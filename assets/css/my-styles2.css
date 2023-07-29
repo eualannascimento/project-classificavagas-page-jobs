@@ -1,0 +1,218 @@
+/* style.css */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  width: 300px;
+  height: auto; /* Aumente esse valor para aumentar a altura do card */
+  box-sizing: border-box;
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+
+.card:hover {
+  transform: translate(0, -5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.card-header {
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-weight: bolder;
+  font-size: 50px;
+  margin: 0;
+}
+
+.card-body {
+  margin-bottom: 10px;
+}
+
+.card-description {
+  margin: 0;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-metadata {
+  font-size: 14px;
+  color: #777;
+}
+
+.card-buttons {
+  text-align: right;
+}
+
+.apply-button {
+  background-color: blue;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.apply-button:hover {
+  background-color: darkblue;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .card-title {
+    font-size: 100px;
+  }
+
+  .card-description {
+    font-size: 20px;
+  }
+
+  .card-metadata {
+    font-size: 16px;
+  }
+
+  .apply-button {
+    font-size: 16px;
+  }
+}
+
+
+@media (min-width: 769px) {
+  .card {
+      width: 95%;
+  }
+  
+  .pagination-container {
+      position: fixed;
+      bottom: 5%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+  }
+
+  .pagination-buttons {
+      display: flex;
+      align-items: center;
+  }
+
+  .pagination-links {
+      display: flex;
+      gap: 5px;
+  }
+
+  .page-link {
+      padding: 8px 12px;
+  }
+
+  .first-page-link,
+  .prev-page-link,
+  .next-page-link,
+  .last-page-link {
+      margin-left: 10px;
+  }
+}
+
+/* style.css */
+.page-link.active {
+  background-color: blue;
+  color: white;
+}
+
+/* style.css */
+.page-link.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* style.css */
+.filter-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* light theme */
+body.light-theme {
+  background-color: #f5f5f5;
+  color: #000;
+}
+
+/* dark theme */
+body.dark-theme {
+  background-color: #222;
+  color: #fff;
+}
+
+/* Estilos para o light theme */
+.light-theme .card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .card:hover {
+  transform: translate(0, -5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .card-metadata {
+  color: #777;
+}
+
+.light-theme .apply-button {
+  background-color: blue;
+  color: white;
+}
+
+.light-theme .apply-button:hover {
+  background-color: darkblue;
+}
+
+/* Estilos para o dark theme */
+.dark-theme .card {
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .card:hover {
+  transform: translate(0, -5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.7);
+}
+
+.dark-theme .card-metadata {
+  color: #aaa;
+}
+
+.dark-theme .apply-button {
+  background-color: darkblue;
+  color: white;
+}
+
+.dark-theme .apply-button:hover {
+  background-color: blue;
+}
+
+.theme-toggle-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+}
