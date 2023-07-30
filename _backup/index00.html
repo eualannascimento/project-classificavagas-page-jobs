@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Classifica Vagas - Busca rápida e fácil na sua mão!</title>
+    <link rel="icon" href="assets/images/icon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-6">
+
+        <!-- Conteúdo colapsado 1 - Sobre o site -->
+        <div class="p-4 bg-gray-800 rounded-lg mb-4 cursor-pointer">
+            <label for="collapsed1" class="text-xl font-semibold">🤷 Por que o site existe?</label>
+            <div class="collapsed-content hidden">
+                <p class="mt-2">O objetivo deste site é facilitar a busca por vagas de emprego em diversas áreas e
+                    localidades.</p>
+            </div>
+        </div>
+
+        <!-- Conteúdo colapsado 2 - Filtros -->
+        <div class="p-4 bg-gray-800 rounded-lg mb-4 cursor-pointer">
+            <label class="text-xl font-semibold">🗂️ Filtros</label>
+            <div class="collapsed-content hidden">
+                <div class="mt-2">
+                    <label class="block">Nível:</label>
+                    <select class="w-full bg-gray-700 text-white p-2 rounded-lg">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="mt-2">
+                    <label class="block">Localidade:</label>
+                    <select class="w-full bg-gray-700 text-white p-2 rounded-lg">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4" id="cards-container">
+
+            <div class="col-span-1">
+                <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col h-full relative">
+                    <h2 class="text-2xl font-semibold mb-4">
+                        <i class='bx bx-home mr-1'></i>
+                        Designer Gráfico PL
+                    </h2>
+                    <div class="flex-grow mb-4">
+                        <div class="flex">
+                            <p class="font-semibold w-1/2">Nível:</p>
+                            <p class="w-1/2">Júnior/Pleno</p>
+                        </div>
+                        <div class="flex">
+                            <p class="font-semibold w-1/2">Segmento:</p>
+                            <p class="w-1/2">Design</p>
+                        </div>
+                        <div class="flex">
+                            <p class="font-semibold w-1/2">Categoria:</p>
+                            <p class="w-1/2">Artes Gráficas</p>
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-4 pb-2 border-t border-gray-700">
+                        <p class="text-xs text-gray-400">Vaga afirmativa!</p>
+                        <p class="text-xs text-gray-400">Data: 30/07/2023</p>
+                        <p class="text-xs text-gray-400">Localidade: Rio de Janeiro, RJ</p>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <!-- Include this script after your HTML content -->
+    <script>
+        // Função para toggle do conteúdo colapsado
+        function toggleCollapse(event) {
+            // Verifica se o clique ocorreu no label ou na div
+            if (event.target.tagName === "LABEL" || event.target.tagName === "DIV") {
+                const collapsedContent = event.currentTarget.querySelector(".collapsed-content");
+                collapsedContent.classList.toggle("hidden");
+            }
+        }
+
+        // Add event listeners to the labels to toggle the collapsed content
+        const labels = document.querySelectorAll(".cursor-pointer");
+        labels.forEach(label => {
+            label.addEventListener("click", toggleCollapse);
+        });
+
+
+        $(function () {
+            var cardsPorPagina = 240;
+            var paginaAtual = 1;
+            var dadosOriginais = [];
+            var dadosFiltrados = [];
+
+            $.getJSON("assets/data/json/open_jobs.json", function (data) {
+                dadosOriginais = data;
+                dadosFiltrados = dadosOriginais;
+
+                var cardsContainer = $("#cards-container");
+                var linksPorGrupo = 10; // Número de links de página exibidos por vez
+                var totalLinks = Math.ceil(dadosFiltrados.length / cardsPorPagina); // Total de links de página
+
+                // Função para exibir os cards
+                function exibirCards(pagina) {
+                    cardsContainer.empty();
+
+                    var startIndex = (pagina - 1) * cardsPorPagina;
+                    var endIndex = startIndex + cardsPorPagina;
+
+                    for (var i = startIndex; i < endIndex; i++) {
+                        if (i >= dadosFiltrados.length) {
+                            break;
+                        }
+
+                        var item = dadosFiltrados[i];
+                        var cardHTML =
+                            '<div class="flex items-center justify-center">' +
+                            '</div>' +
+
+                            '<div class="ml-4">' +
+                            '<h1 class="font-semibold text-5xl">' + item.title + '</h1>' +
+                            '<p class="mt-2 text-3xl text-gray-500">' + item.level + '</p>' +
+                            '<p class="mt-2 text-3xl text-gray-500">' + item.category + '</p>' +
+                            '</div>' +
+                            '</div>';
+
+                        cardsContainer.append(cardHTML);
+                    }
+
+                    // Adicionar evento de clique nos cards
+                    cardsContainer.find('.card').click(function () {
+                        var url = $(this).data('url');
+                        window.open(url, '_blank');
+                    });
+                }
+
+                exibirCards(paginaAtual);
+            });
+        });
+    </script>
+
+    <!-- Importing jsGrid configuration and my CSS stylesheets -->
+    <link type="text/css" rel="stylesheet" href="assets/css/styles.css" />
+</body>
+
+</html>

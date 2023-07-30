@@ -103,6 +103,10 @@ var db = {
     },
 }
 
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
 //----------------------------------------------
 // Configure jsGrid
 //----------------------------------------------
@@ -131,15 +135,15 @@ $("#jsGrid").jsGrid({
 
     fields: [
         { name: "title", title: "Título da Vaga", type: "text", width: "30%" }, // Adicionado css: "wrap-text" aqui
-        { name: "company", title: "Empresa", type: "text", width: "7%" },
-        { name: "company_type", title: "Segmento", type: "text", width: "7%" },
-        { name: "location", title: "Localização", type: "text", width: "10%" },
-        { name: "remote?", title: "Remota?", type: "select", items: getUniqueItems(jobs, "remote?"), valueField: "Value", textField: "Name", width: "5%" },
-        { name: "affirmative?", title: "Afirmativa?", type: "select", items: getUniqueItems(jobs, "affirmative?"), valueField: "Value", textField: "Name", width: "5%" },
-        { name: "temporary?", title: "Temporária?", type: "select", items: getUniqueItems(jobs, "temporary?"), valueField: "Value", textField: "Name", width: "5%" },
-        { name: "category", title: "Categoria da Vaga", type: "select", items: getUniqueItems(jobs, "category"), valueField: "Value", textField: "Name", width: "10%" },
-        { name: "level", title: "Nível da Vaga", type: "select", items: getUniqueItems(jobs, "level"), valueField: "Value", textField: "Name", width: "10%" },
-        { name: "inserted_date", title: "Data de Entrada", type: "text", width: "10%" },
+        { name: "company", title: "Empresa", type: "text", width: "7%", visible: !isMobileDevice()},
+        { name: "company_type", title: "Segmento", type: "text", width: "7%", visible: !isMobileDevice()},
+        { name: "location", title: "Localização", type: "text", width: "10%", visible: !isMobileDevice()},
+        { name: "remote?", title: "Remota?", type: "select", items: getUniqueItems(jobs, "remote?"), valueField: "Value", textField: "Name", width: "5%", visible: !isMobileDevice()},
+        { name: "affirmative?", title: "Afirmativa?", type: "select", items: getUniqueItems(jobs, "affirmative?"), valueField: "Value", textField: "Name", width: "5%", visible: !isMobileDevice()},
+        { name: "temporary?", title: "Temporária?", type: "select", items: getUniqueItems(jobs, "temporary?"), valueField: "Value", textField: "Name", width: "5%", visible: !isMobileDevice()},
+        { name: "category", title: "Categoria da Vaga", type: "select", items: getUniqueItems(jobs, "category"), valueField: "Value", textField: "Name", width: "10%", visible: !isMobileDevice()},
+        { name: "level", title: "Nível da Vaga", type: "select", items: getUniqueItems(jobs, "level"), valueField: "Value", textField: "Name", width: "10%", visible: !isMobileDevice()},
+        { name: "inserted_date", title: "Data de Entrada", type: "text", width: "10%", visible: !isMobileDevice()}
     ],
 
     // Evento "data_loaded"

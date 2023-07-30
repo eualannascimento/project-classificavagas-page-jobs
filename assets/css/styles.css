@@ -1,0 +1,52 @@
+/* Estilo para o card, quando já foi clicado anteriormente */
+.card-clicked {
+  border: 1px dashed #bcb7b7;
+  border-radius: 8px;
+}
+
+.cursor-pointer {
+  display: block;
+}
+
+
+/* Estilo para dispositivos com largura de tela menor que 768px, tipicamente celulares */
+@media (min-width: 768px) {
+
+  /* Estilo para todos os dispositivos */
+  body {
+    display: flex;
+    min-height: 100vh;
+    margin: 0;
+    flex-direction: row;
+  }
+
+  .sidebar {
+    width: 15%;
+    min-width: 350px;
+    padding: 18px;
+    background-color: #1a202c;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: auto;
+  }
+
+  .main-content {
+    width: 85%;
+    padding: 20px;
+  }
+}
+
+/* Estilo para dispositivos com largura de tela maior que 768px, tipicamente celulares */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar,
+  .main-content {
+    width: 100%;
+    min-width: auto;
+    padding: 18px;
+  }
+}

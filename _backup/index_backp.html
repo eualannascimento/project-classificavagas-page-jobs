@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página de Tema Escuro</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/boxicons@2.0.7/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    /* CSS para os elementos collapsible */
+    .collapsible {
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: #2c3e50;
+      color: #fff;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .collapsible-content {
+      display: none;
+      padding: 1rem;
+      background-color: #34495e;
+      color: #fff;
+    }
+    .collapsible.active .collapsible-content {
+      display: block;
+    }
+    /* CSS para o tema claro */
+    body.theme-light {
+      background-color: #fff;
+      color: #333;
+    }
+    .collapsible.theme-light {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    .collapsible-content.theme-light {
+      background-color: #e5e5e5;
+      color: #333;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <!-- Botão para alternar o tema -->
+  <div class="fixed top-4 right-4">
+    <button id="themeToggle" class="p-2 bg-gray-800 rounded-lg">
+      <i class="bx bx-moon"></i> <!-- Ícone de Lua para modo escuro -->
+    </button>
+  </div>
+
+  <div class="container mx-auto p-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Conteúdo colapsado 1 - Sobre o site -->
+      <div class="p-4 bg-gray-800 rounded-lg mb-4">
+        <div class="collapsible" onclick="toggleCollapsible(1)">
+          <label class="text-xl font-semibold cursor-pointer">Por que o site existe?</label>
+          <i class="bx bx-caret-down"></i>
+        </div>
+        <div class="collapsed-content" id="collapsibleContent1">
+          <p class="mt-2">O objetivo deste site é facilitar a busca por vagas de emprego em diversas áreas e localidades. Nossa plataforma visa conectar candidatos a oportunidades de trabalho de forma eficiente e simplificada.</p>
+        </div>
+      </div>
+
+      <!-- Conteúdo colapsado 2 - Filtros -->
+      <div class="p-4 bg-gray-800 rounded-lg mb-4">
+        <div class="collapsible" onclick="toggleCollapsible(2)">
+          <label class="text-xl font-semibold cursor-pointer">Filtros</label>
+          <i class="bx bx-caret-down"></i>
+        </div>
+        <div class="collapsed-content" id="collapsibleContent2">
+          <div class="mt-2">
+            <label class="block">Nível:</label>
+            <select class="w-full bg-gray-700 text-white p-2 rounded-lg">
+              <option value="">Todos</option>
+              <option value="junior">Júnior</option>
+              <option value="pleno">Pleno</option>
+              <option value="senior">Sênior</option>
+            </select>
+          </div>
+          <div class="mt-2">
+            <label class="block">Localidade:</label>
+            <select class="w-full bg-gray-700 text-white p-2 rounded-lg">
+              <option value="">Todas</option>
+              <option value="sp">São Paulo</option>
+              <option value="rj">Rio de Janeiro</option>
+              <option value="mg">Minas Gerais</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="col-span-1">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col h-full">
+          <h2 class="text-2xl font-semibold mb-4">
+            <i class='bx bx-buildings mr-2'></i>
+            Vaga de Desenvolvedor Full Stack (Pleno/Sênior)
+          </h2>
+          <div class="flex-grow">
+            <div class="flex">
+              <p class="font-semibold w-1/2">Localidade:</p>
+              <p class="w-1/2">São Paulo, SP</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Nível:</p>
+              <p class="w-1/2">Pleno/Sênior</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Segmento:</p>
+              <p class="w-1/2">Tecnologia</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Categoria:</p>
+              <p class="w-1/2">Desenvolvimento Web</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Data:</p>
+              <p class="w-1/2">15 de Agosto, 2023</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-1">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col h-full">
+          <h2 class="text-2xl font-semibold mb-4">
+            <i class='bx bx-home mr-2'></i>
+            Vaga de Designer Gráfico (Júnior/Pleno)
+          </h2>
+          <div class="flex-grow">
+            <div class="flex">
+              <p class="font-semibold w-1/2">Localidade:</p>
+              <p class="w-1/2">Rio de Janeiro, RJ</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Nível:</p>
+              <p class="w-1/2">Júnior/Pleno</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Segmento:</p>
+              <p class="w-1/2">Design</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Categoria:</p>
+              <p class="w-1/2">Artes Gráficas</p>
+            </div>
+            <div class="flex">
+              <p class="font-semibold w-1/2">Data:</p>
+              <p class="w-1/2">30 de Setembro, 2023</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript para alternar o tema e os collapsibles -->
+  <script>
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+
+    themeToggle.addEventListener('click', () => {
+      body.classList.toggle('theme-light');
+    });
+
+    function toggleCollapsible(id) {
+      const collapsibleContent = document.getElementById(`collapsibleContent${id}`);
+      collapsibleContent.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>

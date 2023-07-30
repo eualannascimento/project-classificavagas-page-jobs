@@ -1,14 +1,15 @@
 $(function () {
-    var cardsPorPagina = 24;
+    var cardsPorPagina = 20;
     var paginaAtual = 1;
     var dadosOriginais = [];
 
     $.getJSON("assets/data/json/open_jobs.json", function (data) {
+        for (var i = 0; i < data.length; i++) {
+            data[i].id = i + 1;
+        }
         dadosOriginais = data;
 
         var cardsContainer = $("#cards-container");
-        var linksPorGrupo = 5; // Número de links de página exibidos por vez
-        var totalLinks = Math.ceil(dadosOriginais.length / cardsPorPagina); // Total de links de página
 
         // Função para exibir os cards
         function exibirCards(pagina) {
@@ -23,63 +24,54 @@ $(function () {
                 }
 
                 var item = dadosFiltrados[i];
-                var cardHTML = '<div class="card" data-category="' + item.category + '" data-level="' + item.level + '" data-url="' + item.url + '">' +
-                    '<div class="card-header">' +
-                    '<h2 class="card-title">' + item.title + '</h2>' +
-                    '</div>' +
-                    '<div class="card-body">' +
-                    '<p class="card-description">' + item.description + '</p>' +
-                    '</div>' +
-                    '<span class="category">' + item.category + '</span>' +
-                    '<span class="level">' + item.level + '</span>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>';
 
+                // Verifica se o card já foi clicado antes
+                var isCardClicked = localStorage.getItem('card_' + item.id) === 'true';
+
+                // Função para formatar a data no formato dd/mm/yyyy
+                    function formatarData(data) {
+                        const [ano, mes, dia] = data.split('-');
+                        return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+                    }
+
+                    var cardHTML = 
+                        `<div class="col-span-1 ${isCardClicked ? 'card-clicked' : ''}">
+                            <a href="${item.url}" target="_blank" data-item-id="${item.id}">
+                                <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col h-full relative">
+                                    <h2 class="text-2xl font-semibold mb-4">
+                                        ${item['remote?'] === '01 - Sim' ? '<i class="mr-1">🏠</i>' : ''}
+                                        ${item['remote?'] === '02 - Não' ? '<i class="mr-1">🏢</i>' : ''}
+                                        ${item.title}
+                                    </h2>
+                                    <div class="flex-grow mb-6">
+                                        <div class="flex"><p class="font-semibold">Nível: <span class="font-normal">${item.level}</span></p></div>
+                                        <div class="flex"><p class="font-semibold">Empresa: <span class="font-normal">${item.company}</span></p></div>
+                                        <div class="flex"><p class="font-semibold">Categoria: <span class="font-normal">${item.category}</span></p></div>
+                                    </div>
+                                    <div class="mt-auto pt-4 pb-2 border-t border-gray-700">
+                                        <p class="text-xs text-gray-400">Data: ${isCardClicked}</p>
+                                        <p class="text-xs text-gray-400">Data: ${formatarData(item.inserted_date)}</p>
+                                        <p class="text-xs text-gray-400">Localidade: ${item.location}</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>`;
 
                 cardsContainer.append(cardHTML);
             }
 
             // Adicionar evento de clique nos cards
-            cardsContainer.find('.card').click(function () {
-                var url = $(this).data('url');
-                window.open(url, '_blank');
+            cardsContainer.find('.col-span-1').click(function () {
+                var card = $(this);
+                var url = card.find('a').attr('href');
+                abrirURL(url);
+
+                // Marcar o card como clicado no localStorage
+                card.addClass('card-clicked');
+                var itemId = card.find('a').data('item-id');
+                localStorage.setItem('card_' + itemId, 'true');
+                atualizarExibicao()
             });
-        }
-
-        // Função para exibir os links de página
-        function exibirLinksPagina() {
-            var paginationContainer = $("#pagination-container");
-            paginationContainer.empty();
-
-            var totalGrupos = Math.ceil(totalLinks / linksPorGrupo); // Total de grupos de links de página
-            var grupoAtual = Math.ceil(paginaAtual / linksPorGrupo); // Grupo atual
-
-            var startIndex = (grupoAtual - 1) * linksPorGrupo + 1;
-            var endIndex = startIndex + linksPorGrupo - 1;
-            endIndex = Math.min(endIndex, totalLinks);
-
-            // Botão "Primeira Página"
-            var firstHTML = '<a href="#" class="page-link' + (paginaAtual === 1 ? ' disabled' : '') + '" data-page="1">Primeira Página</a>';
-            paginationContainer.prepend(firstHTML);
-
-            // Botão "Anterior"
-            var prevHTML = '<a href="#" class="page-link" data-page="' + (paginaAtual - 1) + '">&laquo; Anterior</a>';
-            paginationContainer.append(prevHTML);
-
-            // Links de página
-            for (var i = startIndex; i <= endIndex; i++) {
-                var linkHTML = '<a href="#" class="page-link' + (i === paginaAtual ? ' active' : '') + '" data-page="' + i + '">' + i + '</a>';
-                paginationContainer.append(linkHTML);
-            }
-
-            // Botão "Próximo"
-            var nextHTML = '<a href="#" class="page-link" data-page="' + (paginaAtual + 1) + '">Próximo &raquo;</a>';
-            paginationContainer.append(nextHTML);
-
-            // Botão "Última Página"
-            var lastHTML = '<a href="#" class="page-link' + (paginaAtual === totalLinks ? ' disabled' : '') + '" data-page="' + totalLinks + '">Última Página</a>';
-            paginationContainer.append(lastHTML);
         }
 
         // Função para atualizar a exibição dos cards e dos links de página
@@ -88,16 +80,9 @@ $(function () {
             exibirLinksPagina();
         }
 
-        // Evento de clique nos links de página
-        $("#pagination-container").on("click", ".page-link", function (e) {
-            e.preventDefault();
-            var pagina = parseInt($(this).data("page"));
 
-            if (pagina !== paginaAtual && pagina >= 1 && pagina <= totalLinks) {
-                paginaAtual = pagina;
-                atualizarExibicao();
-            }
-        });
+
+
 
         // Obtendo todas as categorias distintas
         var categories = dadosOriginais.map(function (item) {
@@ -184,36 +169,6 @@ $(function () {
 
         // Inicializando a exibição
         atualizarExibicao();
+
     });
 });
-
-// Função para filtrar os cards com base nas categorias e níveis selecionados
-function filterCardsByCategoryAndLevel(category, level) {
-    if (category === '' && level === '') {
-        return dadosOriginais;
-    }
-
-    return dadosOriginais.filter(function (item) {
-        if (category !== '' && level !== '') {
-            return item.category === category && item.level === level;
-        } else if (category !== '') {
-            return item.category === category;
-        } else if (level !== '') {
-            return item.level === level;
-        } else {
-            return true;
-        }
-    });
-}
-
-// Função para alternar entre os temas
-function toggleTheme() {
-    var body = document.body;
-    var sunIcon = document.getElementById("sun-icon");
-    var moonIcon = document.getElementById("moon-icon");
-  
-    body.classList.toggle("dark-theme");
-    sunIcon.classList.toggle("hidden");
-    moonIcon.classList.toggle("hidden");
-  }
-  

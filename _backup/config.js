@@ -1,0 +1,218 @@
+$(function () {
+    var cardsPorPagina = 240;
+    var paginaAtual = 1;
+    var dadosOriginais = [];
+
+    $.getJSON("assets/data/json/open_jobs.json", function (data) {
+        dadosOriginais = data;
+
+        var cardsContainer = $("#cards-container");
+        var linksPorGrupo = 10; // Número de links de página exibidos por vez
+        var totalLinks = Math.ceil(dadosOriginais.length / cardsPorPagina); // Total de links de página
+
+        // Função para exibir os cards
+        function exibirCards(pagina) {
+            cardsContainer.empty();
+
+            var startIndex = (pagina - 1) * cardsPorPagina;
+            var endIndex = startIndex + cardsPorPagina;
+
+            for (var i = startIndex; i < endIndex; i++) {
+                if (i >= dadosFiltrados.length) {
+                    break;
+                }
+
+                var item = dadosFiltrados[i];
+                var cardHTML = 
+                    '<div class="flex items-start rounded-xl bg-white p-4 outline-solid shadow-lg m-4">' +
+                        '<div class="flex items-center justify-center">' +
+                        '</div>' +
+
+                        '<div class="ml-4">' +
+                            '<h1 class="font-semibold text-5xl">' + item.title + '</h1>' +
+                            '<p class="mt-2 text-3xl text-gray-500">' + item.level + '</p>' +
+                            '<p class="mt-2 text-3xl text-gray-500">' + item.category + '</p>' +
+                        '</div>' +
+                    '</div>'
+                    ;
+
+
+                cardsContainer.append(cardHTML);
+            }
+
+            // Adicionar evento de clique nos cards
+            cardsContainer.find('.card').click(function () {
+                var url = $(this).data('url');
+                window.open(url, '_blank');
+            });
+        }
+
+        // Função para exibir os links de página
+        function exibirLinksPagina() {
+            var paginationContainer = $("#pagination-container");
+            paginationContainer.empty();
+
+            var totalGrupos = Math.ceil(totalLinks / linksPorGrupo); // Total de grupos de links de página
+            var grupoAtual = Math.ceil(paginaAtual / linksPorGrupo); // Grupo atual
+
+            var startIndex = (grupoAtual - 1) * linksPorGrupo + 1;
+            var endIndex = startIndex + linksPorGrupo - 1;
+            endIndex = Math.min(endIndex, totalLinks);
+
+            // Botão "Primeira Página"
+            var firstHTML = '<a href="#" class="page-link' + (paginaAtual === 1 ? ' disabled' : '') + '" data-page="1">Primeira Página</a>';
+            paginationContainer.prepend(firstHTML);
+
+            // Botão "Anterior"
+            var prevHTML = '<a href="#" class="page-link" data-page="' + (paginaAtual - 1) + '">&laquo; Anterior</a>';
+            paginationContainer.append(prevHTML);
+
+            // Links de página
+            for (var i = startIndex; i <= endIndex; i++) {
+                var linkHTML = '<a href="#" class="page-link' + (i === paginaAtual ? ' active' : '') + '" data-page="' + i + '">' + i + '</a>';
+                paginationContainer.append(linkHTML);
+            }
+
+            // Botão "Próximo"
+            var nextHTML = '<a href="#" class="page-link" data-page="' + (paginaAtual + 1) + '">Próximo &raquo;</a>';
+            paginationContainer.append(nextHTML);
+
+            // Botão "Última Página"
+            var lastHTML = '<a href="#" class="page-link' + (paginaAtual === totalLinks ? ' disabled' : '') + '" data-page="' + totalLinks + '">Última Página</a>';
+            paginationContainer.append(lastHTML);
+        }
+
+        // Função para atualizar a exibição dos cards e dos links de página
+        function atualizarExibicao() {
+            exibirCards(paginaAtual);
+            exibirLinksPagina();
+        }
+
+        // Evento de clique nos links de página
+        $("#pagination-container").on("click", ".page-link", function (e) {
+            e.preventDefault();
+            var pagina = parseInt($(this).data("page"));
+
+            if (pagina !== paginaAtual && pagina >= 1 && pagina <= totalLinks) {
+                paginaAtual = pagina;
+                atualizarExibicao();
+            }
+        });
+
+        // Obtendo todas as categorias distintas
+        var categories = dadosOriginais.map(function (item) {
+            return item.category;
+        }).filter(function (value, index, self) {
+            return self.indexOf(value) === index;
+        });
+
+        // Criando o menu de filtro com as categorias
+        var filterMenuHTML = '<div class="filter-container" style="height: 50px; overflow-y: auto;"><select id="categoryFilter"><option value="">Todos</option>';
+        for (var i = 0; i < categories.length; i++) {
+            filterMenuHTML += '<option value="' + categories[i] + '">' + categories[i] + '</option>';
+        }
+        filterMenuHTML += '</select></div>';
+
+        // Adicionando o menu de filtro no início da página
+        var filterContainer = document.getElementById('filterContainer');
+        filterContainer.innerHTML = filterMenuHTML;
+
+        // Obtendo todos os níveis distintos
+        var levels = dadosOriginais.map(function (item) {
+            return item.level;
+        }).filter(function (value, index, self) {
+            return self.indexOf(value) === index;
+        });
+
+        // Criando o menu de filtro com os níveis
+        var levelFilterMenuHTML = '<div class="filter-container" style="height: 50px; overflow-y: auto;"><select id="levelFilter"><option value="">Todos</option>';
+        for (var i = 0; i < levels.length; i++) {
+            levelFilterMenuHTML += '<option value="' + levels[i] + '">' + levels[i] + '</option>';
+        }
+        levelFilterMenuHTML += '</select></div>';
+
+        // Adicionando o menu de filtro no início da página
+        filterContainer.innerHTML += levelFilterMenuHTML;
+
+        // Obtendo uma referência ao elemento do filtro no HTML para a propriedade category
+        var categoryFilterSelect = document.getElementById('categoryFilter');
+
+        // Função para filtrar os cards com base nas categorias selecionadas
+        function filtrarCards() {
+            var selectedCategory = categoryFilterSelect.value;
+            var selectedLevel = levelFilterSelect.value;
+
+            dadosFiltrados = dadosOriginais.filter(function (item) {
+                if (selectedCategory !== '' && selectedLevel !== '') {
+                    return item.category === selectedCategory && item.level === selectedLevel;
+                } else if (selectedCategory !== '') {
+                    return item.category === selectedCategory;
+                } else if (selectedLevel !== '') {
+                    return item.level === selectedLevel;
+                } else {
+                    return true;
+                }
+            });
+
+            totalLinks = Math.ceil(dadosFiltrados.length / cardsPorPagina);
+            paginaAtual = 1;
+
+            // Atualizando a exibição
+            atualizarExibicao();
+        }
+
+        // Adicionando um ouvinte de evento para capturar a seleção do usuário para a propriedade category
+        categoryFilterSelect.addEventListener('change', filtrarCards);
+
+        // Obtendo uma referência ao elemento do filtro no HTML para a propriedade level
+        var levelFilterSelect = document.getElementById('levelFilter');
+
+        // Adicionando um ouvinte de evento para capturar a seleção do usuário para a propriedade level
+        levelFilterSelect.addEventListener('change', filtrarCards);
+
+        // Função para abrir o URL do card quando clicado
+        function abrirURL(url) {
+            window.open(url, '_blank');
+        }
+
+        // Evento de clique no botão de aplicar
+        $("#cards-container").on("click", ".apply-button", function () {
+            var card = $(this).closest('.card');
+            var url = card.data('url');
+            abrirURL(url);
+        });
+
+        // Inicializando a exibição
+        atualizarExibicao();
+    });
+});
+
+// Função para filtrar os cards com base nas categorias e níveis selecionados
+function filterCardsByCategoryAndLevel(category, level) {
+    if (category === '' && level === '') {
+        return dadosOriginais;
+    }
+
+    return dadosOriginais.filter(function (item) {
+        if (category !== '' && level !== '') {
+            return item.category === category && item.level === level;
+        } else if (category !== '') {
+            return item.category === category;
+        } else if (level !== '') {
+            return item.level === level;
+        } else {
+            return true;
+        }
+    });
+}
+
+// Função para alternar entre os temas
+function toggleTheme() {
+    var body = document.body;
+    var sunIcon = document.getElementById("sun-icon");
+    var moonIcon = document.getElementById("moon-icon");
+  
+    body.classList.toggle("dark-theme");
+    sunIcon.classList.toggle("hidden");
+    moonIcon.classList.toggle("hidden");
+  }

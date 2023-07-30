@@ -33,3 +33,16 @@ img {
     margin-left: auto;
     margin-right: auto;
 }
+
+
+  
+/* Mobile-specific styles */
+@media screen and (max-width: 767px) {
+/* Example of hiding a column on mobile devices */
+.jsgrid-grid-header .jsgrid-header-cell:nth-child(2),
+.jsgrid-grid-body .jsgrid-cell:nth-child(2) {
+    display: none;
+}
+
+/* Add more mobile-specific styles here */
+}
