@@ -29,7 +29,7 @@ $(function () {
                 }
 
                 const cardHTML =
-                `<div class="col-span-1 ${isCardClicked ? 'card-clicked' : ''}">
+                    `<div class="col-span-1 ${isCardClicked ? 'card-clicked' : ''}">
                     <a href="${item.url}" target="_blank" data-item-id="${item.id}">
                         <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col h-full relative">
                             <div class="text-xl font-semibold mb-3">
@@ -168,11 +168,11 @@ $(function () {
                 limparTodosOsFiltros();
             });
             filterContainer.prepend(clearFiltersButton);
-            
+
             // Adicionar um elemento <br> após o botão para pular uma linha
             var breakElement = document.createElement('br');
             filterContainer.insertBefore(breakElement, clearFiltersButton.nextSibling);
-            
+
 
             filterProperties.forEach(function (property) {
                 var filterSelect = document.getElementById(property + 'Filter');
@@ -194,11 +194,25 @@ $(function () {
 
         atualizarExibicao();
     });
+
+    // Função para alternar entre modo claro e escuro
+    const toggleTheme = () => {
+        if ($('body').hasClass('light-theme')) {
+            $('body').removeClass('light-theme');
+            $('#toggleThemeBtn i').removeClass('bx-sun').addClass('bx-moon');
+        } else {
+            $('body').addClass('light-theme');
+            $('#toggleThemeBtn i').removeClass('bx-moon').addClass('bx-sun');
+        }
+    };
+
+    // Event listener para o botão de alternar tema
+    $('#toggleThemeBtn').on('click', toggleTheme);
 });
 
 const toggleCollapse = (event) => {
     const parentDiv = event.currentTarget.parentElement;
-    
+
     const collapsedContent = parentDiv.querySelector(".collapsed-content");
     collapsedContent.classList.toggle("hidden");
 
@@ -211,3 +225,29 @@ const labels = document.querySelectorAll(".cursor-pointer");
 labels.forEach(label => {
     label.addEventListener("click", toggleCollapse);
 });
+
+
+async function fetchJSONModificationDate() {
+    try {
+        const response = await fetch('assets/data/json/open_jobs.json');
+        const lastModified = response.headers.get('last-modified');
+        const gmtDate = new Date(lastModified);
+
+        const saoPauloDate = new Intl.DateTimeFormat('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(gmtDate);
+
+        const formatTwoDigits = (value) => value.toString().padStart(2, '0');
+        const timeString = `${formatTwoDigits(gmtDate.getHours())}:${formatTwoDigits(gmtDate.getMinutes())}`;
+
+        const modificationDateElement = document.getElementById('modificationDate');
+        modificationDateElement.textContent = `${saoPauloDate} ás ${timeString}`;
+    } catch (error) {
+        console.error('Erro ao buscar a data de modificação:', error);
+    }
+}
+
+fetchJSONModificationDate();

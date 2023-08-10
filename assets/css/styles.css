@@ -1,6 +1,6 @@
 /* Estilo para o card, quando já foi clicado anteriormente */
 .card-clicked {
-  border: 1px dashed #bcb7b7;
+  border: 1.2px dashed #bcb7b7;
   border-radius: 8px;
 }
 
@@ -49,4 +49,101 @@
     min-width: auto;
     padding: 18px;
   }
+}
+
+
+/* Estilos básicos para o modo claro, adaptando versão mobile */
+@media (max-width: 768px) {
+  body.light-theme {
+    background-color: #e6e6e6;
+    color: #333;
+  }
+}
+
+/* Estilos básicos para o modo claro, adaptando versão desktop com sidebar */
+@media (min-width: 768px) {
+  body.light-theme {
+    background-color: #f2f2f2;
+    color: #333;
+  }
+
+  .light-theme .sidebar {
+    background-color: #e6e6e6;
+  }
+}
+
+.light-theme .bg-gray-800 {
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.light-theme .border-gray-700 {
+  border-color: #ddd;
+}
+
+.light-theme .text-gray-400 {
+  color: #888;
+}
+
+/* Botão para alternar tema */
+.toggle-theme-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a202c;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.toggle-theme-btn i {
+  font-size: 24px;
+}
+
+/* Quando o tema escuro está ativo */
+.toggle-theme-btn {
+  background-color: rgba(255, 255, 255, 0.5);
+  /* claro com transparência */
+  color: #000000;
+}
+
+/* Quando o tema claro está ativo */
+.light-theme .toggle-theme-btn {
+  background-color: rgba(65, 64, 64, 0.8);
+  /* escuro com transparência */
+  color: #ffffff;
+}
+
+/* Modificações baseadas em tema claro para elementos <select> */
+.light-theme #filterContainer select {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #ccc;
+}
+
+.light-theme #filterContainer option {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* Caso haja qualquer foco no elemento <select> */
+.light-theme #filterContainer select:focus {
+  border-color: #007BFF;
+  outline: none;
+}
+
+/* Modificações baseadas em tema claro para o botão de limpar filtros */
+.light-theme #filterContainer button {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #ccc;
+}
+
+.light-theme #filterContainer button:hover {
+  background-color: #f7f7f7;
 }

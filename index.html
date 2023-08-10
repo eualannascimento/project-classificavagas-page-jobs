@@ -21,13 +21,15 @@
         <a href="#">
             <div class="text-center">Classifica Vagas</div>
         </a>
-        <div class="text-center mb-4" id="filteredValue">Quantidade de Vagas: 0/0</div>
+        <div class="text-center" id="filteredValue">Quantidade de Vagas: 0/0</div>
+        <p class="text-center mb-4">Última atualização: <span id="modificationDate"></span></p>
         <!-- Divisor -->
         <div class="border-b border-gray-400 mb-4"></div>
         <!-- Conteúdo colapsado 1 - Sobre o site -->
         <div id="collapsed1" class="p-4 bg-gray-800 rounded-lg mb-4">
             <label for="collapsed1" class="text-xl font-semibold cursor-pointer">
-                <span class="indicator" style="float: right;"><i class='bx bx-chevron-down'></i></span>🎯 Objetivo do site</label>
+                <span class="indicator" style="float: right;"><i class='bx bx-chevron-down'></i></span>🎯 Objetivo do
+                site</label>
             <div class="collapsed-content hidden">
                 <p class="mt-2">Esse site foi criado visando aplicar meus conhecimentos relacionados a webscraping e ao
                     mesmo tempo
@@ -35,10 +37,11 @@
             </div>
         </div>
         <!-- Conteúdo colapsado 2 - Filtros -->
-        <div id="collapsed2" class="p-4 bg-gray-800 rounded-lg mb-4">
+        <div id="collapsed2" class="p-4 bg-gray-800 rounded-lg">
             <label for="collapsed2" class="text-xl font-semibold cursor-pointer" id="filteredValue">
-                
-            <span class="indicator" style="float: right;"><i class='bx bx-chevron-down'></i></span>🗂️ Filtros</label>
+
+                <span class="indicator" style="float: right;"><i class='bx bx-chevron-down'></i></span>🗂️
+                Filtros</label>
             <div class="collapsed-content hidden">
                 <div id="filterContainer" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
@@ -49,6 +52,11 @@
     <div class="main-content">
         <!-- Conteúdo - Cards -->
         <div id="cards-container" class="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+    </div>
+
+    <!-- Botão para alternar entre modo claro e escuro -->
+    <div class="toggle-theme-btn" id="toggleThemeBtn">
+        <i class="bx bx-moon"></i>
     </div>
 
     <!-- Scripts e Estilização -->
