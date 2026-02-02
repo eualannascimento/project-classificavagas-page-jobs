@@ -417,10 +417,7 @@
             const isRemote = job['remote?'] === '01 - Sim';
             const isVisited = state.visitedJobs.has(job.id);
 
-            const card = document.createElement('a');
-            card.href = job.url;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
+            const card = document.createElement('div');
             card.className = `job-card${isVisited ? ' visited' : ''}`;
             card.dataset.id = job.id;
 
@@ -428,36 +425,86 @@
             const levelName = job.level ? job.level.split(' - ').slice(1).join(' - ') : '';
             const categoryName = job.category ? job.category.split(' - ').slice(1).join(' - ') : '';
 
+            // Icons
+            const iconRemote = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`;
+            const iconOffice = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`;
+            const iconLocation = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                            <circle cx="12" cy="10" r="3"/></svg>`;
+            const iconDate = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+            const iconExternal = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+
             card.innerHTML = `
                 <div class="job-header">
-                    <div class="job-badge ${isRemote ? 'remote' : 'office'}">
-                        ${isRemote ? '🏠' : '🏢'}
+                    <div class="job-main-info">
+                        <h3 class="job-title">${utils.escapeHtml(job.title)}</h3>
+                        <p class="job-company">${utils.escapeHtml(job.company)}</p>
                     </div>
-                    <h3 class="job-title">${utils.escapeHtml(job.title)}</h3>
-                </div>
-                <p class="job-company">${utils.escapeHtml(job.company)}</p>
-                <div class="job-tags">
-                    ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(job.company_type, 20))}</span>` : ''}
-                    ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(levelName, 18))}</span>` : ''}
-                    ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(categoryName, 18))}</span>` : ''}
-                </div>
-                <div class="job-meta">
-                    <div class="job-location">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                            <circle cx="12" cy="10" r="3"/>
-                        </svg>
-                        <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
+                    <div class="job-badges">
+                        <div class="job-icon-badge ${isRemote ? 'remote' : 'office'}" title="${isRemote ? 'Remoto' : 'Presencial'}">
+                            ${isRemote ? iconRemote : iconOffice}
+                        </div>
                     </div>
-                    <span class="job-date">${utils.formatDate(job.inserted_date)}</span>
                 </div>
+
+                <div class="job-details">
+                    <div class="job-details-content">
+                        <div class="job-tags">
+                            ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(job.company_type, 20))}</span>` : ''}
+                            ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(levelName, 18))}</span>` : ''}
+                            ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(categoryName, 18))}</span>` : ''}
+                            ${job.affirmative === '01 - Sim' ? `<span class="job-tag">Vaga Afirmativa</span>` : ''}
+                        </div>
+
+                        <div class="job-meta-grid">
+                            <div class="job-meta-item">
+                                ${iconLocation}
+                                <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
+                            </div>
+                            <div class="job-meta-item">
+                                ${iconDate}
+                                <span>Publicado em ${utils.formatDate(job.inserted_date)}</span>
+                            </div>
+                        </div>
+
+                        <div class="job-actions">
+                            <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="btn btn-apply">
+                                Candidatar-se ${iconExternal}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expand-hint">Toque para ver detalhes</div>
             `;
 
-            // Mark as visited on click
-            card.addEventListener('click', () => {
-                if (!state.visitedJobs.has(job.id)) {
-                    utils.markJobVisited(job.id);
-                    card.classList.add('visited');
+            // Interaction Handlers
+            card.addEventListener('click', (e) => {
+                // If clicking the apply button, don't toggle expand
+                if (e.target.closest('.btn-apply')) {
+                    if (!state.visitedJobs.has(job.id)) {
+                        utils.markJobVisited(job.id);
+                        card.classList.add('visited');
+                    }
+                    return;
+                }
+
+                // Toggle expanded state
+                const isExpanded = card.classList.toggle('expanded');
+
+                // Optional: Scroll into view if expanded and partially out of view
+                if (isExpanded) {
+                    setTimeout(() => {
+                        const rect = card.getBoundingClientRect();
+                        const isInView = (
+                            rect.top >= 0 &&
+                            rect.left >= 0 &&
+                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                        );
+                        if (!isInView) {
+                            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }, 300);
                 }
             });
 
