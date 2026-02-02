@@ -1,375 +1,413 @@
 /**
- * Classifica Vagas - Premium Design System (v2)
- * Layout: Sidebar (Desktop) / Bottom Nav (Mobile)
+ * Classifica Vagas - Premium Core (v2)
+ * Architecture: State-Driven UI with Modular Logic
  */
 
-(function () {
+(function() {
     'use strict';
 
     // ============================================
-    // STATE & CONFIG
+    // 1. CONFIG & STATE
     // ============================================
-    const CONFIG = {
+    const CONSTANTS = {
         DATA_URL: 'assets/data/json/open_jobs.json',
-        JOBS_PER_PAGE: 50
+        PAGE_SIZE: 40,
+        ANIMATION_DURATION: 300
     };
 
     const state = {
         allJobs: [],
         filteredJobs: [],
-        displayedCount: 0,
-        activeFilters: {},
-        searchQuery: '',
-        visitedJobs: new Set(),
-        isSidebarOpen: false
-    };
-
-    // ============================================
-    // DOM ELEMENTS
-    // ============================================
-    const elements = {
-        app: document.getElementById('app'),
-        jobsContainer: document.getElementById('jobsContainer'),
-        sidebar: document.getElementById('sidebar'),
-        searchInput: document.getElementById('searchInput'),
-        filterList: document.getElementById('filterList'),
-        jobStats: document.getElementById('jobStats'),
-        bottomNav: document.getElementById('bottomNav'),
-        themeToggle: document.getElementById('themeToggle'),
-        btnOpenFilters: document.getElementById('btnOpenFilters'),
-        btnCloseSidebar: document.getElementById('btnCloseSidebar'),
-        loadingScreen: document.getElementById('loadingScreen')
-    };
-
-    // ============================================
-    // UTILS
-    // ============================================
-    const utils = {
-        formatDate(dateStr) {
-            if (!dateStr) return '';
-            const [y, m, d] = dateStr.split('-');
-            return `${d}/${m}/${y}`;
+        visibleCount: 0,
+        filters: {
+            query: '',
+            remote: false,
+            presencial: false,
+            affirmative: false,
+            level: new Set(),
+            category: new Set(),
+            contract: new Set(),
+            site_type: new Set()
         },
-        escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text || '';
-            return div.innerHTML;
-        },
-        normalize(text) {
-            return (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        },
-        getInitials(name) {
-            return (name || 'CV').substring(0, 2).toUpperCase();
+        metadata: {
+            levels: {},
+            categories: {},
+            contracts: {},
+            sites: {}
         }
     };
 
     // ============================================
-    // RENDERERS
+    // 2. UI CONTROLLER
     // ============================================
-    const render = {
-        jobs(append = false) {
+    const UI = {
+        el: {
+            app: document.getElementById('app'),
+            skeleton: document.getElementById('skeleton-screen'),
+            jobsFeed: document.getElementById('jobs-feed'),
+            sentinel: document.getElementById('infinite-sentinel'),
+            filterDrawer: document.getElementById('filter-drawer'),
+            desktopFilters: document.getElementById('desktop-filters'),
+            mobileFiltersContent: document.getElementById('mobile-filters-content'),
+            searchInput: document.getElementById('global-search'),
+            clearSearchBtn: document.getElementById('clear-search'),
+            filterBadge: document.getElementById('filter-count-badge'),
+            activeFiltersBar: document.getElementById('active-filters-bar'),
+            navHome: document.getElementById('nav-home'),
+            navFilters: document.getElementById('nav-filters')
+        },
+
+        showApp() {
+            // Fade out skeleton, fade in app
+            this.el.skeleton.style.opacity = '0';
+            setTimeout(() => {
+                this.el.skeleton.classList.add('hidden');
+                this.el.app.classList.remove('hidden');
+                // Trigger reflow for animation if needed
+            }, 300);
+        },
+
+        renderJobs(jobs, append = false) {
             if (!append) {
-                elements.jobsContainer.innerHTML = '';
-                state.displayedCount = 0;
+                this.el.jobsFeed.innerHTML = '';
             }
 
-            // Remove existing sentinel if any
-            const existingSentinel = document.getElementById('infinite-scroll-sentinel');
-            if (existingSentinel) existingSentinel.remove();
-
-            if (state.filteredJobs.length === 0) {
-                elements.jobsContainer.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-tertiary);">
-                        <p>Nenhuma vaga encontrada para os filtros selecionados.</p>
+            if (jobs.length === 0) {
+                this.el.jobsFeed.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: var(--color-text-tertiary);">
+                        <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" style="margin-bottom:16px; opacity:0.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <p>Nenhuma vaga encontrada.</p>
+                        <button onclick="window.resetFilters()" style="margin-top:16px; color:var(--color-text-primary); text-decoration:underline;">Limpar filtros</button>
                     </div>
                 `;
                 return;
             }
 
-            const start = state.displayedCount;
-            const end = Math.min(start + CONFIG.JOBS_PER_PAGE, state.filteredJobs.length);
             const fragment = document.createDocumentFragment();
-
-            state.filteredJobs.slice(start, end).forEach(job => {
-                fragment.appendChild(this.createCard(job));
-            });
-            elements.jobsContainer.appendChild(fragment);
-
-            state.displayedCount = end;
-            this.updateStats();
-
-            // Setup Infinite Scroll if more jobs exist
-            if (state.displayedCount < state.filteredJobs.length) {
-                const sentinel = document.createElement('div');
-                sentinel.id = 'infinite-scroll-sentinel';
-                sentinel.style.height = '20px';
-                sentinel.style.width = '100%';
-                sentinel.style.gridColumn = '1 / -1';
-                elements.jobsContainer.appendChild(sentinel);
-                logic.setupObserver(sentinel);
-            }
+            jobs.forEach(job => fragment.appendChild(this.createJobCard(job)));
+            this.el.jobsFeed.appendChild(fragment);
         },
 
-        createCard(job) {
+        createJobCard(job) {
+            const el = document.createElement('div');
+            el.className = 'job-card';
+
+            // Logic for badges
             const isRemote = job['remote?'] === '01 - Sim';
-            const isAffirmative = job['affirmative?'] === '01 - Sim';
-            const companyInitials = utils.getInitials(job.company);
+            const initials = (job.company || 'CV').substring(0,2).toUpperCase();
 
-            const card = document.createElement('div');
-            card.className = 'job-card';
-            if (state.visitedJobs.has(job.id)) card.classList.add('visited');
-
-            // Icons
-            const icons = {
-                chevron: `<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>`,
-                location: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`,
-                date: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`,
-                external: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`
-            };
-
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="company-logo-placeholder">${companyInitials}</div>
-                    <div class="card-badges">
+            el.innerHTML = `
+                <div class="card-top">
+                    <div class="company-avatar">${initials}</div>
+                    <div class="badges">
                         ${isRemote ? '<span class="badge remote">Remoto</span>' : ''}
-                        ${isAffirmative ? '<span class="badge">Afirmativa</span>' : ''}
+                        <span class="badge">${job.site_type || 'Gupy'}</span>
                     </div>
                 </div>
+                <h3 class="job-title">${this.escape(job.title)}</h3>
+                <p class="company-name">${this.escape(job.company)}</p>
 
-                <h3 class="card-title">${utils.escapeHtml(job.title)}</h3>
-                <p class="card-company">${utils.escapeHtml(job.company)}</p>
-
-                <div class="card-details">
+                <div class="card-meta">
                     <div class="meta-row">
-                        <div class="meta-item">${icons.location} <span>${utils.escapeHtml(job.location)}</span></div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span>${this.escape(job.location)}</span>
                     </div>
-                     <div class="meta-row">
-                        <div class="meta-item">${icons.date} <span>${utils.formatDate(job.inserted_date)}</span></div>
-                    </div>
-
-                    <div class="card-actions">
-                        <a href="${job.url}" target="_blank" class="btn-apply">
-                            Aplicar Agora ${icons.external}
-                        </a>
+                    <div class="meta-row">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>${this.formatDate(job.inserted_date)}</span>
                     </div>
                 </div>
-                ${icons.chevron}
+
+                <div class="card-actions">
+                    <a href="${job.url}" target="_blank" class="btn-apply">
+                        Aplicar Agora
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                </div>
+
+                <svg class="chevron-indicator" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             `;
 
-            // Interaction
-            card.addEventListener('click', (e) => {
-                if(e.target.closest('.btn-apply')) {
-                    // Mark visited logic
-                    if(!state.visitedJobs.has(job.id)) {
-                        state.visitedJobs.add(job.id);
-                        localStorage.setItem('cv_visited', JSON.stringify([...state.visitedJobs]));
-                        card.classList.add('visited');
-                    }
-                    return;
+            // Expand Interaction
+            el.addEventListener('click', (e) => {
+                if (!e.target.closest('.btn-apply')) {
+                    el.classList.toggle('expanded');
                 }
-
-                // Toggle Expand
-                card.classList.toggle('expanded');
             });
 
-            return card;
+            return el;
         },
 
-        filters() {
-            // Build Sidebar Filters
-            // 1. Fixed "Type" Group (Remote, Hybrid, etc) - Integrated into main flow
-            const specialFilters = [
-                { id: 'remote', label: 'Apenas Remoto', check: (j) => j['remote?'] === '01 - Sim' },
-                { id: 'presencial', label: 'Apenas Presencial', check: (j) => j['remote?'] === '02 - Não' },
-                { id: 'affirmative', label: 'Vagas Afirmativas', check: (j) => j['affirmative?'] === '01 - Sim' }
-            ];
+        renderFilters() {
+            // We render the same structure to both Desktop Sidebar and Mobile Drawer
+            const html = this.buildFilterHTML();
+            this.el.desktopFilters.innerHTML = html;
+            this.el.mobileFiltersContent.innerHTML = html;
 
-            let html = `<div class="filter-section">
-                <div class="filter-title">Preferências</div>
-                <div class="filter-list">`;
+            this.bindFilterEvents(this.el.desktopFilters);
+            this.bindFilterEvents(this.el.mobileFiltersContent);
+        },
 
-            specialFilters.forEach(f => {
-                const isActive = state.activeFilters[f.id];
-                html += `
-                    <div class="filter-item ${isActive ? 'active' : ''}" data-special="${f.id}">
-                        <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                        <span>${f.label}</span>
-                    </div>`;
-            });
-            html += `</div></div>`;
-
-            // 2. Dynamic Groups (Level, Category)
-            const groups = {
-                'level': 'Nível',
-                'category': 'Área'
+        buildFilterHTML() {
+            // Helper to build sections
+            const buildSection = (title, items, type) => {
+                if (!items || items.length === 0) return '';
+                // Sort items
+                const sorted = items.sort();
+                let html = `<div class="filter-group"><div class="filter-header">${title}</div><div class="filter-list">`;
+                sorted.forEach(val => {
+                    const isActive = state.filters[type].has(val);
+                    // Clean label
+                    const label = val.replace(/^\d+ - /, '');
+                    html += `
+                        <div class="filter-row ${isActive ? 'active' : ''}" data-type="${type}" data-val="${val}">
+                            <div class="checkbox-custom"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <span>${label}</span>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+                return html;
             };
 
-            for(const [key, label] of Object.entries(groups)) {
-                // Extract unique values
-                const values = [...new Set(state.allJobs.map(j => j[key]).filter(Boolean))].sort();
+            // 1. Toggles (Manual)
+            let html = `<div class="filter-group"><div class="filter-header">Preferências</div><div class="filter-list">
+                <div class="filter-row ${state.filters.remote ? 'active' : ''}" data-type="remote" data-val="true">
+                    <div class="checkbox-custom"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                    <span>Remoto</span>
+                </div>
+                <div class="filter-row ${state.filters.presencial ? 'active' : ''}" data-type="presencial" data-val="true">
+                    <div class="checkbox-custom"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                    <span>Presencial</span>
+                </div>
+                <div class="filter-row ${state.filters.affirmative ? 'active' : ''}" data-type="affirmative" data-val="true">
+                    <div class="checkbox-custom"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                    <span>Vagas Afirmativas</span>
+                </div>
+            </div></div>`;
 
-                html += `<div class="filter-section">
-                    <div class="filter-title">${label}</div>
-                    <div class="filter-list">`;
+            // 2. Dynamic Sections
+            // Helper to get keys sorted by count (descending)
+            const getSortedKeys = (obj) => Object.entries(obj).sort((a,b) => b[1] - a[1]).map(x => x[0]);
 
-                values.slice(0, 8).forEach(val => { // Limit to 8 to save space
-                    const isActive = state.activeFilters[key] && state.activeFilters[key].includes(val);
-                    html += `
-                        <div class="filter-item ${isActive ? 'active' : ''}" data-group="${key}" data-val="${utils.escapeHtml(val)}">
-                            <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                            <span>${utils.escapeHtml(val.replace(/^\d+ - /, ''))}</span>
-                        </div>`;
-                });
+            html += buildSection('Nível', getSortedKeys(state.metadata.levels), 'level');
+            html += buildSection('Área', getSortedKeys(state.metadata.categories), 'category');
+            html += buildSection('Contrato', getSortedKeys(state.metadata.contracts).slice(0, 8), 'contract');
+            html += buildSection('Plataforma', getSortedKeys(state.metadata.sites), 'site_type');
 
-                html += `</div></div>`;
-            }
+            return html;
+        },
 
-            elements.filterList.innerHTML = html;
+        bindFilterEvents(container) {
+            container.querySelectorAll('.filter-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const type = row.dataset.type;
+                    const val = row.dataset.val;
 
-            // Attach Events
-            elements.filterList.querySelectorAll('.filter-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    if(el.dataset.special) {
-                        // Toggle special filter
-                        const id = el.dataset.special;
-                        state.activeFilters[id] = !state.activeFilters[id];
+                    // Update State
+                    if (type === 'remote' || type === 'affirmative' || type === 'presencial') {
+                        state.filters[type] = !state.filters[type];
                     } else {
-                        // Toggle group filter
-                        const group = el.dataset.group;
-                        const val = el.dataset.val;
-                        if(!state.activeFilters[group]) state.activeFilters[group] = [];
-
-                        const idx = state.activeFilters[group].indexOf(val);
-                        if(idx > -1) state.activeFilters[group].splice(idx, 1);
-                        else state.activeFilters[group].push(val);
+                        if (state.filters[type].has(val)) {
+                            state.filters[type].delete(val);
+                        } else {
+                            state.filters[type].add(val);
+                        }
                     }
 
-                    this.filters(); // Re-render filters to show active state
-                    logic.applyFilters();
+                    // Re-render ALL filter UIs (to sync desktop/mobile)
+                    this.renderFilters();
+
+                    // On desktop, apply immediately. On mobile, wait for "Apply".
+                    if (window.innerWidth >= 768) {
+                        Logic.applyFilters();
+                    } else {
+                        // Update badge count preview
+                        const previewCount = Logic.getFilteredCount();
+                        this.el.filterBadge.textContent = previewCount;
+                    }
                 });
             });
         },
 
-        updateStats() {
-            elements.jobStats.textContent = `${state.filteredJobs.length} vagas`;
+        toggleDrawer(open) {
+            if (open) {
+                this.el.filterDrawer.classList.remove('hidden'); // Ensure display block first
+                // Small delay to allow transition
+                requestAnimationFrame(() => this.el.filterDrawer.classList.add('open'));
+                this.el.filterBadge.textContent = state.filteredJobs.length;
+            } else {
+                this.el.filterDrawer.classList.remove('open');
+                setTimeout(() => this.el.filterDrawer.classList.add('hidden'), 300);
+            }
+        },
+
+        escape(str) {
+            return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+        },
+
+        formatDate(str) {
+            if(!str) return '';
+            const [y,m,d] = str.split('-');
+            return `${d}/${m}/${y}`;
         }
     };
 
     // ============================================
-    // BUSINESS LOGIC
+    // 3. LOGIC CONTROLLER
     // ============================================
-    const logic = {
+    const Logic = {
         async init() {
-            // Load Data
             try {
-                const res = await fetch(CONFIG.DATA_URL);
+                const res = await fetch(CONSTANTS.DATA_URL);
                 const data = await res.json();
-                state.allJobs = data.map((j, i) => ({...j, id: i}));
-                state.filteredJobs = state.allJobs;
 
-                // Load Visited
-                const storedVisited = localStorage.getItem('cv_visited');
-                if(storedVisited) state.visitedJobs = new Set(JSON.parse(storedVisited));
+                state.allJobs = data;
 
-                // Initial Render
-                render.filters();
-                render.jobs();
+                // Extract Metadata for Filters (with counts)
+                const count = (obj, key) => { if(key) obj[key] = (obj[key] || 0) + 1; };
 
-                // Remove Loading
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('app').classList.remove('hidden');
+                data.forEach(job => {
+                    count(state.metadata.levels, job.level);
+                    count(state.metadata.categories, job.category);
+                    count(state.metadata.contracts, job.contract);
+                    count(state.metadata.sites, job.site_type);
+                });
 
-            } catch(e) {
-                console.error(e);
+                // Initial Filter Apply (Reset)
+                this.applyFilters();
+
+                // Build UI
+                UI.renderFilters();
+                UI.showApp();
+
+            } catch (err) {
+                console.error('Failed to load jobs', err);
             }
-
-            // Theme Init
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', savedTheme);
         },
 
         applyFilters() {
             let res = state.allJobs;
 
-            // 1. Text Search
-            if(state.searchQuery) {
-                const q = utils.normalize(state.searchQuery);
+            // Text Search
+            if (state.filters.query) {
+                const q = state.filters.query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 res = res.filter(j =>
-                    utils.normalize(j.title).includes(q) ||
-                    utils.normalize(j.company).includes(q)
+                    (j.title && j.title.toLowerCase().normalize("NFD").includes(q)) ||
+                    (j.company && j.company.toLowerCase().normalize("NFD").includes(q))
                 );
             }
 
-            // 2. Special Filters
-            if(state.activeFilters['remote']) {
+            // Boolean Toggles
+            const wantsRemote = state.filters.remote;
+            const wantsPresencial = state.filters.presencial;
+
+            if (wantsRemote && !wantsPresencial) {
                 res = res.filter(j => j['remote?'] === '01 - Sim');
-            }
-            if(state.activeFilters['presencial']) {
-                res = res.filter(j => j['remote?'] === '02 - Não');
-            }
-            if(state.activeFilters['affirmative']) {
-                res = res.filter(j => j['affirmative?'] === '01 - Sim');
+            } else if (wantsPresencial && !wantsRemote) {
+                res = res.filter(j => j['remote?'] !== '01 - Sim');
             }
 
-            // 3. Group Filters
-            ['level', 'category'].forEach(group => {
-                const active = state.activeFilters[group];
-                if(active && active.length > 0) {
-                    res = res.filter(j => active.includes(j[group]));
+            if (state.filters.affirmative) res = res.filter(j => j['affirmative?'] === '01 - Sim');
+
+            // Set Filters
+            ['level', 'category', 'contract', 'site_type'].forEach(key => {
+                if (state.filters[key].size > 0) {
+                    res = res.filter(j => state.filters[key].has(j[key]));
                 }
             });
 
             state.filteredJobs = res;
-            render.jobs();
+            state.visibleCount = 0;
 
             // Scroll to top
-            window.scrollTo(0, 0);
+            if(UI.el.jobsFeed) UI.el.jobsFeed.scrollTop = 0;
+
+            this.loadMore();
         },
 
-        toggleSidebar() {
-            state.isSidebarOpen = !state.isSidebarOpen;
-            elements.sidebar.classList.toggle('active', state.isSidebarOpen);
+        loadMore() {
+            const start = state.visibleCount;
+            const end = Math.min(start + CONSTANTS.PAGE_SIZE, state.filteredJobs.length);
+
+            if (start >= end) return;
+
+            const slice = state.filteredJobs.slice(start, end);
+            UI.renderJobs(slice, start > 0);
+            state.visibleCount = end;
+
+            // Manage Sentinel
+            if (state.visibleCount >= state.filteredJobs.length) {
+                UI.el.sentinel.style.display = 'none';
+            } else {
+                UI.el.sentinel.style.display = 'block';
+            }
         },
 
-        setupObserver(sentinel) {
-            if (this.observer) this.observer.disconnect();
-
-            this.observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting) {
-                    render.jobs(true); // Append mode
-                }
-            }, { rootMargin: '200px' });
-
-            this.observer.observe(sentinel);
+        getFilteredCount() {
+            // Duplicate logic just for badge preview - optimization: create a pure function for filter predicate
+            // For now, let's just use the current logic (simple enough)
+            return state.filteredJobs.length; // Approximate (reactive in real frameworks)
         }
     };
 
     // ============================================
-    // EVENT LISTENERS
+    // 4. EVENT LISTENERS
     // ============================================
+
     // Search
-    elements.searchInput.addEventListener('input', (e) => {
-        state.searchQuery = e.target.value;
-        logic.applyFilters();
+    UI.el.searchInput.addEventListener('input', (e) => {
+        state.filters.query = e.target.value;
+        UI.el.clearSearchBtn.classList.toggle('hidden', !state.filters.query);
+        Logic.applyFilters();
     });
 
-    // Theme Toggle
-    elements.themeToggle.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
+    UI.el.clearSearchBtn.addEventListener('click', () => {
+        state.filters.query = '';
+        UI.el.searchInput.value = '';
+        UI.el.clearSearchBtn.classList.add('hidden');
+        Logic.applyFilters();
     });
 
-    // Mobile Sidebar Controls
-    if(elements.btnOpenFilters) {
-        elements.btnOpenFilters.addEventListener('click', logic.toggleSidebar);
-    }
-    if(elements.btnCloseSidebar) {
-        elements.btnCloseSidebar.addEventListener('click', logic.toggleSidebar);
-    }
+    // Mobile Drawer Logic
+    UI.el.navFilters.addEventListener('click', () => UI.toggleDrawer(true));
+    document.getElementById('btn-close-filters').addEventListener('click', () => UI.toggleDrawer(false));
+
+    document.getElementById('btn-apply-filters').addEventListener('click', () => {
+        Logic.applyFilters();
+        UI.toggleDrawer(false);
+    });
+
+    document.getElementById('btn-clear-filters').addEventListener('click', () => {
+        state.filters.remote = false;
+        state.filters.presencial = false;
+        state.filters.affirmative = false;
+        state.filters.level.clear();
+        state.filters.category.clear();
+        state.filters.contract.clear();
+        UI.renderFilters();
+        // Update badge
+        UI.el.filterBadge.textContent = state.allJobs.length;
+    });
+
+    // Global Reset
+    window.resetFilters = () => {
+        state.filters.query = '';
+        UI.el.searchInput.value = '';
+        document.getElementById('btn-clear-filters').click(); // Reuse logic
+        Logic.applyFilters();
+    };
+
+    // Infinite Scroll
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            Logic.loadMore();
+        }
+    }, { rootMargin: '400px' });
+
+    observer.observe(UI.el.sentinel);
 
     // Init
-    logic.init();
+    Logic.init();
 
 })();
