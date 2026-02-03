@@ -1,20 +1,26 @@
 /**
- * Classifica Vagas - Modern Job Listing Application
- * Minimalista, Responsivo, UX Impecável
+ * Classifica Vagas - Material Design 3
+ * Modern Job Listing Application
  */
 
-(function () {
+(function() {
     'use strict';
 
     // ============================================
     // CONFIGURATION
     // ============================================
     const CONFIG = {
-        JOBS_PER_PAGE: 30,
-        SEARCH_DEBOUNCE: 300,
-        SCROLL_THRESHOLD: 200,
-        INFINITE_SCROLL_THRESHOLD: 500,
-        DATA_URL: 'assets/data/json/open_jobs.json'
+        JOBS_PER_PAGE: 24,
+        SEARCH_DEBOUNCE: 250,
+        SCROLL_THRESHOLD: 300,
+        INFINITE_SCROLL_THRESHOLD: 600,
+        DATA_URL: 'assets/data/json/open_jobs.json',
+        FILTER_CATEGORIES: [
+            { key: 'company', label: 'Empresa', icon: 'business' },
+            { key: 'company_type', label: 'Ramo', icon: 'category' },
+            { key: 'level', label: 'Nível', icon: 'trending_up' },
+            { key: 'category', label: 'Categoria', icon: 'work' }
+        ]
     };
 
     // ============================================
@@ -23,42 +29,49 @@
     const state = {
         allJobs: [],
         filteredJobs: [],
-        displayedJobs: 0,
+        displayedCount: 0,
         isLoading: false,
         searchQuery: '',
         quickFilter: 'all',
-        activeFilters: {},
-        visitedJobs: new Set(),
-        filterOptions: {}
+        selectedFilters: {},
+        tempFilters: {},
+        filterOptions: {},
+        visitedJobs: new Set()
     };
 
     // ============================================
     // DOM ELEMENTS
     // ============================================
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => document.querySelectorAll(selector);
+
     const elements = {
-        loadingScreen: document.getElementById('loading-screen'),
-        app: document.getElementById('app'),
-        jobStats: document.getElementById('jobStats'),
-        searchInput: document.getElementById('searchInput'),
-        searchClear: document.getElementById('searchClear'),
-        activeFiltersContainer: document.getElementById('activeFilters'),
-        activeFiltersList: document.getElementById('activeFiltersList'),
-        clearAllFilters: document.getElementById('clearAllFilters'),
-        quickFilters: document.querySelectorAll('.quick-filter-chip'),
-        jobsContainer: document.getElementById('jobsContainer'),
-        loadingMore: document.getElementById('loadingMore'),
-        emptyState: document.getElementById('emptyState'),
-        filterFab: document.getElementById('filterFab'),
-        filterCount: document.getElementById('filterCount'),
-        filterModal: document.getElementById('filterModal'),
-        modalBackdrop: document.getElementById('modalBackdrop'),
-        modalClose: document.getElementById('modalClose'),
-        filterModalBody: document.getElementById('filterModalBody'),
-        clearFiltersBtn: document.getElementById('clearFiltersBtn'),
-        applyFiltersBtn: document.getElementById('applyFiltersBtn'),
-        scrollTop: document.getElementById('scrollTop'),
-        themeToggle: document.getElementById('themeToggle'),
-        lastUpdate: document.getElementById('lastUpdate')
+        splash: $('#splash'),
+        app: $('#app'),
+        jobCount: $('#jobCount'),
+        searchInput: $('#searchInput'),
+        searchClear: $('#searchClear'),
+        filterChips: $$('.filter-chip[data-filter]'),
+        openFilters: $('#openFilters'),
+        filterBadge: $('#filterBadge'),
+        activeFilters: $('#activeFilters'),
+        activeFiltersList: $('#activeFiltersList'),
+        clearAllFilters: $('#clearAllFilters'),
+        jobsGrid: $('#jobsGrid'),
+        loadingMore: $('#loadingMore'),
+        emptyState: $('#emptyState'),
+        emptyStateClear: $('#emptyStateClear'),
+        scrollTopFab: $('#scrollTopFab'),
+        scrim: $('#scrim'),
+        filterSheet: $('#filterSheet'),
+        filterSheetContent: $('#filterSheetContent'),
+        sheetFilterCount: $('#sheetFilterCount'),
+        closeSheet: $('#closeSheet'),
+        sheetClearFilters: $('#sheetClearFilters'),
+        sheetApplyFilters: $('#sheetApplyFilters'),
+        themeToggle: $('#themeToggle'),
+        lastUpdate: $('#lastUpdate'),
+        topAppBar: $('.top-app-bar')
     };
 
     // ============================================
@@ -66,97 +79,89 @@
     // ============================================
     const utils = {
         debounce(fn, delay) {
-            let timeoutId;
-            return function (...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => fn.apply(this, args), delay);
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
             };
         },
 
-        formatDate(dateString) {
-            if (!dateString) return '';
-            const [year, month, day] = dateString.split('-');
-            return `${day}/${month}/${year}`;
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
         },
 
-        truncateText(text, maxLength) {
-            if (!text || text.length <= maxLength) return text;
-            return text.slice(0, maxLength) + '...';
-        },
-
-        escapeHtml(text) {
+        escapeHtml(str) {
+            if (!str) return '';
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = str;
             return div.innerHTML;
         },
 
-        getStorageKey(jobId) {
-            return `cv_visited_${jobId}`;
+        truncate(str, len) {
+            if (!str || str.length <= len) return str || '';
+            return str.slice(0, len) + '...';
         },
 
-        isJobVisited(jobId) {
-            return localStorage.getItem(utils.getStorageKey(jobId)) === 'true';
+        normalize(str) {
+            if (!str) return '';
+            return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
 
-        markJobVisited(jobId) {
-            localStorage.setItem(utils.getStorageKey(jobId), 'true');
-            state.visitedJobs.add(jobId);
-        },
+        storageKey: (id) => `cv_v_${id}`,
 
-        normalizeText(text) {
-            if (!text) return '';
-            return text.toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '');
+        isVisited: (id) => localStorage.getItem(utils.storageKey(id)) === '1',
+
+        markVisited(id) {
+            localStorage.setItem(utils.storageKey(id), '1');
+            state.visitedJobs.add(id);
         }
     };
 
     // ============================================
-    // THEME MANAGEMENT
+    // THEME MANAGER
     // ============================================
     const themeManager = {
         init() {
-            const savedTheme = localStorage.getItem('cv_theme') || 'dark';
-            this.setTheme(savedTheme);
+            const saved = localStorage.getItem('cv_theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            this.apply(theme);
+
             elements.themeToggle.addEventListener('click', () => this.toggle());
         },
 
-        setTheme(theme) {
+        apply(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('cv_theme', theme);
 
-            // Update meta theme-color for mobile browsers
-            const metaTheme = document.querySelector('meta[name="theme-color"]');
-            if (metaTheme) {
-                metaTheme.content = theme === 'light' ? '#ffffff' : '#0a0a0a';
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+                meta.content = theme === 'light' ? '#f9f9ff' : '#111318';
             }
         },
 
         toggle() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            this.setTheme(newTheme);
+            const current = document.documentElement.getAttribute('data-theme');
+            this.apply(current === 'light' ? 'dark' : 'light');
         }
     };
 
     // ============================================
-    // DATA LOADING
+    // DATA LOADER
     // ============================================
     const dataLoader = {
-        async loadJobs() {
+        async load() {
             try {
                 const response = await fetch(CONFIG.DATA_URL);
                 const data = await response.json();
 
-                // Process jobs and add IDs
-                state.allJobs = data.map((job, index) => ({
-                    ...job,
-                    id: index + 1
-                }));
+                state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
 
-                // Load visited jobs from localStorage
+                // Load visited
                 state.allJobs.forEach(job => {
-                    if (utils.isJobVisited(job.id)) {
+                    if (utils.isVisited(job.id)) {
                         state.visitedJobs.add(job.id);
                     }
                 });
@@ -164,48 +169,39 @@
                 // Build filter options
                 this.buildFilterOptions();
 
-                // Initial filter
-                filterManager.applyFilters();
-
-                // Update last modified date
+                // Update last modified
                 this.updateLastModified(response);
 
-                // Hide loading screen
-                this.hideLoadingScreen();
+                // Apply initial filters
+                filterManager.apply();
 
-            } catch (error) {
-                console.error('Error loading jobs:', error);
-                elements.loadingScreen.innerHTML = `
-                    <div class="loading-content">
-                        <div class="loading-logo">CV</div>
-                        <p class="loading-text" style="color: var(--danger);">
-                            Erro ao carregar vagas. Por favor, recarregue a página.
-                        </p>
+                // Show app
+                this.showApp();
+
+            } catch (err) {
+                console.error('Error loading jobs:', err);
+                elements.splash.innerHTML = `
+                    <div class="splash-content">
+                        <span class="material-symbols-rounded" style="font-size:64px;color:var(--md-sys-color-error)">error</span>
+                        <p style="color:var(--md-sys-color-error)">Erro ao carregar vagas</p>
                     </div>
                 `;
             }
         },
 
         buildFilterOptions() {
-            const filterFields = {
-                'company': 'Empresa',
-                'company_type': 'Ramo',
-                'level': 'Nível',
-                'category': 'Categoria'
-            };
-
-            for (const [field, label] of Object.entries(filterFields)) {
-                const values = [...new Set(state.allJobs.map(job => job[field]).filter(Boolean))];
+            CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
+                const values = [...new Set(state.allJobs.map(j => j[key]).filter(Boolean))];
                 values.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                state.filterOptions[field] = { label, values };
-            }
+                state.filterOptions[key] = values;
+            });
         },
 
         updateLastModified(response) {
-            const lastModified = response.headers.get('last-modified');
-            if (lastModified) {
-                const date = new Date(lastModified);
-                const formatted = new Intl.DateTimeFormat('pt-BR', {
+            const lastMod = response.headers.get('last-modified');
+            if (lastMod) {
+                const date = new Date(lastMod);
+                elements.lastUpdate.textContent = new Intl.DateTimeFormat('pt-BR', {
                     timeZone: 'America/Sao_Paulo',
                     day: '2-digit',
                     month: '2-digit',
@@ -213,183 +209,173 @@
                     hour: '2-digit',
                     minute: '2-digit'
                 }).format(date);
-                elements.lastUpdate.textContent = formatted;
             }
         },
 
-        hideLoadingScreen() {
-            elements.loadingScreen.classList.add('fade-out');
-            elements.app.classList.remove('hidden');
-
+        showApp() {
             setTimeout(() => {
-                elements.loadingScreen.style.display = 'none';
-            }, 300);
+                elements.splash.classList.add('fade-out');
+                elements.app.classList.add('visible');
+
+                setTimeout(() => {
+                    elements.splash.style.display = 'none';
+                }, 400);
+            }, 800);
         }
     };
 
     // ============================================
-    // FILTER MANAGEMENT
+    // FILTER MANAGER
     // ============================================
     const filterManager = {
-        applyFilters() {
-            let filtered = [...state.allJobs];
+        apply() {
+            let jobs = [...state.allJobs];
 
-            // Apply search query
+            // Search query
             if (state.searchQuery) {
-                const query = utils.normalizeText(state.searchQuery);
-                filtered = filtered.filter(job => {
-                    const searchFields = [
-                        job.title,
-                        job.company,
-                        job.company_type,
-                        job.level,
-                        job.category,
-                        job.location
-                    ].map(utils.normalizeText).join(' ');
-                    return searchFields.includes(query);
+                const q = utils.normalize(state.searchQuery);
+                jobs = jobs.filter(job => {
+                    const text = utils.normalize([
+                        job.title, job.company, job.company_type,
+                        job.level, job.category, job.location
+                    ].join(' '));
+                    return text.includes(q);
                 });
             }
 
-            // Apply quick filter
+            // Quick filter
             if (state.quickFilter !== 'all') {
-                filtered = filtered.filter(job => {
+                jobs = jobs.filter(job => {
                     switch (state.quickFilter) {
-                        case 'remote':
-                            return job['remote?'] === '01 - Sim';
-                        case 'office':
-                            return job['remote?'] === '02 - Não';
-                        case 'affirmative':
-                            return job['affirmative?'] === '01 - Sim';
-                        default:
-                            return true;
+                        case 'remote': return job['remote?'] === '01 - Sim';
+                        case 'hybrid': return job.contract === 'HIBRIDO';
+                        case 'onsite': return job['remote?'] === '02 - Não';
+                        case 'affirmative': return job['affirmative?'] === '01 - Sim';
+                        default: return true;
                     }
                 });
             }
 
-            // Apply advanced filters
-            for (const [field, values] of Object.entries(state.activeFilters)) {
+            // Selected filters
+            Object.entries(state.selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
-                    filtered = filtered.filter(job => values.includes(job[field]));
+                    jobs = jobs.filter(job => values.includes(job[key]));
                 }
-            }
+            });
 
-            state.filteredJobs = filtered;
-            state.displayedJobs = 0;
+            state.filteredJobs = jobs;
+            state.displayedCount = 0;
 
             this.updateUI();
-            jobRenderer.renderJobs(true);
+            cardRenderer.render(true);
         },
 
         updateUI() {
-            // Update stats
-            elements.jobStats.textContent = `${state.filteredJobs.length.toLocaleString('pt-BR')} vagas encontradas`;
+            // Job count
+            elements.jobCount.textContent = `${state.filteredJobs.length.toLocaleString('pt-BR')} vagas`;
 
-            // Update filter count badge
-            const filterCount = Object.values(state.activeFilters)
+            // Filter badge
+            const count = Object.values(state.selectedFilters)
                 .filter(arr => arr && arr.length > 0)
-                .reduce((acc, arr) => acc + arr.length, 0);
+                .reduce((sum, arr) => sum + arr.length, 0);
 
-            if (filterCount > 0) {
-                elements.filterCount.textContent = filterCount;
-                elements.filterCount.classList.remove('hidden');
+            if (count > 0) {
+                elements.filterBadge.textContent = count;
+                elements.filterBadge.classList.remove('hidden');
             } else {
-                elements.filterCount.classList.add('hidden');
+                elements.filterBadge.classList.add('hidden');
             }
 
-            // Update active filters display
-            this.updateActiveFiltersDisplay();
+            // Active filters chips
+            this.renderActiveFilters();
         },
 
-        updateActiveFiltersDisplay() {
-            const activeFilters = [];
+        renderActiveFilters() {
+            const chips = [];
 
-            for (const [field, values] of Object.entries(state.activeFilters)) {
+            Object.entries(state.selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
                     values.forEach(value => {
-                        activeFilters.push({ field, value });
+                        chips.push({ key, value });
                     });
                 }
-            }
+            });
 
-            if (activeFilters.length === 0) {
-                elements.activeFiltersContainer.classList.add('hidden');
+            if (chips.length === 0) {
+                elements.activeFilters.classList.add('hidden');
                 return;
             }
 
-            elements.activeFiltersContainer.classList.remove('hidden');
-            elements.activeFiltersList.innerHTML = activeFilters.map(({ field, value }) => `
-                <div class="active-filter-tag" data-field="${field}" data-value="${utils.escapeHtml(value)}">
-                    <span>${utils.truncateText(value, 20)}</span>
-                    <button aria-label="Remover filtro">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 6L6 18M6 6l12 12"/>
-                        </svg>
+            elements.activeFilters.classList.remove('hidden');
+            elements.activeFiltersList.innerHTML = chips.map(({ key, value }) => `
+                <div class="active-filter-chip" data-key="${key}" data-value="${utils.escapeHtml(value)}">
+                    <span>${utils.truncate(value, 18)}</span>
+                    <button aria-label="Remover">
+                        <span class="material-symbols-rounded">close</span>
                     </button>
                 </div>
             `).join('');
 
-            // Add click handlers for removing individual filters
-            elements.activeFiltersList.querySelectorAll('.active-filter-tag button').forEach(btn => {
+            // Add remove handlers
+            elements.activeFiltersList.querySelectorAll('.active-filter-chip button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const tag = e.target.closest('.active-filter-tag');
-                    const field = tag.dataset.field;
-                    const value = tag.dataset.value;
-                    this.removeFilter(field, value);
+                    const chip = e.target.closest('.active-filter-chip');
+                    const key = chip.dataset.key;
+                    const value = chip.dataset.value;
+                    this.removeFilter(key, value);
                 });
             });
         },
 
-        removeFilter(field, value) {
-            if (state.activeFilters[field]) {
-                state.activeFilters[field] = state.activeFilters[field].filter(v => v !== value);
-                if (state.activeFilters[field].length === 0) {
-                    delete state.activeFilters[field];
+        removeFilter(key, value) {
+            if (state.selectedFilters[key]) {
+                state.selectedFilters[key] = state.selectedFilters[key].filter(v => v !== value);
+                if (state.selectedFilters[key].length === 0) {
+                    delete state.selectedFilters[key];
                 }
             }
-            this.applyFilters();
-            modalManager.updateModalSelection();
+            this.apply();
         },
 
-        clearAllFilters() {
-            state.activeFilters = {};
+        clearAll() {
+            state.selectedFilters = {};
             state.searchQuery = '';
             state.quickFilter = 'all';
             elements.searchInput.value = '';
             elements.searchClear.classList.add('hidden');
 
-            // Reset quick filters UI
-            elements.quickFilters.forEach(chip => {
-                chip.classList.toggle('active', chip.dataset.filter === 'all');
+            // Reset quick filter UI
+            elements.filterChips.forEach(chip => {
+                chip.dataset.active = chip.dataset.filter === 'all' ? 'true' : 'false';
             });
 
-            this.applyFilters();
-            modalManager.updateModalSelection();
+            this.apply();
         },
 
         setQuickFilter(filter) {
             state.quickFilter = filter;
-            elements.quickFilters.forEach(chip => {
-                chip.classList.toggle('active', chip.dataset.filter === filter);
+            elements.filterChips.forEach(chip => {
+                chip.dataset.active = chip.dataset.filter === filter ? 'true' : 'false';
             });
-            this.applyFilters();
+            this.apply();
         }
     };
 
     // ============================================
-    // JOB RENDERER
+    // CARD RENDERER
     // ============================================
-    const jobRenderer = {
-        renderJobs(reset = false) {
+    const cardRenderer = {
+        render(reset = false) {
             if (reset) {
-                elements.jobsContainer.innerHTML = '';
-                state.displayedJobs = 0;
+                elements.jobsGrid.innerHTML = '';
+                state.displayedCount = 0;
             }
 
-            const startIndex = state.displayedJobs;
-            const endIndex = startIndex + CONFIG.JOBS_PER_PAGE;
-            const jobsToRender = state.filteredJobs.slice(startIndex, endIndex);
+            const start = state.displayedCount;
+            const end = start + CONFIG.JOBS_PER_PAGE;
+            const jobs = state.filteredJobs.slice(start, end);
 
-            if (jobsToRender.length === 0 && state.displayedJobs === 0) {
+            if (jobs.length === 0 && state.displayedCount === 0) {
                 elements.emptyState.classList.remove('hidden');
                 elements.loadingMore.classList.add('hidden');
                 return;
@@ -398,22 +384,17 @@
             elements.emptyState.classList.add('hidden');
 
             const fragment = document.createDocumentFragment();
+            jobs.forEach(job => fragment.appendChild(this.createCard(job)));
+            elements.jobsGrid.appendChild(fragment);
 
-            jobsToRender.forEach(job => {
-                const card = this.createJobCard(job);
-                fragment.appendChild(card);
-            });
+            state.displayedCount = end;
 
-            elements.jobsContainer.appendChild(fragment);
-            state.displayedJobs = endIndex;
-
-            // Update loading more visibility
-            if (state.displayedJobs >= state.filteredJobs.length) {
+            if (state.displayedCount >= state.filteredJobs.length) {
                 elements.loadingMore.classList.add('hidden');
             }
         },
 
-        createJobCard(job) {
+        createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isVisited = state.visitedJobs.has(job.id);
 
@@ -424,39 +405,40 @@
             card.className = `job-card${isVisited ? ' visited' : ''}`;
             card.dataset.id = job.id;
 
-            // Extract level name (after " - ")
             const levelName = job.level ? job.level.split(' - ').slice(1).join(' - ') : '';
             const categoryName = job.category ? job.category.split(' - ').slice(1).join(' - ') : '';
 
             card.innerHTML = `
-                <div class="job-header">
-                    <div class="job-badge ${isRemote ? 'remote' : 'office'}">
-                        ${isRemote ? '🏠' : '🏢'}
+                <div class="job-card-badge">
+                    <span class="material-symbols-rounded">check_circle</span>
+                    Visitado
+                </div>
+                <div class="job-card-header">
+                    <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
+                        <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
                     </div>
-                    <h3 class="job-title">${utils.escapeHtml(job.title)}</h3>
+                    <div class="job-card-title">
+                        <h3>${utils.escapeHtml(job.title)}</h3>
+                        <p>${utils.escapeHtml(job.company)}</p>
+                    </div>
                 </div>
-                <p class="job-company">${utils.escapeHtml(job.company)}</p>
-                <div class="job-tags">
-                    ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(job.company_type, 20))}</span>` : ''}
-                    ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(levelName, 18))}</span>` : ''}
-                    ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncateText(categoryName, 18))}</span>` : ''}
+                <div class="job-card-body">
+                    ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
+                    ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
+                    ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
                 </div>
-                <div class="job-meta">
+                <div class="job-card-footer">
                     <div class="job-location">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                            <circle cx="12" cy="10" r="3"/>
-                        </svg>
+                        <span class="material-symbols-rounded">location_on</span>
                         <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                     </div>
                     <span class="job-date">${utils.formatDate(job.inserted_date)}</span>
                 </div>
             `;
 
-            // Mark as visited on click
             card.addEventListener('click', () => {
                 if (!state.visitedJobs.has(job.id)) {
-                    utils.markJobVisited(job.id);
+                    utils.markVisited(job.id);
                     card.classList.add('visited');
                 }
             });
@@ -465,215 +447,243 @@
         },
 
         loadMore() {
-            if (state.isLoading || state.displayedJobs >= state.filteredJobs.length) {
-                return;
-            }
+            if (state.isLoading || state.displayedCount >= state.filteredJobs.length) return;
 
             state.isLoading = true;
             elements.loadingMore.classList.remove('hidden');
 
-            // Simulate small delay for smoother UX
-            setTimeout(() => {
-                this.renderJobs(false);
+            requestAnimationFrame(() => {
+                this.render(false);
                 state.isLoading = false;
-            }, 100);
+            });
         }
     };
 
     // ============================================
-    // MODAL MANAGEMENT
+    // BOTTOM SHEET (Filter Modal)
     // ============================================
-    const modalManager = {
-        tempFilters: {},
-
+    const bottomSheet = {
         init() {
-            elements.filterFab.addEventListener('click', () => this.open());
-            elements.modalBackdrop.addEventListener('click', () => this.close());
-            elements.modalClose.addEventListener('click', () => this.close());
-            elements.clearFiltersBtn.addEventListener('click', () => this.clearTemp());
-            elements.applyFiltersBtn.addEventListener('click', () => this.apply());
+            elements.openFilters.addEventListener('click', () => this.open());
+            elements.closeSheet.addEventListener('click', () => this.close());
+            elements.scrim.addEventListener('click', () => this.close());
+            elements.sheetClearFilters.addEventListener('click', () => this.clearTemp());
+            elements.sheetApplyFilters.addEventListener('click', () => this.applyAndClose());
 
-            // Close on escape key
+            // ESC key
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && !elements.filterModal.classList.contains('hidden')) {
+                if (e.key === 'Escape' && !elements.filterSheet.classList.contains('hidden')) {
                     this.close();
                 }
             });
         },
 
-        buildFilterModal() {
-            const html = Object.entries(state.filterOptions).map(([field, { label, values }]) => `
-                <div class="filter-group" data-field="${field}">
-                    <div class="filter-group-header">
-                        <span class="filter-group-title">${label}</span>
-                        <span class="filter-group-count">${values.length} opções</span>
-                    </div>
-                    <input
-                        type="text"
-                        class="filter-search"
-                        placeholder="Buscar ${label.toLowerCase()}..."
-                        data-field="${field}"
-                    >
-                    <div class="filter-options-scroll">
-                        <div class="filter-options" data-field="${field}">
-                            ${values.slice(0, 50).map(value => `
-                                <button
-                                    class="filter-option"
-                                    data-field="${field}"
-                                    data-value="${utils.escapeHtml(value)}"
-                                >
-                                    ${utils.escapeHtml(utils.truncateText(value, 25))}
-                                </button>
-                            `).join('')}
-                            ${values.length > 50 ? `
-                                <button class="filter-option show-more" data-field="${field}">
-                                    +${values.length - 50} mais...
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            elements.filterModalBody.innerHTML = html;
-
-            // Add event listeners
-            this.addModalEventListeners();
-        },
-
-        addModalEventListeners() {
-            // Filter search inputs
-            elements.filterModalBody.querySelectorAll('.filter-search').forEach(input => {
-                input.addEventListener('input', (e) => {
-                    const field = e.target.dataset.field;
-                    const query = utils.normalizeText(e.target.value);
-                    const optionsContainer = elements.filterModalBody.querySelector(`.filter-options[data-field="${field}"]`);
-                    const { values } = state.filterOptions[field];
-
-                    const filteredValues = query
-                        ? values.filter(v => utils.normalizeText(v).includes(query))
-                        : values.slice(0, 50);
-
-                    optionsContainer.innerHTML = filteredValues.slice(0, 50).map(value => `
-                        <button
-                            class="filter-option ${this.isValueSelected(field, value) ? 'selected' : ''}"
-                            data-field="${field}"
-                            data-value="${utils.escapeHtml(value)}"
-                        >
-                            ${utils.escapeHtml(utils.truncateText(value, 25))}
-                        </button>
-                    `).join('');
-
-                    this.addOptionClickListeners(optionsContainer);
-                });
-            });
-
-            // Filter option clicks
-            elements.filterModalBody.querySelectorAll('.filter-options').forEach(container => {
-                this.addOptionClickListeners(container);
-            });
-        },
-
-        addOptionClickListeners(container) {
-            container.querySelectorAll('.filter-option:not(.show-more)').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const field = btn.dataset.field;
-                    const value = btn.dataset.value;
-
-                    if (!this.tempFilters[field]) {
-                        this.tempFilters[field] = [];
-                    }
-
-                    const index = this.tempFilters[field].indexOf(value);
-                    if (index > -1) {
-                        this.tempFilters[field].splice(index, 1);
-                        btn.classList.remove('selected');
-                    } else {
-                        this.tempFilters[field].push(value);
-                        btn.classList.add('selected');
-                    }
-                });
-            });
-        },
-
-        isValueSelected(field, value) {
-            return this.tempFilters[field] && this.tempFilters[field].includes(value);
-        },
-
-        updateModalSelection() {
-            elements.filterModalBody.querySelectorAll('.filter-option').forEach(btn => {
-                const field = btn.dataset.field;
-                const value = btn.dataset.value;
-                const isSelected = state.activeFilters[field] && state.activeFilters[field].includes(value);
-                btn.classList.toggle('selected', isSelected);
-            });
-        },
-
         open() {
-            this.tempFilters = JSON.parse(JSON.stringify(state.activeFilters));
-            this.buildFilterModal();
-            this.updateModalSelection();
+            // Clone current filters to temp
+            state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
 
-            elements.filterModal.classList.remove('hidden');
+            // Build filter sections
+            this.buildSections();
+            this.updateCount();
+
+            // Show
+            elements.scrim.classList.remove('hidden');
+            elements.filterSheet.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
-            // Trigger animation
             requestAnimationFrame(() => {
-                elements.filterModal.classList.add('active');
+                elements.scrim.classList.add('visible');
+                elements.filterSheet.classList.add('visible');
             });
         },
 
         close() {
-            elements.filterModal.classList.remove('active');
+            elements.scrim.classList.remove('visible');
+            elements.filterSheet.classList.remove('visible');
 
             setTimeout(() => {
-                elements.filterModal.classList.add('hidden');
+                elements.scrim.classList.add('hidden');
+                elements.filterSheet.classList.add('hidden');
                 document.body.style.overflow = '';
-            }, 300);
+            }, 400);
         },
 
-        clearTemp() {
-            this.tempFilters = {};
-            elements.filterModalBody.querySelectorAll('.filter-option.selected').forEach(btn => {
-                btn.classList.remove('selected');
+        buildSections() {
+            elements.filterSheetContent.innerHTML = CONFIG.FILTER_CATEGORIES.map(({ key, label, icon }) => {
+                const options = state.filterOptions[key] || [];
+                const selectedCount = (state.tempFilters[key] || []).length;
+
+                return `
+                    <div class="filter-section" data-key="${key}">
+                        <div class="filter-section-header">
+                            <div class="filter-section-header-left">
+                                <span class="material-symbols-rounded">${icon}</span>
+                                <span class="filter-section-title">${label}</span>
+                                ${selectedCount > 0 ? `<span class="filter-section-count">${selectedCount}</span>` : ''}
+                            </div>
+                            <span class="material-symbols-rounded filter-section-icon">expand_more</span>
+                        </div>
+                        <div class="filter-section-body">
+                            <input type="text" class="filter-search-input" placeholder="Buscar ${label.toLowerCase()}..." data-key="${key}">
+                            <div class="filter-options-list" data-key="${key}">
+                                ${this.renderOptions(key, options.slice(0, 30))}
+                            </div>
+                            ${options.length > 30 ? `<p style="font-size:12px;color:var(--md-sys-color-outline);margin-top:8px;">Use a busca para encontrar mais opções</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add event listeners
+            this.addSectionListeners();
+        },
+
+        renderOptions(key, options) {
+            const selected = state.tempFilters[key] || [];
+
+            return options.map(opt => `
+                <button class="filter-option-chip ${selected.includes(opt) ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}">
+                    <span class="material-symbols-rounded check-icon">check</span>
+                    <span>${utils.escapeHtml(utils.truncate(opt, 22))}</span>
+                </button>
+            `).join('');
+        },
+
+        addSectionListeners() {
+            // Accordion headers
+            elements.filterSheetContent.querySelectorAll('.filter-section-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const section = header.closest('.filter-section');
+                    section.classList.toggle('expanded');
+                });
+            });
+
+            // Search inputs
+            elements.filterSheetContent.querySelectorAll('.filter-search-input').forEach(input => {
+                input.addEventListener('input', utils.debounce((e) => {
+                    const key = e.target.dataset.key;
+                    const query = utils.normalize(e.target.value);
+                    const allOptions = state.filterOptions[key] || [];
+
+                    const filtered = query
+                        ? allOptions.filter(opt => utils.normalize(opt).includes(query))
+                        : allOptions.slice(0, 30);
+
+                    const list = elements.filterSheetContent.querySelector(`.filter-options-list[data-key="${key}"]`);
+                    list.innerHTML = this.renderOptions(key, filtered.slice(0, 50));
+                    this.addOptionListeners(list);
+                }, 150));
+            });
+
+            // Option chips
+            elements.filterSheetContent.querySelectorAll('.filter-options-list').forEach(list => {
+                this.addOptionListeners(list);
             });
         },
 
-        apply() {
-            state.activeFilters = this.tempFilters;
-            filterManager.applyFilters();
+        addOptionListeners(container) {
+            container.querySelectorAll('.filter-option-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const key = chip.dataset.key;
+                    const value = chip.dataset.value;
+
+                    if (!state.tempFilters[key]) {
+                        state.tempFilters[key] = [];
+                    }
+
+                    const idx = state.tempFilters[key].indexOf(value);
+                    if (idx > -1) {
+                        state.tempFilters[key].splice(idx, 1);
+                        chip.classList.remove('selected');
+                    } else {
+                        state.tempFilters[key].push(value);
+                        chip.classList.add('selected');
+                    }
+
+                    this.updateCount();
+                    this.updateSectionBadges();
+                });
+            });
+        },
+
+        updateCount() {
+            const count = Object.values(state.tempFilters)
+                .filter(arr => arr && arr.length > 0)
+                .reduce((sum, arr) => sum + arr.length, 0);
+
+            elements.sheetFilterCount.textContent = count > 0
+                ? `${count} selecionado${count > 1 ? 's' : ''}`
+                : 'Nenhum selecionado';
+        },
+
+        updateSectionBadges() {
+            CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
+                const section = elements.filterSheetContent.querySelector(`.filter-section[data-key="${key}"]`);
+                const count = (state.tempFilters[key] || []).length;
+                const badge = section.querySelector('.filter-section-count');
+
+                if (count > 0) {
+                    if (badge) {
+                        badge.textContent = count;
+                    } else {
+                        const left = section.querySelector('.filter-section-header-left');
+                        left.insertAdjacentHTML('beforeend', `<span class="filter-section-count">${count}</span>`);
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+            });
+        },
+
+        clearTemp() {
+            state.tempFilters = {};
+
+            elements.filterSheetContent.querySelectorAll('.filter-option-chip.selected').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+
+            elements.filterSheetContent.querySelectorAll('.filter-section-count').forEach(badge => {
+                badge.remove();
+            });
+
+            this.updateCount();
+        },
+
+        applyAndClose() {
+            state.selectedFilters = state.tempFilters;
+            filterManager.apply();
             this.close();
         }
     };
 
     // ============================================
-    // SEARCH MANAGEMENT
+    // SEARCH MANAGER
     // ============================================
     const searchManager = {
         init() {
-            const debouncedSearch = utils.debounce(() => {
+            const search = utils.debounce(() => {
                 state.searchQuery = elements.searchInput.value.trim();
-                filterManager.applyFilters();
+                filterManager.apply();
             }, CONFIG.SEARCH_DEBOUNCE);
 
             elements.searchInput.addEventListener('input', () => {
                 const hasValue = elements.searchInput.value.length > 0;
                 elements.searchClear.classList.toggle('hidden', !hasValue);
-                debouncedSearch();
+                search();
             });
 
             elements.searchClear.addEventListener('click', () => {
                 elements.searchInput.value = '';
                 elements.searchClear.classList.add('hidden');
                 state.searchQuery = '';
-                filterManager.applyFilters();
+                filterManager.apply();
                 elements.searchInput.focus();
             });
         }
     };
 
     // ============================================
-    // SCROLL MANAGEMENT
+    // SCROLL MANAGER
     // ============================================
     const scrollManager = {
         init() {
@@ -682,33 +692,40 @@
             window.addEventListener('scroll', () => {
                 if (!ticking) {
                     requestAnimationFrame(() => {
-                        this.handleScroll();
+                        this.onScroll();
                         ticking = false;
                     });
                     ticking = true;
                 }
             });
 
-            elements.scrollTop.addEventListener('click', () => {
+            elements.scrollTopFab.addEventListener('click', () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         },
 
-        handleScroll() {
+        onScroll() {
             const scrollY = window.scrollY;
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
+            const windowH = window.innerHeight;
+            const docH = document.documentElement.scrollHeight;
 
-            // Show/hide scroll to top button
-            if (scrollY > CONFIG.SCROLL_THRESHOLD) {
-                elements.scrollTop.classList.add('visible');
+            // Top app bar elevation
+            if (scrollY > 10) {
+                elements.topAppBar.classList.add('elevated');
             } else {
-                elements.scrollTop.classList.remove('visible');
+                elements.topAppBar.classList.remove('elevated');
+            }
+
+            // FAB visibility
+            if (scrollY > CONFIG.SCROLL_THRESHOLD) {
+                elements.scrollTopFab.classList.add('visible');
+            } else {
+                elements.scrollTopFab.classList.remove('visible');
             }
 
             // Infinite scroll
-            if (documentHeight - scrollY - windowHeight < CONFIG.INFINITE_SCROLL_THRESHOLD) {
-                jobRenderer.loadMore();
+            if (docH - scrollY - windowH < CONFIG.INFINITE_SCROLL_THRESHOLD) {
+                cardRenderer.loadMore();
             }
         }
     };
@@ -716,9 +733,9 @@
     // ============================================
     // QUICK FILTERS
     // ============================================
-    const quickFiltersManager = {
+    const quickFilters = {
         init() {
-            elements.quickFilters.forEach(chip => {
+            elements.filterChips.forEach(chip => {
                 chip.addEventListener('click', () => {
                     filterManager.setQuickFilter(chip.dataset.filter);
                 });
@@ -727,12 +744,16 @@
     };
 
     // ============================================
-    // CLEAR ALL FILTERS
+    // CLEAR ALL HANDLERS
     // ============================================
-    const clearFiltersManager = {
+    const clearHandlers = {
         init() {
             elements.clearAllFilters.addEventListener('click', () => {
-                filterManager.clearAllFilters();
+                filterManager.clearAll();
+            });
+
+            elements.emptyStateClear.addEventListener('click', () => {
+                filterManager.clearAll();
             });
         }
     };
@@ -744,16 +765,16 @@
         themeManager.init();
         searchManager.init();
         scrollManager.init();
-        quickFiltersManager.init();
-        clearFiltersManager.init();
-        modalManager.init();
-        dataLoader.loadJobs();
+        quickFilters.init();
+        bottomSheet.init();
+        clearHandlers.init();
+        dataLoader.load();
     }
 
-    // Start the application
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
+
 })();
