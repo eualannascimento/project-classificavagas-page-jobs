@@ -2,92 +2,197 @@
 <html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#000000">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="Classifica Vagas - Plataforma Premium de Vagas">
 
     <title>Classifica Vagas</title>
 
-    <!-- Preload Fonts -->
+    <!-- Google Fonts - Roboto -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
 
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-
-    <!-- Loading -->
-    <div id="loading-screen" class="loading-screen" style="position:fixed; inset:0; background:#000; z-index:9999; display:flex; align-items:center; justify-content:center; color:#fff;">
-        <div style="font-weight:700; font-size:1.5rem; letter-spacing:-1px;">CV</div>
+    <!-- Splash Screen -->
+    <div id="splash" class="splash">
+        <div class="splash-content">
+            <div class="splash-icon">
+                <span class="material-symbols-rounded">work</span>
+            </div>
+            <h1 class="splash-title">Classifica Vagas</h1>
+            <div class="splash-loader">
+                <div class="splash-progress"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Mobile Header (Visible < 768px) -->
-    <header class="mobile-header">
-        <div class="brand-logo">CV</div>
-        <button id="themeToggleMobile" style="display:none"></button> <!-- Handled by sidebar for simplicity -->
-    </header>
+    <!-- Main App -->
+    <div id="app" class="app">
+        <!-- Top App Bar -->
+        <header class="top-app-bar">
+            <div class="top-app-bar-content">
+                <div class="top-app-bar-left">
+                    <span class="material-symbols-rounded app-icon">work</span>
+                    <div class="app-title">
+                        <h1>Classifica Vagas</h1>
+                        <span class="job-count" id="jobCount">Carregando...</span>
+                    </div>
+                </div>
+                <div class="top-app-bar-actions">
+                    <button class="icon-button" id="themeToggle" aria-label="Alternar tema">
+                        <span class="material-symbols-rounded icon-light">light_mode</span>
+                        <span class="material-symbols-rounded icon-dark">dark_mode</span>
+                    </button>
+                </div>
+            </div>
+        </header>
 
-    <!-- Sidebar (Left Panel on Desktop / Bottom Sheet on Mobile) -->
-    <aside class="sidebar" id="sidebar">
-        <!-- Mobile Header inside Sidebar -->
-        <div class="sidebar-header-mobile hidden"> <!-- Shown via CSS on mobile -->
-            <h2>Filtros</h2>
-            <button class="close-sidebar" id="btnCloseSidebar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        </div>
-
-        <div class="brand">
-            <div class="brand-logo">CV</div>
-            <div class="brand-text">
-                <h1>Classifica Vagas</h1>
-                <p id="jobStats">Carregando...</p>
+        <!-- Search Bar -->
+        <div class="search-bar-container">
+            <div class="search-bar" id="searchBar">
+                <span class="material-symbols-rounded search-icon">search</span>
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Buscar vagas, empresas, cargos..."
+                    autocomplete="off"
+                >
+                <button class="icon-button search-clear hidden" id="searchClear" aria-label="Limpar">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
             </div>
         </div>
 
-        <div class="sidebar-search">
-            <div class="search-box">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="searchInput" placeholder="Buscar cargo, empresa...">
+        <!-- Filter Chips -->
+        <div class="filter-chips-container">
+            <div class="filter-chips-scroll">
+                <!-- Main Filter Button -->
+                <button class="filter-chip filter-chip-main" id="openFilters">
+                    <span class="material-symbols-rounded">tune</span>
+                    <span>Filtros</span>
+                    <span class="filter-badge hidden" id="filterBadge">0</span>
+                </button>
+
+                <div class="chip-divider"></div>
+
+                <!-- Quick Filter Chips -->
+                <button class="filter-chip" data-filter="all" data-active="true">
+                    <span class="material-symbols-rounded">apps</span>
+                    <span>Todas</span>
+                </button>
+                <button class="filter-chip" data-filter="remote">
+                    <span class="material-symbols-rounded">home_work</span>
+                    <span>Remoto</span>
+                </button>
+                <button class="filter-chip" data-filter="hybrid">
+                    <span class="material-symbols-rounded">sync_alt</span>
+                    <span>Híbrido</span>
+                </button>
+                <button class="filter-chip" data-filter="onsite">
+                    <span class="material-symbols-rounded">apartment</span>
+                    <span>Presencial</span>
+                </button>
+                <button class="filter-chip" data-filter="affirmative">
+                    <span class="material-symbols-rounded">diversity_3</span>
+                    <span>Afirmativa</span>
+                </button>
             </div>
         </div>
 
-        <!-- Dynamic Filters -->
-        <div id="filterList"></div>
-
-        <div class="sidebar-footer">
-            <button class="theme-btn" id="themeToggle">
-                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-                <svg class="icon-sun hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <!-- Active Filters -->
+        <div class="active-filters hidden" id="activeFilters">
+            <div class="active-filters-scroll" id="activeFiltersList">
+                <!-- Dynamic filter tags -->
+            </div>
+            <button class="clear-filters-btn" id="clearAllFilters">
+                <span class="material-symbols-rounded">delete_sweep</span>
+                <span>Limpar</span>
             </button>
             <div style="font-size:0.75rem; color:var(--text-tertiary);">v2.0</div>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-area">
-        <div class="content-scroll">
-            <div class="jobs-grid" id="jobsContainer">
-                <!-- Jobs Rendered Here -->
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Jobs Grid -->
+            <div class="jobs-grid" id="jobsGrid">
+                <!-- Job cards will be inserted here -->
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-more hidden" id="loadingMore">
+                <div class="loading-spinner"></div>
+                <span>Carregando mais vagas...</span>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="emptyState">
+                <span class="material-symbols-rounded">search_off</span>
+                <h3>Nenhuma vaga encontrada</h3>
+                <p>Tente ajustar seus filtros ou termos de busca</p>
+                <button class="filled-button" id="emptyStateClear">
+                    <span class="material-symbols-rounded">refresh</span>
+                    Limpar filtros
+                </button>
+            </div>
+        </main>
+
+        <!-- FAB -->
+        <button class="fab" id="scrollTopFab" aria-label="Voltar ao topo">
+            <span class="material-symbols-rounded">keyboard_arrow_up</span>
+        </button>
+
+        <!-- Bottom Sheet Scrim -->
+        <div class="scrim hidden" id="scrim"></div>
+
+        <!-- Filter Bottom Sheet -->
+        <div class="bottom-sheet hidden" id="filterSheet">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-handle"></div>
+                <div class="bottom-sheet-title">
+                    <h2>Filtros</h2>
+                    <span class="filter-count-label" id="sheetFilterCount">0 selecionados</span>
+                </div>
+                <button class="icon-button" id="closeSheet" aria-label="Fechar">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <div class="bottom-sheet-content" id="filterSheetContent">
+                <!-- Filter sections will be dynamically generated -->
+            </div>
+
+            <div class="bottom-sheet-actions">
+                <button class="text-button" id="sheetClearFilters">
+                    Limpar tudo
+                </button>
+                <button class="filled-button" id="sheetApplyFilters">
+                    <span class="material-symbols-rounded">check</span>
+                    Aplicar filtros
+                </button>
             </div>
         </div>
-    </main>
 
-    <!-- Bottom Nav (Mobile Only) -->
-    <nav class="bottom-nav" id="bottomNav">
-        <button class="nav-item active">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            <span>Vagas</span>
-        </button>
-        <button class="nav-item" id="btnOpenFilters">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-            <span>Filtros</span>
-        </button>
-    </nav>
-
-    <div id="app" class="hidden"></div> <!-- Legacy hook if needed, mostly unused now -->
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-update">Atualizado: <span id="lastUpdate">--</span></span>
+                <a href="https://github.com/eualannascimento" target="_blank" rel="noopener" class="footer-link">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+            </div>
+        </footer>
+    </div>
 
     <script src="assets/js/scripts.js"></script>
 </body>
