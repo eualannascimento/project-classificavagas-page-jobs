@@ -110,7 +110,7 @@
     --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
-/* Light Theme */
+/* Light Theme Override */
 [data-theme="light"] {
     --md-sys-color-primary: #415f91;
     --md-sys-color-on-primary: #ffffff;
@@ -187,10 +187,8 @@ body {
                 color var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
+    --border-subtle: #e5e5e5;
+    --border-strong: #d4d4d4;
 
 button {
     font: inherit;
@@ -450,6 +448,7 @@ input {
     width: 40px;
     height: 40px;
 }
+.theme-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
 /* ============================================
    FILTER CHIPS
@@ -523,6 +522,7 @@ input {
 .filter-chip-main .material-symbols-rounded {
     font-size: 18px;
 }
+.badge.remote { color: var(--success); border-color: rgba(34, 197, 94, 0.2); }
 
 .filter-badge {
     min-width: 16px;
@@ -562,6 +562,7 @@ input {
 .active-filters-scroll::-webkit-scrollbar {
     display: none;
 }
+.job-card:hover .card-details, .job-card.expanded .card-details { opacity: 1; }
 
 .active-filter-chip {
     display: flex;
@@ -627,6 +628,8 @@ input {
 .clear-filters-btn .material-symbols-rounded {
     font-size: 18px;
 }
+.btn-apply svg { width: 18px; height: 18px; }
+.btn-apply:hover { opacity: 0.9; }
 
 /* ============================================
    MAIN CONTENT
@@ -639,9 +642,12 @@ input {
     margin: 0 auto;
     width: 100%;
 }
+.job-card:hover .chevron { opacity: 1; transform: translateX(2px); }
+.job-card.expanded .chevron { display: none; }
+
 
 /* ============================================
-   JOBS GRID
+   MOBILE RESPONSIVENESS (The Big Shift)
    ============================================ */
 .jobs-grid {
     display: grid;
@@ -654,7 +660,6 @@ input {
         grid-template-columns: repeat(2, 1fr);
         gap: 16px;
     }
-}
 
 @media (min-width: 905px) {
     .jobs-grid {
@@ -702,13 +707,19 @@ input {
     opacity: 0.05;
 }
 
-.job-card:active {
-    transform: translateY(0);
-}
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: var(--text-secondary);
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 8px 16px;
+    }
 
-.job-card.visited {
-    opacity: 0.7;
-}
+    .nav-item.active { color: var(--text-primary); }
+    .nav-item svg { width: 22px; height: 22px; }
 
 .job-card.visited .job-card-badge {
     display: flex;

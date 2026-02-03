@@ -7,7 +7,7 @@
     'use strict';
 
     // ============================================
-    // CONFIGURATION
+    // STATE & CONFIG
     // ============================================
     const CONFIG = {
         JOBS_PER_PAGE: 24,
@@ -23,9 +23,6 @@
         ]
     };
 
-    // ============================================
-    // STATE
-    // ============================================
     const state = {
         allJobs: [],
         filteredJobs: [],
@@ -75,7 +72,7 @@
     };
 
     // ============================================
-    // UTILITIES
+    // UTILS
     // ============================================
     const utils = {
         debounce(fn, delay) {
@@ -140,7 +137,6 @@
             if (meta) {
                 meta.content = theme === 'light' ? '#f9f9ff' : '#111318';
             }
-        },
 
         toggle() {
             const current = document.documentElement.getAttribute('data-theme');
@@ -381,8 +377,8 @@
                 return;
             }
 
-            elements.emptyState.classList.add('hidden');
-
+            const start = state.displayedCount;
+            const end = Math.min(start + CONFIG.JOBS_PER_PAGE, state.filteredJobs.length);
             const fragment = document.createDocumentFragment();
             jobs.forEach(job => fragment.appendChild(this.createCard(job)));
             elements.jobsGrid.appendChild(fragment);
@@ -432,8 +428,8 @@
                         <span class="material-symbols-rounded">location_on</span>
                         <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                     </div>
-                    <span class="job-date">${utils.formatDate(job.inserted_date)}</span>
                 </div>
+                ${icons.chevron}
             `;
 
             card.addEventListener('click', () => {
@@ -441,6 +437,9 @@
                     utils.markVisited(job.id);
                     card.classList.add('visited');
                 }
+
+                // Toggle Expand
+                card.classList.toggle('expanded');
             });
 
             return card;
@@ -759,7 +758,7 @@
     };
 
     // ============================================
-    // INITIALIZATION
+    // EVENT LISTENERS
     // ============================================
     function init() {
         themeManager.init();
