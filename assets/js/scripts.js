@@ -151,6 +151,11 @@
         async load() {
             try {
                 const response = await fetch(CONFIG.DATA_URL);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
 
                 state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
@@ -176,12 +181,14 @@
 
             } catch (err) {
                 console.error('Error loading jobs:', err);
-                elements.splash.innerHTML = `
-                    <div class="splash-content">
-                        <span class="material-symbols-rounded" style="font-size:64px;color:var(--md-sys-color-error)">error</span>
-                        <p style="color:var(--md-sys-color-error)">Erro ao carregar vagas</p>
-                    </div>
-                `;
+                // Show error but still show app
+                this.showApp();
+                if (elements.emptyState) {
+                    elements.jobsGrid.innerHTML = '';
+                    elements.emptyState.classList.remove('hidden');
+                    elements.emptyState.querySelector('h3').textContent = 'Erro ao carregar';
+                    elements.emptyState.querySelector('p').textContent = 'Não foi possível carregar as vagas. Recarregue a página.';
+                }
             }
         },
 
@@ -209,14 +216,23 @@
         },
 
         showApp() {
-            setTimeout(() => {
-                elements.splash.classList.add('fade-out');
-                elements.app.classList.add('visible');
+            // Ensure splash and app elements exist
+            const splash = elements.splash || document.getElementById('splash');
+            const app = elements.app || document.getElementById('app');
 
-                setTimeout(() => {
-                    elements.splash.style.display = 'none';
-                }, 400);
-            }, 800);
+            if (splash) {
+                splash.classList.add('fade-out');
+            }
+
+            if (app) {
+                app.classList.add('visible');
+            }
+
+            setTimeout(() => {
+                if (splash) {
+                    splash.style.display = 'none';
+                }
+            }, 400);
         }
     };
 
@@ -761,13 +777,35 @@
     // EVENT LISTENERS
     // ============================================
     function init() {
-        themeManager.init();
-        searchManager.init();
-        scrollManager.init();
-        quickFilters.init();
-        bottomSheet.init();
-        clearHandlers.init();
-        dataLoader.load();
+        try {
+            themeManager.init();
+            searchManager.init();
+            scrollManager.init();
+            quickFilters.init();
+            bottomSheet.init();
+            clearHandlers.init();
+            dataLoader.load();
+
+            // Fallback: ensure app shows after 5 seconds no matter what
+            setTimeout(() => {
+                const app = document.getElementById('app');
+                const splash = document.getElementById('splash');
+                if (app && !app.classList.contains('visible')) {
+                    app.classList.add('visible');
+                    if (splash) {
+                        splash.style.display = 'none';
+                    }
+                }
+            }, 5000);
+
+        } catch (err) {
+            console.error('Initialization error:', err);
+            // Force show app on error
+            const app = document.getElementById('app');
+            const splash = document.getElementById('splash');
+            if (app) app.classList.add('visible');
+            if (splash) splash.style.display = 'none';
+        }
     }
 
     if (document.readyState === 'loading') {
