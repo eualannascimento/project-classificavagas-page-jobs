@@ -137,6 +137,7 @@
             if (meta) {
                 meta.content = theme === 'light' ? '#f9f9ff' : '#111318';
             }
+        },
 
         toggle() {
             const current = document.documentElement.getAttribute('data-theme');
@@ -393,13 +394,13 @@
                 return;
             }
 
-            const start = state.displayedCount;
-            const end = Math.min(start + CONFIG.JOBS_PER_PAGE, state.filteredJobs.length);
+            elements.emptyState.classList.add('hidden');
+
             const fragment = document.createDocumentFragment();
             jobs.forEach(job => fragment.appendChild(this.createCard(job)));
             elements.jobsGrid.appendChild(fragment);
 
-            state.displayedCount = end;
+            state.displayedCount += jobs.length;
 
             if (state.displayedCount >= state.filteredJobs.length) {
                 elements.loadingMore.classList.add('hidden');
@@ -444,8 +445,8 @@
                         <span class="material-symbols-rounded">location_on</span>
                         <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                     </div>
+                    <span class="job-date">${utils.formatDate(job.published_at)}</span>
                 </div>
-                ${icons.chevron}
             `;
 
             card.addEventListener('click', () => {
@@ -453,9 +454,6 @@
                     utils.markVisited(job.id);
                     card.classList.add('visited');
                 }
-
-                // Toggle Expand
-                card.classList.toggle('expanded');
             });
 
             return card;
