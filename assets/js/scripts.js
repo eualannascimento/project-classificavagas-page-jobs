@@ -119,11 +119,27 @@
     // ============================================
     // THEME MANAGER
     // ============================================
+    const THEMES = ['light', 'dark', 'dark-amoled', 'dark-emerald', 'dark-rose'];
+    const THEME_LABELS = {
+        'light': 'Claro',
+        'dark': 'Escuro',
+        'dark-amoled': 'AMOLED',
+        'dark-emerald': 'Esmeralda',
+        'dark-rose': 'Rosé'
+    };
+    const THEME_META_COLORS = {
+        'light': '#f9f9ff',
+        'dark': '#111318',
+        'dark-amoled': '#000000',
+        'dark-emerald': '#0f1512',
+        'dark-rose': '#181013'
+    };
+
     const themeManager = {
         init() {
             const saved = localStorage.getItem('cv_theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = saved || (prefersDark ? 'dark' : 'light');
+            const theme = saved && THEMES.includes(saved) ? saved : (prefersDark ? 'dark' : 'light');
             this.apply(theme);
 
             elements.themeToggle.addEventListener('click', () => this.toggle());
@@ -135,13 +151,33 @@
 
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) {
-                meta.content = theme === 'light' ? '#f9f9ff' : '#111318';
+                meta.content = THEME_META_COLORS[theme] || THEME_META_COLORS['dark'];
             }
+
+            this.showThemeToast(theme);
         },
 
         toggle() {
             const current = document.documentElement.getAttribute('data-theme');
-            this.apply(current === 'light' ? 'dark' : 'light');
+            const idx = THEMES.indexOf(current);
+            const next = THEMES[(idx + 1) % THEMES.length];
+            this.apply(next);
+        },
+
+        showThemeToast(theme) {
+            const existing = document.querySelector('.theme-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'theme-toast';
+            toast.textContent = THEME_LABELS[theme] || theme;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.add('visible'));
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 300);
+            }, 1200);
         }
     };
 
@@ -420,10 +456,6 @@
             const categoryName = job.category ? job.category.split(' - ').slice(1).join(' - ') : '';
 
             card.innerHTML = `
-                <div class="job-card-badge">
-                    <span class="material-symbols-rounded">check_circle</span>
-                    Visitado
-                </div>
                 <div class="job-card-header">
                     <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
                         <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
@@ -444,7 +476,6 @@
                         <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                     </div>
                 </div>
-                <span class="material-symbols-rounded job-card-chevron">chevron_right</span>
             `;
 
             card.addEventListener('click', () => {
@@ -452,9 +483,6 @@
                     utils.markVisited(job.id);
                     card.classList.add('visited');
                 }
-
-                // Toggle Expand
-                card.classList.toggle('expanded');
             });
 
             return card;
@@ -540,9 +568,8 @@
                         <div class="filter-section-body">
                             <input type="text" class="filter-search-input" placeholder="Buscar ${label.toLowerCase()}..." data-key="${key}">
                             <div class="filter-options-list" data-key="${key}">
-                                ${this.renderOptions(key, options.slice(0, 30))}
+                                ${this.renderOptions(key, options)}
                             </div>
-                            ${options.length > 30 ? `<p style="font-size:12px;color:var(--md-sys-color-outline);margin-top:8px;">Use a busca para encontrar mais opções</p>` : ''}
                         </div>
                     </div>
                 `;
@@ -581,10 +608,10 @@
 
                     const filtered = query
                         ? allOptions.filter(opt => utils.normalize(opt).includes(query))
-                        : allOptions.slice(0, 30);
+                        : allOptions;
 
                     const list = elements.filterSheetContent.querySelector(`.filter-options-list[data-key="${key}"]`);
-                    list.innerHTML = this.renderOptions(key, filtered.slice(0, 50));
+                    list.innerHTML = this.renderOptions(key, filtered);
                     this.addOptionListeners(list);
                 }, 150));
             });
