@@ -152,6 +152,142 @@
     --md-sys-elevation-3: 0 1px 3px rgba(0,0,0,0.1), 0 4px 8px 3px rgba(0,0,0,0.05);
 }
 
+/* Dark AMOLED */
+[data-theme="dark-amoled"] {
+    --md-sys-color-primary: #a8c7fa;
+    --md-sys-color-on-primary: #062e6f;
+    --md-sys-color-primary-container: #1a3a6b;
+    --md-sys-color-on-primary-container: #d3e3fd;
+
+    --md-sys-color-secondary: #bec6dc;
+    --md-sys-color-on-secondary: #283141;
+    --md-sys-color-secondary-container: #2a3344;
+    --md-sys-color-on-secondary-container: #dae2f9;
+
+    --md-sys-color-tertiary: #d4bee5;
+    --md-sys-color-on-tertiary: #392a48;
+    --md-sys-color-tertiary-container: #3e3050;
+    --md-sys-color-on-tertiary-container: #f1dbff;
+
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+
+    --md-sys-color-surface: #000000;
+    --md-sys-color-on-surface: #e2e2e9;
+    --md-sys-color-surface-variant: #2a2d33;
+    --md-sys-color-on-surface-variant: #c4c6d0;
+
+    --md-sys-color-surface-container-lowest: #000000;
+    --md-sys-color-surface-container-low: #0c0e13;
+    --md-sys-color-surface-container: #111318;
+    --md-sys-color-surface-container-high: #1a1c21;
+    --md-sys-color-surface-container-highest: #222427;
+
+    --md-sys-color-outline: #8e9099;
+    --md-sys-color-outline-variant: #333539;
+
+    --md-sys-color-inverse-surface: #e2e2e9;
+    --md-sys-color-inverse-on-surface: #2f3036;
+    --md-sys-color-inverse-primary: #415f91;
+
+    --md-sys-color-success: #7dd17d;
+    --md-sys-color-success-container: #1e4620;
+
+    --md-sys-elevation-1: 0 1px 2px rgba(0,0,0,0.5);
+    --md-sys-elevation-2: 0 2px 4px rgba(0,0,0,0.5);
+    --md-sys-elevation-3: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+/* Dark Emerald */
+[data-theme="dark-emerald"] {
+    --md-sys-color-primary: #82d9a0;
+    --md-sys-color-on-primary: #003921;
+    --md-sys-color-primary-container: #005233;
+    --md-sys-color-on-primary-container: #9ef6bb;
+
+    --md-sys-color-secondary: #b4ccb9;
+    --md-sys-color-on-secondary: #203528;
+    --md-sys-color-secondary-container: #374b3e;
+    --md-sys-color-on-secondary-container: #d0e8d5;
+
+    --md-sys-color-tertiary: #a3cddb;
+    --md-sys-color-on-tertiary: #043542;
+    --md-sys-color-tertiary-container: #224c59;
+    --md-sys-color-on-tertiary-container: #bfe9f7;
+
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+
+    --md-sys-color-surface: #0f1512;
+    --md-sys-color-on-surface: #dfe4de;
+    --md-sys-color-surface-variant: #404943;
+    --md-sys-color-on-surface-variant: #c0c9c1;
+
+    --md-sys-color-surface-container-lowest: #0a100d;
+    --md-sys-color-surface-container-low: #171d19;
+    --md-sys-color-surface-container: #1b211d;
+    --md-sys-color-surface-container-high: #262b27;
+    --md-sys-color-surface-container-highest: #303632;
+
+    --md-sys-color-outline: #8a938b;
+    --md-sys-color-outline-variant: #404943;
+
+    --md-sys-color-inverse-surface: #dfe4de;
+    --md-sys-color-inverse-on-surface: #2c322e;
+    --md-sys-color-inverse-primary: #006d42;
+
+    --md-sys-color-success: #82d9a0;
+    --md-sys-color-success-container: #1a4028;
+}
+
+/* Dark Rose */
+[data-theme="dark-rose"] {
+    --md-sys-color-primary: #f0b0c8;
+    --md-sys-color-on-primary: #4e1135;
+    --md-sys-color-primary-container: #6a294c;
+    --md-sys-color-on-primary-container: #ffd8e7;
+
+    --md-sys-color-secondary: #d8bfc8;
+    --md-sys-color-on-secondary: #3c2b33;
+    --md-sys-color-secondary-container: #544149;
+    --md-sys-color-on-secondary-container: #f5dbe4;
+
+    --md-sys-color-tertiary: #efbd93;
+    --md-sys-color-on-tertiary: #46290a;
+    --md-sys-color-tertiary-container: #60401f;
+    --md-sys-color-on-tertiary-container: #ffdcc1;
+
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+
+    --md-sys-color-surface: #181013;
+    --md-sys-color-on-surface: #ede0e3;
+    --md-sys-color-surface-variant: #504349;
+    --md-sys-color-on-surface-variant: #d4c2c8;
+
+    --md-sys-color-surface-container-lowest: #120b0e;
+    --md-sys-color-surface-container-low: #201a1c;
+    --md-sys-color-surface-container: #251e21;
+    --md-sys-color-surface-container-high: #2f282b;
+    --md-sys-color-surface-container-highest: #3b3336;
+
+    --md-sys-color-outline: #9e8f94;
+    --md-sys-color-outline-variant: #504349;
+
+    --md-sys-color-inverse-surface: #ede0e3;
+    --md-sys-color-inverse-on-surface: #342f31;
+    --md-sys-color-inverse-primary: #864866;
+
+    --md-sys-color-success: #7dd17d;
+    --md-sys-color-success-container: #1e4620;
+}
+
 /* ============================================
    RESET & BASE
    ============================================ */
@@ -300,8 +436,8 @@ input {
     top: 0;
     z-index: 100;
     background: var(--md-sys-color-surface);
-    padding: 8px 16px;
-    padding-top: calc(8px + var(--safe-area-top));
+    padding: 12px 20px;
+    padding-top: calc(12px + var(--safe-area-top));
     transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
                 box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
@@ -317,35 +453,37 @@ input {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 48px;
+    height: 56px;
 }
 
 .top-app-bar-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
 }
 
 .app-icon {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
     border-radius: var(--md-sys-shape-corner-medium);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 26px;
 }
 
 .app-title h1 {
-    font: var(--md-sys-typescale-title-medium);
+    font: var(--md-sys-typescale-title-large);
     color: var(--md-sys-color-on-surface);
+    letter-spacing: -0.01em;
 }
 
 .job-count {
-    font: var(--md-sys-typescale-label-small);
+    font: var(--md-sys-typescale-label-medium);
     color: var(--md-sys-color-on-surface-variant);
+    margin-top: 2px;
 }
 
 .icon-button {
@@ -396,7 +534,7 @@ input {
     padding: 8px 16px;
     background: var(--md-sys-color-surface);
     position: sticky;
-    top: calc(64px + var(--safe-area-top));
+    top: calc(80px + var(--safe-area-top));
     z-index: 99;
 }
 
@@ -688,11 +826,8 @@ input {
 }
 
 .job-card.visited {
-    opacity: 0.7;
-}
-
-.job-card.visited .job-card-badge {
-    display: flex;
+    opacity: 0.75;
+    border-left: 3px solid var(--md-sys-color-success);
 }
 
 .job-card-header {
@@ -745,24 +880,6 @@ input {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.job-card-badge {
-    display: none;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    background: var(--md-sys-color-success-container);
-    color: var(--md-sys-color-success);
-    border-radius: var(--md-sys-shape-corner-full);
-    font: var(--md-sys-typescale-label-small);
-    position: absolute;
-    top: 8px;
-    right: 8px;
-}
-
-.job-card-badge .material-symbols-rounded {
-    font-size: 14px;
 }
 
 .job-card-body {
@@ -822,6 +939,32 @@ input {
     font: var(--md-sys-typescale-label-small);
     color: var(--md-sys-color-outline);
     white-space: nowrap;
+}
+
+/* Light theme card overrides */
+[data-theme="light"] .job-card {
+    background: var(--md-sys-color-surface-container-lowest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: var(--md-sys-elevation-1);
+}
+
+[data-theme="light"] .job-card:hover {
+    border-color: var(--md-sys-color-primary);
+    box-shadow: var(--md-sys-elevation-3);
+}
+
+[data-theme="light"] .job-card.visited {
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-left: 3px solid var(--md-sys-color-success);
+}
+
+[data-theme="light"] .job-tag {
+    background: var(--md-sys-color-surface-container);
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+[data-theme="light"] .job-card-footer {
+    border-top-color: var(--md-sys-color-outline-variant);
 }
 
 /* ============================================
@@ -1126,7 +1269,7 @@ input {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -1240,6 +1383,30 @@ input {
     .job-card:active {
         transform: scale(0.98);
     }
+}
+
+/* Theme Toast */
+.theme-toast {
+    position: fixed;
+    bottom: calc(96px + var(--safe-area-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    padding: 8px 20px;
+    border-radius: var(--md-sys-shape-corner-full);
+    font: var(--md-sys-typescale-label-large);
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard),
+                transform var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-standard);
+    box-shadow: var(--md-sys-elevation-3);
+}
+
+.theme-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Reduce motion */
