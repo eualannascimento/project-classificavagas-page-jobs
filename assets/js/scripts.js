@@ -137,6 +137,7 @@
             if (meta) {
                 meta.content = theme === 'light' ? '#f9f9ff' : '#111318';
             }
+        },
 
         toggle() {
             const current = document.documentElement.getAttribute('data-theme');
@@ -393,8 +394,6 @@
                 return;
             }
 
-            const start = state.displayedCount;
-            const end = Math.min(start + CONFIG.JOBS_PER_PAGE, state.filteredJobs.length);
             const fragment = document.createDocumentFragment();
             jobs.forEach(job => fragment.appendChild(this.createCard(job)));
             elements.jobsGrid.appendChild(fragment);
@@ -445,7 +444,7 @@
                         <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                     </div>
                 </div>
-                ${icons.chevron}
+                <span class="material-symbols-rounded job-card-chevron">chevron_right</span>
             `;
 
             card.addEventListener('click', () => {
