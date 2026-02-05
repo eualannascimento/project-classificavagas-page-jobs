@@ -136,11 +136,14 @@
     };
 
     const themeManager = {
+        _initialized: false,
+
         init() {
             const saved = localStorage.getItem('cv_theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const theme = saved && THEMES.includes(saved) ? saved : (prefersDark ? 'dark' : 'light');
             this.apply(theme);
+            this._initialized = true;
 
             elements.themeToggle.addEventListener('click', () => this.toggle());
         },
@@ -154,7 +157,9 @@
                 meta.content = THEME_META_COLORS[theme] || THEME_META_COLORS['dark'];
             }
 
-            this.showThemeToast(theme);
+            if (this._initialized) {
+                this.showThemeToast(theme);
+            }
         },
 
         toggle() {
@@ -423,6 +428,8 @@
             const start = state.displayedCount;
             const end = start + CONFIG.JOBS_PER_PAGE;
             const jobs = state.filteredJobs.slice(start, end);
+
+            elements.emptyState.classList.add('hidden');
 
             if (jobs.length === 0 && state.displayedCount === 0) {
                 elements.emptyState.classList.remove('hidden');
