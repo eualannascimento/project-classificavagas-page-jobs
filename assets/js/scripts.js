@@ -19,7 +19,23 @@
             { key: 'company', label: 'Empresa', icon: 'business' },
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
-            { key: 'category', label: 'Categoria', icon: 'work' }
+            { key: 'category', label: 'Categoria', icon: 'work' },
+            { key: 'location', label: 'Localidade', icon: 'location_on' }
+        ],
+        DATE_PERIODS: [
+            { key: 'all', label: 'Todas as datas', days: null },
+            { key: '24h', label: 'Últimas 24 horas', days: 1 },
+            { key: '7d', label: 'Últimos 7 dias', days: 7 },
+            { key: '30d', label: 'Últimos 30 dias', days: 30 },
+            { key: '90d', label: 'Últimos 3 meses', days: 90 }
+        ],
+        SORT_OPTIONS: [
+            { key: 'date_desc', label: 'Mais recentes', icon: 'schedule' },
+            { key: 'date_asc', label: 'Mais antigas', icon: 'history' },
+            { key: 'company_asc', label: 'Empresa A-Z', icon: 'sort_by_alpha' },
+            { key: 'company_desc', label: 'Empresa Z-A', icon: 'sort_by_alpha' },
+            { key: 'title_asc', label: 'Título A-Z', icon: 'sort_by_alpha' },
+            { key: 'title_desc', label: 'Título Z-A', icon: 'sort_by_alpha' }
         ]
     };
 
@@ -33,7 +49,10 @@
         selectedFilters: {},
         tempFilters: {},
         filterOptions: {},
-        visitedJobs: new Set()
+        visitedJobs: new Set(),
+        datePeriod: 'all',
+        sortBy: 'date_desc',
+        viewMode: 'cards' // 'cards' or 'list'
     };
 
     // ============================================
@@ -68,7 +87,9 @@
         sheetApplyFilters: $('#sheetApplyFilters'),
         themeToggle: $('#themeToggle'),
         lastUpdate: $('#lastUpdate'),
-        topAppBar: $('.top-app-bar')
+        topAppBar: $('.top-app-bar'),
+        viewToggle: $('#viewToggle'),
+        shareButton: $('#shareButton')
     };
 
     // ============================================
@@ -87,6 +108,21 @@
             if (!dateStr) return '';
             const [y, m, d] = dateStr.split('-');
             return `${d}/${m}/${y}`;
+        },
+
+        formatRelativeDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffTime = now - date;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'Hoje';
+            if (diffDays === 1) return 'Ontem';
+            if (diffDays < 7) return `${diffDays} dias`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)} sem`;
+            if (diffDays < 365) return `${Math.floor(diffDays / 30)} mês`;
+            return `${Math.floor(diffDays / 365)} ano`;
         },
 
         escapeHtml(str) {
@@ -113,26 +149,29 @@
         markVisited(id) {
             localStorage.setItem(utils.storageKey(id), '1');
             state.visitedJobs.add(id);
+        },
+
+        isWithinDays(dateStr, days) {
+            if (!dateStr || !days) return true;
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffTime = now - date;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= days;
         }
     };
 
     // ============================================
     // THEME MANAGER
     // ============================================
-    const THEMES = ['light', 'dark', 'dark-amoled', 'dark-emerald', 'dark-rose'];
+    const THEMES = ['light', 'dark'];
     const THEME_LABELS = {
-        'light': 'Claro',
-        'dark': 'Escuro',
-        'dark-amoled': 'AMOLED',
-        'dark-emerald': 'Esmeralda',
-        'dark-rose': 'Rosé'
+        'light': 'Light',
+        'dark': 'Dark'
     };
     const THEME_META_COLORS = {
         'light': '#f9f9ff',
-        'dark': '#111318',
-        'dark-amoled': '#000000',
-        'dark-emerald': '#0f1512',
-        'dark-rose': '#181013'
+        'dark': '#000000'
     };
 
     const themeManager = {
@@ -140,8 +179,8 @@
 
         init() {
             const saved = localStorage.getItem('cv_theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = saved && THEMES.includes(saved) ? saved : (prefersDark ? 'dark' : 'light');
+            // Default to light theme if no preference saved
+            const theme = saved && THEMES.includes(saved) ? saved : 'light';
             this.apply(theme);
             this._initialized = true;
 
@@ -154,7 +193,7 @@
 
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) {
-                meta.content = THEME_META_COLORS[theme] || THEME_META_COLORS['dark'];
+                meta.content = THEME_META_COLORS[theme] || THEME_META_COLORS['light'];
             }
 
             if (this._initialized) {
@@ -183,6 +222,163 @@
                 toast.classList.remove('visible');
                 setTimeout(() => toast.remove(), 300);
             }, 1200);
+        }
+    };
+
+    // ============================================
+    // VIEW MODE MANAGER
+    // ============================================
+    const viewModeManager = {
+        init() {
+            const saved = localStorage.getItem('cv_view');
+            state.viewMode = saved && ['cards', 'list'].includes(saved) ? saved : 'cards';
+            this.apply(state.viewMode);
+
+            if (elements.viewToggle) {
+                elements.viewToggle.addEventListener('click', () => this.toggle());
+            }
+        },
+
+        apply(mode) {
+            state.viewMode = mode;
+            localStorage.setItem('cv_view', mode);
+
+            if (elements.jobsGrid) {
+                elements.jobsGrid.classList.toggle('list-view', mode === 'list');
+            }
+
+            // Update icon visibility
+            document.body.classList.toggle('view-list', mode === 'list');
+        },
+
+        toggle() {
+            const newMode = state.viewMode === 'cards' ? 'list' : 'cards';
+            this.apply(newMode);
+            // Re-render cards for list view
+            cardRenderer.render(true);
+        }
+    };
+
+    // ============================================
+    // SHARE MANAGER
+    // ============================================
+    const shareManager = {
+        init() {
+            if (elements.shareButton) {
+                elements.shareButton.addEventListener('click', () => this.share());
+            }
+            // Load filters from URL on init
+            this.loadFromURL();
+        },
+
+        buildURL() {
+            const url = new URL(window.location.href.split('?')[0]);
+
+            if (state.searchQuery) {
+                url.searchParams.set('q', state.searchQuery);
+            }
+            if (state.quickFilter !== 'all') {
+                url.searchParams.set('qf', state.quickFilter);
+            }
+            if (state.datePeriod !== 'all') {
+                url.searchParams.set('dp', state.datePeriod);
+            }
+            if (state.sortBy !== 'date_desc') {
+                url.searchParams.set('sort', state.sortBy);
+            }
+
+            Object.entries(state.selectedFilters).forEach(([key, values]) => {
+                if (values && values.length > 0) {
+                    url.searchParams.set(`f_${key}`, values.join('|'));
+                }
+            });
+
+            return url.toString();
+        },
+
+        loadFromURL() {
+            const params = new URLSearchParams(window.location.search);
+
+            if (params.has('q')) {
+                state.searchQuery = params.get('q');
+                if (elements.searchInput) {
+                    elements.searchInput.value = state.searchQuery;
+                    elements.searchClear.classList.toggle('hidden', !state.searchQuery);
+                }
+            }
+            if (params.has('qf')) {
+                state.quickFilter = params.get('qf');
+            }
+            if (params.has('dp')) {
+                state.datePeriod = params.get('dp');
+            }
+            if (params.has('sort')) {
+                state.sortBy = params.get('sort');
+            }
+
+            params.forEach((value, key) => {
+                if (key.startsWith('f_')) {
+                    const filterKey = key.replace('f_', '');
+                    state.selectedFilters[filterKey] = value.split('|');
+                }
+            });
+        },
+
+        async share() {
+            const url = this.buildURL();
+            const shareData = {
+                title: 'classificavagas.com',
+                text: 'Confira essas vagas!',
+                url: url
+            };
+
+            // Try Web Share API first
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                try {
+                    await navigator.share(shareData);
+                    this.showToast('Compartilhado!');
+                    return;
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        // Fall through to clipboard
+                    } else {
+                        return;
+                    }
+                }
+            }
+
+            // Fallback to clipboard
+            try {
+                await navigator.clipboard.writeText(url);
+                this.showToast('Link copiado!');
+            } catch (err) {
+                // Final fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                this.showToast('Link copiado!');
+            }
+        },
+
+        showToast(message) {
+            const existing = document.querySelector('.share-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'theme-toast share-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.add('visible'));
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
         }
     };
 
@@ -310,12 +506,23 @@
                 });
             }
 
+            // Date period filter
+            if (state.datePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+                if (period && period.days) {
+                    jobs = jobs.filter(job => utils.isWithinDays(job.date, period.days));
+                }
+            }
+
             // Selected filters
             Object.entries(state.selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
                     jobs = jobs.filter(job => values.includes(job[key]));
                 }
             });
+
+            // Sorting
+            jobs = this.sortJobs(jobs);
 
             state.filteredJobs = jobs;
             state.displayedCount = 0;
@@ -324,14 +531,46 @@
             cardRenderer.render(true);
         },
 
+        sortJobs(jobs) {
+            const [field, direction] = state.sortBy.split('_');
+            const asc = direction === 'asc';
+
+            return jobs.sort((a, b) => {
+                let valA, valB;
+
+                switch (field) {
+                    case 'date':
+                        valA = a.date || '0000-00-00';
+                        valB = b.date || '0000-00-00';
+                        break;
+                    case 'company':
+                        valA = (a.company || '').toLowerCase();
+                        valB = (b.company || '').toLowerCase();
+                        break;
+                    case 'title':
+                        valA = (a.title || '').toLowerCase();
+                        valB = (b.title || '').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (valA < valB) return asc ? -1 : 1;
+                if (valA > valB) return asc ? 1 : -1;
+                return 0;
+            });
+        },
+
         updateUI() {
             // Job count
             elements.jobCount.textContent = `${state.filteredJobs.length.toLocaleString('pt-BR')} vagas`;
 
             // Filter badge
-            const count = Object.values(state.selectedFilters)
+            let count = Object.values(state.selectedFilters)
                 .filter(arr => arr && arr.length > 0)
                 .reduce((sum, arr) => sum + arr.length, 0);
+
+            if (state.datePeriod !== 'all') count++;
 
             if (count > 0) {
                 elements.filterBadge.textContent = count;
@@ -340,12 +579,25 @@
                 elements.filterBadge.classList.add('hidden');
             }
 
+            // Update quick filter chips
+            elements.filterChips.forEach(chip => {
+                chip.dataset.active = chip.dataset.filter === state.quickFilter ? 'true' : 'false';
+            });
+
             // Active filters chips
             this.renderActiveFilters();
         },
 
         renderActiveFilters() {
             const chips = [];
+
+            // Add date period chip if active
+            if (state.datePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+                if (period) {
+                    chips.push({ key: '_date', value: period.label, isDate: true });
+                }
+            }
 
             Object.entries(state.selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
@@ -361,8 +613,8 @@
             }
 
             elements.activeFilters.classList.remove('hidden');
-            elements.activeFiltersList.innerHTML = chips.map(({ key, value }) => `
-                <div class="active-filter-chip" data-key="${key}" data-value="${utils.escapeHtml(value)}">
+            elements.activeFiltersList.innerHTML = chips.map(({ key, value, isDate }) => `
+                <div class="active-filter-chip" data-key="${key}" data-value="${utils.escapeHtml(value)}" ${isDate ? 'data-date="true"' : ''}>
                     <span>${utils.truncate(value, 18)}</span>
                     <button aria-label="Remover">
                         <span class="material-symbols-rounded">close</span>
@@ -376,7 +628,14 @@
                     const chip = e.target.closest('.active-filter-chip');
                     const key = chip.dataset.key;
                     const value = chip.dataset.value;
-                    this.removeFilter(key, value);
+                    const isDate = chip.dataset.date === 'true';
+
+                    if (isDate) {
+                        state.datePeriod = 'all';
+                        this.apply();
+                    } else {
+                        this.removeFilter(key, value);
+                    }
                 });
             });
         },
@@ -395,6 +654,8 @@
             state.selectedFilters = {};
             state.searchQuery = '';
             state.quickFilter = 'all';
+            state.datePeriod = 'all';
+            state.sortBy = 'date_desc';
             elements.searchInput.value = '';
             elements.searchClear.classList.add('hidden');
 
@@ -451,6 +712,7 @@
         createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isVisited = state.visitedJobs.has(job.id);
+            const relativeDate = utils.formatRelativeDate(job.date);
 
             const card = document.createElement('a');
             card.href = job.url;
@@ -462,28 +724,50 @@
             const levelName = job.level ? job.level.split(' - ').slice(1).join(' - ') : '';
             const categoryName = job.category ? job.category.split(' - ').slice(1).join(' - ') : '';
 
-            card.innerHTML = `
-                <div class="job-card-header">
-                    <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
-                        <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
+            if (state.viewMode === 'list') {
+                card.innerHTML = `
+                    <div class="job-list-content">
+                        <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
+                            <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
+                        </div>
+                        <div class="job-list-main">
+                            <h3>${utils.escapeHtml(job.title)}</h3>
+                            <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
+                        </div>
+                        <div class="job-list-meta">
+                            <span class="job-list-location">
+                                <span class="material-symbols-rounded">location_on</span>
+                                ${utils.escapeHtml(utils.truncate(job.location, 20) || 'Não informado')}
+                            </span>
+                            <span class="job-list-date">${relativeDate}</span>
+                        </div>
                     </div>
-                    <div class="job-card-title">
-                        <h3>${utils.escapeHtml(job.title)}</h3>
-                        <p>${utils.escapeHtml(job.company)}</p>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="job-card-header">
+                        <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
+                            <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
+                        </div>
+                        <div class="job-card-title">
+                            <h3>${utils.escapeHtml(job.title)}</h3>
+                            <p>${utils.escapeHtml(job.company)}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="job-card-body">
-                    ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
-                    ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
-                    ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
-                </div>
-                <div class="job-card-footer">
-                    <div class="job-location">
-                        <span class="material-symbols-rounded">location_on</span>
-                        <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
+                    <div class="job-card-body">
+                        ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
+                        ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
+                        ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
                     </div>
-                </div>
-            `;
+                    <div class="job-card-footer">
+                        <div class="job-location">
+                            <span class="material-symbols-rounded">location_on</span>
+                            <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
+                        </div>
+                        <span class="job-date">${relativeDate}</span>
+                    </div>
+                `;
+            }
 
             card.addEventListener('click', () => {
                 if (!state.visitedJobs.has(job.id)) {
@@ -530,6 +814,8 @@
         open() {
             // Clone current filters to temp
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
+            state.tempDatePeriod = state.datePeriod;
+            state.tempSortBy = state.sortBy;
 
             // Build filter sections
             this.buildSections();
@@ -558,7 +844,55 @@
         },
 
         buildSections() {
-            elements.filterSheetContent.innerHTML = CONFIG.FILTER_CATEGORIES.map(({ key, label, icon }) => {
+            // Date period section
+            const datePeriodSection = `
+                <div class="filter-section expanded" data-key="_date">
+                    <div class="filter-section-header">
+                        <div class="filter-section-header-left">
+                            <span class="material-symbols-rounded">calendar_today</span>
+                            <span class="filter-section-title">Data da vaga</span>
+                            ${state.tempDatePeriod !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
+                        </div>
+                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
+                    </div>
+                    <div class="filter-section-body">
+                        <div class="filter-options-list date-options">
+                            ${CONFIG.DATE_PERIODS.map(period => `
+                                <button class="filter-option-chip ${state.tempDatePeriod === period.key ? 'selected' : ''}" data-period="${period.key}">
+                                    <span class="material-symbols-rounded check-icon">check</span>
+                                    <span>${period.label}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Sort section
+            const sortSection = `
+                <div class="filter-section" data-key="_sort">
+                    <div class="filter-section-header">
+                        <div class="filter-section-header-left">
+                            <span class="material-symbols-rounded">sort</span>
+                            <span class="filter-section-title">Ordenar por</span>
+                        </div>
+                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
+                    </div>
+                    <div class="filter-section-body">
+                        <div class="filter-options-list sort-options">
+                            ${CONFIG.SORT_OPTIONS.map(opt => `
+                                <button class="filter-option-chip ${state.tempSortBy === opt.key ? 'selected' : ''}" data-sort="${opt.key}">
+                                    <span class="material-symbols-rounded check-icon">check</span>
+                                    <span>${opt.label}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Regular filter sections
+            const filterSections = CONFIG.FILTER_CATEGORIES.map(({ key, label, icon }) => {
                 const options = state.filterOptions[key] || [];
                 const selectedCount = (state.tempFilters[key] || []).length;
 
@@ -581,6 +915,8 @@
                     </div>
                 `;
             }).join('');
+
+            elements.filterSheetContent.innerHTML = datePeriodSection + sortSection + filterSections;
 
             // Add event listeners
             this.addSectionListeners();
@@ -606,6 +942,48 @@
                 });
             });
 
+            // Date period options
+            elements.filterSheetContent.querySelectorAll('.date-options .filter-option-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const period = chip.dataset.period;
+                    state.tempDatePeriod = period;
+
+                    // Update UI
+                    elements.filterSheetContent.querySelectorAll('.date-options .filter-option-chip').forEach(c => {
+                        c.classList.toggle('selected', c.dataset.period === period);
+                    });
+
+                    // Update badge
+                    const section = chip.closest('.filter-section');
+                    const badge = section.querySelector('.filter-section-count');
+                    if (period !== 'all') {
+                        if (badge) {
+                            badge.textContent = '1';
+                        } else {
+                            const left = section.querySelector('.filter-section-header-left');
+                            left.insertAdjacentHTML('beforeend', `<span class="filter-section-count">1</span>`);
+                        }
+                    } else if (badge) {
+                        badge.remove();
+                    }
+
+                    this.updateCount();
+                });
+            });
+
+            // Sort options
+            elements.filterSheetContent.querySelectorAll('.sort-options .filter-option-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const sort = chip.dataset.sort;
+                    state.tempSortBy = sort;
+
+                    // Update UI
+                    elements.filterSheetContent.querySelectorAll('.sort-options .filter-option-chip').forEach(c => {
+                        c.classList.toggle('selected', c.dataset.sort === sort);
+                    });
+                });
+            });
+
             // Search inputs
             elements.filterSheetContent.querySelectorAll('.filter-search-input').forEach(input => {
                 input.addEventListener('input', utils.debounce((e) => {
@@ -624,8 +1002,10 @@
             });
 
             // Option chips
-            elements.filterSheetContent.querySelectorAll('.filter-options-list').forEach(list => {
-                this.addOptionListeners(list);
+            elements.filterSheetContent.querySelectorAll('.filter-options-list[data-key]').forEach(list => {
+                if (!list.classList.contains('date-options') && !list.classList.contains('sort-options')) {
+                    this.addOptionListeners(list);
+                }
             });
         },
 
@@ -655,9 +1035,11 @@
         },
 
         updateCount() {
-            const count = Object.values(state.tempFilters)
+            let count = Object.values(state.tempFilters)
                 .filter(arr => arr && arr.length > 0)
                 .reduce((sum, arr) => sum + arr.length, 0);
+
+            if (state.tempDatePeriod !== 'all') count++;
 
             elements.sheetFilterCount.textContent = count > 0
                 ? `${count} selecionado${count > 1 ? 's' : ''}`
@@ -667,6 +1049,8 @@
         updateSectionBadges() {
             CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
                 const section = elements.filterSheetContent.querySelector(`.filter-section[data-key="${key}"]`);
+                if (!section) return;
+
                 const count = (state.tempFilters[key] || []).length;
                 const badge = section.querySelector('.filter-section-count');
 
@@ -685,10 +1069,16 @@
 
         clearTemp() {
             state.tempFilters = {};
+            state.tempDatePeriod = 'all';
+            state.tempSortBy = 'date_desc';
 
             elements.filterSheetContent.querySelectorAll('.filter-option-chip.selected').forEach(chip => {
                 chip.classList.remove('selected');
             });
+
+            // Select default date and sort options
+            elements.filterSheetContent.querySelector('.date-options .filter-option-chip[data-period="all"]')?.classList.add('selected');
+            elements.filterSheetContent.querySelector('.sort-options .filter-option-chip[data-sort="date_desc"]')?.classList.add('selected');
 
             elements.filterSheetContent.querySelectorAll('.filter-section-count').forEach(badge => {
                 badge.remove();
@@ -699,6 +1089,8 @@
 
         applyAndClose() {
             state.selectedFilters = state.tempFilters;
+            state.datePeriod = state.tempDatePeriod;
+            state.sortBy = state.tempSortBy;
             filterManager.apply();
             this.close();
         }
@@ -812,6 +1204,8 @@
     function init() {
         try {
             themeManager.init();
+            viewModeManager.init();
+            shareManager.init();
             searchManager.init();
             scrollManager.init();
             quickFilters.init();
