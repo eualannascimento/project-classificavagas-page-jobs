@@ -20,7 +20,8 @@
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
             { key: 'category', label: 'Categoria', icon: 'work' },
-            { key: 'location', label: 'Localidade', icon: 'location_on' }
+            { key: 'location', label: 'Localidade', icon: 'location_on' },
+            { key: 'site_type', label: 'Plataforma', icon: 'language' }
         ],
         DATE_PERIODS: [
             { key: 'all', label: 'Todas as datas', days: null },
@@ -510,7 +511,7 @@
             if (state.datePeriod !== 'all') {
                 const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
                 if (period && period.days) {
-                    jobs = jobs.filter(job => utils.isWithinDays(job.date, period.days));
+                    jobs = jobs.filter(job => utils.isWithinDays(job.inserted_date, period.days));
                 }
             }
 
@@ -540,8 +541,8 @@
 
                 switch (field) {
                     case 'date':
-                        valA = a.date || '0000-00-00';
-                        valB = b.date || '0000-00-00';
+                        valA = a.inserted_date || '0000-00-00';
+                        valB = b.inserted_date || '0000-00-00';
                         break;
                     case 'company':
                         valA = (a.company || '').toLowerCase();
@@ -589,55 +590,112 @@
         },
 
         renderActiveFilters() {
-            const chips = [];
+            const groups = [];
 
             // Add date period chip if active
             if (state.datePeriod !== 'all') {
                 const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
                 if (period) {
-                    chips.push({ key: '_date', value: period.label, isDate: true });
+                    groups.push({ key: '_date', label: 'Data', values: [period.label], isDate: true });
                 }
             }
 
+            // Group filters by category
             Object.entries(state.selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
-                    values.forEach(value => {
-                        chips.push({ key, value });
-                    });
+                    const category = CONFIG.FILTER_CATEGORIES.find(c => c.key === key);
+                    const label = category ? category.label : key;
+                    groups.push({ key, label, values });
                 }
             });
 
-            if (chips.length === 0) {
+            if (groups.length === 0) {
                 elements.activeFilters.classList.add('hidden');
                 return;
             }
 
             elements.activeFilters.classList.remove('hidden');
-            elements.activeFiltersList.innerHTML = chips.map(({ key, value, isDate }) => `
-                <div class="active-filter-chip" data-key="${key}" data-value="${utils.escapeHtml(value)}" ${isDate ? 'data-date="true"' : ''}>
-                    <span>${utils.truncate(value, 18)}</span>
-                    <button aria-label="Remover">
-                        <span class="material-symbols-rounded">close</span>
-                    </button>
-                </div>
-            `).join('');
+            elements.activeFiltersList.innerHTML = groups.map(({ key, label, values, isDate }) => {
+                const count = values.length;
+                const displayText = count === 1 ? values[0] : `${label}: ${count}`;
+                const tooltipItems = count > 1 ? values.map(v => utils.escapeHtml(v)).join(', ') : '';
 
-            // Add remove handlers
-            elements.activeFiltersList.querySelectorAll('.active-filter-chip button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const chip = e.target.closest('.active-filter-chip');
-                    const key = chip.dataset.key;
-                    const value = chip.dataset.value;
-                    const isDate = chip.dataset.date === 'true';
+                return `
+                    <div class="active-filter-chip ${count > 1 ? 'grouped' : ''}"
+                         data-key="${key}"
+                         ${isDate ? 'data-date="true"' : ''}
+                         ${count > 1 ? `data-tooltip="${tooltipItems}"` : `data-value="${utils.escapeHtml(values[0])}"`}>
+                        <span class="chip-text">${count === 1 ? utils.truncate(displayText, 18) : displayText}</span>
+                        ${count > 1 ? `
+                            <div class="filter-dropdown">
+                                ${values.map(v => `
+                                    <div class="filter-dropdown-item" data-value="${utils.escapeHtml(v)}">
+                                        <span>${utils.escapeHtml(v)}</span>
+                                        <button aria-label="Remover ${utils.escapeHtml(v)}">
+                                            <span class="material-symbols-rounded">close</span>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        <button class="chip-close" aria-label="Remover">
+                            <span class="material-symbols-rounded">close</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
 
+            // Add event handlers
+            elements.activeFiltersList.querySelectorAll('.active-filter-chip').forEach(chip => {
+                const key = chip.dataset.key;
+                const isDate = chip.dataset.date === 'true';
+                const isGrouped = chip.classList.contains('grouped');
+
+                // Close button on chip removes all values for that category
+                chip.querySelector('.chip-close').addEventListener('click', (e) => {
+                    e.stopPropagation();
                     if (isDate) {
                         state.datePeriod = 'all';
-                        this.apply();
                     } else {
-                        this.removeFilter(key, value);
+                        delete state.selectedFilters[key];
                     }
+                    this.apply();
                 });
+
+                // For grouped chips, toggle dropdown on click
+                if (isGrouped) {
+                    chip.addEventListener('click', (e) => {
+                        if (e.target.closest('.filter-dropdown') || e.target.closest('.chip-close')) return;
+                        chip.classList.toggle('expanded');
+                    });
+
+                    // Individual remove buttons in dropdown
+                    chip.querySelectorAll('.filter-dropdown-item button').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const item = btn.closest('.filter-dropdown-item');
+                            const value = item.dataset.value;
+                            this.removeFilter(key, value);
+                        });
+                    });
+                } else if (!isDate) {
+                    // Single value chip - close removes that value
+                    chip.querySelector('.chip-close').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const value = chip.dataset.value;
+                        this.removeFilter(key, value);
+                    });
+                }
             });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.active-filter-chip')) {
+                    elements.activeFiltersList.querySelectorAll('.active-filter-chip.expanded').forEach(c => {
+                        c.classList.remove('expanded');
+                    });
+                }
+            }, { once: true });
         },
 
         removeFilter(key, value) {
@@ -712,7 +770,7 @@
         createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isVisited = state.visitedJobs.has(job.id);
-            const relativeDate = utils.formatRelativeDate(job.date);
+            const relativeDate = utils.formatRelativeDate(job.inserted_date);
 
             const card = document.createElement('a');
             card.href = job.url;
