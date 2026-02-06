@@ -446,13 +446,6 @@ input {
 [data-theme="dark"] .icon-light { display: none; }
 [data-theme="dark"] .icon-dark { display: block; }
 
-/* View toggle icons */
-.icon-cards { display: block; }
-.icon-list { display: none; }
-
-body.view-list .icon-cards { display: none; }
-body.view-list .icon-list { display: block; }
-
 /* ============================================
    SEARCH BAR
    ============================================ */
@@ -565,6 +558,18 @@ body.view-list .icon-list { display: block; }
     color: var(--md-sys-color-on-secondary-container);
 }
 
+.filter-chip-view {
+    background: var(--md-sys-color-surface-container-high);
+    border-color: transparent;
+    padding: 0 12px;
+    gap: 0;
+}
+
+.filter-chip-view .icon-cards { display: block; }
+.filter-chip-view .icon-list { display: none; }
+body.view-list .filter-chip-view .icon-cards { display: none; }
+body.view-list .filter-chip-view .icon-list { display: block; }
+
 .filter-chip-main {
     background: var(--md-sys-color-surface-container-high);
     border-color: transparent;
@@ -626,6 +631,29 @@ body.view-list .icon-list { display: block; }
     color: var(--md-sys-color-on-secondary-container);
     white-space: nowrap;
     animation: chipIn var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized-decelerate);
+    position: relative;
+    cursor: default;
+}
+
+.active-filter-chip.grouped {
+    cursor: pointer;
+}
+
+.active-filter-chip.grouped .chip-text::after {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid currentColor;
+    margin-left: 6px;
+    vertical-align: middle;
+    transition: transform var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard);
+}
+
+.active-filter-chip.grouped.expanded .chip-text::after {
+    transform: rotate(180deg);
 }
 
 @keyframes chipIn {
@@ -633,7 +661,7 @@ body.view-list .icon-list { display: block; }
     to { opacity: 1; transform: scale(1); }
 }
 
-.active-filter-chip button {
+.active-filter-chip .chip-close {
     width: 24px;
     height: 24px;
     border-radius: var(--md-sys-shape-corner-full);
@@ -641,15 +669,87 @@ body.view-list .icon-list { display: block; }
     align-items: center;
     justify-content: center;
     color: var(--md-sys-color-on-secondary-container);
+    flex-shrink: 0;
 }
 
-.active-filter-chip button:hover {
+.active-filter-chip .chip-close:hover {
     background: var(--md-sys-color-on-secondary-container);
     color: var(--md-sys-color-secondary-container);
 }
 
 .active-filter-chip .material-symbols-rounded {
     font-size: 18px;
+}
+
+/* Filter Dropdown */
+.filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    min-width: 200px;
+    max-width: 300px;
+    max-height: 250px;
+    overflow-y: auto;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-medium);
+    box-shadow: var(--md-sys-elevation-3);
+    z-index: 150;
+    display: none;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.active-filter-chip.expanded .filter-dropdown {
+    display: flex;
+}
+
+.filter-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    font: var(--md-sys-typescale-body-medium);
+    color: var(--md-sys-color-on-surface);
+    transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.filter-dropdown-item:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.filter-dropdown-item span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.filter-dropdown-item button {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--md-sys-shape-corner-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-on-surface-variant);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.filter-dropdown-item:hover button {
+    opacity: 1;
+}
+
+.filter-dropdown-item button:hover {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-error);
+}
+
+.filter-dropdown-item button .material-symbols-rounded {
+    font-size: 16px;
 }
 
 .clear-filters-btn {
