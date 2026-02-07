@@ -90,7 +90,10 @@
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
         viewToggle: $('#viewToggle'),
-        shareButton: $('#shareButton')
+        shareButton: $('#shareButton'),
+        sortToggle: $('#sortToggle'),
+        sortDropdown: $('#sortDropdown'),
+        sortLabel: $('.sort-label')
     };
 
     // ============================================
@@ -257,6 +260,68 @@
             this.apply(newMode);
             // Re-render cards for list view
             cardRenderer.render(true);
+        }
+    };
+
+    // ============================================
+    // SORT MANAGER
+    // ============================================
+    const SORT_LABELS = {
+        'date_desc': 'Recentes',
+        'date_asc': 'Antigas',
+        'company_asc': 'Empresa A-Z',
+        'company_desc': 'Empresa Z-A',
+        'title_asc': 'Título A-Z',
+        'title_desc': 'Título Z-A'
+    };
+
+    const sortManager = {
+        init() {
+            if (elements.sortToggle && elements.sortDropdown) {
+                elements.sortToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleDropdown();
+                });
+
+                elements.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const sortKey = option.dataset.sort;
+                        this.setSort(sortKey);
+                        this.closeDropdown();
+                    });
+                });
+
+                // Close on outside click
+                document.addEventListener('click', () => this.closeDropdown());
+
+                // Update label on init
+                this.updateLabel();
+            }
+        },
+
+        toggleDropdown() {
+            elements.sortDropdown.classList.toggle('hidden');
+        },
+
+        closeDropdown() {
+            elements.sortDropdown.classList.add('hidden');
+        },
+
+        setSort(sortKey) {
+            state.sortBy = sortKey;
+            this.updateLabel();
+            filterManager.apply();
+        },
+
+        updateLabel() {
+            if (elements.sortLabel) {
+                elements.sortLabel.textContent = SORT_LABELS[state.sortBy] || 'Ordenar';
+            }
+            // Update active state
+            elements.sortDropdown.querySelectorAll('.sort-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.sort === state.sortBy);
+            });
         }
     };
 
@@ -770,7 +835,7 @@
         createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isVisited = state.visitedJobs.has(job.id);
-            const relativeDate = utils.formatRelativeDate(job.inserted_date);
+            const formattedDate = utils.formatDate(job.inserted_date);
 
             const card = document.createElement('a');
             card.href = job.url;
@@ -797,7 +862,7 @@
                                 <span class="material-symbols-rounded">location_on</span>
                                 ${utils.escapeHtml(utils.truncate(job.location, 20) || 'Não informado')}
                             </span>
-                            <span class="job-list-date">${relativeDate}</span>
+                            <span class="job-list-date">${formattedDate}</span>
                         </div>
                     </div>
                 `;
@@ -822,7 +887,7 @@
                             <span class="material-symbols-rounded">location_on</span>
                             <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                         </div>
-                        <span class="job-date">${relativeDate}</span>
+                        <span class="job-date">${formattedDate}</span>
                     </div>
                 `;
             }
@@ -1263,6 +1328,7 @@
         try {
             themeManager.init();
             viewModeManager.init();
+            sortManager.init();
             shareManager.init();
             searchManager.init();
             scrollManager.init();

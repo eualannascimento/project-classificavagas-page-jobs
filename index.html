@@ -83,6 +83,40 @@
                     <span class="material-symbols-rounded icon-list">view_list</span>
                 </button>
 
+                <!-- Sort Button -->
+                <div class="sort-dropdown-container">
+                    <button class="filter-chip filter-chip-sort" id="sortToggle" aria-label="Ordenar">
+                        <span class="material-symbols-rounded">swap_vert</span>
+                        <span class="sort-label">Recentes</span>
+                    </button>
+                    <div class="sort-dropdown hidden" id="sortDropdown">
+                        <button class="sort-option" data-sort="date_desc">
+                            <span class="material-symbols-rounded">schedule</span>
+                            <span>Mais recentes</span>
+                        </button>
+                        <button class="sort-option" data-sort="date_asc">
+                            <span class="material-symbols-rounded">history</span>
+                            <span>Mais antigas</span>
+                        </button>
+                        <button class="sort-option" data-sort="company_asc">
+                            <span class="material-symbols-rounded">sort_by_alpha</span>
+                            <span>Empresa A-Z</span>
+                        </button>
+                        <button class="sort-option" data-sort="company_desc">
+                            <span class="material-symbols-rounded">sort_by_alpha</span>
+                            <span>Empresa Z-A</span>
+                        </button>
+                        <button class="sort-option" data-sort="title_asc">
+                            <span class="material-symbols-rounded">sort_by_alpha</span>
+                            <span>Título A-Z</span>
+                        </button>
+                        <button class="sort-option" data-sort="title_desc">
+                            <span class="material-symbols-rounded">sort_by_alpha</span>
+                            <span>Título Z-A</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Main Filter Button -->
                 <button class="filter-chip filter-chip-main" id="openFilters">
                     <span class="material-symbols-rounded">tune</span>

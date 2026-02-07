@@ -570,6 +570,67 @@ input {
 body.view-list .filter-chip-view .icon-cards { display: none; }
 body.view-list .filter-chip-view .icon-list { display: block; }
 
+/* Sort Dropdown */
+.sort-dropdown-container {
+    position: relative;
+}
+
+.filter-chip-sort {
+    background: var(--md-sys-color-surface-container-high);
+    border-color: transparent;
+}
+
+.filter-chip-sort .sort-label {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sort-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    min-width: 180px;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-medium);
+    box-shadow: var(--md-sys-elevation-3);
+    z-index: 150;
+    padding: 8px 0;
+    overflow: hidden;
+}
+
+.sort-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    font: var(--md-sys-typescale-body-medium);
+    color: var(--md-sys-color-on-surface);
+    transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+    text-align: left;
+}
+
+.sort-option:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.sort-option.active {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+}
+
+.sort-option .material-symbols-rounded {
+    font-size: 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.sort-option.active .material-symbols-rounded {
+    color: var(--md-sys-color-on-secondary-container);
+}
+
 .filter-chip-main {
     background: var(--md-sys-color-surface-container-high);
     border-color: transparent;
