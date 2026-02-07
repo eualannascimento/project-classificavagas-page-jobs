@@ -1030,34 +1030,46 @@ input {
     color: var(--md-sys-color-on-surface-variant);
 }
 
-.job-card.visited::after {
-    content: 'Visto';
+/* Visited indicator on icon */
+.job-card.visited .job-card-icon::after {
+    content: '✓';
     position: absolute;
-    top: 8px;
-    right: 8px;
-    font: var(--md-sys-typescale-label-small);
-    color: var(--md-sys-color-on-success-container);
-    background: var(--md-sys-color-success-container);
-    padding: 2px 8px;
+    bottom: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: var(--md-sys-color-success);
+    color: white;
     border-radius: var(--md-sys-shape-corner-full);
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--md-sys-color-surface-container-lowest);
 }
 
-/* List view visited */
-.jobs-grid.list-view .job-card.visited::after {
-    top: 50%;
-    transform: translateY(-50%);
-    right: 16px;
+.job-card-icon {
+    position: relative;
 }
 
-/* Compact view visited */
-.jobs-grid.compact-view .job-card.visited::after {
-    position: static;
-    margin-left: 8px;
-    flex-shrink: 0;
+/* List view visited - same indicator */
+.jobs-grid.list-view .job-card.visited .job-card-icon::after {
+    bottom: -3px;
+    right: -3px;
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
 }
 
-.jobs-grid.compact-view .job-card.visited .job-compact-content {
-    padding-right: 0;
+/* Compact view visited - subtle left border */
+.jobs-grid.compact-view .job-card.visited {
+    border-left: 3px solid var(--md-sys-color-success);
+    padding-left: 13px;
+}
+
+.jobs-grid.compact-view .job-card.visited .job-card-icon::after {
+    display: none;
 }
 
 .job-card-header {
@@ -1182,9 +1194,8 @@ input {
     background: var(--md-sys-color-surface-container);
 }
 
-[data-theme="dark"] .job-card.visited::after {
-    background: var(--md-sys-color-success-container);
-    color: var(--md-sys-color-on-success-container);
+[data-theme="dark"] .job-card.visited .job-card-icon::after {
+    border-color: var(--md-sys-color-surface-container-low);
 }
 
 [data-theme="dark"] .job-card:hover {
@@ -1312,10 +1323,6 @@ input {
 
 .jobs-grid.compact-view .job-card::before {
     display: none;
-}
-
-.jobs-grid.compact-view .job-card.visited {
-    background: transparent;
 }
 
 .job-compact-content {
