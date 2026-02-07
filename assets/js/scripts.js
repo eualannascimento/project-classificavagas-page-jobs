@@ -37,7 +37,9 @@
             { key: 'company_desc', label: 'Empresa Z-A', icon: 'sort_by_alpha' },
             { key: 'title_asc', label: 'Título A-Z', icon: 'sort_by_alpha' },
             { key: 'title_desc', label: 'Título Z-A', icon: 'sort_by_alpha' }
-        ]
+        ],
+        MAX_SEARCH_HISTORY: 5,
+        SKELETON_COUNT: 8
     };
 
     const state = {
@@ -50,10 +52,12 @@
         selectedFilters: {},
         tempFilters: {},
         filterOptions: {},
+        filterCounts: {}, // counts per filter option
         visitedJobs: new Set(),
         datePeriod: 'all',
         sortBy: 'date_desc',
-        viewMode: 'cards' // 'cards' or 'list'
+        viewMode: 'cards', // 'cards', 'list', or 'compact'
+        searchHistory: [] // recent searches
     };
 
     // ============================================
@@ -90,7 +94,10 @@
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
         viewToggle: $('#viewToggle'),
-        shareButton: $('#shareButton')
+        shareButton: $('#shareButton'),
+        sortToggle: $('#sortToggle'),
+        sortDropdown: $('#sortDropdown'),
+        sortLabel: $('.sort-label')
     };
 
     // ============================================
@@ -229,10 +236,17 @@
     // ============================================
     // VIEW MODE MANAGER
     // ============================================
+    const VIEW_MODES = ['cards', 'list', 'compact'];
+    const VIEW_MODE_ICONS = {
+        'cards': 'grid_view',
+        'list': 'view_list',
+        'compact': 'density_small'
+    };
+
     const viewModeManager = {
         init() {
             const saved = localStorage.getItem('cv_view');
-            state.viewMode = saved && ['cards', 'list'].includes(saved) ? saved : 'cards';
+            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : 'cards';
             this.apply(state.viewMode);
 
             if (elements.viewToggle) {
@@ -245,18 +259,103 @@
             localStorage.setItem('cv_view', mode);
 
             if (elements.jobsGrid) {
-                elements.jobsGrid.classList.toggle('list-view', mode === 'list');
+                elements.jobsGrid.classList.remove('list-view', 'compact-view');
+                if (mode === 'list') {
+                    elements.jobsGrid.classList.add('list-view');
+                } else if (mode === 'compact') {
+                    elements.jobsGrid.classList.add('compact-view');
+                }
             }
 
             // Update icon visibility
-            document.body.classList.toggle('view-list', mode === 'list');
+            document.body.classList.remove('view-cards', 'view-list', 'view-compact');
+            document.body.classList.add(`view-${mode}`);
+
+            // Update toggle button icon
+            this.updateIcon();
+        },
+
+        updateIcon() {
+            if (!elements.viewToggle) return;
+            const currentIdx = VIEW_MODES.indexOf(state.viewMode);
+            const nextIdx = (currentIdx + 1) % VIEW_MODES.length;
+            const nextMode = VIEW_MODES[nextIdx];
+            const nextIcon = VIEW_MODE_ICONS[nextMode];
+
+            // Update all icons in the toggle button
+            elements.viewToggle.innerHTML = `<span class="material-symbols-rounded">${nextIcon}</span>`;
+            elements.viewToggle.setAttribute('aria-label', `Alternar para ${nextMode === 'cards' ? 'cards' : nextMode === 'list' ? 'lista' : 'compacto'}`);
         },
 
         toggle() {
-            const newMode = state.viewMode === 'cards' ? 'list' : 'cards';
+            const currentIdx = VIEW_MODES.indexOf(state.viewMode);
+            const nextIdx = (currentIdx + 1) % VIEW_MODES.length;
+            const newMode = VIEW_MODES[nextIdx];
             this.apply(newMode);
-            // Re-render cards for list view
+            // Re-render cards for new view
             cardRenderer.render(true);
+        }
+    };
+
+    // ============================================
+    // SORT MANAGER
+    // ============================================
+    const SORT_LABELS = {
+        'date_desc': 'Recentes',
+        'date_asc': 'Antigas',
+        'company_asc': 'Empresa A-Z',
+        'company_desc': 'Empresa Z-A',
+        'title_asc': 'Título A-Z',
+        'title_desc': 'Título Z-A'
+    };
+
+    const sortManager = {
+        init() {
+            if (elements.sortToggle && elements.sortDropdown) {
+                elements.sortToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleDropdown();
+                });
+
+                elements.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const sortKey = option.dataset.sort;
+                        this.setSort(sortKey);
+                        this.closeDropdown();
+                    });
+                });
+
+                // Close on outside click
+                document.addEventListener('click', () => this.closeDropdown());
+
+                // Update label on init
+                this.updateLabel();
+            }
+        },
+
+        toggleDropdown() {
+            elements.sortDropdown.classList.toggle('hidden');
+        },
+
+        closeDropdown() {
+            elements.sortDropdown.classList.add('hidden');
+        },
+
+        setSort(sortKey) {
+            state.sortBy = sortKey;
+            this.updateLabel();
+            filterManager.apply();
+        },
+
+        updateLabel() {
+            if (elements.sortLabel) {
+                elements.sortLabel.textContent = SORT_LABELS[state.sortBy] || 'Ordenar';
+            }
+            // Update active state
+            elements.sortDropdown.querySelectorAll('.sort-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.sort === state.sortBy);
+            });
         }
     };
 
@@ -384,10 +483,91 @@
     };
 
     // ============================================
+    // SKELETON LOADER
+    // ============================================
+    const skeletonLoader = {
+        show() {
+            const grid = elements.jobsGrid;
+            if (!grid) return;
+
+            const count = CONFIG.SKELETON_COUNT;
+            const mode = state.viewMode;
+
+            grid.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                grid.appendChild(this.createSkeleton(mode, i));
+            }
+        },
+
+        createSkeleton(mode, index) {
+            const card = document.createElement('div');
+            card.className = 'skeleton-card';
+            card.style.animationDelay = `${index * 0.05}s`;
+
+            if (mode === 'compact') {
+                card.innerHTML = `
+                    <div class="skeleton-compact-content">
+                        <div class="skeleton-compact-main">
+                            <div class="skeleton-compact-title"></div>
+                            <div class="skeleton-compact-company"></div>
+                        </div>
+                    </div>
+                `;
+            } else if (mode === 'list') {
+                card.innerHTML = `
+                    <div class="skeleton-list-content">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-list-main">
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-subtitle"></div>
+                        </div>
+                        <div class="skeleton-list-meta">
+                            <div class="skeleton-location"></div>
+                            <div class="skeleton-date"></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="skeleton-header">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-title-group">
+                            <div class="skeleton-title"></div>
+                            <div class="skeleton-subtitle"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-body">
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-tag"></div>
+                        <div class="skeleton-tag"></div>
+                    </div>
+                    <div class="skeleton-footer">
+                        <div class="skeleton-location"></div>
+                        <div class="skeleton-date"></div>
+                    </div>
+                `;
+            }
+
+            return card;
+        },
+
+        hide() {
+            const skeletons = elements.jobsGrid?.querySelectorAll('.skeleton-card');
+            if (skeletons) {
+                skeletons.forEach(s => s.remove());
+            }
+        }
+    };
+
+    // ============================================
     // DATA LOADER
     // ============================================
     const dataLoader = {
         async load() {
+            // Show skeleton loading
+            skeletonLoader.show();
+
             try {
                 const response = await fetch(CONFIG.DATA_URL);
 
@@ -436,6 +616,12 @@
                 const values = [...new Set(state.allJobs.map(j => j[key]).filter(Boolean))];
                 values.sort((a, b) => a.localeCompare(b, 'pt-BR'));
                 state.filterOptions[key] = values;
+
+                // Count jobs per filter option
+                state.filterCounts[key] = {};
+                values.forEach(value => {
+                    state.filterCounts[key][value] = state.allJobs.filter(j => j[key] === value).length;
+                });
             });
         },
 
@@ -770,7 +956,7 @@
         createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isVisited = state.visitedJobs.has(job.id);
-            const relativeDate = utils.formatRelativeDate(job.inserted_date);
+            const formattedDate = utils.formatDate(job.inserted_date);
 
             const card = document.createElement('a');
             card.href = job.url;
@@ -782,7 +968,15 @@
             const levelName = job.level ? job.level.split(' - ').slice(1).join(' - ') : '';
             const categoryName = job.category ? job.category.split(' - ').slice(1).join(' - ') : '';
 
-            if (state.viewMode === 'list') {
+            if (state.viewMode === 'compact') {
+                card.innerHTML = `
+                    <div class="job-compact-content">
+                        <span class="job-compact-title">${utils.escapeHtml(utils.truncate(job.title, 45))}</span>
+                        <span class="job-compact-separator">·</span>
+                        <span class="job-compact-company">${utils.escapeHtml(utils.truncate(job.company, 25))}</span>
+                    </div>
+                `;
+            } else if (state.viewMode === 'list') {
                 card.innerHTML = `
                     <div class="job-list-content">
                         <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
@@ -797,7 +991,7 @@
                                 <span class="material-symbols-rounded">location_on</span>
                                 ${utils.escapeHtml(utils.truncate(job.location, 20) || 'Não informado')}
                             </span>
-                            <span class="job-list-date">${relativeDate}</span>
+                            <span class="job-list-date">${formattedDate}</span>
                         </div>
                     </div>
                 `;
@@ -822,7 +1016,7 @@
                             <span class="material-symbols-rounded">location_on</span>
                             <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
                         </div>
-                        <span class="job-date">${relativeDate}</span>
+                        <span class="job-date">${formattedDate}</span>
                     </div>
                 `;
             }
@@ -982,13 +1176,19 @@
 
         renderOptions(key, options) {
             const selected = state.tempFilters[key] || [];
+            const counts = state.filterCounts[key] || {};
 
-            return options.map(opt => `
-                <button class="filter-option-chip ${selected.includes(opt) ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}">
-                    <span class="material-symbols-rounded check-icon">check</span>
-                    <span>${utils.escapeHtml(utils.truncate(opt, 22))}</span>
-                </button>
-            `).join('');
+            return options.map(opt => {
+                const count = counts[opt] || 0;
+                const countStr = count.toLocaleString('pt-BR');
+                return `
+                    <button class="filter-option-chip ${selected.includes(opt) ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}">
+                        <span class="material-symbols-rounded check-icon">check</span>
+                        <span>${utils.escapeHtml(utils.truncate(opt, 18))}</span>
+                        <span class="filter-option-count">(${countStr})</span>
+                    </button>
+                `;
+            }).join('');
         },
 
         addSectionListeners() {
@@ -1155,6 +1355,142 @@
     };
 
     // ============================================
+    // SEARCH HISTORY MANAGER
+    // ============================================
+    const searchHistoryManager = {
+        storageKey: 'cv_search_history',
+
+        init() {
+            this.load();
+            this.createDropdown();
+        },
+
+        load() {
+            try {
+                const saved = localStorage.getItem(this.storageKey);
+                state.searchHistory = saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                state.searchHistory = [];
+            }
+        },
+
+        save() {
+            localStorage.setItem(this.storageKey, JSON.stringify(state.searchHistory));
+        },
+
+        add(query) {
+            if (!query || query.length < 2) return;
+
+            // Remove duplicates
+            state.searchHistory = state.searchHistory.filter(q => q.toLowerCase() !== query.toLowerCase());
+
+            // Add to beginning
+            state.searchHistory.unshift(query);
+
+            // Limit size
+            if (state.searchHistory.length > CONFIG.MAX_SEARCH_HISTORY) {
+                state.searchHistory = state.searchHistory.slice(0, CONFIG.MAX_SEARCH_HISTORY);
+            }
+
+            this.save();
+            this.updateDropdown();
+        },
+
+        remove(query) {
+            state.searchHistory = state.searchHistory.filter(q => q !== query);
+            this.save();
+            this.updateDropdown();
+        },
+
+        clear() {
+            state.searchHistory = [];
+            this.save();
+            this.updateDropdown();
+        },
+
+        createDropdown() {
+            const searchBar = document.querySelector('.search-bar');
+            if (!searchBar) return;
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'search-history-dropdown hidden';
+            dropdown.id = 'searchHistoryDropdown';
+            searchBar.parentElement.appendChild(dropdown);
+
+            this.updateDropdown();
+        },
+
+        updateDropdown() {
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            if (!dropdown) return;
+
+            if (state.searchHistory.length === 0) {
+                dropdown.innerHTML = '';
+                return;
+            }
+
+            dropdown.innerHTML = `
+                <div class="search-history-header">
+                    <span>Buscas recentes</span>
+                    <button class="search-history-clear" aria-label="Limpar histórico">
+                        <span class="material-symbols-rounded">delete_sweep</span>
+                    </button>
+                </div>
+                <div class="search-history-list">
+                    ${state.searchHistory.map(query => `
+                        <div class="search-history-item" data-query="${utils.escapeHtml(query)}">
+                            <span class="material-symbols-rounded">history</span>
+                            <span class="search-history-text">${utils.escapeHtml(query)}</span>
+                            <button class="search-history-remove" aria-label="Remover">
+                                <span class="material-symbols-rounded">close</span>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // Add event listeners
+            dropdown.querySelector('.search-history-clear')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.clear();
+                this.hide();
+            });
+
+            dropdown.querySelectorAll('.search-history-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.search-history-remove')) return;
+                    const query = item.dataset.query;
+                    elements.searchInput.value = query;
+                    elements.searchClear.classList.remove('hidden');
+                    state.searchQuery = query;
+                    filterManager.apply();
+                    this.hide();
+                });
+            });
+
+            dropdown.querySelectorAll('.search-history-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const item = btn.closest('.search-history-item');
+                    const query = item.dataset.query;
+                    this.remove(query);
+                });
+            });
+        },
+
+        show() {
+            if (state.searchHistory.length === 0) return;
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            if (dropdown) dropdown.classList.remove('hidden');
+        },
+
+        hide() {
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+    };
+
+    // ============================================
     // SEARCH MANAGER
     // ============================================
     const searchManager = {
@@ -1162,12 +1498,28 @@
             const search = utils.debounce(() => {
                 state.searchQuery = elements.searchInput.value.trim();
                 filterManager.apply();
+
+                // Save to history when search is applied
+                if (state.searchQuery.length >= 2) {
+                    searchHistoryManager.add(state.searchQuery);
+                }
             }, CONFIG.SEARCH_DEBOUNCE);
 
             elements.searchInput.addEventListener('input', () => {
                 const hasValue = elements.searchInput.value.length > 0;
                 elements.searchClear.classList.toggle('hidden', !hasValue);
                 search();
+            });
+
+            elements.searchInput.addEventListener('focus', () => {
+                if (!elements.searchInput.value) {
+                    searchHistoryManager.show();
+                }
+            });
+
+            elements.searchInput.addEventListener('blur', () => {
+                // Delay to allow click on history items
+                setTimeout(() => searchHistoryManager.hide(), 200);
             });
 
             elements.searchClear.addEventListener('click', () => {
@@ -1263,7 +1615,9 @@
         try {
             themeManager.init();
             viewModeManager.init();
+            sortManager.init();
             shareManager.init();
+            searchHistoryManager.init();
             searchManager.init();
             scrollManager.init();
             quickFilters.init();
