@@ -498,10 +498,6 @@ input {
 }
 
 /* Search History Dropdown */
-.search-bar-container {
-    position: relative;
-}
-
 .search-history-dropdown {
     position: absolute;
     top: 100%;
