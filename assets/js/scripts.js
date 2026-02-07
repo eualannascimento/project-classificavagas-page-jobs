@@ -329,13 +329,30 @@
                 // Close on outside click
                 document.addEventListener('click', () => this.closeDropdown());
 
+                // Close on scroll
+                window.addEventListener('scroll', () => this.closeDropdown(), { passive: true });
+
                 // Update label on init
                 this.updateLabel();
             }
         },
 
         toggleDropdown() {
-            elements.sortDropdown.classList.toggle('hidden');
+            const isHidden = elements.sortDropdown.classList.contains('hidden');
+            if (isHidden) {
+                this.openDropdown();
+            } else {
+                this.closeDropdown();
+            }
+        },
+
+        openDropdown() {
+            // Position dropdown below the button
+            const rect = elements.sortToggle.getBoundingClientRect();
+            elements.sortDropdown.style.position = 'fixed';
+            elements.sortDropdown.style.top = `${rect.bottom + 4}px`;
+            elements.sortDropdown.style.left = `${rect.left}px`;
+            elements.sortDropdown.classList.remove('hidden');
         },
 
         closeDropdown() {
@@ -971,9 +988,10 @@
             if (state.viewMode === 'compact') {
                 card.innerHTML = `
                     <div class="job-compact-content">
-                        <span class="job-compact-title">${utils.escapeHtml(utils.truncate(job.title, 45))}</span>
+                        <span class="job-compact-title">${utils.escapeHtml(utils.truncate(job.title, 40))}</span>
                         <span class="job-compact-separator">·</span>
-                        <span class="job-compact-company">${utils.escapeHtml(utils.truncate(job.company, 25))}</span>
+                        <span class="job-compact-company">${utils.escapeHtml(utils.truncate(job.company, 20))}</span>
+                        <span class="job-compact-date">${formattedDate}</span>
                     </div>
                 `;
             } else if (state.viewMode === 'list') {
