@@ -683,15 +683,12 @@ input {
 }
 
 .sort-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 4px;
+    position: fixed;
     min-width: 180px;
     background: var(--md-sys-color-surface-container-high);
     border-radius: var(--md-sys-shape-corner-medium);
     box-shadow: var(--md-sys-elevation-3);
-    z-index: 150;
+    z-index: 200;
     padding: 8px 0;
     overflow: hidden;
 }
@@ -1024,8 +1021,43 @@ input {
 }
 
 .job-card.visited {
-    opacity: 0.7;
-    border-left: 3px solid var(--md-sys-color-success);
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.job-card.visited .job-card-title h3,
+.job-card.visited .job-list-main h3,
+.job-card.visited .job-compact-title {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.job-card.visited::after {
+    content: 'Visto';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font: var(--md-sys-typescale-label-small);
+    color: var(--md-sys-color-on-success-container);
+    background: var(--md-sys-color-success-container);
+    padding: 2px 8px;
+    border-radius: var(--md-sys-shape-corner-full);
+}
+
+/* List view visited */
+.jobs-grid.list-view .job-card.visited::after {
+    top: 50%;
+    transform: translateY(-50%);
+    right: 16px;
+}
+
+/* Compact view visited */
+.jobs-grid.compact-view .job-card.visited::after {
+    position: static;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.jobs-grid.compact-view .job-card.visited .job-compact-content {
+    padding-right: 0;
 }
 
 .job-card-header {
@@ -1144,6 +1176,15 @@ input {
     background: var(--md-sys-color-surface-container-low);
     border-color: transparent;
     box-shadow: var(--md-sys-elevation-1);
+}
+
+[data-theme="dark"] .job-card.visited {
+    background: var(--md-sys-color-surface-container);
+}
+
+[data-theme="dark"] .job-card.visited::after {
+    background: var(--md-sys-color-success-container);
+    color: var(--md-sys-color-on-success-container);
 }
 
 [data-theme="dark"] .job-card:hover {
@@ -1274,8 +1315,7 @@ input {
 }
 
 .jobs-grid.compact-view .job-card.visited {
-    border-left: 2px solid var(--md-sys-color-success);
-    padding-left: 14px;
+    background: transparent;
 }
 
 .job-compact-content {
@@ -1308,8 +1348,15 @@ input {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 1;
+}
+
+.job-compact-date {
+    font: var(--md-sys-typescale-label-small);
+    color: var(--md-sys-color-outline);
+    white-space: nowrap;
     flex-shrink: 0;
-    max-width: 40%;
+    margin-left: auto;
 }
 
 [data-theme="dark"] .jobs-grid.compact-view .job-card {
