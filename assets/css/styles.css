@@ -497,6 +497,110 @@ input {
     height: 40px;
 }
 
+/* Search History Dropdown */
+.search-bar-container {
+    position: relative;
+}
+
+.search-history-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 16px;
+    right: 16px;
+    max-width: 1400px;
+    margin: 4px auto 0;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-medium);
+    box-shadow: var(--md-sys-elevation-3);
+    z-index: 150;
+    overflow: hidden;
+}
+
+.search-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px;
+    font: var(--md-sys-typescale-label-medium);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.search-history-clear {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--md-sys-shape-corner-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-error);
+    transition: background var(--md-sys-motion-duration-short3) var(--md-sys-motion-easing-standard);
+}
+
+.search-history-clear:hover {
+    background: var(--md-sys-color-error-container);
+}
+
+.search-history-clear .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.search-history-list {
+    padding-bottom: 8px;
+}
+
+.search-history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.search-history-item:hover {
+    background: var(--md-sys-color-surface-container-highest);
+}
+
+.search-history-item .material-symbols-rounded {
+    font-size: 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.search-history-text {
+    flex: 1;
+    font: var(--md-sys-typescale-body-medium);
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-history-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--md-sys-shape-corner-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-on-surface-variant);
+    opacity: 0;
+    transition: opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                background var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+}
+
+.search-history-item:hover .search-history-remove {
+    opacity: 1;
+}
+
+.search-history-remove:hover {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-error);
+}
+
+.search-history-remove .material-symbols-rounded {
+    font-size: 16px;
+}
+
 /* ============================================
    FILTER CHIPS
    ============================================ */
@@ -564,11 +668,6 @@ input {
     padding: 0 12px;
     gap: 0;
 }
-
-.filter-chip-view .icon-cards { display: block; }
-.filter-chip-view .icon-list { display: none; }
-body.view-list .filter-chip-view .icon-cards { display: none; }
-body.view-list .filter-chip-view .icon-list { display: block; }
 
 /* Sort Dropdown */
 .sort-dropdown-container {
@@ -1146,6 +1245,87 @@ body.view-list .filter-chip-view .icon-list { display: block; }
 }
 
 /* ============================================
+   COMPACT VIEW STYLES
+   ============================================ */
+.jobs-grid.compact-view {
+    grid-template-columns: 1fr;
+    gap: 4px;
+}
+
+@media (min-width: 600px) {
+    .jobs-grid.compact-view {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+}
+
+.jobs-grid.compact-view .job-card {
+    padding: 10px 16px;
+    border-radius: var(--md-sys-shape-corner-small);
+    box-shadow: none;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: transparent;
+}
+
+.jobs-grid.compact-view .job-card:hover {
+    background: var(--md-sys-color-surface-container-low);
+    transform: none;
+    box-shadow: none;
+}
+
+.jobs-grid.compact-view .job-card::before {
+    display: none;
+}
+
+.jobs-grid.compact-view .job-card.visited {
+    border-left: 2px solid var(--md-sys-color-success);
+    padding-left: 14px;
+}
+
+.job-compact-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.job-compact-title {
+    font: var(--md-sys-typescale-body-medium);
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.job-compact-separator {
+    color: var(--md-sys-color-outline);
+    flex-shrink: 0;
+}
+
+.job-compact-company {
+    font: var(--md-sys-typescale-body-small);
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+    max-width: 40%;
+}
+
+[data-theme="dark"] .jobs-grid.compact-view .job-card {
+    background: transparent;
+    border-color: var(--md-sys-color-outline-variant);
+}
+
+[data-theme="dark"] .jobs-grid.compact-view .job-card:hover {
+    background: var(--md-sys-color-surface-container);
+}
+
+/* ============================================
    LOADING & EMPTY STATES
    ============================================ */
 .loading-more {
@@ -1169,6 +1349,190 @@ body.view-list .filter-chip-view .icon-list { display: block; }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Skeleton Loading */
+.skeleton-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--md-sys-color-surface-container-lowest);
+    border-radius: var(--md-sys-shape-corner-medium);
+    overflow: hidden;
+    box-shadow: var(--md-sys-elevation-1);
+    border: 1px solid transparent;
+}
+
+.skeleton-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    padding-bottom: 12px;
+}
+
+.skeleton-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--md-sys-shape-corner-medium);
+    background: var(--md-sys-color-surface-container-high);
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-title-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-title {
+    height: 20px;
+    width: 80%;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-small);
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.1s;
+}
+
+.skeleton-subtitle {
+    height: 14px;
+    width: 50%;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-small);
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.2s;
+}
+
+.skeleton-body {
+    padding: 0 16px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.skeleton-tag {
+    height: 24px;
+    width: 70px;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-full);
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.3s;
+}
+
+.skeleton-tag:nth-child(2) {
+    width: 90px;
+    animation-delay: 0.4s;
+}
+
+.skeleton-tag:nth-child(3) {
+    width: 60px;
+    animation-delay: 0.5s;
+}
+
+.skeleton-footer {
+    margin-top: auto;
+    padding: 12px 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.skeleton-location {
+    height: 14px;
+    width: 120px;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-small);
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.6s;
+}
+
+.skeleton-date {
+    height: 12px;
+    width: 60px;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-small);
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.7s;
+}
+
+@keyframes shimmer {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* List view skeleton */
+.jobs-grid.list-view .skeleton-card {
+    flex-direction: row;
+    padding: 12px 16px;
+}
+
+.skeleton-list-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.skeleton-list-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.skeleton-list-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Compact view skeleton */
+.jobs-grid.compact-view .skeleton-card {
+    padding: 8px 12px;
+}
+
+.skeleton-compact-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.skeleton-compact-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skeleton-compact-title {
+    height: 16px;
+    width: 40%;
+    background: var(--md-sys-color-surface-container-high);
+    border-radius: var(--md-sys-shape-corner-small);
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-compact-company {
+    height: 14px;
+    width: 25%;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-small);
+    animation: shimmer 1.5s infinite;
+    animation-delay: 0.2s;
+}
+
+[data-theme="dark"] .skeleton-card {
+    background: var(--md-sys-color-surface-container-low);
 }
 
 .empty-state {
@@ -1484,6 +1848,17 @@ body.view-list .filter-chip-view .icon-list { display: block; }
 
 .filter-option-chip.selected .check-icon {
     display: block;
+}
+
+.filter-option-count {
+    font: var(--md-sys-typescale-label-small);
+    color: var(--md-sys-color-outline);
+    margin-left: auto;
+}
+
+.filter-option-chip.selected .filter-option-count {
+    color: var(--md-sys-color-on-secondary-container);
+    opacity: 0.7;
 }
 
 /* ============================================
