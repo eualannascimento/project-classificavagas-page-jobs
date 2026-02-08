@@ -2033,3 +2033,108 @@ input {
         display: none;
     }
 }
+
+/* ============================================
+   MOBILE APP OPTIMIZATIONS
+   Prepared for future PWA/Native app conversion
+   ============================================ */
+
+/* Minimum touch target sizes (44px for accessibility) */
+@media (pointer: coarse) {
+    .icon-button,
+    .filter-chip,
+    .sort-option,
+    .filter-option-chip {
+        min-height: 44px;
+    }
+
+    .filter-chip {
+        padding: 0 16px;
+    }
+
+    .sort-option {
+        padding: 14px 16px;
+    }
+
+    .filter-section-header {
+        min-height: 52px;
+    }
+}
+
+/* Prevent text selection on interactive elements (app-like feel) */
+.filter-chip,
+.icon-button,
+.job-card,
+.sort-option,
+.filter-option-chip,
+.fab,
+.filled-button,
+.text-button {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Active states for touch feedback */
+@media (hover: none) and (pointer: coarse) {
+    .filter-chip:active,
+    .icon-button:active,
+    .sort-option:active,
+    .filter-option-chip:active {
+        opacity: 0.7;
+        transform: scale(0.97);
+    }
+
+    .fab:active {
+        transform: scale(0.95);
+    }
+
+    /* Smooth scrolling for touch */
+    .filter-chips-scroll,
+    .active-filters-scroll,
+    .filter-options-list,
+    .bottom-sheet-content {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+}
+
+/* Tablet landscape optimizations */
+@media (min-width: 905px) and (max-width: 1239px) {
+    .jobs-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .top-app-bar-content {
+        padding: 0 24px;
+    }
+}
+
+/* Large tablet / iPad Pro */
+@media (min-width: 1024px) and (pointer: coarse) {
+    .main-content {
+        padding: 0 24px;
+    }
+
+    .jobs-grid {
+        gap: 20px;
+    }
+}
+
+/* Standalone mode (when installed as PWA) */
+@media (display-mode: standalone) {
+    .top-app-bar {
+        padding-top: calc(16px + var(--safe-area-top));
+    }
+
+    body {
+        overscroll-behavior-y: contain;
+    }
+}
+
+/* Fullscreen mode */
+@media (display-mode: fullscreen) {
+    .top-app-bar {
+        padding-top: var(--safe-area-top);
+    }
+}

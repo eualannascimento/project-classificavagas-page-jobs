@@ -20,8 +20,12 @@
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
             { key: 'category', label: 'Categoria', icon: 'work' },
-            { key: 'location', label: 'Localidade', icon: 'location_on' },
-            { key: 'site_type', label: 'Plataforma', icon: 'language' }
+            { key: 'site_type', label: 'Plataforma', icon: 'language' },
+            { key: 'location_scope', label: 'Abrangência', icon: 'public' },
+            { key: 'location_country', label: 'País', icon: 'flag' },
+            { key: 'location_state', label: 'Estado', icon: 'map' },
+            { key: 'location_city', label: 'Cidade', icon: 'location_city' },
+            { key: 'location', label: 'Localização', icon: 'location_on' }
         ],
         DATE_PERIODS: [
             { key: 'all', label: 'Todas as datas', days: null },
@@ -150,13 +154,31 @@
             return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
 
-        storageKey: (id) => `cv_v_${id}`,
+        // Use URL hash for stable job identification (survives JSON reordering)
+        hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(36);
+        },
 
-        isVisited: (id) => localStorage.getItem(utils.storageKey(id)) === '1',
+        getJobKey(job) {
+            // Use URL as unique identifier (most stable)
+            return `cv_v_${this.hashCode(job.url || job.title + job.company)}`;
+        },
 
-        markVisited(id) {
-            localStorage.setItem(utils.storageKey(id), '1');
-            state.visitedJobs.add(id);
+        isVisited(job) {
+            const key = typeof job === 'string' ? job : this.getJobKey(job);
+            return localStorage.getItem(key) === '1';
+        },
+
+        markVisited(job) {
+            const key = this.getJobKey(job);
+            localStorage.setItem(key, '1');
+            state.visitedJobs.add(key);
         },
 
         isWithinDays(dateStr, days) {
@@ -310,15 +332,20 @@
     };
 
     const sortManager = {
+        isOpen: false,
+
         init() {
             if (elements.sortToggle && elements.sortDropdown) {
+                // Use both click and touchend for better mobile support
                 elements.sortToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     this.toggleDropdown();
                 });
 
                 elements.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
                     option.addEventListener('click', (e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         const sortKey = option.dataset.sort;
                         this.setSort(sortKey);
@@ -326,11 +353,21 @@
                     });
                 });
 
-                // Close on outside click
-                document.addEventListener('click', () => this.closeDropdown());
+                // Close on outside click/touch
+                document.addEventListener('click', (e) => {
+                    if (this.isOpen && !elements.sortToggle.contains(e.target) && !elements.sortDropdown.contains(e.target)) {
+                        this.closeDropdown();
+                    }
+                });
 
-                // Close on scroll
-                window.addEventListener('scroll', () => this.closeDropdown(), { passive: true });
+                // Close on scroll (with debounce to avoid immediate close on mobile)
+                let scrollTimeout;
+                window.addEventListener('scroll', () => {
+                    if (this.isOpen) {
+                        clearTimeout(scrollTimeout);
+                        scrollTimeout = setTimeout(() => this.closeDropdown(), 100);
+                    }
+                }, { passive: true });
 
                 // Update label on init
                 this.updateLabel();
@@ -338,11 +375,10 @@
         },
 
         toggleDropdown() {
-            const isHidden = elements.sortDropdown.classList.contains('hidden');
-            if (isHidden) {
-                this.openDropdown();
-            } else {
+            if (this.isOpen) {
                 this.closeDropdown();
+            } else {
+                this.openDropdown();
             }
         },
 
@@ -353,10 +389,12 @@
             elements.sortDropdown.style.top = `${rect.bottom + 4}px`;
             elements.sortDropdown.style.left = `${rect.left}px`;
             elements.sortDropdown.classList.remove('hidden');
+            this.isOpen = true;
         },
 
         closeDropdown() {
             elements.sortDropdown.classList.add('hidden');
+            this.isOpen = false;
         },
 
         setSort(sortKey) {
@@ -596,10 +634,11 @@
 
                 state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
 
-                // Load visited
+                // Load visited (using URL-based keys for stability)
                 state.allJobs.forEach(job => {
-                    if (utils.isVisited(job.id)) {
-                        state.visitedJobs.add(job.id);
+                    const key = utils.getJobKey(job);
+                    if (utils.isVisited(key)) {
+                        state.visitedJobs.add(key);
                     }
                 });
 
@@ -972,7 +1011,8 @@
 
         createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
-            const isVisited = state.visitedJobs.has(job.id);
+            const jobKey = utils.getJobKey(job);
+            const isVisited = state.visitedJobs.has(jobKey);
             const formattedDate = utils.formatDate(job.inserted_date);
 
             const card = document.createElement('a');
@@ -1040,8 +1080,8 @@
             }
 
             card.addEventListener('click', () => {
-                if (!state.visitedJobs.has(job.id)) {
-                    utils.markVisited(job.id);
+                if (!state.visitedJobs.has(jobKey)) {
+                    utils.markVisited(job);
                     card.classList.add('visited');
                 }
             });
