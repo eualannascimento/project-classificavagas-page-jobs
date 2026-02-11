@@ -777,7 +777,7 @@
         },
 
         // Calculate counts for other filters based on current selection
-        recalculateFilterCounts(currentJobs) {
+        recalculateFilterCounts(currentJobs, filters = state.selectedFilters, datePeriod = state.datePeriod, quickFilter = state.quickFilter, searchQuery = state.searchQuery) {
             // Reset counts
             state.dynamicFilterCounts = {};
 
@@ -788,7 +788,7 @@
 
             CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
                 // Get all filters EXCEPT the current category
-                const otherFilters = { ...state.selectedFilters };
+                const otherFilters = { ...filters };
                 delete otherFilters[key];
 
                 // Base set of jobs to count from:
@@ -796,8 +796,8 @@
                 let baseJobs = state.allJobs;
 
                 // Apply search query
-                if (state.searchQuery) {
-                    const q = utils.normalize(state.searchQuery);
+                if (searchQuery) {
+                    const q = utils.normalize(searchQuery);
                     baseJobs = baseJobs.filter(job => {
                         const text = utils.normalize([
                             job.title, job.company, job.company_type,
@@ -808,9 +808,9 @@
                 }
 
                 // Apply quick filter
-                if (state.quickFilter !== 'all') {
+                if (quickFilter !== 'all') {
                     baseJobs = baseJobs.filter(job => {
-                        switch (state.quickFilter) {
+                        switch (quickFilter) {
                             case 'remote': return job['remote?'] === '01 - Sim';
                             case 'hybrid': return job.contract === 'HIBRIDO';
                             case 'onsite': return job['remote?'] === '02 - Não';
@@ -821,8 +821,8 @@
                 }
 
                 // Apply date period
-                if (state.datePeriod !== 'all') {
-                    const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+                if (datePeriod !== 'all') {
+                    const period = CONFIG.DATE_PERIODS.find(p => p.key === datePeriod);
                     if (period && period.days) {
                         baseJobs = baseJobs.filter(job => utils.isWithinDays(job.inserted_date, period.days));
                     }
@@ -1208,6 +1208,10 @@
             this.buildSections();
             this.updateCount();
 
+            // Initial count calculation for the modal state
+            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.quickFilter, state.searchQuery);
+            this.updateOptionCounts();
+
             // Show
             elements.scrim.classList.remove('hidden');
             elements.filterSheet.classList.remove('hidden');
@@ -1362,6 +1366,7 @@
                     }
 
                     this.updateCount();
+                    this.updateOptionCounts();
                 });
             });
 
@@ -1424,7 +1429,30 @@
 
                     this.updateCount();
                     this.updateSectionBadges();
+                    this.updateOptionCounts();
                 });
+            });
+        },
+
+        updateOptionCounts() {
+            // Recalculate counts based on current TEMP state
+            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.quickFilter, state.searchQuery);
+
+            // Update all visible option counts
+            elements.filterSheetContent.querySelectorAll('.filter-option-chip').forEach(chip => {
+                const key = chip.dataset.key;
+                const value = chip.dataset.value;
+
+                // Skip date/sort options which don't have dynamic counts in the same way
+                if (!key || key === '_date' || key === '_sort') return;
+
+                const counts = state.dynamicFilterCounts[key] || {};
+                const count = counts[value] || 0;
+
+                const countEl = chip.querySelector('.filter-option-count');
+                if (countEl) {
+                    countEl.textContent = `(${count.toLocaleString('pt-BR')})`;
+                }
             });
         },
 
@@ -1479,6 +1507,7 @@
             });
 
             this.updateCount();
+            this.updateOptionCounts();
         },
 
         applyAndClose() {
