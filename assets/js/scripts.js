@@ -3,7 +3,7 @@
  * Modern Job Listing Application
  */
 
-(function() {
+(function () {
     'use strict';
 
     // ============================================
@@ -20,6 +20,7 @@
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
             { key: 'category', label: 'Categoria', icon: 'work' },
+            { key: 'sub_category', label: 'Especialidade', icon: 'star' },
             { key: 'site_type', label: 'Plataforma', icon: 'language' },
             { key: 'location_scope', label: 'Abrangência', icon: 'public' },
             { key: 'location_country', label: 'País', icon: 'flag' },
@@ -771,7 +772,78 @@
             state.displayedCount = 0;
 
             this.updateUI();
+            this.recalculateFilterCounts(jobs); // Calculate counts based on current filtered set
             cardRenderer.render(true);
+        },
+
+        // Calculate counts for other filters based on current selection
+        recalculateFilterCounts(currentJobs) {
+            // Reset counts
+            state.dynamicFilterCounts = {};
+
+            // We need to calculate what the counts WOULD be if we applied
+            // all CURRENT filters EXCEPT the category we are counting.
+            // This is computationally expensive, so we optimize by only doing it for
+            // categories that are NOT currently completely filtered out.
+
+            CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
+                // Get all filters EXCEPT the current category
+                const otherFilters = { ...state.selectedFilters };
+                delete otherFilters[key];
+
+                // Base set of jobs to count from:
+                // Start with all jobs
+                let baseJobs = state.allJobs;
+
+                // Apply search query
+                if (state.searchQuery) {
+                    const q = utils.normalize(state.searchQuery);
+                    baseJobs = baseJobs.filter(job => {
+                        const text = utils.normalize([
+                            job.title, job.company, job.company_type,
+                            job.level, job.category, job.location
+                        ].join(' '));
+                        return text.includes(q);
+                    });
+                }
+
+                // Apply quick filter
+                if (state.quickFilter !== 'all') {
+                    baseJobs = baseJobs.filter(job => {
+                        switch (state.quickFilter) {
+                            case 'remote': return job['remote?'] === '01 - Sim';
+                            case 'hybrid': return job.contract === 'HIBRIDO';
+                            case 'onsite': return job['remote?'] === '02 - Não';
+                            case 'affirmative': return job['affirmative?'] === '01 - Sim';
+                            default: return true;
+                        }
+                    });
+                }
+
+                // Apply date period
+                if (state.datePeriod !== 'all') {
+                    const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+                    if (period && period.days) {
+                        baseJobs = baseJobs.filter(job => utils.isWithinDays(job.inserted_date, period.days));
+                    }
+                }
+
+                // Apply other active filters
+                Object.entries(otherFilters).forEach(([otherKey, values]) => {
+                    if (values && values.length > 0) {
+                        baseJobs = baseJobs.filter(job => values.includes(job[otherKey]));
+                    }
+                });
+
+                // Now count the occurrences of each value in this category
+                state.dynamicFilterCounts[key] = {};
+                baseJobs.forEach(job => {
+                    const value = job[key];
+                    if (value) {
+                        state.dynamicFilterCounts[key][value] = (state.dynamicFilterCounts[key][value] || 0) + 1;
+                    }
+                });
+            });
         },
 
         sortJobs(jobs) {
@@ -1020,6 +1092,11 @@
             card.target = '_blank';
             card.rel = 'noopener noreferrer';
             card.className = `job-card${isVisited ? ' visited' : ''}`;
+
+            // Add animation observer
+            if (typeof animationManager !== 'undefined') {
+                animationManager.observe(card);
+            }
             card.dataset.id = job.id;
 
             const levelName = job.level ? job.level.split(' - ').slice(1).join(' - ') : '';
@@ -1234,7 +1311,8 @@
 
         renderOptions(key, options) {
             const selected = state.tempFilters[key] || [];
-            const counts = state.filterCounts[key] || {};
+            // Use dynamic counts if available, otherwise fall back to static
+            const counts = (state.dynamicFilterCounts && state.dynamicFilterCounts[key]) || state.filterCounts[key] || {};
 
             return options.map(opt => {
                 const count = counts[opt] || 0;
@@ -1591,6 +1669,61 @@
     };
 
     // ============================================
+    // ANIMATION MANAGER (SectionWrapper)
+    // ============================================
+    const animationManager = {
+        observer: null,
+
+        init() {
+            // Options for intersection observer
+            const options = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            this.observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        this.observer.unobserve(entry.target); // Only animate once
+                    }
+                });
+            }, options);
+
+            // Animate main sections
+            this.animateSections();
+        },
+
+        animateSections() {
+            const sections = [
+                elements.topAppBar,
+                elements.searchBar?.parentElement,
+                document.querySelector('.filter-chips-container'),
+                elements.jobsGrid
+            ];
+
+            sections.forEach((section, index) => {
+                if (section) {
+                    section.classList.add('section-animate');
+                    // Add staggered delays
+                    if (index > 0) {
+                        section.classList.add(`delay-${Math.min(index * 100, 400)}`);
+                    }
+                    this.observer.observe(section);
+                }
+            });
+        },
+
+        observe(element) {
+            if (this.observer && element) {
+                element.classList.add('section-animate');
+                this.observer.observe(element);
+            }
+        }
+    };
+
+    // ============================================
     // SCROLL MANAGER
     // ============================================
     const scrollManager = {
@@ -1677,6 +1810,7 @@
             shareManager.init();
             searchHistoryManager.init();
             searchManager.init();
+            animationManager.init();
             scrollManager.init();
             quickFilters.init();
             bottomSheet.init();
