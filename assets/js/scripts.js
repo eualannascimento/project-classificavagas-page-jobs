@@ -338,8 +338,17 @@
         init() {
             if (elements.sortToggle && elements.sortDropdown) {
                 // Use both click and touchend for better mobile support
-                elements.sortToggle.addEventListener('click', (e) => {
+                const toggleSort = (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleDropdown();
+                };
+
+                // Use click, but ensure it works on mobile
+                elements.sortToggle.addEventListener('click', toggleSort);
+                // Add touchend for better responsiveness, but prevent ghost clicks if handled
+                elements.sortToggle.addEventListener('touchend', (e) => {
+                    e.preventDefault(); // This prevents mouse emulation events like click
                     e.stopPropagation();
                     this.toggleDropdown();
                 });
