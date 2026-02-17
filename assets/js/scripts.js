@@ -337,18 +337,9 @@
 
         init() {
             if (elements.sortToggle && elements.sortDropdown) {
-                // Use both click and touchend for better mobile support
-                const toggleSort = (e) => {
+                // Simplified event listener - Click handles both mouse and touch correctly
+                elements.sortToggle.addEventListener('click', (e) => {
                     e.preventDefault();
-                    e.stopPropagation();
-                    this.toggleDropdown();
-                };
-
-                // Use click, but ensure it works on mobile
-                elements.sortToggle.addEventListener('click', toggleSort);
-                // Add touchend for better responsiveness, but prevent ghost clicks if handled
-                elements.sortToggle.addEventListener('touchend', (e) => {
-                    e.preventDefault(); // This prevents mouse emulation events like click
                     e.stopPropagation();
                     this.toggleDropdown();
                 });
@@ -370,13 +361,9 @@
                     }
                 });
 
-                // Close on scroll (with debounce to avoid immediate close on mobile)
-                let scrollTimeout;
+                // Close on scroll
                 window.addEventListener('scroll', () => {
-                    if (this.isOpen) {
-                        clearTimeout(scrollTimeout);
-                        scrollTimeout = setTimeout(() => this.closeDropdown(), 100);
-                    }
+                    if (this.isOpen) this.closeDropdown();
                 }, { passive: true });
 
                 // Update label on init
@@ -393,11 +380,22 @@
         },
 
         openDropdown() {
-            // Position dropdown below the button
             const rect = elements.sortToggle.getBoundingClientRect();
+
+            // Move to body to avoid occlusion/clipping
+            document.body.appendChild(elements.sortDropdown);
+
             elements.sortDropdown.style.position = 'fixed';
-            elements.sortDropdown.style.top = `${rect.bottom + 4}px`;
-            elements.sortDropdown.style.left = `${rect.left}px`;
+            elements.sortDropdown.style.top = `${rect.bottom + 8}px`;
+            // Align right edge if it goes off screen, else align left
+            if (rect.left + 200 > window.innerWidth) {
+                elements.sortDropdown.style.left = 'auto';
+                elements.sortDropdown.style.right = '16px';
+            } else {
+                elements.sortDropdown.style.left = `${rect.left}px`;
+                elements.sortDropdown.style.right = 'auto';
+            }
+
             elements.sortDropdown.classList.remove('hidden');
             this.isOpen = true;
         },
@@ -405,6 +403,8 @@
         closeDropdown() {
             elements.sortDropdown.classList.add('hidden');
             this.isOpen = false;
+            // Optional: Move back to original place if needed, but keeping in body is fine for now
+            // simpler to just leave it hidden in body
         },
 
         setSort(sortKey) {

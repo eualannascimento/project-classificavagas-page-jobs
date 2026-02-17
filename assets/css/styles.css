@@ -672,7 +672,11 @@ input {
    ============================================ */
 .filter-chips-container {
     padding: 8px 0;
+    padding: 8px 0;
     background: var(--md-sys-color-surface);
+    position: relative;
+    z-index: 98;
+    /* Ensure it stays above scrolling content but below header/search */
 }
 
 .filter-chips-scroll {
