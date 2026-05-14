@@ -125,17 +125,16 @@
 
         formatRelativeDate(dateStr) {
             if (!dateStr) return '';
-            const date = new Date(dateStr);
+            const date = new Date(dateStr + 'T00:00:00');
             const now = new Date();
-            const diffTime = now - date;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
             if (diffDays === 0) return 'Hoje';
             if (diffDays === 1) return 'Ontem';
-            if (diffDays < 7) return `${diffDays} dias`;
-            if (diffDays < 30) return `${Math.floor(diffDays / 7)} sem`;
-            if (diffDays < 365) return `${Math.floor(diffDays / 30)} mês`;
-            return `${Math.floor(diffDays / 365)} ano`;
+            if (diffDays < 7) return `${diffDays}d atrás`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)}sem`;
+            if (diffDays < 365) return `${Math.floor(diffDays / 30)}m atrás`;
+            return `${Math.floor(diffDays / 365)}a atrás`;
         },
 
         escapeHtml(str) {
@@ -153,6 +152,58 @@
         normalize(str) {
             if (!str) return '';
             return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        },
+
+        toTitleCase(str) {
+            if (!str) return '';
+            const skipWords = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'com', 'para', 'por', 'que', 'e', 'a', 'o', 'as', 'os', 'um', 'uma', 'no', 'na', 'nos', 'nas', 'ao', 'aos', '\u00e0', '\u00e0s', 'se', '\u00e9']);
+            return str.toLowerCase().split(/\s+/).map((word, i) => {
+                if (!word) return word;
+                if (i === 0 || !skipWords.has(word)) {
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }
+                return word;
+            }).join(' ');
+        },
+
+        getSmartLocation(job) {
+            const isValid = (s) => s && s !== 'N\u00c3O INFORMADO' && s !== 'N\u00e3o informado' && s !== 'NAO INFORMADO';
+            const scope = job.location_scope;
+            const city = job.location_city;
+            const state = job.location_state;
+            const country = job.location_country;
+
+            if (scope === 'INTERNACIONAL') {
+                return isValid(country) ? country : 'Internacional';
+            }
+            if (scope === 'NACIONAL') return 'Brasil';
+            if (isValid(city) && isValid(state)) return `${city}, ${state}`;
+            if (isValid(city)) return city;
+            if (isValid(state)) return state;
+            return '';
+        },
+
+        getContractInfo(job) {
+            const contract = job.contract;
+            if (!contract || contract === 'N\u00c3O INFORMADO' || contract === 'NAO INFORMADO') return null;
+            const map = {
+                'H\u00cdBRIDO': { label: 'H\u00edbrido', cls: 'hybrid' },
+                'HIBRIDO': { label: 'H\u00edbrido', cls: 'hybrid' },
+                'REMOTO': { label: 'Remoto', cls: 'remote' },
+                'HOME OFFICE': { label: 'Home Office', cls: 'remote' },
+                'PRESENCIAL': { label: 'Presencial', cls: 'onsite' },
+                'EFETIVO': { label: 'Efetivo', cls: 'contract' },
+                'CLT': { label: 'CLT', cls: 'contract' },
+                'PJ': { label: 'PJ', cls: 'contract' },
+            };
+            const up = contract.toUpperCase().trim();
+            return map[up] || { label: contract, cls: 'contract' };
+        },
+
+        isToday(dateStr) {
+            if (!dateStr) return false;
+            const today = new Date().toISOString().split('T')[0];
+            return dateStr === today;
         },
 
         // Use URL hash for stable job identification (survives JSON reordering)
@@ -751,9 +802,10 @@
                 jobs = jobs.filter(job => {
                     switch (state.quickFilter) {
                         case 'remote': return job['remote?'] === '01 - Sim';
-                        case 'hybrid': return job.contract === 'HIBRIDO';
+                        case 'hybrid': return job.contract === 'HIBRIDO' || job.contract === 'HÍBRIDO';
                         case 'onsite': return job['remote?'] === '02 - Não';
                         case 'affirmative': return job['affirmative?'] === '01 - Sim';
+                        case 'today': return utils.isToday(job.inserted_date);
                         default: return true;
                     }
                 });
@@ -821,9 +873,10 @@
                     baseJobs = baseJobs.filter(job => {
                         switch (quickFilter) {
                             case 'remote': return job['remote?'] === '01 - Sim';
-                            case 'hybrid': return job.contract === 'HIBRIDO';
+                            case 'hybrid': return job.contract === 'HIBRIDO' || job.contract === 'HÍBRIDO';
                             case 'onsite': return job['remote?'] === '02 - Não';
                             case 'affirmative': return job['affirmative?'] === '01 - Sim';
+                            case 'today': return utils.isToday(job.inserted_date);
                             default: return true;
                         }
                     });
@@ -887,7 +940,19 @@
 
         updateUI() {
             // Job count
-            elements.jobCount.textContent = `${state.filteredJobs.length.toLocaleString('pt-BR')} vagas`;
+            const total = state.allJobs.length;
+            const filtered = state.filteredJobs.length;
+            const todayCount = state.allJobs.filter(j => utils.isToday(j.inserted_date)).length;
+            const hasActiveFilters = state.searchQuery || state.quickFilter !== 'all' ||
+                Object.values(state.selectedFilters).some(v => v && v.length > 0) || state.datePeriod !== 'all';
+
+            if (hasActiveFilters) {
+                elements.jobCount.textContent = `${filtered.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} vagas`;
+            } else {
+                elements.jobCount.textContent = todayCount > 0
+                    ? `${total.toLocaleString('pt-BR')} vagas · ${todayCount} novas hoje`
+                    : `${total.toLocaleString('pt-BR')} vagas`;
+            }
 
             // Filter badge
             let count = Object.values(state.selectedFilters)
@@ -1092,9 +1157,15 @@
 
         createCard(job) {
             const isRemote = job['remote?'] === '01 - Sim';
+            const isAffirmative = job['affirmative?'] === '01 - Sim';
+            const isNew = utils.isToday(job.inserted_date);
             const jobKey = utils.getJobKey(job);
             const isVisited = state.visitedJobs.has(jobKey);
-            const formattedDate = utils.formatDate(job.inserted_date);
+            const relativeDate = utils.formatRelativeDate(job.inserted_date);
+            const fullDate = utils.formatDate(job.inserted_date);
+            const smartLocation = utils.getSmartLocation(job);
+            const contractInfo = utils.getContractInfo(job);
+            const title = utils.toTitleCase(job.title);
 
             const card = document.createElement('a');
             card.href = job.url;
@@ -1102,7 +1173,6 @@
             card.rel = 'noopener noreferrer';
             card.className = `job-card${isVisited ? ' visited' : ''}`;
 
-            // Add animation observer
             if (typeof animationManager !== 'undefined') {
                 animationManager.observe(card);
             }
@@ -1110,14 +1180,32 @@
 
             const levelName = job.level ? job.level.split(' - ').slice(1).join(' - ') : '';
             const categoryName = job.category ? job.category.split(' - ').slice(1).join(' - ') : '';
+            const isValidLevel = levelName && levelName !== 'Não definido' && levelName !== 'Nao definido';
+            const isValidCategory = categoryName && categoryName !== 'Não definido' && categoryName !== 'Nao definido';
+            const isValidCompanyType = job.company_type && job.company_type !== 'A Classificar' && job.company_type !== 'Não definido';
+
+            const affirmativeTag = isAffirmative
+                ? `<span class="job-tag job-tag-affirmative"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span>Afirmativa</span>`
+                : '';
+
+            const contractTag = contractInfo
+                ? `<span class="job-tag job-tag-${contractInfo.cls}">${utils.escapeHtml(contractInfo.label)}</span>`
+                : '';
+
+            const newBadge = isNew
+                ? `<span class="job-badge job-badge-new">Novo</span>`
+                : '';
+
+            const dateClass = isNew ? ' job-date-today' : '';
 
             if (state.viewMode === 'compact') {
                 card.innerHTML = `
                     <div class="job-compact-content">
-                        <span class="job-compact-title">${utils.escapeHtml(utils.truncate(job.title, 40))}</span>
+                        ${isNew ? '<span class="job-compact-dot"></span>' : ''}
+                        <span class="job-compact-title">${utils.escapeHtml(utils.truncate(title, 45))}</span>
                         <span class="job-compact-separator">·</span>
                         <span class="job-compact-company">${utils.escapeHtml(utils.truncate(job.company, 20))}</span>
-                        <span class="job-compact-date">${formattedDate}</span>
+                        <span class="job-compact-date${dateClass}" title="${fullDate}">${relativeDate}</span>
                     </div>
                 `;
             } else if (state.viewMode === 'list') {
@@ -1127,15 +1215,14 @@
                             <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
                         </div>
                         <div class="job-list-main">
-                            <h3>${utils.escapeHtml(job.title)}</h3>
+                            <h3>${utils.escapeHtml(title)}</h3>
                             <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                         </div>
                         <div class="job-list-meta">
-                            <span class="job-list-location">
-                                <span class="material-symbols-rounded">location_on</span>
-                                ${utils.escapeHtml(utils.truncate(job.location, 20) || 'Não informado')}
-                            </span>
-                            <span class="job-list-date">${formattedDate}</span>
+                            ${smartLocation ? `<span class="job-list-location"><span class="material-symbols-rounded">location_on</span>${utils.escapeHtml(utils.truncate(smartLocation, 20))}</span>` : ''}
+                            ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${utils.escapeHtml(contractInfo.label)}</span>` : ''}
+                            ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact" title="Vaga afirmativa"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span></span>` : ''}
+                            <span class="job-list-date${dateClass}" title="${fullDate}">${relativeDate}</span>
                         </div>
                     </div>
                 `;
@@ -1146,21 +1233,24 @@
                             <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
                         </div>
                         <div class="job-card-title">
-                            <h3>${utils.escapeHtml(job.title)}</h3>
+                            <h3>${utils.escapeHtml(title)}</h3>
                             <p>${utils.escapeHtml(job.company)}</p>
                         </div>
+                        ${newBadge}
                     </div>
                     <div class="job-card-body">
-                        ${job.company_type ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
-                        ${levelName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
-                        ${categoryName ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
+                        ${contractTag}
+                        ${affirmativeTag}
+                        ${isValidLevel ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
+                        ${isValidCategory ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
+                        ${isValidCompanyType ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
                     </div>
                     <div class="job-card-footer">
                         <div class="job-location">
                             <span class="material-symbols-rounded">location_on</span>
-                            <span>${utils.escapeHtml(job.location || 'Não informado')}</span>
+                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : 'Não informado'}</span>
                         </div>
-                        <span class="job-date">${formattedDate}</span>
+                        <span class="job-date${dateClass}" title="${fullDate}">${relativeDate}</span>
                     </div>
                 `;
             }
@@ -1702,6 +1792,22 @@
                 state.searchQuery = '';
                 filterManager.apply();
                 elements.searchInput.focus();
+            });
+
+            // Keyboard shortcut: press / to focus search
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                    e.preventDefault();
+                    elements.searchInput.focus();
+                    elements.searchInput.select();
+                }
+                // Escape clears search if active
+                if (e.key === 'Escape' && document.activeElement === elements.searchInput && state.searchQuery) {
+                    elements.searchInput.value = '';
+                    elements.searchClear.classList.add('hidden');
+                    state.searchQuery = '';
+                    filterManager.apply();
+                }
             });
         }
     };
