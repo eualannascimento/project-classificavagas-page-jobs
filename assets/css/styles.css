@@ -1273,6 +1273,85 @@ input {
     white-space: nowrap;
 }
 
+/* Today date highlight */
+.job-date-today {
+    color: var(--md-sys-color-success);
+    font-weight: 600;
+}
+
+/* Job Badges (compact inline indicators) */
+.job-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: var(--md-sys-shape-corner-full);
+    font: var(--md-sys-typescale-label-small);
+    font-weight: 600;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.job-badge-new {
+    background: var(--md-sys-color-success-container);
+    color: var(--md-sys-color-success);
+}
+
+/* Job Tag Variants */
+.job-tag-hybrid {
+    background: color-mix(in srgb, #e65100 12%, transparent);
+    color: #b84000;
+    border-color: transparent;
+}
+
+.job-tag-remote {
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    border-color: transparent;
+}
+
+.job-tag-onsite {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border-color: transparent;
+}
+
+.job-tag-contract {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
+    border-color: transparent;
+}
+
+.job-tag-affirmative {
+    background: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    border-color: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+[data-theme="dark"] .job-tag-hybrid {
+    background: color-mix(in srgb, #ffb74d 15%, transparent);
+    color: #ffb74d;
+}
+
+/* Compact inline tags for list view */
+.job-tag-compact {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 0.69rem;
+}
+
+/* Compact view dot for new jobs */
+.job-compact-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--md-sys-color-success);
+    flex-shrink: 0;
+}
+
 /* Dark theme card overrides */
 [data-theme="dark"] .job-card {
     background: var(--md-sys-color-surface-container-low);
