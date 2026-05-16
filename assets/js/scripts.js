@@ -2222,6 +2222,14 @@
         init() {
             let ticking = false;
 
+            // Set CSS var for mobile sticky bar positioning
+            const setHeaderHeight = () => {
+                const h = elements.topAppBar ? elements.topAppBar.offsetHeight : 60;
+                document.documentElement.style.setProperty('--header-h', h + 'px');
+            };
+            setHeaderHeight();
+            window.addEventListener('resize', setHeaderHeight, { passive: true });
+
             window.addEventListener('scroll', () => {
                 if (!ticking) {
                     requestAnimationFrame(() => {
@@ -2342,7 +2350,6 @@
             animationManager.init();
             scrollManager.init();
             quickFilters.init();
-            visitedFilter.init();
             bottomSheet.init();
             clearHandlers.init();
 

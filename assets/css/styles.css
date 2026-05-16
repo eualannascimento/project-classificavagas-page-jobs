@@ -1454,61 +1454,65 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    RESPONSIVE
    ============================================ */
-.mobile-jobcount-row { display: none; }
+/* Mobile job count bar — sticky, hidden on desktop */
+.mobile-jobcount-row {
+    display: none;
+}
 
 @media (max-width: 720px) {
     :root { --shell-pad: 16px; }
+
+    /* Header: logo on left, actions on right, update text below logo */
     .masthead-inner {
-        flex-wrap: wrap;
         height: auto;
-        min-height: 56px;
-        padding: 8px 0;
-        gap: 0;
-        align-items: flex-start;
-        position: relative;
-    }
-    .masthead-brand {
-        flex: 1 1 100%;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-        order: 1;
-    }
-    .brand-meta {
-        font-size: 0.72rem;
+        min-height: 52px;
+        padding: 10px 0 8px;
+        gap: 8px;
+        align-items: center;
         flex-wrap: nowrap;
     }
-    .brand-mark {
-        font-size: 1.4rem;
-        line-height: 1;
+    .masthead-brand {
+        flex: 1;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+        min-width: 0;
     }
+    .brand-mark {
+        font-size: 1.35rem;
+        line-height: 1.1;
+    }
+    /* Show update text under logo, hide job-count and pulse in header */
     .brand-update {
         display: block;
-        font-size: 0.62rem;
+        font-size: 0.60rem;
     }
-    /* Move job-count to row 2 */
     .masthead-brand .job-count,
     .masthead-brand .brand-pulse {
         display: none;
     }
     .top-app-bar-actions {
-        order: 2;
-        position: absolute;
-        top: 8px;
-        right: var(--shell-pad);
-        gap: 6px;
-        width: auto;
+        flex-shrink: 0;
+        gap: 4px;
     }
+
+    /* Sticky job count bar below header */
     .mobile-jobcount-row {
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 6px var(--shell-pad) 4px;
+        padding: 5px var(--shell-pad);
         font-family: var(--font-mono);
         font-size: 0.68rem;
         color: var(--accent);
         letter-spacing: 0.01em;
+        background: color-mix(in oklch, var(--bg) 92%, transparent);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid var(--rule-2);
+        position: sticky;
+        top: var(--header-h, 72px);
+        z-index: 99;
     }
 }
 
