@@ -633,7 +633,7 @@
             } else if (mode === 'list') {
                 card.innerHTML = `
                     <div class="skeleton-list-content">
-                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-date" style="width:28px;height:12px;margin-right:4px;"></div>
                         <div class="skeleton-list-main">
                             <div class="skeleton-title"></div>
                             <div class="skeleton-subtitle"></div>
@@ -1126,10 +1126,13 @@
     // CARD RENDERER
     // ============================================
     const cardRenderer = {
+        _index: 0,
+
         render(reset = false) {
             if (reset) {
                 elements.jobsGrid.innerHTML = '';
                 state.displayedCount = 0;
+                this._index = 0;
             }
 
             const start = state.displayedCount;
@@ -1145,7 +1148,10 @@
             }
 
             const fragment = document.createDocumentFragment();
-            jobs.forEach(job => fragment.appendChild(this.createCard(job)));
+            jobs.forEach(job => {
+                this._index++;
+                fragment.appendChild(this.createCard(job, this._index));
+            });
             elements.jobsGrid.appendChild(fragment);
 
             state.displayedCount = end;
@@ -1155,7 +1161,7 @@
             }
         },
 
-        createCard(job) {
+        createCard(job, index = 0) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isAffirmative = job['affirmative?'] === '01 - Sim';
             const isNew = utils.isToday(job.inserted_date);
@@ -1209,21 +1215,31 @@
                     </div>
                 `;
             } else if (state.viewMode === 'list') {
+                const indexStr = String(index).padStart(2, '0');
                 card.innerHTML = `
                     <div class="job-list-content">
-                        <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
-                            <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
+                        <div class="job-list-index">
+                            ${indexStr}
+                            ${isNew ? '<span class="list-new-dot"></span>' : ''}
                         </div>
                         <div class="job-list-main">
                             <h3>${utils.escapeHtml(title)}</h3>
-                            <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
+                            <div class="job-list-company-row">
+                                <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
+                                ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
+                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${utils.escapeHtml(contractInfo.label)}</span>` : ''}
+                                ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</span>` : ''}
+                            </div>
                         </div>
                         <div class="job-list-meta">
-                            ${smartLocation ? `<span class="job-list-location"><span class="material-symbols-rounded">location_on</span>${utils.escapeHtml(utils.truncate(smartLocation, 20))}</span>` : ''}
-                            ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${utils.escapeHtml(contractInfo.label)}</span>` : ''}
-                            ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact" title="Vaga afirmativa"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span></span>` : ''}
+                            ${smartLocation ? `<span class="job-list-location"><span class="material-symbols-rounded">location_on</span>${utils.escapeHtml(utils.truncate(smartLocation, 18))}</span>` : ''}
                             <span class="job-list-date${dateClass}" title="${fullDate}">${relativeDate}</span>
                         </div>
+                        <span class="job-list-arrow">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </span>
                     </div>
                 `;
             } else {
