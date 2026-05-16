@@ -62,7 +62,8 @@
         datePeriod: 'all',
         sortBy: 'date_desc',
         viewMode: 'cards', // 'cards', 'list', or 'compact'
-        searchHistory: [] // recent searches
+        searchHistory: [], // recent searches
+        showOnlyVisited: false
     };
 
     // ============================================
@@ -75,6 +76,7 @@
         splash: $('#splash'),
         app: $('#app'),
         jobCount: $('#jobCount'),
+        jobCountMobile: $('#jobCountMobile'),
         searchInput: $('#searchInput'),
         searchClear: $('#searchClear'),
         filterChips: $$('.filter-chip[data-filter]'),
@@ -445,9 +447,16 @@
                 b.classList.toggle('active', b.dataset.value === density);
             });
         },
+        toggle() {
+            const cur = document.documentElement.getAttribute('data-density') || 'compact';
+            const next = DENSITIES[(DENSITIES.indexOf(cur) + 1) % DENSITIES.length];
+            this.apply(next);
+        },
         init() {
             const saved = localStorage.getItem('cv_density') || 'compact';
             this.apply(saved);
+            const btn = document.getElementById('densityToggle');
+            if (btn) btn.addEventListener('click', () => this.toggle());
         }
     };
 
@@ -892,6 +901,15 @@
     // ============================================
     // DATA LOADER
     // ============================================
+    function setSplashProgress(pct, msg) {
+        const bar = document.getElementById('splashProgress');
+        const pctEl = document.getElementById('splashPct');
+        const msgEl = document.getElementById('splashMsg');
+        if (bar) bar.style.width = pct + '%';
+        if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+        if (msg && msgEl) msgEl.textContent = msg;
+    }
+
     const dataLoader = {
         setSplashMsg(msg) {
             const el = document.getElementById('splashMsg');
@@ -901,17 +919,34 @@
         async load() {
             // Show skeleton loading
             skeletonLoader.show();
-            this.setSplashMsg('Carregando vagas...');
+            setSplashProgress(5, 'Conectando...');
 
             try {
-                const response = await fetch(CONFIG.DATA_URL);
+                const xhrResult = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', CONFIG.DATA_URL);
+                    xhr.responseType = 'json';
+                    xhr.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            const pct = 10 + (e.loaded / e.total) * 60; // 10-70%
+                            setSplashProgress(pct, `Baixando vagas... ${Math.round(e.loaded / 1024).toLocaleString('pt-BR')}KB`);
+                        } else {
+                            setSplashProgress(40, 'Baixando vagas...');
+                        }
+                    };
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve({ data: xhr.response, lastModified: xhr.getResponseHeader('last-modified') });
+                        } else {
+                            reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.send();
+                });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                this.setSplashMsg(`Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
+                const data = xhrResult.data;
+                setSplashProgress(80, `Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
 
                 state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
 
@@ -927,11 +962,13 @@
                 this.buildFilterOptions();
 
                 // Update last modified
-                this.updateLastModified(response);
+                this.updateLastModifiedFromHeader(xhrResult.lastModified);
 
+                setSplashProgress(95, 'Renderizando...');
                 // Apply initial filters
                 filterManager.apply();
-                this.setSplashMsg('Pronto!');
+                if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
+                setSplashProgress(100, 'Pronto!');
 
                 // Show app
                 this.showApp();
@@ -961,6 +998,20 @@
                     state.filterCounts[key][value] = state.allJobs.filter(j => j[key] === value).length;
                 });
             });
+        },
+
+        updateLastModifiedFromHeader(lastMod) {
+            if (lastMod) {
+                const date = new Date(lastMod);
+                elements.lastUpdate.textContent = new Intl.DateTimeFormat('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).format(date);
+            }
         },
 
         updateLastModified(response) {
@@ -1006,16 +1057,24 @@
         apply() {
             let jobs = [...state.allJobs];
 
-            // Search query
+            // Search query (multi-term AND)
             if (state.searchQuery) {
-                const q = utils.normalize(state.searchQuery);
-                jobs = jobs.filter(job => {
-                    const text = utils.normalize([
-                        job.title, job.company, job.company_type,
-                        job.level, job.category, job.location
-                    ].join(' '));
-                    return text.includes(q);
-                });
+                const terms = utils.normalize(state.searchQuery).split(/\s+/).filter(Boolean);
+                if (terms.length) {
+                    jobs = jobs.filter(job => {
+                        const text = utils.normalize([
+                            job.title, job.company, job.company_type,
+                            job.level, job.category, job.sub_category,
+                            job.location, job.location_city, job.location_state
+                        ].filter(Boolean).join(' '));
+                        return terms.every(t => text.includes(t));
+                    });
+                }
+            }
+
+            // Visited-only filter
+            if (state.showOnlyVisited) {
+                jobs = jobs.filter(j => utils.isVisited(j));
             }
 
             // Quick filter
@@ -1077,16 +1136,24 @@
                 // Start with all jobs
                 let baseJobs = state.allJobs;
 
-                // Apply search query
+                // Apply search query (multi-term AND)
                 if (searchQuery) {
-                    const q = utils.normalize(searchQuery);
-                    baseJobs = baseJobs.filter(job => {
-                        const text = utils.normalize([
-                            job.title, job.company, job.company_type,
-                            job.level, job.category, job.location
-                        ].join(' '));
-                        return text.includes(q);
-                    });
+                    const terms = utils.normalize(searchQuery).split(/\s+/).filter(Boolean);
+                    if (terms.length) {
+                        baseJobs = baseJobs.filter(job => {
+                            const text = utils.normalize([
+                                job.title, job.company, job.company_type,
+                                job.level, job.category, job.sub_category,
+                                job.location, job.location_city, job.location_state
+                            ].filter(Boolean).join(' '));
+                            return terms.every(t => text.includes(t));
+                        });
+                    }
+                }
+
+                // Apply visited-only
+                if (state.showOnlyVisited) {
+                    baseJobs = baseJobs.filter(j => utils.isVisited(j));
                 }
 
                 // Apply quick filter
@@ -1174,6 +1241,9 @@
                     ? `${total.toLocaleString('pt-BR')} vagas · ${todayCount.toLocaleString('pt-BR')} novas hoje`
                     : `${total.toLocaleString('pt-BR')} vagas`;
             }
+            if (elements.jobCountMobile) {
+                elements.jobCountMobile.textContent = elements.jobCount.textContent;
+            }
 
             // Filter badge
             let count = Object.values(state.selectedFilters)
@@ -1189,10 +1259,8 @@
                 elements.filterBadge.classList.add('hidden');
             }
 
-            // Update quick filter chips
-            elements.filterChips.forEach(chip => {
-                chip.dataset.active = chip.dataset.filter === state.quickFilter ? 'true' : 'false';
-            });
+            // Update quick filter chips (sheet)
+            if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
 
             // Active filters chips
             this.renderActiveFilters();
@@ -1323,22 +1391,21 @@
             state.quickFilter = 'all';
             state.datePeriod = 'all';
             state.sortBy = 'date_desc';
+            state.showOnlyVisited = false;
             elements.searchInput.value = '';
             elements.searchClear.classList.add('hidden');
 
             // Reset quick filter UI
-            elements.filterChips.forEach(chip => {
-                chip.dataset.active = chip.dataset.filter === 'all' ? 'true' : 'false';
-            });
+            if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
+            const visitedBtn = document.getElementById('visitedToggle');
+            if (visitedBtn) visitedBtn.setAttribute('aria-pressed', 'false');
 
             this.apply();
         },
 
         setQuickFilter(filter) {
             state.quickFilter = filter;
-            elements.filterChips.forEach(chip => {
-                chip.dataset.active = chip.dataset.filter === filter ? 'true' : 'false';
-            });
+            if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             this.apply();
         }
     };
@@ -1496,6 +1563,7 @@
                 if (!state.visitedJobs.has(jobKey)) {
                     utils.markVisited(job);
                     card.classList.add('visited');
+                    if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
                 }
             });
 
@@ -1643,7 +1711,38 @@
                 `;
             }).join('');
 
-            elements.filterSheetContent.innerHTML = datePeriodSection + sortSection + filterSections;
+            // Quick filters section (Tipo)
+            const quickOpts = [
+                { key: 'all', label: 'Todas' },
+                { key: 'remote', label: 'Remoto' },
+                { key: 'hybrid', label: 'Híbrido' },
+                { key: 'onsite', label: 'Presencial' },
+                { key: 'affirmative', label: 'Afirmativa' },
+                { key: 'today', label: 'Hoje' }
+            ];
+            const quickSection = `
+                <div class="filter-section expanded" data-key="_quick">
+                    <div class="filter-section-header">
+                        <div class="filter-section-header-left">
+                            <span class="material-symbols-rounded">tune</span>
+                            <span class="filter-section-title">Tipo</span>
+                        </div>
+                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
+                    </div>
+                    <div class="filter-section-body">
+                        <div class="filter-options-list" id="sheetQuickFilters">
+                            ${quickOpts.map(o => `
+                                <button class="filter-option-chip ${state.quickFilter === o.key ? 'selected' : ''}" data-quick="${o.key}">
+                                    <span class="material-symbols-rounded check-icon">check</span>
+                                    <span>${o.label}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            elements.filterSheetContent.innerHTML = quickSection + datePeriodSection + sortSection + filterSections;
 
             // Add event listeners
             this.addSectionListeners();
@@ -1673,6 +1772,18 @@
                 header.addEventListener('click', () => {
                     const section = header.closest('.filter-section');
                     section.classList.toggle('expanded');
+                });
+            });
+
+            // Quick filter options (Tipo)
+            elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const q = chip.dataset.quick;
+                    filterManager.setQuickFilter(q);
+                    elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(c => {
+                        c.classList.toggle('selected', c.dataset.quick === q);
+                    });
+                    this.updateOptionCounts();
                 });
             });
 
@@ -2157,11 +2268,42 @@
     // ============================================
     const quickFilters = {
         init() {
-            elements.filterChips.forEach(chip => {
+            document.querySelectorAll('[data-quick]').forEach(chip => {
                 chip.addEventListener('click', () => {
-                    filterManager.setQuickFilter(chip.dataset.filter);
+                    filterManager.setQuickFilter(chip.dataset.quick);
+                    this.syncUI();
                 });
             });
+            this.syncUI();
+        },
+        syncUI() {
+            document.querySelectorAll('[data-quick]').forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.quick === state.quickFilter);
+            });
+        }
+    };
+
+    // ============================================
+    // VISITED FILTER
+    // ============================================
+    const visitedFilter = {
+        init() {
+            const btn = document.getElementById('visitedToggle');
+            if (!btn) return;
+            btn.addEventListener('click', () => this.toggle());
+            this.updateCount();
+        },
+        toggle() {
+            state.showOnlyVisited = !state.showOnlyVisited;
+            const btn = document.getElementById('visitedToggle');
+            if (btn) btn.setAttribute('aria-pressed', state.showOnlyVisited ? 'true' : 'false');
+            filterManager.apply();
+        },
+        updateCount() {
+            const el = document.getElementById('visitedCount');
+            if (!el) return;
+            const count = state.allJobs.filter(j => utils.isVisited(j)).length;
+            el.textContent = count > 0 ? `(${count.toLocaleString('pt-BR')})` : '';
         }
     };
 
@@ -2186,12 +2328,12 @@
     function init() {
         try {
             themeManager.init();
-            // styleManager.init() — not called; restraint is default via HTML data-style attr
-            fontManager.init();
+            // styleManager.init() / fontManager.init() — not called; defaults applied via HTML attrs
             densityManager.init();
+            visitedFilter.init();
             viewModeManager.init();
             scrollProgress.init();
-            tweaksPanel.init();
+            // tweaksPanel removed — density toggle moved to header button
             sortManager.init();
             // shareManager.init() — share button removed from UI; URL loading still works via shareManager.loadFromURL()
             shareManager.loadFromURL();
@@ -2200,6 +2342,7 @@
             animationManager.init();
             scrollManager.init();
             quickFilters.init();
+            visitedFilter.init();
             bottomSheet.init();
             clearHandlers.init();
 

@@ -187,8 +187,14 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     margin-top: -20px;
 }
 
+.splash-loader-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 220px;
+}
 .splash-loader {
-    width: 160px; height: 2px;
+    flex: 1; height: 2px;
     background: var(--rule);
     border-radius: var(--radius-pill);
     overflow: hidden;
@@ -198,10 +204,17 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     width: 0; height: 100%;
     background: var(--accent);
     border-radius: var(--radius-pill);
-    animation: splashProgress 1.4s var(--ease) forwards;
+    transition: width 0.3s var(--ease);
 }
 
-@keyframes splashProgress { from { width: 0; } to { width: 100%; } }
+.splash-pct {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    min-width: 36px;
+    text-align: right;
+}
 
 /* ============================================
    APP
@@ -334,6 +347,12 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 [data-theme="light"] .theme-icon-light { display: block; }
 [data-theme="dark"]  .theme-icon-dark  { display: block; }
 [data-theme="black"] .theme-icon-black { display: block; }
+
+/* 3-state density icons */
+.density-icon-compact, .density-icon-regular, .density-icon-comfy { display: none; }
+[data-density="compact"] .density-icon-compact { display: block; }
+[data-density="regular"] .density-icon-regular { display: block; }
+[data-density="comfy"]   .density-icon-comfy   { display: block; }
 /* legacy aliases */
 .icon-light { display: none; }
 .icon-dark  { display: none; }
@@ -527,7 +546,20 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .filter-chip-view,
 .filter-chip-sort,
+.filter-chip-visited,
 .filter-chip-main { padding: 0 10px; gap: 5px; }
+
+.filter-chip-visited[aria-pressed="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+}
+.visited-count {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    opacity: 0.7;
+    margin-left: 2px;
+}
 
 .filter-chip .material-symbols-rounded { font-size: 16px; }
 
@@ -937,6 +969,9 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 /* Visited in list */
 .jobs-grid.list-view .job-card.visited .job-card-icon::after { display: none; }
+.jobs-grid.list-view .job-card.visited { opacity: 0.55; }
+.jobs-grid.list-view .job-card.visited .job-list-main h3,
+.jobs-grid.list-view .job-card.visited .job-list-company { color: var(--ink-3); }
 
 @media (max-width: 599px) {
     .job-list-content { grid-template-columns: 32px 1fr auto 14px; gap: 10px; }
@@ -1419,18 +1454,62 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    RESPONSIVE
    ============================================ */
+.mobile-jobcount-row { display: none; }
+
 @media (max-width: 720px) {
     :root { --shell-pad: 16px; }
-    .brand-update { display: none; }
     .masthead-inner {
         flex-wrap: wrap;
         height: auto;
+        min-height: 56px;
         padding: 8px 0;
-        gap: 4px;
+        gap: 0;
+        align-items: flex-start;
+        position: relative;
     }
-    .masthead-brand { flex: 1 1 100%; }
-    .brand-meta { flex-wrap: wrap; }
-    .top-app-bar-actions { width: 100%; justify-content: flex-end; }
+    .masthead-brand {
+        flex: 1 1 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        order: 1;
+    }
+    .brand-meta {
+        font-size: 0.72rem;
+        flex-wrap: nowrap;
+    }
+    .brand-mark {
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+    .brand-update {
+        display: block;
+        font-size: 0.62rem;
+    }
+    /* Move job-count to row 2 */
+    .masthead-brand .job-count,
+    .masthead-brand .brand-pulse {
+        display: none;
+    }
+    .top-app-bar-actions {
+        order: 2;
+        position: absolute;
+        top: 8px;
+        right: var(--shell-pad);
+        gap: 6px;
+        width: auto;
+    }
+    .mobile-jobcount-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px var(--shell-pad) 4px;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--accent);
+        letter-spacing: 0.01em;
+        border-bottom: 1px solid var(--rule-2);
+    }
 }
 
 @media (min-width: 600px) {

@@ -24,8 +24,11 @@
     <div id="splash" class="splash">
         <div class="splash-content">
             <div class="splash-brand"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas</div>
-            <div class="splash-loader"><div class="splash-progress"></div></div>
-            <p class="splash-msg" id="splashMsg">Carregando...</p>
+            <div class="splash-loader-wrap">
+                <div class="splash-loader"><div class="splash-progress" id="splashProgress"></div></div>
+                <span class="splash-pct" id="splashPct">0%</span>
+            </div>
+            <p class="splash-msg" id="splashMsg">Iniciando...</p>
         </div>
     </div>
 
@@ -44,8 +47,10 @@
                     </div>
                 </div>
                 <div class="top-app-bar-actions">
-                    <button class="icon-btn" id="tweaksToggle" aria-label="Preferências">
-                        <span class="material-symbols-rounded">tune</span>
+                    <button class="icon-btn" id="densityToggle" aria-label="Alternar densidade">
+                        <span class="material-symbols-rounded density-icon-compact">density_small</span>
+                        <span class="material-symbols-rounded density-icon-regular">density_medium</span>
+                        <span class="material-symbols-rounded density-icon-comfy">density_large</span>
                     </button>
                     <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">
                         <span class="material-symbols-rounded theme-icon-light">light_mode</span>
@@ -55,6 +60,12 @@
                 </div>
             </div>
         </header>
+
+        <!-- Mobile job count (line 2) -->
+        <div class="mobile-jobcount-row">
+            <span class="brand-pulse"></span>
+            <span id="jobCountMobile">Carregando...</span>
+        </div>
 
         <!-- Search -->
         <div class="search-bar-container">
@@ -94,20 +105,17 @@
                     </div>
                 </div>
 
+                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false">
+                    <span class="material-symbols-rounded">visibility</span>
+                    <span>Visualizadas</span>
+                    <span class="visited-count" id="visitedCount"></span>
+                </button>
+
                 <button class="filter-chip filter-chip-main" id="openFilters">
                     <span class="material-symbols-rounded">filter_list</span>
                     <span>Filtros</span>
                     <span class="filter-badge hidden" id="filterBadge">0</span>
                 </button>
-
-                <div class="chip-divider"></div>
-
-                <button class="filter-chip" data-filter="all" data-active="true">Todas</button>
-                <button class="filter-chip" data-filter="remote">Remoto</button>
-                <button class="filter-chip" data-filter="hybrid">Híbrido</button>
-                <button class="filter-chip" data-filter="onsite">Presencial</button>
-                <button class="filter-chip" data-filter="affirmative">Afirmativa</button>
-                <button class="filter-chip" data-filter="today">Hoje</button>
             </div>
         </div>
 
@@ -165,88 +173,6 @@
                     <span class="material-symbols-rounded">check</span>
                     Aplicar
                 </button>
-            </div>
-        </div>
-
-        <!-- Tweaks Panel -->
-        <div class="tweaks-panel hidden" id="tweaksPanel">
-            <div class="tweaks-header">
-                <span class="tweaks-title">Preferências</span>
-                <button class="icon-btn" id="closeTweaks" aria-label="Fechar">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            </div>
-            <div class="tweaks-body">
-
-                <div class="tweaks-section">
-                    <div class="tweaks-label">Estilo</div>
-                    <div class="tweaks-radio-group" id="tweaksStyle">
-                        <button class="tweaks-radio" data-value="editorial">Editorial</button>
-                        <button class="tweaks-radio" data-value="restraint">Restraint</button>
-                    </div>
-                </div>
-
-                <div class="tweaks-section">
-                    <div class="tweaks-label">Fonte</div>
-                    <div class="tweaks-font-grid" id="tweaksFont">
-                        <button class="tweaks-font-btn" data-font="instrument" style="--preview-font:'Instrument Serif'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">Instrument</span>
-                        </button>
-                        <button class="tweaks-font-btn" data-font="newsreader" style="--preview-font:'Newsreader'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">Newsreader</span>
-                        </button>
-                        <button class="tweaks-font-btn" data-font="eb_garamond" style="--preview-font:'EB Garamond'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">Garamond</span>
-                        </button>
-                        <button class="tweaks-font-btn" data-font="dm_serif" style="--preview-font:'DM Serif Display'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">DM Serif</span>
-                        </button>
-                        <button class="tweaks-font-btn" data-font="bricolage" style="--preview-font:'Bricolage Grotesque'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">Bricolage</span>
-                        </button>
-                        <button class="tweaks-font-btn" data-font="inter" style="--preview-font:'Inter'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">Inter</span>
-                        </button>
-                        <button class="tweaks-font-btn" data-font="mono" style="--preview-font:'Fira Code'">
-                            <span class="tweaks-font-preview">Aa</span>
-                            <span class="tweaks-font-name">Mono</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="tweaks-section">
-                    <div class="tweaks-label">Visualização</div>
-                    <div class="tweaks-radio-group" id="tweaksView">
-                        <button class="tweaks-radio" data-value="cards">Cards</button>
-                        <button class="tweaks-radio" data-value="list">Lista</button>
-                        <button class="tweaks-radio" data-value="compact">Compacto</button>
-                    </div>
-                </div>
-
-                <div class="tweaks-section">
-                    <div class="tweaks-label">Densidade</div>
-                    <div class="tweaks-radio-group" id="tweaksDensity">
-                        <button class="tweaks-radio" data-value="compact">Compacto</button>
-                        <button class="tweaks-radio" data-value="regular">Regular</button>
-                        <button class="tweaks-radio" data-value="comfy">Confortável</button>
-                    </div>
-                </div>
-
-                <div class="tweaks-section">
-                    <div class="tweaks-label">Tema</div>
-                    <div class="tweaks-radio-group" id="tweaksTheme">
-                        <button class="tweaks-radio" data-value="light">Claro</button>
-                        <button class="tweaks-radio" data-value="dark">Escuro</button>
-                        <button class="tweaks-radio" data-value="black">Preto</button>
-                    </div>
-                </div>
-
             </div>
         </div>
 
