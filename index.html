@@ -81,13 +81,19 @@
         <!-- Filter Chips -->
         <div class="filter-chips-container">
             <div class="filter-chips-scroll">
+                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas">
+                    <span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 18">visibility</span>
+                    <span class="visited-count" id="visitedCount"></span>
+                </button>
+
                 <button class="filter-chip filter-chip-view" id="viewToggle" aria-label="Alternar visualização">
                     <span class="material-symbols-rounded">view_list</span>
                 </button>
 
-                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas">
-                    <span class="material-symbols-rounded">visibility</span>
-                    <span class="visited-count" id="visitedCount"></span>
+                <button class="filter-chip filter-chip-main" id="openFilters">
+                    <span class="material-symbols-rounded">filter_list</span>
+                    <span>Filtros</span>
+                    <span class="filter-badge hidden" id="filterBadge">0</span>
                 </button>
 
                 <div class="sort-dropdown-container">
@@ -104,12 +110,6 @@
                         <button class="sort-option" data-sort="title_desc">Título Z–A</button>
                     </div>
                 </div>
-
-                <button class="filter-chip filter-chip-main" id="openFilters">
-                    <span class="material-symbols-rounded">filter_list</span>
-                    <span>Filtros</span>
-                    <span class="filter-badge hidden" id="filterBadge">0</span>
-                </button>
             </div>
         </div>
 
