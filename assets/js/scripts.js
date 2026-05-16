@@ -319,11 +319,7 @@
     // VIEW MODE MANAGER
     // ============================================
     const VIEW_MODES = ['cards', 'list', 'compact'];
-    const VIEW_MODE_ICONS = {
-        'cards': 'grid_view',
-        'list': 'view_list',
-        'compact': 'density_small'
-    };
+    const VIEW_MODE_ICONS = { 'cards': 'grid_view', 'list': 'view_list', 'compact': 'density_small' };
 
     const viewModeManager = {
         init() {
@@ -398,7 +394,7 @@
             this.apply(cur === 'editorial' ? 'restraint' : 'editorial');
         },
         init() {
-            const saved = localStorage.getItem('cv_style') || 'editorial';
+            const saved = localStorage.getItem('cv_style') || 'restraint';
             this.apply(saved);
             const btn = document.getElementById('styleToggle');
             if (btn) btn.addEventListener('click', () => this.toggle());
