@@ -47,11 +47,6 @@
                     </div>
                 </div>
                 <div class="top-app-bar-actions">
-                    <button class="icon-btn" id="densityToggle" aria-label="Alternar densidade">
-                        <span class="material-symbols-rounded density-icon-compact">density_small</span>
-                        <span class="material-symbols-rounded density-icon-regular">density_medium</span>
-                        <span class="material-symbols-rounded density-icon-comfy">density_large</span>
-                    </button>
                     <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">
                         <span class="material-symbols-rounded theme-icon-light">light_mode</span>
                         <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
@@ -90,6 +85,11 @@
                     <span class="material-symbols-rounded">view_list</span>
                 </button>
 
+                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas">
+                    <span class="material-symbols-rounded">visibility</span>
+                    <span class="visited-count" id="visitedCount"></span>
+                </button>
+
                 <div class="sort-dropdown-container">
                     <button class="filter-chip filter-chip-sort" id="sortToggle" aria-label="Ordenar">
                         <span class="material-symbols-rounded">swap_vert</span>
@@ -104,12 +104,6 @@
                         <button class="sort-option" data-sort="title_desc">Título Z–A</button>
                     </div>
                 </div>
-
-                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false">
-                    <span class="material-symbols-rounded">visibility</span>
-                    <span>Visualizadas</span>
-                    <span class="visited-count" id="visitedCount"></span>
-                </button>
 
                 <button class="filter-chip filter-chip-main" id="openFilters">
                     <span class="material-symbols-rounded">filter_list</span>

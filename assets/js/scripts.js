@@ -16,17 +16,17 @@
         INFINITE_SCROLL_THRESHOLD: 600,
         DATA_URL: 'assets/data/json/open_jobs.json',
         FILTER_CATEGORIES: [
-            { key: 'company', label: 'Empresa', icon: 'business' },
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
             { key: 'category', label: 'Categoria', icon: 'work' },
             { key: 'sub_category', label: 'Especialidade', icon: 'star' },
-            { key: 'site_type', label: 'Plataforma', icon: 'language' },
+            { key: 'company', label: 'Empresa', icon: 'business' },
             { key: 'location_scope', label: 'Abrangência', icon: 'public' },
+            { key: 'site_type', label: 'Plataforma', icon: 'language' },
+            { key: 'location', label: 'Localização', icon: 'location_on' },
             { key: 'location_country', label: 'País', icon: 'flag' },
             { key: 'location_state', label: 'Estado', icon: 'map' },
-            { key: 'location_city', label: 'Cidade', icon: 'location_city' },
-            { key: 'location', label: 'Localização', icon: 'location_on' }
+            { key: 'location_city', label: 'Cidade', icon: 'location_city' }
         ],
         DATE_PERIODS: [
             { key: 'all', label: 'Todas as datas', days: null },
@@ -1639,9 +1639,41 @@
         },
 
         buildSections() {
-            // Date period section
+            // Tipo (quick filter) section
+            const quickOpts = [
+                { key: 'all', label: 'Todas' },
+                { key: 'remote', label: 'Remoto' },
+                { key: 'hybrid', label: 'Híbrido' },
+                { key: 'onsite', label: 'Presencial' },
+                { key: 'affirmative', label: 'Afirmativa' },
+                { key: 'today', label: 'Hoje' }
+            ];
+            const quickSection = `
+                <div class="filter-section" data-key="_quick">
+                    <div class="filter-section-header">
+                        <div class="filter-section-header-left">
+                            <span class="material-symbols-rounded">tune</span>
+                            <span class="filter-section-title">Tipo</span>
+                            ${state.quickFilter !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
+                        </div>
+                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
+                    </div>
+                    <div class="filter-section-body">
+                        <div class="filter-options-list" id="sheetQuickFilters">
+                            ${quickOpts.map(o => `
+                                <button class="filter-option-chip ${state.quickFilter === o.key ? 'selected' : ''}" data-quick="${o.key}">
+                                    <span class="material-symbols-rounded check-icon">check</span>
+                                    <span>${o.label}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Data da vaga section (position: after Especialidade, before Empresa)
             const datePeriodSection = `
-                <div class="filter-section expanded" data-key="_date">
+                <div class="filter-section" data-key="_date">
                     <div class="filter-section-header">
                         <div class="filter-section-header-left">
                             <span class="material-symbols-rounded">calendar_today</span>
@@ -1663,34 +1695,15 @@
                 </div>
             `;
 
-            // Sort section
-            const sortSection = `
-                <div class="filter-section" data-key="_sort">
-                    <div class="filter-section-header">
-                        <div class="filter-section-header-left">
-                            <span class="material-symbols-rounded">sort</span>
-                            <span class="filter-section-title">Ordenar por</span>
-                        </div>
-                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
-                    </div>
-                    <div class="filter-section-body">
-                        <div class="filter-options-list sort-options">
-                            ${CONFIG.SORT_OPTIONS.map(opt => `
-                                <button class="filter-option-chip ${state.tempSortBy === opt.key ? 'selected' : ''}" data-sort="${opt.key}">
-                                    <span class="material-symbols-rounded check-icon">check</span>
-                                    <span>${opt.label}</span>
-                                </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
+            // Order: Tipo | Ramo Nível Categoria Especialidade | Data | Empresa Abrangência Plataforma Localização País Estado Cidade
+            // FILTER_CATEGORIES is already ordered; split at index 4 (Empresa) to insert date section
+            const cats = CONFIG.FILTER_CATEGORIES;
+            const beforeDate = cats.slice(0, 4); // Ramo Nível Categoria Especialidade
+            const afterDate  = cats.slice(4);    // Empresa Abrangência Plataforma Localização País Estado Cidade
 
-            // Regular filter sections
-            const filterSections = CONFIG.FILTER_CATEGORIES.map(({ key, label, icon }) => {
+            const buildCats = (list) => list.map(({ key, label, icon }) => {
                 const options = state.filterOptions[key] || [];
                 const selectedCount = (state.tempFilters[key] || []).length;
-
                 return `
                     <div class="filter-section" data-key="${key}">
                         <div class="filter-section-header">
@@ -1711,38 +1724,11 @@
                 `;
             }).join('');
 
-            // Quick filters section (Tipo)
-            const quickOpts = [
-                { key: 'all', label: 'Todas' },
-                { key: 'remote', label: 'Remoto' },
-                { key: 'hybrid', label: 'Híbrido' },
-                { key: 'onsite', label: 'Presencial' },
-                { key: 'affirmative', label: 'Afirmativa' },
-                { key: 'today', label: 'Hoje' }
-            ];
-            const quickSection = `
-                <div class="filter-section expanded" data-key="_quick">
-                    <div class="filter-section-header">
-                        <div class="filter-section-header-left">
-                            <span class="material-symbols-rounded">tune</span>
-                            <span class="filter-section-title">Tipo</span>
-                        </div>
-                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
-                    </div>
-                    <div class="filter-section-body">
-                        <div class="filter-options-list" id="sheetQuickFilters">
-                            ${quickOpts.map(o => `
-                                <button class="filter-option-chip ${state.quickFilter === o.key ? 'selected' : ''}" data-quick="${o.key}">
-                                    <span class="material-symbols-rounded check-icon">check</span>
-                                    <span>${o.label}</span>
-                                </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            elements.filterSheetContent.innerHTML = quickSection + datePeriodSection + sortSection + filterSections;
+            elements.filterSheetContent.innerHTML =
+                quickSection +
+                buildCats(beforeDate) +
+                datePeriodSection +
+                buildCats(afterDate);
 
             // Add event listeners
             this.addSectionListeners();
@@ -2311,7 +2297,7 @@
             const el = document.getElementById('visitedCount');
             if (!el) return;
             const count = state.allJobs.filter(j => utils.isVisited(j)).length;
-            el.textContent = count > 0 ? `(${count.toLocaleString('pt-BR')})` : '';
+            el.textContent = count > 0 ? count.toLocaleString('pt-BR') : '';
         }
     };
 
