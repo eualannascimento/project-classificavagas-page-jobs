@@ -1444,9 +1444,8 @@
 
             state.displayedCount = end;
 
-            if (state.displayedCount >= state.filteredJobs.length) {
-                elements.loadingMore.classList.add('hidden');
-            }
+            // Always hide spinner after rendering a batch; it'll reappear on next scroll trigger
+            elements.loadingMore.classList.add('hidden');
         },
 
         createCard(job, index = 0) {
