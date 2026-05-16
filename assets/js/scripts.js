@@ -99,7 +99,6 @@
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
         viewToggle: $('#viewToggle'),
-        shareButton: $('#shareButton'),
         sortToggle: $('#sortToggle'),
         sortDropdown: $('#sortDropdown'),
         sortLabel: $('.sort-label')
@@ -332,7 +331,7 @@
             }
         },
 
-        apply(mode) {
+        apply(mode, rerender = false) {
             state.viewMode = mode;
             localStorage.setItem('cv_view', mode);
 
@@ -351,6 +350,13 @@
 
             // Update toggle button icon
             this.updateIcon();
+
+            // Re-render if requested (e.g. from tweaks panel)
+            if (rerender && state.allJobs.length > 0) {
+                elements.jobsGrid.innerHTML = '';
+                state.displayedCount = 0;
+                cardRenderer.render(true);
+            }
         },
 
         updateIcon() {
@@ -496,7 +502,7 @@
                     btn.addEventListener('click', () => {
                         const mode = btn.dataset.value;
                         if (VIEW_MODES.includes(mode)) {
-                            viewModeManager.apply(mode);
+                            viewModeManager.apply(mode, true);
                             this.syncGroup(viewGroup, mode);
                         }
                     });
@@ -887,9 +893,15 @@
     // DATA LOADER
     // ============================================
     const dataLoader = {
+        setSplashMsg(msg) {
+            const el = document.getElementById('splashMsg');
+            if (el) el.textContent = msg;
+        },
+
         async load() {
             // Show skeleton loading
             skeletonLoader.show();
+            this.setSplashMsg('Carregando vagas...');
 
             try {
                 const response = await fetch(CONFIG.DATA_URL);
@@ -899,6 +911,7 @@
                 }
 
                 const data = await response.json();
+                this.setSplashMsg(`Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
 
                 state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
 
@@ -918,6 +931,7 @@
 
                 // Apply initial filters
                 filterManager.apply();
+                this.setSplashMsg('Pronto!');
 
                 // Show app
                 this.showApp();
@@ -1157,7 +1171,7 @@
                 elements.jobCount.textContent = `${filtered.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} vagas`;
             } else {
                 elements.jobCount.textContent = todayCount > 0
-                    ? `${total.toLocaleString('pt-BR')} vagas · ${todayCount} novas hoje`
+                    ? `${total.toLocaleString('pt-BR')} vagas · ${todayCount.toLocaleString('pt-BR')} novas hoje`
                     : `${total.toLocaleString('pt-BR')} vagas`;
             }
 
@@ -2172,14 +2186,15 @@
     function init() {
         try {
             themeManager.init();
-            styleManager.init();
+            // styleManager.init() — not called; restraint is default via HTML data-style attr
             fontManager.init();
             densityManager.init();
             viewModeManager.init();
             scrollProgress.init();
             tweaksPanel.init();
             sortManager.init();
-            shareManager.init();
+            // shareManager.init() — share button removed from UI; URL loading still works via shareManager.loadFromURL()
+            shareManager.loadFromURL();
             searchHistoryManager.init();
             searchManager.init();
             animationManager.init();
@@ -2187,6 +2202,23 @@
             quickFilters.init();
             bottomSheet.init();
             clearHandlers.init();
+
+            // Brand logo click → reset to initial state
+            const brandLink = document.getElementById('brandLink');
+            if (brandLink) {
+                brandLink.addEventListener('click', () => {
+                    filterManager.clearAll();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                brandLink.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        filterManager.clearAll();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            }
+
             dataLoader.load();
 
             // Fallback: ensure app shows after 5 seconds no matter what
