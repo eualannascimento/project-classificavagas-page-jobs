@@ -40,39 +40,39 @@
 }
 
 [data-theme="dark"] {
-    --bg:           oklch(0.11 0.015 250);
-    --bg-elevated:  oklch(0.15 0.012 250);
-    --bg-sunk:      oklch(0.08 0.012 250);
-    --ink:          oklch(0.93 0.008 250);
-    --ink-2:        oklch(0.70 0.012 250);
-    --ink-3:        oklch(0.50 0.010 250);
-    --accent:       oklch(0.70 0.08 240);
-    --accent-soft:  oklch(0.20 0.040 240);
-    --accent-ink:   oklch(0.88 0.04 240);
+    --bg:           oklch(0.12 0.012 260);
+    --bg-elevated:  oklch(0.16 0.010 260);
+    --bg-sunk:      oklch(0.09 0.010 260);
+    --ink:          oklch(0.93 0.006 260);
+    --ink-2:        oklch(0.68 0.012 260);
+    --ink-3:        oklch(0.48 0.010 260);
+    --accent:       oklch(0.72 0.12 245);
+    --accent-soft:  oklch(0.18 0.045 245);
+    --accent-ink:   oklch(0.90 0.05 245);
     --success:      oklch(0.68 0.14 145);
-    --success-soft: oklch(0.18 0.06 145);
-    --warn:         oklch(0.75 0.12 50);
-    --warn-soft:    oklch(0.20 0.06 50);
-    --rule:         oklch(0.22 0.012 250);
-    --rule-2:       oklch(0.18 0.010 250);
+    --success-soft: oklch(0.16 0.06 145);
+    --warn:         oklch(0.76 0.12 50);
+    --warn-soft:    oklch(0.18 0.06 50);
+    --rule:         oklch(0.22 0.010 260);
+    --rule-2:       oklch(0.17 0.008 260);
 }
 
 [data-theme="black"] {
     --bg:           oklch(0.00 0.000 0);
-    --bg-elevated:  oklch(0.07 0.008 250);
-    --bg-sunk:      oklch(0.00 0.000 0);
-    --ink:          oklch(0.92 0.020 80);
-    --ink-2:        oklch(0.68 0.016 80);
-    --ink-3:        oklch(0.48 0.012 80);
-    --accent:       oklch(0.78 0.12 55);
-    --accent-soft:  oklch(0.18 0.05 55);
-    --accent-ink:   oklch(0.90 0.06 55);
-    --success:      oklch(0.68 0.14 145);
-    --success-soft: oklch(0.12 0.05 145);
-    --warn:         oklch(0.78 0.13 50);
-    --warn-soft:    oklch(0.14 0.05 50);
-    --rule:         oklch(0.16 0.008 250);
-    --rule-2:       oklch(0.10 0.006 250);
+    --bg-elevated:  oklch(0.09 0.006 280);
+    --bg-sunk:      oklch(0.05 0.004 280);
+    --ink:          oklch(0.95 0.005 80);
+    --ink-2:        oklch(0.65 0.010 80);
+    --ink-3:        oklch(0.42 0.008 80);
+    --accent:       oklch(0.72 0.16 290);
+    --accent-soft:  oklch(0.14 0.06 290);
+    --accent-ink:   oklch(0.90 0.08 290);
+    --success:      oklch(0.70 0.15 145);
+    --success-soft: oklch(0.10 0.05 145);
+    --warn:         oklch(0.80 0.14 50);
+    --warn-soft:    oklch(0.12 0.05 50);
+    --rule:         oklch(0.15 0.006 280);
+    --rule-2:       oklch(0.10 0.004 280);
 }
 
 /* Restraint style — sans-serif, less decoration */
@@ -176,6 +176,16 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .splash-amp { color: var(--accent); }
 .splash-brand .brand-v { color: var(--accent); }
+.splash-brand .brand-c { color: var(--accent); display: inline-block; }
+
+.splash-msg {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: -20px;
+}
 
 .splash-loader {
     width: 160px; height: 2px;
@@ -246,22 +256,24 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .brand-amp {
     color: var(--accent);
     display: inline-block;
-    transition: transform 0.35s var(--ease);
 }
 
-.brand-mark:hover .brand-amp {
-    transform: translateY(-2px) rotate(-4deg) scale(1.1);
+@keyframes brandFloat {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-3px); }
+}
+
+.brand-c {
+    color: var(--accent);
+    display: inline-block;
+    animation: brandFloat 3s ease-in-out infinite;
 }
 
 .brand-v {
     color: var(--accent);
     display: inline-block;
-    transition: transform 0.35s var(--ease);
-}
-
-.brand-mark:hover .brand-v,
-.splash-brand:hover .brand-v {
-    transform: translateY(-2px) scale(1.12);
+    animation: brandFloat 3s ease-in-out infinite;
+    animation-delay: 1.5s;
 }
 
 .brand-meta {
@@ -810,7 +822,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .job-date-today { color: var(--success); font-weight: 600; }
 
 .job-badge {
-    display: inline-flex; align-items: center;
+    display: inline-flex; align-items: center; vertical-align: middle;
     height: 20px; padding: 0 8px;
     border-radius: var(--radius-pill);
     font-family: var(--font-mono);
@@ -1356,26 +1368,37 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    FOOTER
    ============================================ */
-.footer {
-    padding: 16px var(--shell-pad);
-    padding-bottom: calc(16px + var(--safe-bottom));
-    border-top: 1px solid var(--rule-2);
-}
-.footer-content {
-    max-width: 1240px; margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-}
-.footer-brand {
-    font-family: var(--font-serif); font-style: italic;
-    font-size: 0.9rem; color: var(--ink-3);
-}
-.footer-link {
-    width: 34px; height: 34px; border-radius: var(--radius-md);
+.footer-fixed {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(36px + var(--safe-bottom));
+    padding: 0 var(--shell-pad);
+    padding-bottom: var(--safe-bottom);
     display: flex; align-items: center; justify-content: center;
-    color: var(--ink-3);
-    transition: background 0.2s var(--ease), color 0.2s var(--ease);
+    background: color-mix(in oklch, var(--bg) 92%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--rule-2);
+    z-index: 50;
 }
-.footer-link:hover { background: var(--bg-sunk); color: var(--ink); }
+.footer-quote {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    letter-spacing: 0.01em;
+    text-align: center;
+}
+.footer-quote-author {
+    color: var(--ink-3);
+    font-style: normal;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+}
+.app { padding-bottom: calc(36px + var(--safe-bottom)); }
 
 /* ============================================
    TOAST
@@ -1399,6 +1422,15 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 @media (max-width: 720px) {
     :root { --shell-pad: 16px; }
     .brand-update { display: none; }
+    .masthead-inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 8px 0;
+        gap: 4px;
+    }
+    .masthead-brand { flex: 1 1 100%; }
+    .brand-meta { flex-wrap: wrap; }
+    .top-app-bar-actions { width: 100%; justify-content: flex-end; }
 }
 
 @media (min-width: 600px) {
