@@ -246,14 +246,16 @@
     // ============================================
     // THEME MANAGER
     // ============================================
-    const THEMES = ['light', 'dark'];
+    const THEMES = ['light', 'dark', 'black'];
     const THEME_LABELS = {
         'light': 'Light',
-        'dark': 'Dark'
+        'dark': 'Dark',
+        'black': 'Black'
     };
     const THEME_META_COLORS = {
         'light': '#f9f9ff',
-        'dark': '#000000'
+        'dark': '#1b1d23',
+        'black': '#000000'
     };
 
     const themeManager = {
@@ -277,6 +279,12 @@
             if (meta) {
                 meta.content = THEME_META_COLORS[theme] || THEME_META_COLORS['light'];
             }
+
+            // Sync tweaks panel buttons
+            const themeGroup = document.querySelector('#tweaksTheme');
+            if (themeGroup) themeGroup.querySelectorAll('[data-value]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.value === theme);
+            });
 
             if (this._initialized) {
                 this.showThemeToast(theme);
@@ -368,6 +376,209 @@
             this.apply(newMode);
             // Re-render cards for new view
             cardRenderer.render(true);
+        }
+    };
+
+    // ============================================
+    // STYLE MANAGER (editorial / restraint)
+    // ============================================
+    const styleManager = {
+        apply(style) {
+            document.documentElement.setAttribute('data-style', style);
+            localStorage.setItem('cv_style', style);
+            const btn = document.getElementById('styleToggle');
+            if (btn) btn.textContent = style === 'editorial' ? 'Aa' : 'aa';
+            const group = document.querySelector('#tweaksStyle');
+            if (group) group.querySelectorAll('[data-value]').forEach(b => {
+                b.classList.toggle('active', b.dataset.value === style);
+            });
+        },
+        toggle() {
+            const cur = document.documentElement.getAttribute('data-style') || 'editorial';
+            this.apply(cur === 'editorial' ? 'restraint' : 'editorial');
+        },
+        init() {
+            const saved = localStorage.getItem('cv_style') || 'editorial';
+            this.apply(saved);
+            const btn = document.getElementById('styleToggle');
+            if (btn) btn.addEventListener('click', () => this.toggle());
+        }
+    };
+
+    // ============================================
+    // FONT MANAGER
+    // ============================================
+    const FONTS = ['instrument', 'newsreader', 'eb_garamond', 'dm_serif', 'bricolage', 'inter', 'mono'];
+    const FONT_LABELS = {
+        instrument: 'Instrument', newsreader: 'Newsreader', eb_garamond: 'EB Garamond',
+        dm_serif: 'DM Serif', bricolage: 'Bricolage', inter: 'Inter', mono: 'Mono'
+    };
+
+    const fontManager = {
+        apply(font) {
+            document.documentElement.setAttribute('data-font', font);
+            localStorage.setItem('cv_font', font);
+            const group = document.querySelector('#tweaksFont');
+            if (group) group.querySelectorAll('[data-font]').forEach(b => {
+                b.classList.toggle('active', b.dataset.font === font);
+            });
+        },
+        init() {
+            const saved = localStorage.getItem('cv_font') || 'instrument';
+            this.apply(saved);
+        }
+    };
+
+    // ============================================
+    // DENSITY MANAGER
+    // ============================================
+    const DENSITIES = ['compact', 'regular', 'comfy'];
+
+    const densityManager = {
+        apply(density) {
+            document.documentElement.setAttribute('data-density', density);
+            localStorage.setItem('cv_density', density);
+            const group = document.querySelector('#tweaksDensity');
+            if (group) group.querySelectorAll('[data-value]').forEach(b => {
+                b.classList.toggle('active', b.dataset.value === density);
+            });
+        },
+        init() {
+            const saved = localStorage.getItem('cv_density') || 'compact';
+            this.apply(saved);
+        }
+    };
+
+    // ============================================
+    // TWEAKS PANEL
+    // ============================================
+    const tweaksPanel = {
+        isOpen: false,
+
+        init() {
+            const toggleBtn = document.getElementById('tweaksToggle');
+            const panel = document.getElementById('tweaksPanel');
+            const closeBtn = document.getElementById('closeTweaks');
+            if (!toggleBtn || !panel) return;
+
+            // Remove 'hidden' class so the panel is controlled by 'open' class
+            panel.classList.remove('hidden');
+
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+
+            if (closeBtn) closeBtn.addEventListener('click', () => this.close());
+
+            document.addEventListener('click', (e) => {
+                if (this.isOpen && !panel.contains(e.target) && e.target !== toggleBtn) {
+                    this.close();
+                }
+            });
+
+            // Style buttons (#tweaksStyle [data-value])
+            const styleGroup = panel.querySelector('#tweaksStyle');
+            if (styleGroup) {
+                styleGroup.querySelectorAll('[data-value]').forEach(btn => {
+                    btn.addEventListener('click', () => styleManager.apply(btn.dataset.value));
+                });
+            }
+
+            // Font buttons (#tweaksFont [data-font])
+            const fontGroup = panel.querySelector('#tweaksFont');
+            if (fontGroup) {
+                fontGroup.querySelectorAll('[data-font]').forEach(btn => {
+                    btn.addEventListener('click', () => fontManager.apply(btn.dataset.font));
+                });
+            }
+
+            // View mode buttons (#tweaksView [data-value])
+            const viewGroup = panel.querySelector('#tweaksView');
+            if (viewGroup) {
+                viewGroup.querySelectorAll('[data-value]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const mode = btn.dataset.value;
+                        if (VIEW_MODES.includes(mode)) {
+                            viewModeManager.apply(mode);
+                            this.syncGroup(viewGroup, mode);
+                        }
+                    });
+                });
+            }
+
+            // Density buttons (#tweaksDensity [data-value])
+            const densityGroup = panel.querySelector('#tweaksDensity');
+            if (densityGroup) {
+                densityGroup.querySelectorAll('[data-value]').forEach(btn => {
+                    btn.addEventListener('click', () => densityManager.apply(btn.dataset.value));
+                });
+            }
+
+            // Theme buttons (#tweaksTheme [data-value])
+            const themeGroup = panel.querySelector('#tweaksTheme');
+            if (themeGroup) {
+                themeGroup.querySelectorAll('[data-value]').forEach(btn => {
+                    btn.addEventListener('click', () => themeManager.apply(btn.dataset.value));
+                });
+            }
+
+            // Sync all groups to initial state
+            this.syncAll();
+        },
+
+        syncGroup(group, activeValue) {
+            if (!group) return;
+            group.querySelectorAll('[data-value],[data-font]').forEach(btn => {
+                const val = btn.dataset.value || btn.dataset.font;
+                btn.classList.toggle('active', val === activeValue);
+            });
+        },
+
+        syncAll() {
+            const panel = document.getElementById('tweaksPanel');
+            if (!panel) return;
+            const theme = document.documentElement.getAttribute('data-theme') || 'light';
+            const style = document.documentElement.getAttribute('data-style') || 'editorial';
+            const font  = document.documentElement.getAttribute('data-font')  || 'instrument';
+            const density = document.documentElement.getAttribute('data-density') || 'compact';
+
+            this.syncGroup(panel.querySelector('#tweaksTheme'), theme);
+            this.syncGroup(panel.querySelector('#tweaksStyle'), style);
+            this.syncGroup(panel.querySelector('#tweaksFont'), font);
+            this.syncGroup(panel.querySelector('#tweaksDensity'), density);
+            this.syncGroup(panel.querySelector('#tweaksView'), state.viewMode);
+        },
+
+        toggle() {
+            this.isOpen ? this.close() : this.open();
+        },
+
+        open() {
+            this.isOpen = true;
+            this.syncAll();
+            document.getElementById('tweaksPanel')?.classList.add('open');
+        },
+
+        close() {
+            this.isOpen = false;
+            document.getElementById('tweaksPanel')?.classList.remove('open');
+        }
+    };
+
+    // ============================================
+    // SCROLL PROGRESS
+    // ============================================
+    const scrollProgress = {
+        init() {
+            const bar = document.getElementById('scrollProgress');
+            if (!bar) return;
+            window.addEventListener('scroll', () => {
+                const scrollY = window.scrollY;
+                const docH = document.documentElement.scrollHeight - window.innerHeight;
+                const pct = docH > 0 ? scrollY / docH : 0;
+                bar.style.transform = `scaleX(${pct})`;
+            }, { passive: true });
         }
     };
 
@@ -1965,7 +2176,12 @@
     function init() {
         try {
             themeManager.init();
+            styleManager.init();
+            fontManager.init();
+            densityManager.init();
             viewModeManager.init();
+            scrollProgress.init();
+            tweaksPanel.init();
             sortManager.init();
             shareManager.init();
             searchHistoryManager.init();
