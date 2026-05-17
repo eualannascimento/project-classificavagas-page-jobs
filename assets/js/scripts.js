@@ -104,7 +104,8 @@
         viewToggle: $('#viewToggle'),
         sortToggle: $('#sortToggle'),
         sortDropdown: $('#sortDropdown'),
-        sortLabel: $('.sort-label')
+        sortLabel: $('.sort-label'),
+        quickClearFilters: $('#quickClearFilters')
     };
 
     // ============================================
@@ -1287,6 +1288,7 @@
             if (state.showOnlyVisited) count += 1;
             elements.filterBadge.textContent = count;
             elements.filterBadge.classList.toggle('hidden', count === 0);
+            if (elements.quickClearFilters) elements.quickClearFilters.classList.toggle('hidden', count === 0);
 
             // Update quick filter chips (sheet)
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
@@ -1513,7 +1515,7 @@
             const fullDate = utils.formatDate(job.inserted_date);
             const smartLocation = utils.getSmartLocation(job);
             const contractInfo = utils.getContractInfo(job);
-            const title = utils.toTitleCase(job.title);
+            const title = (job.title || '').toUpperCase();
 
             const card = document.createElement('a');
             card.href = job.url;
@@ -2416,6 +2418,12 @@
             elements.clearAllFilters.addEventListener('click', () => {
                 filterManager.clearAll();
             });
+
+            if (elements.quickClearFilters) {
+                elements.quickClearFilters.addEventListener('click', () => {
+                    filterManager.clearAll();
+                });
+            }
 
             elements.emptyStateClear.addEventListener('click', () => {
                 filterManager.clearAll();

@@ -337,6 +337,17 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     overflow: hidden; text-overflow: ellipsis;
 }
 
+.brand-tagline {
+    font-family: var(--font-mono);
+    font-size: 0.60rem;
+    color: var(--ink-3);
+    letter-spacing: 0.01em;
+    margin: 2px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .top-app-bar-actions {
     display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
@@ -581,6 +592,25 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 .filter-chip .material-symbols-rounded { font-size: 16px; }
+
+/* Quick-clear chip — icon-only, destructive tint */
+.filter-chip-clear {
+    padding: 0 8px;
+    color: var(--ink-2);
+    border-color: var(--rule);
+    transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.filter-chip-clear:hover {
+    background: oklch(0.96 0.03 15);
+    border-color: oklch(0.70 0.12 15);
+    color: oklch(0.45 0.18 15);
+}
+[data-theme="dark"] .filter-chip-clear:hover,
+[data-theme="black"] .filter-chip-clear:hover {
+    background: oklch(0.22 0.04 15);
+    border-color: oklch(0.50 0.14 15);
+    color: oklch(0.80 0.14 15);
+}
 
 /* Sort dropdown */
 .sort-dropdown-container { position: relative; }
@@ -1539,6 +1569,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     .masthead-brand .brand-pulse {
         display: none;
     }
+    .brand-tagline { display: none; }
     .top-app-bar-actions {
         flex-shrink: 0;
         gap: 4px;
