@@ -2445,6 +2445,9 @@
             if (!overlay) return;
 
             closeBtn?.addEventListener('click', () => overlay.classList.add('hidden'));
+            document.getElementById('shortcutsBtn')?.addEventListener('click', () => {
+                overlay.classList.toggle('hidden');
+            });
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) overlay.classList.add('hidden');
             });
