@@ -599,10 +599,10 @@
     const SORT_LABELS = {
         'date_desc': 'Recentes',
         'date_asc': 'Antigas',
-        'company_asc': 'Empresa A-Z',
-        'company_desc': 'Empresa Z-A',
-        'title_asc': 'Título A-Z',
-        'title_desc': 'Título Z-A'
+        'company_asc': 'A→Z',
+        'company_desc': 'Z→A',
+        'title_asc': 'Título ↑',
+        'title_desc': 'Título ↓'
     };
 
     const sortManager = {
@@ -1551,7 +1551,7 @@
                     <div class="job-card-footer">
                         <div class="job-location">
                             <span class="material-symbols-rounded">location_on</span>
-                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : 'Não informado'}</span>
+                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : '<span class="job-location-empty">—</span>'}</span>
                         </div>
                         <span class="job-date${dateClass}" title="${fullDate}">${relativeDate}</span>
                     </div>
