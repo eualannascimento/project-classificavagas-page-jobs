@@ -17,8 +17,8 @@
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-    <!-- Scroll Progress -->
-    <div class="scroll-progress" id="scrollProgress"></div>
+    <!-- Scroll Progress (replaced by FAB ring; kept hidden for backward compat) -->
+    <div class="scroll-progress hidden" id="scrollProgress"></div>
 
     <!-- Splash -->
     <div id="splash" class="splash">
@@ -43,7 +43,7 @@
                     <div class="brand-meta">
                         <span class="job-count" id="jobCount">Carregando...</span>
                         <span class="brand-pulse"></span>
-                        <span class="brand-update">atualizado <span id="lastUpdate">—</span></span>
+                        <span class="brand-update"><span title="Data e hora em que os dados das vagas foram atualizados no servidor">dados de <span id="lastUpdate">—</span></span></span>
                     </div>
                 </div>
                 <div class="top-app-bar-actions">
@@ -71,6 +71,7 @@
                     id="searchInput"
                     placeholder="Buscar vagas, empresas, cargos... (pressione /)"
                     autocomplete="off"
+                    aria-label="Buscar vagas, empresas e cargos"
                 >
                 <button class="icon-btn search-clear hidden" id="searchClear" aria-label="Limpar">
                     <span class="material-symbols-rounded">close</span>
@@ -81,7 +82,7 @@
         <!-- Filter Chips -->
         <div class="filter-chips-container">
             <div class="filter-chips-scroll">
-                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas">
+                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas" title="Vagas que você já abriu">
                     <span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 18">visibility</span>
                     <span class="visited-count" id="visitedCount"></span>
                 </button>
@@ -127,6 +128,8 @@
         <main class="main-content">
             <div class="jobs-grid" id="jobsGrid"></div>
 
+            <div class="results-counter hidden" id="resultsCounter" aria-live="polite"></div>
+
             <div class="loading-more hidden" id="loadingMore">
                 <div class="loading-spinner"></div>
                 <span>Carregando mais vagas...</span>
@@ -142,6 +145,10 @@
 
         <!-- FAB -->
         <button class="fab" id="scrollTopFab" aria-label="Voltar ao topo">
+            <svg class="fab-ring" viewBox="0 0 36 36" aria-hidden="true">
+                <circle cx="18" cy="18" r="16" fill="none" stroke="var(--rule)" stroke-width="2"/>
+                <circle id="fabRingProgress" cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" transform="rotate(-90 18 18)"/>
+            </svg>
             <span class="material-symbols-rounded">keyboard_arrow_up</span>
         </button>
 
@@ -167,6 +174,25 @@
                     <span class="material-symbols-rounded">check</span>
                     Aplicar
                 </button>
+            </div>
+        </div>
+
+        <!-- Shortcuts Overlay -->
+        <div class="shortcuts-overlay hidden" id="shortcutsOverlay">
+            <div class="shortcuts-card">
+                <div class="shortcuts-header">
+                    <h3>Atalhos</h3>
+                    <button class="icon-btn" id="closeShortcuts" aria-label="Fechar">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <ul class="shortcuts-list">
+                    <li><kbd>/</kbd><span>Focar busca</span></li>
+                    <li><kbd>Esc</kbd><span>Limpar busca</span></li>
+                    <li><kbd>?</kbd><span>Mostrar atalhos</span></li>
+                    <li><kbd>g</kbd> <kbd>t</kbd><span>Topo da página</span></li>
+                    <li><kbd>t</kbd><span>Alternar tema</span></li>
+                </ul>
             </div>
         </div>
 

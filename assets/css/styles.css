@@ -40,39 +40,39 @@
 }
 
 [data-theme="dark"] {
-    --bg:           oklch(0.12 0.012 260);
-    --bg-elevated:  oklch(0.16 0.010 260);
-    --bg-sunk:      oklch(0.09 0.010 260);
-    --ink:          oklch(0.93 0.006 260);
-    --ink-2:        oklch(0.68 0.012 260);
-    --ink-3:        oklch(0.48 0.010 260);
-    --accent:       oklch(0.72 0.12 245);
-    --accent-soft:  oklch(0.18 0.045 245);
-    --accent-ink:   oklch(0.90 0.05 245);
-    --success:      oklch(0.68 0.14 145);
-    --success-soft: oklch(0.16 0.06 145);
-    --warn:         oklch(0.76 0.12 50);
-    --warn-soft:    oklch(0.18 0.06 50);
-    --rule:         oklch(0.22 0.010 260);
-    --rule-2:       oklch(0.17 0.008 260);
+    --bg:           oklch(0.13 0.010 260);
+    --bg-elevated:  oklch(0.19 0.010 260);
+    --bg-sunk:      oklch(0.10 0.010 260);
+    --ink:          oklch(0.94 0.006 260);
+    --ink-2:        oklch(0.76 0.010 260);
+    --ink-3:        oklch(0.58 0.008 260);
+    --accent:       oklch(0.74 0.11 245);
+    --accent-soft:  oklch(0.20 0.045 245);
+    --accent-ink:   oklch(0.92 0.05 245);
+    --success:      oklch(0.70 0.14 145);
+    --success-soft: oklch(0.18 0.06 145);
+    --warn:         oklch(0.78 0.12 50);
+    --warn-soft:    oklch(0.20 0.06 50);
+    --rule:         oklch(0.26 0.010 260);
+    --rule-2:       oklch(0.21 0.008 260);
 }
 
 [data-theme="black"] {
     --bg:           oklch(0.00 0.000 0);
-    --bg-elevated:  oklch(0.09 0.006 280);
-    --bg-sunk:      oklch(0.05 0.004 280);
-    --ink:          oklch(0.95 0.005 80);
-    --ink-2:        oklch(0.65 0.010 80);
-    --ink-3:        oklch(0.42 0.008 80);
-    --accent:       oklch(0.72 0.16 290);
-    --accent-soft:  oklch(0.14 0.06 290);
-    --accent-ink:   oklch(0.90 0.08 290);
-    --success:      oklch(0.70 0.15 145);
-    --success-soft: oklch(0.10 0.05 145);
-    --warn:         oklch(0.80 0.14 50);
-    --warn-soft:    oklch(0.12 0.05 50);
-    --rule:         oklch(0.15 0.006 280);
-    --rule-2:       oklch(0.10 0.004 280);
+    --bg-elevated:  oklch(0.11 0.006 280);
+    --bg-sunk:      oklch(0.06 0.004 280);
+    --ink:          oklch(0.96 0.004 80);
+    --ink-2:        oklch(0.75 0.008 80);
+    --ink-3:        oklch(0.56 0.006 80);
+    --accent:       oklch(0.74 0.15 290);
+    --accent-soft:  oklch(0.16 0.06 290);
+    --accent-ink:   oklch(0.92 0.08 290);
+    --success:      oklch(0.72 0.15 145);
+    --success-soft: oklch(0.13 0.05 145);
+    --warn:         oklch(0.82 0.13 50);
+    --warn-soft:    oklch(0.14 0.05 50);
+    --rule:         oklch(0.18 0.006 280);
+    --rule-2:       oklch(0.13 0.004 280);
 }
 
 /* Restraint style — sans-serif, less decoration */
@@ -273,20 +273,33 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 @keyframes brandFloat {
     0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-3px); }
+    50%      { transform: translateY(-1.5px); }
 }
 
 .brand-c {
     color: var(--accent);
     display: inline-block;
-    animation: brandFloat 3s ease-in-out infinite;
+    animation: brandFloat 6s ease-in-out infinite;
 }
 
 .brand-v {
     color: var(--accent);
     display: inline-block;
-    animation: brandFloat 3s ease-in-out infinite;
-    animation-delay: 1.5s;
+    animation: brandFloat 6s ease-in-out infinite;
+    animation-delay: 3s;
+}
+
+.sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+.job-location-empty,
+.job-list-location-empty {
+    color: var(--ink-3);
+    opacity: 0.55;
+    font-style: italic;
 }
 
 .brand-meta {
@@ -617,6 +630,32 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     margin: 0 auto; width: 100%;
 }
 
+.active-filters:not(.hidden) {
+    position: sticky;
+    top: var(--header-h, 60px);
+    z-index: 90;
+    background: color-mix(in oklch, var(--bg) 95%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Search bar spinner during debounce */
+.search-bar { position: relative; }
+.search-bar.searching .search-icon { opacity: 0.4; }
+.search-bar.searching::after {
+    content: '';
+    width: 12px; height: 12px;
+    border: 1.5px solid var(--rule);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: searchSpin 0.7s linear infinite;
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    pointer-events: none;
+}
+@keyframes searchSpin { to { transform: translateY(-50%) rotate(360deg); } }
+
 .active-filters-scroll {
     flex: 1; display: flex; gap: 6px;
     overflow-x: auto; scrollbar-width: none;
@@ -835,6 +874,16 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 .job-tag-compact { height: 20px; padding: 0 7px; font-size: 0.60rem; }
 
+.job-tag-clickable {
+    cursor: pointer;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.job-tag-clickable:hover {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+}
+
 .job-card-footer {
     margin-top: auto;
     padding: 10px 14px;
@@ -910,6 +959,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     text-align: right; padding-right: 4px;
     position: relative; user-select: none;
     font-variant-numeric: tabular-nums;
+    min-width: 14px;
 }
 
 .list-new-dot {
@@ -1268,15 +1318,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    SCROLL PROGRESS
    ============================================ */
-.scroll-progress {
-    position: fixed; top: 0; left: 0; right: 0;
-    height: 2px; z-index: 999;
-    background: var(--accent);
-    transform-origin: left;
-    transform: scaleX(0);
-    transition: transform 0.1s linear;
-    pointer-events: none;
-}
+.scroll-progress { display: none; }
 
 /* ============================================
    TWEAKS PANEL
@@ -1502,6 +1544,16 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
         gap: 4px;
     }
 
+    /* Active filters wrap on mobile */
+    .active-filters-scroll {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+    .active-filters {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
     /* Sticky job count bar below header */
     .mobile-jobcount-row {
         display: flex;
@@ -1532,6 +1584,118 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     .bottom-sheet.visible { transform: translateX(-50%) translateY(0); }
     .fab { right: 24px; }
 }
+
+/* ============================================
+   RESULTS COUNTER
+   ============================================ */
+.results-counter {
+    text-align: center;
+    padding: 12px var(--shell-pad);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.results-counter.hidden { display: none; }
+
+/* ============================================
+   FAB RING
+   ============================================ */
+.fab { position: relative; }
+.fab-ring {
+    position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px);
+    pointer-events: none;
+}
+.fab .material-symbols-rounded { position: relative; z-index: 1; }
+
+/* ============================================
+   HOVER REINFORCEMENT
+   ============================================ */
+.job-card:hover {
+    box-shadow: 0 4px 16px -8px oklch(0.10 0.02 250 / 0.15);
+}
+
+/* ============================================
+   FLASH HIGHLIGHT (scroll-back)
+   ============================================ */
+@keyframes flashHighlight {
+    0%, 100% { background: transparent; }
+    30% { background: var(--accent-soft); }
+}
+.flash-highlight {
+    animation: flashHighlight 2s ease-out;
+}
+
+/* ============================================
+   DATE POPUP (long-press)
+   ============================================ */
+.date-popup {
+    position: fixed;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    z-index: 999;
+    pointer-events: none;
+    animation: dateFadeIn 0.15s var(--ease);
+}
+@keyframes dateFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   SHORTCUTS OVERLAY
+   ============================================ */
+.shortcuts-overlay {
+    position: fixed; inset: 0;
+    background: oklch(0 0 0 / 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+}
+.shortcuts-overlay.hidden { display: none; }
+.shortcuts-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    width: min(360px, calc(100vw - 32px));
+}
+.shortcuts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.shortcuts-header h3 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+.shortcuts-list { list-style: none; display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; }
+.shortcuts-list li { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--ink); }
+.shortcuts-list kbd {
+    font-family: var(--font-mono); font-size: 0.7rem;
+    padding: 2px 6px; min-width: 22px; text-align: center;
+    background: var(--bg-sunk); border: 1px solid var(--rule); border-radius: 4px;
+    color: var(--ink-2);
+}
+
+/* ============================================
+   PULL TO REFRESH
+   ============================================ */
+.ptr-indicator {
+    position: fixed;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    box-shadow: 0 2px 8px -2px oklch(0 0 0 / 0.2);
+    color: var(--accent);
+}
+@media (hover: hover) { .ptr-indicator { display: none; } }
 
 /* Touch */
 @media (hover: none) and (pointer: coarse) {

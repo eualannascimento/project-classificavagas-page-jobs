@@ -79,6 +79,7 @@
         jobCountMobile: $('#jobCountMobile'),
         searchInput: $('#searchInput'),
         searchClear: $('#searchClear'),
+        searchBar: $('#searchBar'),
         filterChips: $$('.filter-chip[data-filter]'),
         openFilters: $('#openFilters'),
         filterBadge: $('#filterBadge'),
@@ -188,14 +189,14 @@
             const contract = job.contract;
             if (!contract || contract === 'N\u00c3O INFORMADO' || contract === 'NAO INFORMADO') return null;
             const map = {
-                'H\u00cdBRIDO': { label: 'H\u00edbrido', cls: 'hybrid' },
-                'HIBRIDO': { label: 'H\u00edbrido', cls: 'hybrid' },
-                'REMOTO': { label: 'Remoto', cls: 'remote' },
-                'HOME OFFICE': { label: 'Home Office', cls: 'remote' },
-                'PRESENCIAL': { label: 'Presencial', cls: 'onsite' },
-                'EFETIVO': { label: 'Efetivo', cls: 'contract' },
-                'CLT': { label: 'CLT', cls: 'contract' },
-                'PJ': { label: 'PJ', cls: 'contract' },
+                'H\u00cdBRIDO': { label: 'H\u00edbrido', cls: 'hybrid', icon: 'sync_alt' },
+                'HIBRIDO': { label: 'H\u00edbrido', cls: 'hybrid', icon: 'sync_alt' },
+                'REMOTO': { label: 'Remoto', cls: 'remote', icon: 'home_work' },
+                'HOME OFFICE': { label: 'Home Office', cls: 'remote', icon: 'home_work' },
+                'PRESENCIAL': { label: 'Presencial', cls: 'onsite', icon: 'apartment' },
+                'EFETIVO': { label: 'Efetivo', cls: 'contract', icon: 'work' },
+                'CLT': { label: 'CLT', cls: 'contract', icon: 'work' },
+                'PJ': { label: 'PJ', cls: 'contract', icon: 'work' },
             };
             const up = contract.toUpperCase().trim();
             return map[up] || { label: contract, cls: 'contract' };
@@ -232,6 +233,19 @@
             const key = this.getJobKey(job);
             localStorage.setItem(key, '1');
             state.visitedJobs.add(key);
+        },
+
+        markSessionStart() {
+            const last = localStorage.getItem('cv_last_visit');
+            if (last) localStorage.setItem('cv_prev_visit', last);
+            localStorage.setItem('cv_last_visit', new Date().toISOString().split('T')[0]);
+        },
+
+        isNewSinceLastVisit(dateStr) {
+            if (!dateStr) return false;
+            const prev = localStorage.getItem('cv_prev_visit');
+            if (!prev) return false;
+            return dateStr > prev;
         },
 
         isWithinDays(dateStr, days) {
@@ -286,6 +300,15 @@
             if (themeGroup) themeGroup.querySelectorAll('[data-value]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.value === theme);
             });
+
+            // Tooltip: indicate current + next on cycle
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                const idx = THEMES.indexOf(theme);
+                const next = THEMES[(idx + 1) % THEMES.length];
+                const map = { 'light': 'Claro', 'dark': 'Escuro', 'black': 'Preto' };
+                btn.title = `Tema: ${map[theme]} — clique para ${map[next]}`;
+            }
 
             if (this._initialized) {
                 this.showThemeToast(theme);
@@ -599,10 +622,10 @@
     const SORT_LABELS = {
         'date_desc': 'Recentes',
         'date_asc': 'Antigas',
-        'company_asc': 'Empresa A-Z',
-        'company_desc': 'Empresa Z-A',
-        'title_asc': 'Título A-Z',
-        'title_desc': 'Título Z-A'
+        'company_asc': 'A→Z',
+        'company_desc': 'Z→A',
+        'title_asc': 'Título ↑',
+        'title_desc': 'Título ↓'
     };
 
     const sortManager = {
@@ -919,7 +942,18 @@
         async load() {
             // Show skeleton loading
             skeletonLoader.show();
-            setSplashProgress(5, 'Conectando...');
+            const _splashStart = Date.now();
+            let _lastSplashAt = _splashStart;
+            const _setProgress = (pct, msg) => {
+                setSplashProgress(pct, msg);
+                return new Promise(r => {
+                    const minDelay = 250;
+                    const elapsedSinceLast = Date.now() - _lastSplashAt;
+                    const wait = Math.max(0, minDelay - elapsedSinceLast);
+                    setTimeout(() => { _lastSplashAt = Date.now(); r(); }, wait);
+                });
+            };
+            await _setProgress(5, 'Conectando...');
 
             try {
                 const xhrResult = await new Promise((resolve, reject) => {
@@ -946,7 +980,7 @@
                 });
 
                 const data = xhrResult.data;
-                setSplashProgress(80, `Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
+                await _setProgress(80, `Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
 
                 state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
 
@@ -964,7 +998,7 @@
                 // Update last modified
                 this.updateLastModifiedFromHeader(xhrResult.lastModified);
 
-                setSplashProgress(95, 'Renderizando...');
+                await _setProgress(95, 'Renderizando...');
                 // Apply initial filters
                 filterManager.apply();
                 if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
@@ -1245,19 +1279,14 @@
                 elements.jobCountMobile.textContent = elements.jobCount.textContent;
             }
 
-            // Filter badge
-            let count = Object.values(state.selectedFilters)
-                .filter(arr => arr && arr.length > 0)
-                .reduce((sum, arr) => sum + arr.length, 0);
-
-            if (state.datePeriod !== 'all') count++;
-
-            if (count > 0) {
-                elements.filterBadge.textContent = count;
-                elements.filterBadge.classList.remove('hidden');
-            } else {
-                elements.filterBadge.classList.add('hidden');
-            }
+            // Filter badge (counts everything: categories, datePeriod, quickFilter, visited)
+            let count = 0;
+            Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
+            if (state.datePeriod && state.datePeriod !== 'all') count += 1;
+            if (state.quickFilter && state.quickFilter !== 'all') count += 1;
+            if (state.showOnlyVisited) count += 1;
+            elements.filterBadge.textContent = count;
+            elements.filterBadge.classList.toggle('hidden', count === 0);
 
             // Update quick filter chips (sheet)
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
@@ -1432,6 +1461,20 @@
             if (jobs.length === 0 && state.displayedCount === 0) {
                 elements.emptyState.classList.remove('hidden');
                 elements.loadingMore.classList.add('hidden');
+                const h3 = elements.emptyState.querySelector('h3');
+                const p = elements.emptyState.querySelector('p');
+                const btn = document.getElementById('emptyStateClear');
+                if (state.showOnlyVisited && state.allJobs.filter(j => utils.isVisited(j)).length === 0) {
+                    if (h3) h3.textContent = 'Nenhuma vaga visitada ainda';
+                    if (p) p.textContent = 'Clique em qualquer vaga para abri-la — ela aparecerá aqui.';
+                    if (btn) btn.textContent = 'Mostrar todas';
+                } else {
+                    if (h3) h3.textContent = 'Nenhuma vaga encontrada';
+                    if (p) p.textContent = 'Tente ajustar seus filtros ou termos de busca';
+                    if (btn) btn.textContent = 'Limpar filtros';
+                }
+                const counter = document.getElementById('resultsCounter');
+                if (counter) counter.classList.add('hidden');
                 return;
             }
 
@@ -1446,12 +1489,24 @@
 
             // Always hide spinner after rendering a batch; it'll reappear on next scroll trigger
             elements.loadingMore.classList.add('hidden');
+
+            // Update results counter
+            const counter = document.getElementById('resultsCounter');
+            if (counter) {
+                if (state.filteredJobs.length === 0) {
+                    counter.classList.add('hidden');
+                } else {
+                    counter.classList.remove('hidden');
+                    const shown = Math.min(state.displayedCount, state.filteredJobs.length);
+                    counter.textContent = `${shown.toLocaleString('pt-BR')} de ${state.filteredJobs.length.toLocaleString('pt-BR')}`;
+                }
+            }
         },
 
         createCard(job, index = 0) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isAffirmative = job['affirmative?'] === '01 - Sim';
-            const isNew = utils.isToday(job.inserted_date);
+            const isNew = utils.isToday(job.inserted_date) || utils.isNewSinceLastVisit(job.inserted_date);
             const jobKey = utils.getJobKey(job);
             const isVisited = state.visitedJobs.has(jobKey);
             const relativeDate = utils.formatRelativeDate(job.inserted_date);
@@ -1481,8 +1536,11 @@
                 ? `<span class="job-tag job-tag-affirmative"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span>Afirmativa</span>`
                 : '';
 
+            const contractQuick = contractInfo
+                ? (contractInfo.cls === 'remote' ? 'remote' : contractInfo.cls === 'hybrid' ? 'hybrid' : contractInfo.cls === 'onsite' ? 'onsite' : null)
+                : null;
             const contractTag = contractInfo
-                ? `<span class="job-tag job-tag-${contractInfo.cls}">${utils.escapeHtml(contractInfo.label)}</span>`
+                ? `<span class="job-tag job-tag-${contractInfo.cls}${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`
                 : '';
 
             const newBadge = isNew
@@ -1502,11 +1560,9 @@
                     </div>
                 `;
             } else if (state.viewMode === 'list') {
-                const indexStr = String(index).padStart(2, '0');
                 card.innerHTML = `
                     <div class="job-list-content">
                         <div class="job-list-index">
-                            ${indexStr}
                             ${isNew ? '<span class="list-new-dot"></span>' : ''}
                         </div>
                         <div class="job-list-main">
@@ -1514,7 +1570,7 @@
                             <div class="job-list-company-row">
                                 <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                                 ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
-                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${utils.escapeHtml(contractInfo.label)}</span>` : ''}
+                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>` : ''}
                                 ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</span>` : ''}
                             </div>
                         </div>
@@ -1544,26 +1600,65 @@
                     <div class="job-card-body">
                         ${contractTag}
                         ${affirmativeTag}
-                        ${isValidLevel ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
-                        ${isValidCategory ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
-                        ${isValidCompanyType ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
+                        ${isValidLevel ? `<span class="job-tag job-tag-clickable" data-filter-key="level" data-filter-value="${utils.escapeHtml(job.level)}">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
+                        ${isValidCategory ? `<span class="job-tag job-tag-clickable" data-filter-key="category" data-filter-value="${utils.escapeHtml(job.category)}">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
+                        ${isValidCompanyType ? `<span class="job-tag job-tag-clickable" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
                     </div>
                     <div class="job-card-footer">
                         <div class="job-location">
                             <span class="material-symbols-rounded">location_on</span>
-                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : 'Não informado'}</span>
+                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : '<span class="job-location-empty">—</span>'}</span>
                         </div>
                         <span class="job-date${dateClass}" title="${fullDate}">${relativeDate}</span>
                     </div>
                 `;
             }
 
-            card.addEventListener('click', () => {
+            // Long-press on dated elements shows full date on touch devices
+            card.querySelectorAll('[title]').forEach(el => {
+                let pressTimer;
+                el.addEventListener('touchstart', () => {
+                    pressTimer = setTimeout(() => {
+                        const titleText = el.getAttribute('title');
+                        if (titleText) {
+                            const popup = document.createElement('div');
+                            popup.className = 'date-popup';
+                            popup.textContent = titleText;
+                            document.body.appendChild(popup);
+                            const rect = el.getBoundingClientRect();
+                            popup.style.left = `${rect.left}px`;
+                            popup.style.top = `${rect.bottom + 6}px`;
+                            setTimeout(() => popup.remove(), 1800);
+                        }
+                    }, 500);
+                }, { passive: true });
+                el.addEventListener('touchend', () => clearTimeout(pressTimer), { passive: true });
+                el.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
+            });
+
+            card.addEventListener('click', (e) => {
+                const tag = e.target.closest('.job-tag-clickable');
+                if (tag) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (tag.dataset.quickFilter) {
+                        filterManager.setQuickFilter(tag.dataset.quickFilter);
+                    } else if (tag.dataset.filterKey && tag.dataset.filterValue) {
+                        const k = tag.dataset.filterKey;
+                        const v = tag.dataset.filterValue;
+                        if (!state.selectedFilters[k]) state.selectedFilters[k] = [];
+                        if (!state.selectedFilters[k].includes(v)) state.selectedFilters[k].push(v);
+                        filterManager.apply();
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
                 if (!state.visitedJobs.has(jobKey)) {
                     utils.markVisited(job);
                     card.classList.add('visited');
                     if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
                 }
+                localStorage.setItem('cv_last_clicked', jobKey);
             });
 
             return card;
@@ -2100,11 +2195,15 @@
                 if (state.searchQuery.length >= 2) {
                     searchHistoryManager.add(state.searchQuery);
                 }
+
+                elements.searchBar?.classList.remove('searching');
             }, CONFIG.SEARCH_DEBOUNCE);
 
             elements.searchInput.addEventListener('input', () => {
                 const hasValue = elements.searchInput.value.length > 0;
                 elements.searchClear.classList.toggle('hidden', !hasValue);
+                if (hasValue) elements.searchBar?.classList.add('searching');
+                else elements.searchBar?.classList.remove('searching');
                 search();
             });
 
@@ -2249,6 +2348,15 @@
                 elements.scrollTopFab.classList.remove('visible');
             }
 
+            // FAB ring progress
+            const ring = document.getElementById('fabRingProgress');
+            if (ring) {
+                const maxScroll = docH - windowH;
+                const pct = maxScroll > 0 ? Math.min(1, Math.max(0, scrollY / maxScroll)) : 0;
+                const circumference = 100.5;
+                ring.style.strokeDashoffset = String(circumference * (1 - pct));
+            }
+
             // Infinite scroll
             if (docH - scrollY - windowH < CONFIG.INFINITE_SCROLL_THRESHOLD) {
                 cardRenderer.loadMore();
@@ -2318,8 +2426,97 @@
     // ============================================
     // EVENT LISTENERS
     // ============================================
+    // ============================================
+    // SHORTCUTS OVERLAY
+    // ============================================
+    const shortcutsOverlay = {
+        init() {
+            const overlay = document.getElementById('shortcutsOverlay');
+            const closeBtn = document.getElementById('closeShortcuts');
+            if (!overlay) return;
+
+            closeBtn?.addEventListener('click', () => overlay.classList.add('hidden'));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.add('hidden');
+            });
+
+            document.addEventListener('keydown', (e) => {
+                const tag = document.activeElement?.tagName;
+                if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+                if (e.key === '?') {
+                    overlay.classList.toggle('hidden');
+                }
+                if (e.key === 't' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                    themeManager.toggle();
+                }
+            });
+
+            // g-t chord for top
+            let gPressed = false;
+            document.addEventListener('keydown', (e) => {
+                const tag = document.activeElement?.tagName;
+                if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+                if (e.key === 'g') {
+                    gPressed = true;
+                    setTimeout(() => { gPressed = false; }, 800);
+                    return;
+                }
+                if (e.key === 't' && gPressed) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    gPressed = false;
+                }
+            });
+        }
+    };
+
+    // ============================================
+    // PULL TO REFRESH (mobile)
+    // ============================================
+    const ptr = {
+        startY: 0,
+        pulling: false,
+        indicator: null,
+        init() {
+            if (!('ontouchstart' in window)) return;
+            const ind = document.createElement('div');
+            ind.className = 'ptr-indicator';
+            ind.innerHTML = '<span class="material-symbols-rounded">refresh</span>';
+            document.body.appendChild(ind);
+            this.indicator = ind;
+
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    this.startY = e.touches[0].clientY;
+                    this.pulling = true;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!this.pulling) return;
+                const dy = e.touches[0].clientY - this.startY;
+                if (dy > 0 && dy < 120) {
+                    this.indicator.style.transform = `translateX(-50%) translateY(${Math.min(dy - 30, 50)}px) rotate(${dy * 3}deg)`;
+                    this.indicator.style.opacity = String(Math.min(dy / 80, 1));
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (!this.pulling) return;
+                const dy = (e.changedTouches[0].clientY - this.startY);
+                this.pulling = false;
+                this.indicator.style.transform = '';
+                this.indicator.style.opacity = '';
+                if (dy > 80) {
+                    location.reload();
+                }
+            }, { passive: true });
+        }
+    };
+
     function init() {
         try {
+            utils.markSessionStart();
             themeManager.init();
             // styleManager.init() / fontManager.init() — not called; defaults applied via HTML attrs
             densityManager.init();
@@ -2337,6 +2534,8 @@
             quickFilters.init();
             bottomSheet.init();
             clearHandlers.init();
+            shortcutsOverlay.init();
+            ptr.init();
 
             // Brand logo click → reset to initial state
             const brandLink = document.getElementById('brandLink');
@@ -2354,7 +2553,23 @@
                 });
             }
 
-            dataLoader.load();
+            dataLoader.load().then(() => {
+                const lastKey = localStorage.getItem('cv_last_clicked');
+                if (!lastKey) return;
+                setTimeout(() => {
+                    const allCards = document.querySelectorAll('.job-card');
+                    for (const c of allCards) {
+                        const href = c.getAttribute('href');
+                        const match = state.allJobs.find(j => utils.getJobKey(j) === lastKey);
+                        if (match && match.url === href) {
+                            c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            c.classList.add('flash-highlight');
+                            setTimeout(() => c.classList.remove('flash-highlight'), 2200);
+                            break;
+                        }
+                    }
+                }, 300);
+            });
 
             // Fallback: ensure app shows after 5 seconds no matter what
             setTimeout(() => {
