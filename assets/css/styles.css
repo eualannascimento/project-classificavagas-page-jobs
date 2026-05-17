@@ -874,6 +874,16 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 .job-tag-compact { height: 20px; padding: 0 7px; font-size: 0.60rem; }
 
+.job-tag-clickable {
+    cursor: pointer;
+    transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.job-tag-clickable:hover {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+}
+
 .job-card-footer {
     margin-top: auto;
     padding: 10px 14px;
@@ -949,6 +959,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     text-align: right; padding-right: 4px;
     position: relative; user-select: none;
     font-variant-numeric: tabular-nums;
+    min-width: 14px;
 }
 
 .list-new-dot {

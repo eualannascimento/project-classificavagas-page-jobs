@@ -189,14 +189,14 @@
             const contract = job.contract;
             if (!contract || contract === 'N\u00c3O INFORMADO' || contract === 'NAO INFORMADO') return null;
             const map = {
-                'H\u00cdBRIDO': { label: 'H\u00edbrido', cls: 'hybrid' },
-                'HIBRIDO': { label: 'H\u00edbrido', cls: 'hybrid' },
-                'REMOTO': { label: 'Remoto', cls: 'remote' },
-                'HOME OFFICE': { label: 'Home Office', cls: 'remote' },
-                'PRESENCIAL': { label: 'Presencial', cls: 'onsite' },
-                'EFETIVO': { label: 'Efetivo', cls: 'contract' },
-                'CLT': { label: 'CLT', cls: 'contract' },
-                'PJ': { label: 'PJ', cls: 'contract' },
+                'H\u00cdBRIDO': { label: 'H\u00edbrido', cls: 'hybrid', icon: 'sync_alt' },
+                'HIBRIDO': { label: 'H\u00edbrido', cls: 'hybrid', icon: 'sync_alt' },
+                'REMOTO': { label: 'Remoto', cls: 'remote', icon: 'home_work' },
+                'HOME OFFICE': { label: 'Home Office', cls: 'remote', icon: 'home_work' },
+                'PRESENCIAL': { label: 'Presencial', cls: 'onsite', icon: 'apartment' },
+                'EFETIVO': { label: 'Efetivo', cls: 'contract', icon: 'work' },
+                'CLT': { label: 'CLT', cls: 'contract', icon: 'work' },
+                'PJ': { label: 'PJ', cls: 'contract', icon: 'work' },
             };
             const up = contract.toUpperCase().trim();
             return map[up] || { label: contract, cls: 'contract' };
@@ -287,6 +287,15 @@
             if (themeGroup) themeGroup.querySelectorAll('[data-value]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.value === theme);
             });
+
+            // Tooltip: indicate current + next on cycle
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                const idx = THEMES.indexOf(theme);
+                const next = THEMES[(idx + 1) % THEMES.length];
+                const map = { 'light': 'Claro', 'dark': 'Escuro', 'black': 'Preto' };
+                btn.title = `Tema: ${map[theme]} — clique para ${map[next]}`;
+            }
 
             if (this._initialized) {
                 this.showThemeToast(theme);
@@ -1500,8 +1509,11 @@
                 ? `<span class="job-tag job-tag-affirmative"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span>Afirmativa</span>`
                 : '';
 
+            const contractQuick = contractInfo
+                ? (contractInfo.cls === 'remote' ? 'remote' : contractInfo.cls === 'hybrid' ? 'hybrid' : contractInfo.cls === 'onsite' ? 'onsite' : null)
+                : null;
             const contractTag = contractInfo
-                ? `<span class="job-tag job-tag-${contractInfo.cls}">${utils.escapeHtml(contractInfo.label)}</span>`
+                ? `<span class="job-tag job-tag-${contractInfo.cls}${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`
                 : '';
 
             const newBadge = isNew
@@ -1521,11 +1533,9 @@
                     </div>
                 `;
             } else if (state.viewMode === 'list') {
-                const indexStr = String(index).padStart(2, '0');
                 card.innerHTML = `
                     <div class="job-list-content">
                         <div class="job-list-index">
-                            ${indexStr}
                             ${isNew ? '<span class="list-new-dot"></span>' : ''}
                         </div>
                         <div class="job-list-main">
@@ -1533,7 +1543,7 @@
                             <div class="job-list-company-row">
                                 <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                                 ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
-                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${utils.escapeHtml(contractInfo.label)}</span>` : ''}
+                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>` : ''}
                                 ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</span>` : ''}
                             </div>
                         </div>
@@ -1563,9 +1573,9 @@
                     <div class="job-card-body">
                         ${contractTag}
                         ${affirmativeTag}
-                        ${isValidLevel ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
-                        ${isValidCategory ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
-                        ${isValidCompanyType ? `<span class="job-tag">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
+                        ${isValidLevel ? `<span class="job-tag job-tag-clickable" data-filter-key="level" data-filter-value="${utils.escapeHtml(job.level)}">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
+                        ${isValidCategory ? `<span class="job-tag job-tag-clickable" data-filter-key="category" data-filter-value="${utils.escapeHtml(job.category)}">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
+                        ${isValidCompanyType ? `<span class="job-tag job-tag-clickable" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
                     </div>
                     <div class="job-card-footer">
                         <div class="job-location">
@@ -1577,12 +1587,29 @@
                 `;
             }
 
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                const tag = e.target.closest('.job-tag-clickable');
+                if (tag) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (tag.dataset.quickFilter) {
+                        filterManager.setQuickFilter(tag.dataset.quickFilter);
+                    } else if (tag.dataset.filterKey && tag.dataset.filterValue) {
+                        const k = tag.dataset.filterKey;
+                        const v = tag.dataset.filterValue;
+                        if (!state.selectedFilters[k]) state.selectedFilters[k] = [];
+                        if (!state.selectedFilters[k].includes(v)) state.selectedFilters[k].push(v);
+                        filterManager.apply();
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
                 if (!state.visitedJobs.has(jobKey)) {
                     utils.markVisited(job);
                     card.classList.add('visited');
                     if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
                 }
+                localStorage.setItem('cv_last_clicked', jobKey);
             });
 
             return card;
