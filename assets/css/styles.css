@@ -630,6 +630,32 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     margin: 0 auto; width: 100%;
 }
 
+.active-filters:not(.hidden) {
+    position: sticky;
+    top: var(--header-h, 60px);
+    z-index: 90;
+    background: color-mix(in oklch, var(--bg) 95%, transparent);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Search bar spinner during debounce */
+.search-bar { position: relative; }
+.search-bar.searching .search-icon { opacity: 0.4; }
+.search-bar.searching::after {
+    content: '';
+    width: 12px; height: 12px;
+    border: 1.5px solid var(--rule);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: searchSpin 0.7s linear infinite;
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    pointer-events: none;
+}
+@keyframes searchSpin { to { transform: translateY(-50%) rotate(360deg); } }
+
 .active-filters-scroll {
     flex: 1; display: flex; gap: 6px;
     overflow-x: auto; scrollbar-width: none;

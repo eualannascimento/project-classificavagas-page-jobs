@@ -79,6 +79,7 @@
         jobCountMobile: $('#jobCountMobile'),
         searchInput: $('#searchInput'),
         searchClear: $('#searchClear'),
+        searchBar: $('#searchBar'),
         filterChips: $$('.filter-chip[data-filter]'),
         openFilters: $('#openFilters'),
         filterBadge: $('#filterBadge'),
@@ -919,7 +920,18 @@
         async load() {
             // Show skeleton loading
             skeletonLoader.show();
-            setSplashProgress(5, 'Conectando...');
+            const _splashStart = Date.now();
+            let _lastSplashAt = _splashStart;
+            const _setProgress = (pct, msg) => {
+                setSplashProgress(pct, msg);
+                return new Promise(r => {
+                    const minDelay = 250;
+                    const elapsedSinceLast = Date.now() - _lastSplashAt;
+                    const wait = Math.max(0, minDelay - elapsedSinceLast);
+                    setTimeout(() => { _lastSplashAt = Date.now(); r(); }, wait);
+                });
+            };
+            await _setProgress(5, 'Conectando...');
 
             try {
                 const xhrResult = await new Promise((resolve, reject) => {
@@ -946,7 +958,7 @@
                 });
 
                 const data = xhrResult.data;
-                setSplashProgress(80, `Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
+                await _setProgress(80, `Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
 
                 state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
 
@@ -964,7 +976,7 @@
                 // Update last modified
                 this.updateLastModifiedFromHeader(xhrResult.lastModified);
 
-                setSplashProgress(95, 'Renderizando...');
+                await _setProgress(95, 'Renderizando...');
                 // Apply initial filters
                 filterManager.apply();
                 if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
@@ -1245,19 +1257,14 @@
                 elements.jobCountMobile.textContent = elements.jobCount.textContent;
             }
 
-            // Filter badge
-            let count = Object.values(state.selectedFilters)
-                .filter(arr => arr && arr.length > 0)
-                .reduce((sum, arr) => sum + arr.length, 0);
-
-            if (state.datePeriod !== 'all') count++;
-
-            if (count > 0) {
-                elements.filterBadge.textContent = count;
-                elements.filterBadge.classList.remove('hidden');
-            } else {
-                elements.filterBadge.classList.add('hidden');
-            }
+            // Filter badge (counts everything: categories, datePeriod, quickFilter, visited)
+            let count = 0;
+            Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
+            if (state.datePeriod && state.datePeriod !== 'all') count += 1;
+            if (state.quickFilter && state.quickFilter !== 'all') count += 1;
+            if (state.showOnlyVisited) count += 1;
+            elements.filterBadge.textContent = count;
+            elements.filterBadge.classList.toggle('hidden', count === 0);
 
             // Update quick filter chips (sheet)
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
@@ -1432,6 +1439,18 @@
             if (jobs.length === 0 && state.displayedCount === 0) {
                 elements.emptyState.classList.remove('hidden');
                 elements.loadingMore.classList.add('hidden');
+                const h3 = elements.emptyState.querySelector('h3');
+                const p = elements.emptyState.querySelector('p');
+                const btn = document.getElementById('emptyStateClear');
+                if (state.showOnlyVisited && state.allJobs.filter(j => utils.isVisited(j)).length === 0) {
+                    if (h3) h3.textContent = 'Nenhuma vaga visitada ainda';
+                    if (p) p.textContent = 'Clique em qualquer vaga para abri-la — ela aparecerá aqui.';
+                    if (btn) btn.textContent = 'Mostrar todas';
+                } else {
+                    if (h3) h3.textContent = 'Nenhuma vaga encontrada';
+                    if (p) p.textContent = 'Tente ajustar seus filtros ou termos de busca';
+                    if (btn) btn.textContent = 'Limpar filtros';
+                }
                 return;
             }
 
@@ -2100,11 +2119,15 @@
                 if (state.searchQuery.length >= 2) {
                     searchHistoryManager.add(state.searchQuery);
                 }
+
+                elements.searchBar?.classList.remove('searching');
             }, CONFIG.SEARCH_DEBOUNCE);
 
             elements.searchInput.addEventListener('input', () => {
                 const hasValue = elements.searchInput.value.length > 0;
                 elements.searchClear.classList.toggle('hidden', !hasValue);
+                if (hasValue) elements.searchBar?.classList.add('searching');
+                else elements.searchBar?.classList.remove('searching');
                 search();
             });
 
