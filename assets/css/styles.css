@@ -273,19 +273,19 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 @keyframes brandFloat {
     0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-1.5px); }
+    50%      { transform: translateY(-1px); }
 }
 
 .brand-c {
     color: var(--accent);
     display: inline-block;
-    animation: brandFloat 6s ease-in-out infinite;
+    animation: brandFloat 12s ease-in-out infinite;
 }
 
 .brand-v {
     color: var(--accent);
     display: inline-block;
-    animation: brandFloat 6s ease-in-out infinite;
+    animation: brandFloat 12s ease-in-out infinite;
     animation-delay: 3s;
 }
 
@@ -335,6 +335,20 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     color: var(--ink-3);
     white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
+}
+
+.site-tagline {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    letter-spacing: 0.02em;
+    padding: 0 var(--shell-pad) 6px;
+    max-width: calc(1240px + var(--shell-pad) * 2);
+    margin: 0 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .top-app-bar-actions {
@@ -416,6 +430,14 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .search-bar:focus-within {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.search-bar.searching .search-icon {
+    animation: searchPulse 0.6s ease-in-out infinite;
+}
+@keyframes searchPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
 }
 
 .search-icon { color: var(--ink-3); flex-shrink: 0; }
@@ -582,6 +604,26 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .filter-chip .material-symbols-rounded { font-size: 16px; }
 
+/* Quick-clear chip — icon-only, destructive tint */
+.filter-chip-clear {
+    padding: 0 10px;
+    gap: 5px;
+    color: var(--ink-2);
+    border-color: var(--rule);
+    transition: opacity 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.filter-chip-clear:hover {
+    background: oklch(0.96 0.03 15);
+    border-color: oklch(0.70 0.12 15);
+    color: oklch(0.45 0.18 15);
+}
+[data-theme="dark"] .filter-chip-clear:hover,
+[data-theme="black"] .filter-chip-clear:hover {
+    background: oklch(0.22 0.04 15);
+    border-color: oklch(0.50 0.14 15);
+    color: oklch(0.80 0.14 15);
+}
+
 /* Sort dropdown */
 .sort-dropdown-container { position: relative; }
 
@@ -737,10 +779,6 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .clear-filters-btn:hover { background: var(--bg-sunk); color: var(--ink); }
 .clear-filters-btn .material-symbols-rounded { font-size: 14px; }
 
-.version-label {
-    font-family: var(--font-mono);
-    font-size: 0.60rem; color: var(--ink-3); opacity: 0.5;
-}
 
 /* ============================================
    MAIN CONTENT
@@ -788,12 +826,10 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .job-card:hover {
     border-color: var(--ink-3);
     box-shadow: 0 4px 20px -8px oklch(0.20 0.02 250 / 0.12);
-    transform: translateY(-2px);
 }
 .job-card:hover::after { opacity: 0.35; }
-.job-card:active { transform: translateY(0); }
 
-.job-card.visited { opacity: 0.65; }
+.job-card.visited { opacity: 0.80; }
 .job-card.visited .job-card-title h3,
 .job-card.visited .job-list-main h3,
 .job-card.visited .job-compact-title { color: var(--ink-2); }
@@ -832,8 +868,8 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .job-card-title h3 {
     font-family: var(--font-serif);
-    font-weight: 400;
-    font-size: 1.02rem; line-height: 1.25; letter-spacing: -0.01em;
+    font-weight: 500;
+    font-size: 0.92rem; line-height: 1.25; letter-spacing: -0.02em;
     color: var(--ink);
     display: -webkit-box;
     -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
@@ -976,8 +1012,8 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .job-list-main h3 {
     font-family: var(--font-serif);
-    font-weight: 400;
-    font-size: 1rem; line-height: 1.25; letter-spacing: -0.01em;
+    font-weight: 500;
+    font-size: 0.92rem; line-height: 1.25; letter-spacing: -0.02em;
     color: var(--ink);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: color 0.2s var(--ease);
@@ -1112,7 +1148,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .skeleton-location { height: 12px; width: 100px; background: var(--rule); border-radius: var(--radius-sm); animation: shimmer 1.5s infinite; animation-delay: 0.6s; }
 .skeleton-date { height: 11px; width: 45px; background: var(--rule); border-radius: var(--radius-sm); animation: shimmer 1.5s infinite; animation-delay: 0.7s; }
 
-@keyframes shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes shimmer { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
 /* List skeleton */
 .jobs-grid.list-view .skeleton-card {
@@ -1539,6 +1575,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     .masthead-brand .brand-pulse {
         display: none;
     }
+    .site-tagline { font-size: 0.64rem; }
     .top-app-bar-actions {
         flex-shrink: 0;
         gap: 4px;
@@ -1591,6 +1628,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .results-counter {
     text-align: center;
     padding: 12px var(--shell-pad);
+    margin-bottom: 6px;
     font-family: var(--font-mono);
     font-size: 0.65rem;
     color: var(--ink-3);

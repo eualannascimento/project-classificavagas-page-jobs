@@ -36,12 +36,12 @@
             { key: '90d', label: 'Últimos 3 meses', days: 90 }
         ],
         SORT_OPTIONS: [
-            { key: 'date_desc', label: 'Mais recentes', icon: 'schedule' },
-            { key: 'date_asc', label: 'Mais antigas', icon: 'history' },
-            { key: 'company_asc', label: 'Empresa A-Z', icon: 'sort_by_alpha' },
-            { key: 'company_desc', label: 'Empresa Z-A', icon: 'sort_by_alpha' },
-            { key: 'title_asc', label: 'Título A-Z', icon: 'sort_by_alpha' },
-            { key: 'title_desc', label: 'Título Z-A', icon: 'sort_by_alpha' }
+            { key: 'date_desc',    label: '↓ Data',       icon: 'schedule' },
+            { key: 'date_asc',     label: '↑ Data',       icon: 'history' },
+            { key: 'company_asc',  label: 'Empresa A–Z',  icon: 'sort_by_alpha' },
+            { key: 'company_desc', label: 'Empresa Z–A',  icon: 'sort_by_alpha' },
+            { key: 'title_asc',    label: 'Título A–Z',   icon: 'sort_by_alpha' },
+            { key: 'title_desc',   label: 'Título Z–A',   icon: 'sort_by_alpha' }
         ],
         MAX_SEARCH_HISTORY: 5,
         SKELETON_COUNT: 8
@@ -104,7 +104,8 @@
         viewToggle: $('#viewToggle'),
         sortToggle: $('#sortToggle'),
         sortDropdown: $('#sortDropdown'),
-        sortLabel: $('.sort-label')
+        sortLabel: $('.sort-label'),
+        quickClearFilters: $('#quickClearFilters')
     };
 
     // ============================================
@@ -279,7 +280,7 @@
         init() {
             const saved = localStorage.getItem('cv_theme');
             // Default to light theme if no preference saved
-            const theme = saved && THEMES.includes(saved) ? saved : 'light';
+            const theme = saved && THEMES.includes(saved) ? saved : 'dark';
             this.apply(theme);
             this._initialized = true;
 
@@ -1287,6 +1288,8 @@
             if (state.showOnlyVisited) count += 1;
             elements.filterBadge.textContent = count;
             elements.filterBadge.classList.toggle('hidden', count === 0);
+            if (elements.quickClearFilters) elements.quickClearFilters.classList.toggle('hidden', count === 0);
+            if (elements.openFilters) elements.openFilters.setAttribute('data-active', count > 0 ? 'true' : 'false');
 
             // Update quick filter chips (sheet)
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
@@ -1513,7 +1516,7 @@
             const fullDate = utils.formatDate(job.inserted_date);
             const smartLocation = utils.getSmartLocation(job);
             const contractInfo = utils.getContractInfo(job);
-            const title = utils.toTitleCase(job.title);
+            const title = (job.title || '').toUpperCase();
 
             const card = document.createElement('a');
             card.href = job.url;
@@ -2417,6 +2420,12 @@
                 filterManager.clearAll();
             });
 
+            if (elements.quickClearFilters) {
+                elements.quickClearFilters.addEventListener('click', () => {
+                    filterManager.clearAll();
+                });
+            }
+
             elements.emptyStateClear.addEventListener('click', () => {
                 filterManager.clearAll();
             });
@@ -2436,6 +2445,9 @@
             if (!overlay) return;
 
             closeBtn?.addEventListener('click', () => overlay.classList.add('hidden'));
+            document.getElementById('shortcutsBtn')?.addEventListener('click', () => {
+                overlay.classList.toggle('hidden');
+            });
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) overlay.classList.add('hidden');
             });
