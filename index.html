@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#1c1c1e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="Todas as vagas abertas do mercado — filtre por nível, regime, área e muito mais. Encontre sua próxima oportunidade no classificavagas.">
-    <title>classificavagas — vagas abertas do mercado</title>
+    <meta name="description" content="classificavagas.com - Plataforma de Vagas">
+    <title>💼 classifica vagas</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,9 +47,6 @@
                     </div>
                 </div>
                 <div class="top-app-bar-actions">
-                    <button class="icon-btn" id="shortcutsBtn" aria-label="Atalhos de teclado" title="Atalhos (?)">
-                        <span class="material-symbols-rounded">keyboard</span>
-                    </button>
                     <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">
                         <span class="material-symbols-rounded theme-icon-light">light_mode</span>
                         <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
@@ -82,8 +79,6 @@
             </div>
         </div>
 
-        <p class="site-tagline">vagas abertas das empresas — filtre por nível, área, regime e mais</p>
-
         <!-- Filter Chips -->
         <div class="filter-chips-container">
             <div class="filter-chips-scroll">
@@ -102,19 +97,14 @@
                     <span class="filter-badge hidden" id="filterBadge">0</span>
                 </button>
 
-                <button class="filter-chip filter-chip-clear hidden" id="quickClearFilters" aria-label="Limpar todos os filtros" title="Limpar todos os filtros">
-                    <span class="material-symbols-rounded">filter_alt_off</span>
-                    <span>Limpar</span>
-                </button>
-
                 <div class="sort-dropdown-container">
                     <button class="filter-chip filter-chip-sort" id="sortToggle" aria-label="Ordenar">
                         <span class="material-symbols-rounded">swap_vert</span>
                         <span class="sort-label">Recentes</span>
                     </button>
                     <div class="sort-dropdown hidden" id="sortDropdown">
-                        <button class="sort-option" data-sort="date_desc">↓ Data (recentes)</button>
-                        <button class="sort-option" data-sort="date_asc">↑ Data (antigas)</button>
+                        <button class="sort-option" data-sort="date_desc">Mais recentes</button>
+                        <button class="sort-option" data-sort="date_asc">Mais antigas</button>
                         <button class="sort-option" data-sort="company_asc">Empresa A–Z</button>
                         <button class="sort-option" data-sort="company_desc">Empresa Z–A</button>
                         <button class="sort-option" data-sort="title_asc">Título A–Z</button>
@@ -131,13 +121,14 @@
                 <span class="material-symbols-rounded">delete_sweep</span>
                 Limpar
             </button>
+            <div class="version-label">v2.1</div>
         </div>
 
         <!-- Content -->
         <main class="main-content">
-            <div class="results-counter hidden" id="resultsCounter" aria-live="polite"></div>
-
             <div class="jobs-grid" id="jobsGrid"></div>
+
+            <div class="results-counter hidden" id="resultsCounter" aria-live="polite"></div>
 
             <div class="loading-more hidden" id="loadingMore">
                 <div class="loading-spinner"></div>
