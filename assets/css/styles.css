@@ -1318,15 +1318,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    SCROLL PROGRESS
    ============================================ */
-.scroll-progress {
-    position: fixed; top: 0; left: 0; right: 0;
-    height: 2px; z-index: 999;
-    background: var(--accent);
-    transform-origin: left;
-    transform: scaleX(0);
-    transition: transform 0.1s linear;
-    pointer-events: none;
-}
+.scroll-progress { display: none; }
 
 /* ============================================
    TWEAKS PANEL
@@ -1552,6 +1544,16 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
         gap: 4px;
     }
 
+    /* Active filters wrap on mobile */
+    .active-filters-scroll {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+    .active-filters {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
     /* Sticky job count bar below header */
     .mobile-jobcount-row {
         display: flex;
@@ -1582,6 +1584,118 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     .bottom-sheet.visible { transform: translateX(-50%) translateY(0); }
     .fab { right: 24px; }
 }
+
+/* ============================================
+   RESULTS COUNTER
+   ============================================ */
+.results-counter {
+    text-align: center;
+    padding: 12px var(--shell-pad);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.results-counter.hidden { display: none; }
+
+/* ============================================
+   FAB RING
+   ============================================ */
+.fab { position: relative; }
+.fab-ring {
+    position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px);
+    pointer-events: none;
+}
+.fab .material-symbols-rounded { position: relative; z-index: 1; }
+
+/* ============================================
+   HOVER REINFORCEMENT
+   ============================================ */
+.job-card:hover {
+    box-shadow: 0 4px 16px -8px oklch(0.10 0.02 250 / 0.15);
+}
+
+/* ============================================
+   FLASH HIGHLIGHT (scroll-back)
+   ============================================ */
+@keyframes flashHighlight {
+    0%, 100% { background: transparent; }
+    30% { background: var(--accent-soft); }
+}
+.flash-highlight {
+    animation: flashHighlight 2s ease-out;
+}
+
+/* ============================================
+   DATE POPUP (long-press)
+   ============================================ */
+.date-popup {
+    position: fixed;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    z-index: 999;
+    pointer-events: none;
+    animation: dateFadeIn 0.15s var(--ease);
+}
+@keyframes dateFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   SHORTCUTS OVERLAY
+   ============================================ */
+.shortcuts-overlay {
+    position: fixed; inset: 0;
+    background: oklch(0 0 0 / 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+}
+.shortcuts-overlay.hidden { display: none; }
+.shortcuts-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    width: min(360px, calc(100vw - 32px));
+}
+.shortcuts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.shortcuts-header h3 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+.shortcuts-list { list-style: none; display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; }
+.shortcuts-list li { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--ink); }
+.shortcuts-list kbd {
+    font-family: var(--font-mono); font-size: 0.7rem;
+    padding: 2px 6px; min-width: 22px; text-align: center;
+    background: var(--bg-sunk); border: 1px solid var(--rule); border-radius: 4px;
+    color: var(--ink-2);
+}
+
+/* ============================================
+   PULL TO REFRESH
+   ============================================ */
+.ptr-indicator {
+    position: fixed;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    box-shadow: 0 2px 8px -2px oklch(0 0 0 / 0.2);
+    color: var(--accent);
+}
+@media (hover: hover) { .ptr-indicator { display: none; } }
 
 /* Touch */
 @media (hover: none) and (pointer: coarse) {

@@ -235,6 +235,19 @@
             state.visitedJobs.add(key);
         },
 
+        markSessionStart() {
+            const last = localStorage.getItem('cv_last_visit');
+            if (last) localStorage.setItem('cv_prev_visit', last);
+            localStorage.setItem('cv_last_visit', new Date().toISOString().split('T')[0]);
+        },
+
+        isNewSinceLastVisit(dateStr) {
+            if (!dateStr) return false;
+            const prev = localStorage.getItem('cv_prev_visit');
+            if (!prev) return false;
+            return dateStr > prev;
+        },
+
         isWithinDays(dateStr, days) {
             if (!dateStr || !days) return true;
             const date = new Date(dateStr);
@@ -1460,6 +1473,8 @@
                     if (p) p.textContent = 'Tente ajustar seus filtros ou termos de busca';
                     if (btn) btn.textContent = 'Limpar filtros';
                 }
+                const counter = document.getElementById('resultsCounter');
+                if (counter) counter.classList.add('hidden');
                 return;
             }
 
@@ -1474,12 +1489,24 @@
 
             // Always hide spinner after rendering a batch; it'll reappear on next scroll trigger
             elements.loadingMore.classList.add('hidden');
+
+            // Update results counter
+            const counter = document.getElementById('resultsCounter');
+            if (counter) {
+                if (state.filteredJobs.length === 0) {
+                    counter.classList.add('hidden');
+                } else {
+                    counter.classList.remove('hidden');
+                    const shown = Math.min(state.displayedCount, state.filteredJobs.length);
+                    counter.textContent = `${shown.toLocaleString('pt-BR')} de ${state.filteredJobs.length.toLocaleString('pt-BR')}`;
+                }
+            }
         },
 
         createCard(job, index = 0) {
             const isRemote = job['remote?'] === '01 - Sim';
             const isAffirmative = job['affirmative?'] === '01 - Sim';
-            const isNew = utils.isToday(job.inserted_date);
+            const isNew = utils.isToday(job.inserted_date) || utils.isNewSinceLastVisit(job.inserted_date);
             const jobKey = utils.getJobKey(job);
             const isVisited = state.visitedJobs.has(jobKey);
             const relativeDate = utils.formatRelativeDate(job.inserted_date);
@@ -1586,6 +1613,28 @@
                     </div>
                 `;
             }
+
+            // Long-press on dated elements shows full date on touch devices
+            card.querySelectorAll('[title]').forEach(el => {
+                let pressTimer;
+                el.addEventListener('touchstart', () => {
+                    pressTimer = setTimeout(() => {
+                        const titleText = el.getAttribute('title');
+                        if (titleText) {
+                            const popup = document.createElement('div');
+                            popup.className = 'date-popup';
+                            popup.textContent = titleText;
+                            document.body.appendChild(popup);
+                            const rect = el.getBoundingClientRect();
+                            popup.style.left = `${rect.left}px`;
+                            popup.style.top = `${rect.bottom + 6}px`;
+                            setTimeout(() => popup.remove(), 1800);
+                        }
+                    }, 500);
+                }, { passive: true });
+                el.addEventListener('touchend', () => clearTimeout(pressTimer), { passive: true });
+                el.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
+            });
 
             card.addEventListener('click', (e) => {
                 const tag = e.target.closest('.job-tag-clickable');
@@ -2299,6 +2348,15 @@
                 elements.scrollTopFab.classList.remove('visible');
             }
 
+            // FAB ring progress
+            const ring = document.getElementById('fabRingProgress');
+            if (ring) {
+                const maxScroll = docH - windowH;
+                const pct = maxScroll > 0 ? Math.min(1, Math.max(0, scrollY / maxScroll)) : 0;
+                const circumference = 100.5;
+                ring.style.strokeDashoffset = String(circumference * (1 - pct));
+            }
+
             // Infinite scroll
             if (docH - scrollY - windowH < CONFIG.INFINITE_SCROLL_THRESHOLD) {
                 cardRenderer.loadMore();
@@ -2368,8 +2426,97 @@
     // ============================================
     // EVENT LISTENERS
     // ============================================
+    // ============================================
+    // SHORTCUTS OVERLAY
+    // ============================================
+    const shortcutsOverlay = {
+        init() {
+            const overlay = document.getElementById('shortcutsOverlay');
+            const closeBtn = document.getElementById('closeShortcuts');
+            if (!overlay) return;
+
+            closeBtn?.addEventListener('click', () => overlay.classList.add('hidden'));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.add('hidden');
+            });
+
+            document.addEventListener('keydown', (e) => {
+                const tag = document.activeElement?.tagName;
+                if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+                if (e.key === '?') {
+                    overlay.classList.toggle('hidden');
+                }
+                if (e.key === 't' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                    themeManager.toggle();
+                }
+            });
+
+            // g-t chord for top
+            let gPressed = false;
+            document.addEventListener('keydown', (e) => {
+                const tag = document.activeElement?.tagName;
+                if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+                if (e.key === 'g') {
+                    gPressed = true;
+                    setTimeout(() => { gPressed = false; }, 800);
+                    return;
+                }
+                if (e.key === 't' && gPressed) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    gPressed = false;
+                }
+            });
+        }
+    };
+
+    // ============================================
+    // PULL TO REFRESH (mobile)
+    // ============================================
+    const ptr = {
+        startY: 0,
+        pulling: false,
+        indicator: null,
+        init() {
+            if (!('ontouchstart' in window)) return;
+            const ind = document.createElement('div');
+            ind.className = 'ptr-indicator';
+            ind.innerHTML = '<span class="material-symbols-rounded">refresh</span>';
+            document.body.appendChild(ind);
+            this.indicator = ind;
+
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    this.startY = e.touches[0].clientY;
+                    this.pulling = true;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!this.pulling) return;
+                const dy = e.touches[0].clientY - this.startY;
+                if (dy > 0 && dy < 120) {
+                    this.indicator.style.transform = `translateX(-50%) translateY(${Math.min(dy - 30, 50)}px) rotate(${dy * 3}deg)`;
+                    this.indicator.style.opacity = String(Math.min(dy / 80, 1));
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                if (!this.pulling) return;
+                const dy = (e.changedTouches[0].clientY - this.startY);
+                this.pulling = false;
+                this.indicator.style.transform = '';
+                this.indicator.style.opacity = '';
+                if (dy > 80) {
+                    location.reload();
+                }
+            }, { passive: true });
+        }
+    };
+
     function init() {
         try {
+            utils.markSessionStart();
             themeManager.init();
             // styleManager.init() / fontManager.init() — not called; defaults applied via HTML attrs
             densityManager.init();
@@ -2387,6 +2534,8 @@
             quickFilters.init();
             bottomSheet.init();
             clearHandlers.init();
+            shortcutsOverlay.init();
+            ptr.init();
 
             // Brand logo click → reset to initial state
             const brandLink = document.getElementById('brandLink');
@@ -2404,7 +2553,23 @@
                 });
             }
 
-            dataLoader.load();
+            dataLoader.load().then(() => {
+                const lastKey = localStorage.getItem('cv_last_clicked');
+                if (!lastKey) return;
+                setTimeout(() => {
+                    const allCards = document.querySelectorAll('.job-card');
+                    for (const c of allCards) {
+                        const href = c.getAttribute('href');
+                        const match = state.allJobs.find(j => utils.getJobKey(j) === lastKey);
+                        if (match && match.url === href) {
+                            c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            c.classList.add('flash-highlight');
+                            setTimeout(() => c.classList.remove('flash-highlight'), 2200);
+                            break;
+                        }
+                    }
+                }, 300);
+            });
 
             // Fallback: ensure app shows after 5 seconds no matter what
             setTimeout(() => {
