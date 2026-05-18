@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="dark" data-style="restraint" data-font="instrument" data-density="compact">
+<html lang="pt-BR" data-theme="light" data-style="restraint" data-font="instrument" data-density="compact">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1c1c1e">
+    <meta name="theme-color" content="#f9f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="classificavagas.com - Plataforma de Vagas">
+    <meta name="description" content="classificavagas.com — agregador de vagas de emprego no Brasil. Busque, filtre e encontre oportunidades em um só lugar.">
+    <meta property="og:title" content="classifica vagas">
+    <meta property="og:description" content="Agregador de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://classificavagas.com">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="classifica vagas">
+    <meta name="twitter:description" content="Agregador de vagas de emprego no Brasil.">
     <title>💼 classifica vagas</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,10 +24,10 @@
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-    <!-- Scroll Progress (replaced by FAB ring; kept hidden for backward compat) -->
+    <a href="#jobsGrid" class="skip-link">Pular para vagas</a>
+
     <div class="scroll-progress hidden" id="scrollProgress"></div>
 
-    <!-- Splash -->
     <div id="splash" class="splash">
         <div class="splash-content">
             <div class="splash-brand"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas</div>
@@ -32,10 +39,17 @@
         </div>
     </div>
 
-    <!-- App -->
     <div id="app" class="app">
 
-        <!-- Masthead -->
+        <div id="onboardingBanner" class="onboarding-banner hidden" role="region" aria-label="Dicas de uso">
+            <ul class="onboarding-list">
+                <li>Pressione <kbd>/</kbd> para buscar e <kbd>?</kbd> para ver atalhos</li>
+                <li>Toque nas tags das vagas para filtrar rapidamente</li>
+                <li>Use o ícone de link para compartilhar sua busca</li>
+            </ul>
+            <button type="button" class="onboarding-dismiss" id="onboardingDismiss">Entendi</button>
+        </div>
+
         <header class="top-app-bar">
             <div class="masthead-inner">
                 <div class="masthead-brand">
@@ -56,13 +70,13 @@
             </div>
         </header>
 
-        <!-- Mobile job count (line 2) -->
         <div class="mobile-jobcount-row">
             <span class="brand-pulse"></span>
             <span id="jobCountMobile">Carregando...</span>
         </div>
 
-        <!-- Search -->
+        <p id="partialDataBanner" class="partial-data-banner hidden" aria-live="polite"></p>
+
         <div class="search-bar-container">
             <div class="search-bar" id="searchBar">
                 <span class="material-symbols-rounded search-icon">search</span>
@@ -79,7 +93,6 @@
             </div>
         </div>
 
-        <!-- Filter Chips -->
         <div class="filter-chips-container">
             <div class="filter-chips-scroll">
                 <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas" title="Vagas que você já abriu">
@@ -91,32 +104,38 @@
                     <span class="material-symbols-rounded">view_list</span>
                 </button>
 
-                <button class="filter-chip filter-chip-main" id="openFilters">
+                <button type="button" class="filter-chip" data-quick="remote" data-filter="remote" aria-label="Filtrar vagas remotas">Remoto</button>
+                <button type="button" class="filter-chip" data-quick="today" data-filter="today" aria-label="Filtrar vagas de hoje">Hoje</button>
+                <button type="button" class="filter-chip" data-quick="affirmative" data-filter="affirmative" aria-label="Filtrar vagas afirmativas">Afirmativa</button>
+
+                <button class="filter-chip filter-chip-main" id="openFilters" aria-haspopup="dialog" aria-controls="filterSheet">
                     <span class="material-symbols-rounded">filter_list</span>
                     <span>Filtros</span>
                     <span class="filter-badge hidden" id="filterBadge">0</span>
                 </button>
 
                 <div class="sort-dropdown-container">
-                    <button class="filter-chip filter-chip-sort" id="sortToggle" aria-label="Ordenar">
+                    <button class="filter-chip filter-chip-sort" id="sortToggle" aria-label="Ordenar" aria-expanded="false" aria-controls="sortDropdown">
                         <span class="material-symbols-rounded">swap_vert</span>
                         <span class="sort-label">Recentes</span>
                     </button>
-                    <div class="sort-dropdown hidden" id="sortDropdown">
-                        <button class="sort-option" data-sort="date_desc">Mais recentes</button>
-                        <button class="sort-option" data-sort="date_asc">Mais antigas</button>
-                        <button class="sort-option" data-sort="company_asc">Empresa A–Z</button>
-                        <button class="sort-option" data-sort="company_desc">Empresa Z–A</button>
-                        <button class="sort-option" data-sort="title_asc">Título A–Z</button>
-                        <button class="sort-option" data-sort="title_desc">Título Z–A</button>
+                    <div class="sort-dropdown hidden" id="sortDropdown" role="menu">
+                        <button class="sort-option" data-sort="date_desc" role="menuitem">Mais recentes</button>
+                        <button class="sort-option" data-sort="date_asc" role="menuitem">Mais antigas</button>
+                        <button class="sort-option" data-sort="company_asc" role="menuitem">Empresa A–Z</button>
+                        <button class="sort-option" data-sort="company_desc" role="menuitem">Empresa Z–A</button>
+                        <button class="sort-option" data-sort="title_asc" role="menuitem">Título A–Z</button>
+                        <button class="sort-option" data-sort="title_desc" role="menuitem">Título Z–A</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Active Filters -->
         <div class="active-filters hidden" id="activeFilters">
             <div class="active-filters-scroll" id="activeFiltersList"></div>
+            <button type="button" class="icon-btn copy-link-btn hidden" id="copySearchLink" aria-label="Copiar link desta busca" title="Copiar link">
+                <span class="material-symbols-rounded">link</span>
+            </button>
             <button class="clear-filters-btn" id="clearAllFilters">
                 <span class="material-symbols-rounded">delete_sweep</span>
                 Limpar
@@ -124,7 +143,6 @@
             <div class="version-label">v2.1</div>
         </div>
 
-        <!-- Content -->
         <main class="main-content">
             <div class="jobs-grid" id="jobsGrid"></div>
 
@@ -139,11 +157,11 @@
                 <span class="material-symbols-rounded">search_off</span>
                 <h3>Nenhuma vaga encontrada</h3>
                 <p>Tente ajustar seus filtros ou termos de busca</p>
-                <button class="filled-button" id="emptyStateClear">Limpar filtros</button>
+                <button type="button" class="filled-button hidden" id="emptyStateRetry">Tentar novamente</button>
+                <button type="button" class="filled-button" id="emptyStateClear">Limpar filtros</button>
             </div>
         </main>
 
-        <!-- FAB -->
         <button class="fab" id="scrollTopFab" aria-label="Voltar ao topo">
             <svg class="fab-ring" viewBox="0 0 36 36" aria-hidden="true">
                 <circle cx="18" cy="18" r="16" fill="none" stroke="var(--rule)" stroke-width="2"/>
@@ -152,18 +170,21 @@
             <span class="material-symbols-rounded">keyboard_arrow_up</span>
         </button>
 
-        <!-- Scrim -->
+        <button type="button" class="last-job-btn hidden" id="lastJobBtn" aria-label="Ir para última vaga aberta">
+            <span class="material-symbols-rounded">history</span>
+            <span>Última vaga</span>
+        </button>
+
         <div class="scrim hidden" id="scrim"></div>
 
-        <!-- Filter Sheet -->
-        <div class="bottom-sheet hidden" id="filterSheet">
+        <div class="bottom-sheet hidden" id="filterSheet" aria-labelledby="filterSheetTitle">
             <div class="bottom-sheet-header">
                 <div class="bottom-sheet-handle"></div>
                 <div class="bottom-sheet-title">
-                    <h2>Filtros</h2>
+                    <h2 id="filterSheetTitle">Filtros</h2>
                     <span class="filter-count-label" id="sheetFilterCount">0 selecionados</span>
                 </div>
-                <button class="icon-btn" id="closeSheet" aria-label="Fechar">
+                <button class="icon-btn" id="closeSheet" aria-label="Fechar filtros">
                     <span class="material-symbols-rounded">close</span>
                 </button>
             </div>
@@ -177,26 +198,25 @@
             </div>
         </div>
 
-        <!-- Shortcuts Overlay -->
-        <div class="shortcuts-overlay hidden" id="shortcutsOverlay">
+        <div class="shortcuts-overlay hidden" id="shortcutsOverlay" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
             <div class="shortcuts-card">
                 <div class="shortcuts-header">
-                    <h3>Atalhos</h3>
+                    <h3 id="shortcutsTitle">Atalhos</h3>
                     <button class="icon-btn" id="closeShortcuts" aria-label="Fechar">
                         <span class="material-symbols-rounded">close</span>
                     </button>
                 </div>
                 <ul class="shortcuts-list">
                     <li><kbd>/</kbd><span>Focar busca</span></li>
-                    <li><kbd>Esc</kbd><span>Limpar busca</span></li>
+                    <li><kbd>f</kbd><span>Abrir filtros</span></li>
+                    <li><kbd>Esc</kbd><span>Limpar busca / fechar painéis</span></li>
                     <li><kbd>?</kbd><span>Mostrar atalhos</span></li>
-                    <li><kbd>g</kbd> <kbd>t</kbd><span>Topo da página</span></li>
+                    <li><kbd>g</kbd> <kbd>g</kbd><span>Topo da página</span></li>
                     <li><kbd>t</kbd><span>Alternar tema</span></li>
                 </ul>
             </div>
         </div>
 
-        <!-- Footer -->
         <footer class="footer-fixed">
             <p class="footer-quote">"Fortes razões fazem fortes ações" <span class="footer-quote-author">— Shakespeare</span></p>
         </footer>

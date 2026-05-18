@@ -15,6 +15,8 @@
         SCROLL_THRESHOLD: 300,
         INFINITE_SCROLL_THRESHOLD: 600,
         DATA_URL: 'assets/data/json/open_jobs.json',
+        RECENT_DATA_URL: 'assets/data/json/recent_jobs.json',
+        RECENT_MAX_AGE_DAYS: 14,
         FILTER_CATEGORIES: [
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
@@ -54,8 +56,11 @@
         isLoading: false,
         searchQuery: '',
         quickFilter: 'all',
+        tempQuickFilter: 'all',
         selectedFilters: {},
         tempFilters: {},
+        isPartialData: false,
+        hideZeroFilterOptions: true,
         filterOptions: {},
         filterCounts: {}, // counts per filter option
         visitedJobs: new Set(),
@@ -139,11 +144,30 @@
             return `${Math.floor(diffDays / 365)}a atrás`;
         },
 
+        showToast(message, className = 'theme-toast', duration = 2000) {
+            const baseClass = className.split(' ')[0];
+            const existing = document.querySelector(`.${baseClass}`);
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = className;
+            toast.setAttribute('role', 'status');
+            toast.setAttribute('aria-live', 'polite');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.add('visible'));
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        },
+
         escapeHtml(str) {
             if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
+            const el = document.createElement('div');
+            el.textContent = str;
+            return el.innerHTML;
         },
 
         truncate(str, len) {
@@ -263,9 +287,9 @@
     // ============================================
     const THEMES = ['light', 'dark', 'black'];
     const THEME_LABELS = {
-        'light': 'Light',
-        'dark': 'Dark',
-        'black': 'Black'
+        light: 'Claro',
+        dark: 'Escuro',
+        black: 'Preto'
     };
     const THEME_META_COLORS = {
         'light': '#f9f9ff',
@@ -323,19 +347,7 @@
         },
 
         showThemeToast(theme) {
-            const existing = document.querySelector('.theme-toast');
-            if (existing) existing.remove();
-
-            const toast = document.createElement('div');
-            toast.className = 'theme-toast';
-            toast.textContent = THEME_LABELS[theme] || theme;
-            document.body.appendChild(toast);
-
-            requestAnimationFrame(() => toast.classList.add('visible'));
-            setTimeout(() => {
-                toast.classList.remove('visible');
-                setTimeout(() => toast.remove(), 300);
-            }, 1200);
+            utils.showToast(THEME_LABELS[theme] || theme, 'theme-toast', 1200);
         }
     };
 
@@ -628,6 +640,15 @@
         'title_desc': 'Título ↓'
     };
 
+    const QUICK_FILTER_LABELS = {
+        all: 'Todas',
+        remote: 'Remoto',
+        hybrid: 'Híbrido',
+        onsite: 'Presencial',
+        affirmative: 'Afirmativa',
+        today: 'Hoje'
+    };
+
     const sortManager = {
         isOpen: false,
 
@@ -681,6 +702,9 @@
             // Move to body to avoid occlusion/clipping
             document.body.appendChild(elements.sortDropdown);
 
+            elements.sortToggle.setAttribute('aria-expanded', 'true');
+            elements.sortToggle.setAttribute('aria-controls', 'sortDropdown');
+
             elements.sortDropdown.style.position = 'fixed';
             elements.sortDropdown.style.top = `${rect.bottom + 8}px`;
             // Align right edge if it goes off screen, else align left
@@ -698,6 +722,7 @@
 
         closeDropdown() {
             elements.sortDropdown.classList.add('hidden');
+            elements.sortToggle.setAttribute('aria-expanded', 'false');
             this.isOpen = false;
             // Optional: Move back to original place if needed, but keeping in body is fine for now
             // simpler to just leave it hidden in body
@@ -728,7 +753,10 @@
             if (elements.shareButton) {
                 elements.shareButton.addEventListener('click', () => this.share());
             }
-            // Load filters from URL on init
+            const copyBtn = document.getElementById('copySearchLink');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => this.copyLink());
+            }
             this.loadFromURL();
         },
 
@@ -743,6 +771,9 @@
             }
             if (state.datePeriod !== 'all') {
                 url.searchParams.set('dp', state.datePeriod);
+            }
+            if (state.showOnlyVisited) {
+                url.searchParams.set('v', '1');
             }
             if (state.sortBy !== 'date_desc') {
                 url.searchParams.set('sort', state.sortBy);
@@ -773,6 +804,9 @@
             if (params.has('dp')) {
                 state.datePeriod = params.get('dp');
             }
+            if (params.has('v') && params.get('v') === '1') {
+                state.showOnlyVisited = true;
+            }
             if (params.has('sort')) {
                 state.sortBy = params.get('sort');
             }
@@ -783,6 +817,29 @@
                     state.selectedFilters[filterKey] = value.split('|');
                 }
             });
+
+            if (state.showOnlyVisited) {
+                const visitedBtn = document.getElementById('visitedToggle');
+                if (visitedBtn) visitedBtn.setAttribute('aria-pressed', 'true');
+            }
+        },
+
+        async copyLink() {
+            const url = this.buildURL();
+            try {
+                await navigator.clipboard.writeText(url);
+                utils.showToast('Link copiado!', 'theme-toast share-toast');
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                utils.showToast('Link copiado!', 'theme-toast share-toast');
+            }
         },
 
         async share() {
@@ -827,19 +884,7 @@
         },
 
         showToast(message) {
-            const existing = document.querySelector('.share-toast');
-            if (existing) existing.remove();
-
-            const toast = document.createElement('div');
-            toast.className = 'theme-toast share-toast';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            requestAnimationFrame(() => toast.classList.add('visible'));
-            setTimeout(() => {
-                toast.classList.remove('visible');
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
+            utils.showToast(message, 'theme-toast share-toast');
         }
     };
 
@@ -934,16 +979,83 @@
     }
 
     const dataLoader = {
+        _slowNetworkTimer: null,
+
         setSplashMsg(msg) {
             const el = document.getElementById('splashMsg');
             if (el) el.textContent = msg;
         },
 
+        fetchJson(url, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.responseType = 'json';
+                xhr.onprogress = (e) => {
+                    if (onProgress) onProgress(e);
+                };
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve({
+                            data: xhr.response,
+                            lastModified: xhr.getResponseHeader('last-modified')
+                        });
+                    } else {
+                        reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.send();
+            });
+        },
+
+        ingestJobs(data, lastModified) {
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid jobs data');
+            }
+            state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
+            state.allJobs.forEach(job => {
+                const key = utils.getJobKey(job);
+                if (utils.isVisited(key)) {
+                    state.visitedJobs.add(key);
+                }
+            });
+            this.buildFilterOptions();
+            this.updateLastModifiedFromHeader(lastModified);
+        },
+
+        updatePartialBanner() {
+            const banner = document.getElementById('partialDataBanner');
+            if (!banner) return;
+            if (state.isPartialData) {
+                banner.classList.remove('hidden');
+                banner.textContent = `Exibindo vagas recentes (${state.allJobs.length.toLocaleString('pt-BR')}). Catálogo completo carregando…`;
+            } else {
+                banner.classList.add('hidden');
+            }
+        },
+
+        showLoadError(err) {
+            console.error('Error loading jobs:', err);
+            skeletonLoader.hide();
+            this.showApp();
+            if (elements.emptyState) {
+                elements.jobsGrid.innerHTML = '';
+                elements.emptyState.classList.remove('hidden');
+                const h3 = elements.emptyState.querySelector('h3');
+                const p = elements.emptyState.querySelector('p');
+                const retryBtn = document.getElementById('emptyStateRetry');
+                const clearBtn = document.getElementById('emptyStateClear');
+                if (h3) h3.textContent = 'Erro ao carregar';
+                if (p) p.textContent = 'Não foi possível carregar as vagas. Verifique sua conexão e tente novamente.';
+                if (retryBtn) retryBtn.classList.remove('hidden');
+                if (clearBtn) clearBtn.classList.add('hidden');
+            }
+        },
+
         async load() {
-            // Show skeleton loading
             skeletonLoader.show();
-            const _splashStart = Date.now();
-            let _lastSplashAt = _splashStart;
+            let _lastSplashAt = Date.now();
             const _setProgress = (pct, msg) => {
                 setSplashProgress(pct, msg);
                 return new Promise(r => {
@@ -953,69 +1065,73 @@
                     setTimeout(() => { _lastSplashAt = Date.now(); r(); }, wait);
                 });
             };
+
+            if (this._slowNetworkTimer) clearTimeout(this._slowNetworkTimer);
+            this._slowNetworkTimer = setTimeout(() => {
+                this.setSplashMsg('Em redes lentas, o download completo pode levar alguns minutos.');
+            }, 8000);
+
             await _setProgress(5, 'Conectando...');
 
+            let showedApp = false;
+
             try {
-                const xhrResult = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('GET', CONFIG.DATA_URL);
-                    xhr.responseType = 'json';
-                    xhr.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            const pct = 10 + (e.loaded / e.total) * 60; // 10-70%
-                            setSplashProgress(pct, `Baixando vagas... ${Math.round(e.loaded / 1024).toLocaleString('pt-BR')}KB`);
-                        } else {
-                            setSplashProgress(40, 'Baixando vagas...');
-                        }
-                    };
-                    xhr.onload = () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            resolve({ data: xhr.response, lastModified: xhr.getResponseHeader('last-modified') });
-                        } else {
-                            reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
-                        }
-                    };
-                    xhr.onerror = () => reject(new Error('Network error'));
-                    xhr.send();
-                });
+                try {
+                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL);
+                    if (recentResult.data?.length) {
+                        this.ingestJobs(recentResult.data, recentResult.lastModified);
+                        state.isPartialData = true;
+                        await _setProgress(65, `Exibindo ${recentResult.data.length.toLocaleString('pt-BR')} vagas recentes...`);
+                        filterManager.apply();
+                        if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
+                        this.updatePartialBanner();
+                        this.showApp();
+                        showedApp = true;
+                        skeletonLoader.hide();
+                    }
+                } catch (_) {
+                    /* recent_jobs.json optional */
+                }
 
-                const data = xhrResult.data;
-                await _setProgress(80, `Processando ${data.length.toLocaleString('pt-BR')} vagas...`);
-
-                state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
-
-                // Load visited (using URL-based keys for stability)
-                state.allJobs.forEach(job => {
-                    const key = utils.getJobKey(job);
-                    if (utils.isVisited(key)) {
-                        state.visitedJobs.add(key);
+                const fullResult = await this.fetchJson(CONFIG.DATA_URL, (e) => {
+                    if (e.lengthComputable) {
+                        const pct = showedApp ? 70 + (e.loaded / e.total) * 25 : 10 + (e.loaded / e.total) * 60;
+                        setSplashProgress(pct, `Baixando catálogo... ${Math.round(e.loaded / 1024).toLocaleString('pt-BR')} KB`);
+                    } else if (!showedApp) {
+                        setSplashProgress(40, 'Baixando vagas...');
                     }
                 });
 
-                // Build filter options
-                this.buildFilterOptions();
+                clearTimeout(this._slowNetworkTimer);
+                this._slowNetworkTimer = null;
 
-                // Update last modified
-                this.updateLastModifiedFromHeader(xhrResult.lastModified);
+                const wasPartial = state.isPartialData;
+                await _setProgress(showedApp ? 90 : 80, `Processando ${fullResult.data.length.toLocaleString('pt-BR')} vagas...`);
 
-                await _setProgress(95, 'Renderizando...');
-                // Apply initial filters
+                this.ingestJobs(fullResult.data, fullResult.lastModified);
+                state.isPartialData = false;
+                this.updatePartialBanner();
+
                 filterManager.apply();
                 if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
-                setSplashProgress(100, 'Pronto!');
 
-                // Show app
-                this.showApp();
+                if (wasPartial) {
+                    utils.showToast('Catálogo completo atualizado', 'theme-toast', 2500);
+                } else {
+                    await _setProgress(95, 'Renderizando...');
+                    setSplashProgress(100, 'Pronto!');
+                    this.showApp();
+                }
+
+                skeletonLoader.hide();
 
             } catch (err) {
-                console.error('Error loading jobs:', err);
-                // Show error but still show app
-                this.showApp();
-                if (elements.emptyState) {
-                    elements.jobsGrid.innerHTML = '';
-                    elements.emptyState.classList.remove('hidden');
-                    elements.emptyState.querySelector('h3').textContent = 'Erro ao carregar';
-                    elements.emptyState.querySelector('p').textContent = 'Não foi possível carregar as vagas. Recarregue a página.';
+                clearTimeout(this._slowNetworkTimer);
+                this._slowNetworkTimer = null;
+                if (!showedApp) {
+                    this.showLoadError(err);
+                } else {
+                    utils.showToast('Não foi possível atualizar o catálogo completo', 'theme-toast', 3000);
                 }
             }
         },
@@ -1298,11 +1414,26 @@
         renderActiveFilters() {
             const groups = [];
 
+            if (state.searchQuery) {
+                groups.push({ key: '_search', label: 'Busca', values: [state.searchQuery], chipType: 'search' });
+            }
+            if (state.quickFilter !== 'all') {
+                groups.push({
+                    key: '_quick',
+                    label: 'Tipo',
+                    values: [QUICK_FILTER_LABELS[state.quickFilter] || state.quickFilter],
+                    chipType: 'quick'
+                });
+            }
+            if (state.showOnlyVisited) {
+                groups.push({ key: '_visited', label: 'Visitadas', values: ['Só visualizadas'], chipType: 'visited' });
+            }
+
             // Add date period chip if active
             if (state.datePeriod !== 'all') {
                 const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
                 if (period) {
-                    groups.push({ key: '_date', label: 'Data', values: [period.label], isDate: true });
+                    groups.push({ key: '_date', label: 'Data', values: [period.label], chipType: 'date' });
                 }
             }
 
@@ -1311,9 +1442,15 @@
                 if (values && values.length > 0) {
                     const category = CONFIG.FILTER_CATEGORIES.find(c => c.key === key);
                     const label = category ? category.label : key;
-                    groups.push({ key, label, values });
+                    groups.push({ key, label, values, chipType: 'category' });
                 }
             });
+
+            const copyBtn = document.getElementById('copySearchLink');
+            const hasShareableState = state.searchQuery || state.quickFilter !== 'all' ||
+                state.showOnlyVisited || state.datePeriod !== 'all' ||
+                Object.values(state.selectedFilters).some(v => v && v.length > 0);
+            if (copyBtn) copyBtn.classList.toggle('hidden', !hasShareableState);
 
             if (groups.length === 0) {
                 elements.activeFilters.classList.add('hidden');
@@ -1321,18 +1458,23 @@
             }
 
             elements.activeFilters.classList.remove('hidden');
-            elements.activeFiltersList.innerHTML = groups.map(({ key, label, values, isDate }) => {
+            elements.activeFiltersList.innerHTML = groups.map(({ key, label, values, chipType }) => {
                 const count = values.length;
                 const displayText = count === 1 ? values[0] : `${label}: ${count}`;
                 const tooltipItems = count > 1 ? values.map(v => utils.escapeHtml(v)).join(', ') : '';
+                const isGrouped = chipType === 'category' && count > 1;
+                const chipText = chipType === 'search'
+                    ? `"${utils.truncate(displayText, 22)}"`
+                    : (count === 1 ? utils.truncate(displayText, 18) : displayText);
 
                 return `
-                    <div class="active-filter-chip ${count > 1 ? 'grouped' : ''}"
+                    <div class="active-filter-chip ${isGrouped ? 'grouped' : ''}"
                          data-key="${key}"
-                         ${isDate ? 'data-date="true"' : ''}
-                         ${count > 1 ? `data-tooltip="${tooltipItems}"` : `data-value="${utils.escapeHtml(values[0])}"`}>
-                        <span class="chip-text">${count === 1 ? utils.truncate(displayText, 18) : displayText}</span>
-                        ${count > 1 ? `
+                         data-chip-type="${chipType}"
+                         ${chipType === 'category' && count === 1 ? `data-value="${utils.escapeHtml(values[0])}"` : ''}
+                         ${isGrouped ? `data-tooltip="${tooltipItems}"` : ''}>
+                        <span class="chip-text">${chipText}</span>
+                        ${isGrouped ? `
                             <div class="filter-dropdown">
                                 ${values.map(v => `
                                     <div class="filter-dropdown-item" data-value="${utils.escapeHtml(v)}">
@@ -1344,52 +1486,56 @@
                                 `).join('')}
                             </div>
                         ` : ''}
-                        <button class="chip-close" aria-label="Remover">
+                        <button class="chip-close" aria-label="Remover filtro">
                             <span class="material-symbols-rounded">close</span>
                         </button>
                     </div>
                 `;
             }).join('');
 
-            // Add event handlers
             elements.activeFiltersList.querySelectorAll('.active-filter-chip').forEach(chip => {
                 const key = chip.dataset.key;
-                const isDate = chip.dataset.date === 'true';
+                const chipType = chip.dataset.chipType;
                 const isGrouped = chip.classList.contains('grouped');
 
-                // Close button on chip removes all values for that category
                 chip.querySelector('.chip-close').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (isDate) {
+                    if (chipType === 'search') {
+                        state.searchQuery = '';
+                        elements.searchInput.value = '';
+                        elements.searchClear.classList.add('hidden');
+                    } else if (chipType === 'quick') {
+                        state.quickFilter = 'all';
+                        if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
+                    } else if (chipType === 'visited') {
+                        state.showOnlyVisited = false;
+                        const visitedBtn = document.getElementById('visitedToggle');
+                        if (visitedBtn) visitedBtn.setAttribute('aria-pressed', 'false');
+                    } else if (chipType === 'date') {
                         state.datePeriod = 'all';
-                    } else {
-                        delete state.selectedFilters[key];
+                    } else if (chipType === 'category') {
+                        if (isGrouped) {
+                            delete state.selectedFilters[key];
+                        } else {
+                            this.removeFilter(key, chip.dataset.value);
+                            return;
+                        }
                     }
                     this.apply();
                 });
 
-                // For grouped chips, toggle dropdown on click
                 if (isGrouped) {
                     chip.addEventListener('click', (e) => {
                         if (e.target.closest('.filter-dropdown') || e.target.closest('.chip-close')) return;
                         chip.classList.toggle('expanded');
                     });
 
-                    // Individual remove buttons in dropdown
                     chip.querySelectorAll('.filter-dropdown-item button').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const item = btn.closest('.filter-dropdown-item');
-                            const value = item.dataset.value;
-                            this.removeFilter(key, value);
+                            this.removeFilter(key, item.dataset.value);
                         });
-                    });
-                } else if (!isDate) {
-                    // Single value chip - close removes that value
-                    chip.querySelector('.chip-close').addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const value = chip.dataset.value;
-                        this.removeFilter(key, value);
                     });
                 }
             });
@@ -1436,6 +1582,13 @@
             state.quickFilter = filter;
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             this.apply();
+        },
+
+        scrollToActiveFilters() {
+            const target = elements.activeFilters && !elements.activeFilters.classList.contains('hidden')
+                ? elements.activeFilters
+                : document.querySelector('.filter-chips-container');
+            target?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     };
 
@@ -1501,6 +1654,25 @@
                     counter.textContent = `${shown.toLocaleString('pt-BR')} de ${state.filteredJobs.length.toLocaleString('pt-BR')}`;
                 }
             }
+
+            let allLoaded = document.getElementById('allLoaded');
+            if (!allLoaded && elements.jobsGrid?.parentNode) {
+                allLoaded = document.createElement('p');
+                allLoaded.id = 'allLoaded';
+                allLoaded.className = 'all-loaded-msg hidden';
+                allLoaded.setAttribute('aria-live', 'polite');
+                const loadingMore = document.getElementById('loadingMore');
+                if (loadingMore) {
+                    loadingMore.parentNode.insertBefore(allLoaded, loadingMore);
+                }
+            }
+            if (allLoaded) {
+                const complete = state.displayedCount >= state.filteredJobs.length && state.filteredJobs.length > 0;
+                allLoaded.classList.toggle('hidden', !complete);
+                if (complete) {
+                    allLoaded.textContent = `Todas as ${state.filteredJobs.length.toLocaleString('pt-BR')} vagas carregadas`;
+                }
+            }
         },
 
         createCard(job, index = 0) {
@@ -1540,7 +1712,7 @@
                 ? (contractInfo.cls === 'remote' ? 'remote' : contractInfo.cls === 'hybrid' ? 'hybrid' : contractInfo.cls === 'onsite' ? 'onsite' : null)
                 : null;
             const contractTag = contractInfo
-                ? `<span class="job-tag job-tag-${contractInfo.cls}${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`
+                ? `<span class="job-tag job-tag-${contractInfo.cls}${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}" role="button" tabindex="0"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`
                 : '';
 
             const newBadge = isNew
@@ -1570,7 +1742,7 @@
                             <div class="job-list-company-row">
                                 <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                                 ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
-                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>` : ''}
+                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}" role="button" tabindex="0"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>` : ''}
                                 ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</span>` : ''}
                             </div>
                         </div>
@@ -1600,9 +1772,9 @@
                     <div class="job-card-body">
                         ${contractTag}
                         ${affirmativeTag}
-                        ${isValidLevel ? `<span class="job-tag job-tag-clickable" data-filter-key="level" data-filter-value="${utils.escapeHtml(job.level)}">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
-                        ${isValidCategory ? `<span class="job-tag job-tag-clickable" data-filter-key="category" data-filter-value="${utils.escapeHtml(job.category)}">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
-                        ${isValidCompanyType ? `<span class="job-tag job-tag-clickable" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
+                        ${isValidLevel ? `<span class="job-tag job-tag-clickable" role="button" tabindex="0" data-filter-key="level" data-filter-value="${utils.escapeHtml(job.level)}">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
+                        ${isValidCategory ? `<span class="job-tag job-tag-clickable" role="button" tabindex="0" data-filter-key="category" data-filter-value="${utils.escapeHtml(job.category)}">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
+                        ${isValidCompanyType ? `<span class="job-tag job-tag-clickable" role="button" tabindex="0" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
                     </div>
                     <div class="job-card-footer">
                         <div class="job-location">
@@ -1641,16 +1813,21 @@
                 if (tag) {
                     e.preventDefault();
                     e.stopPropagation();
+                    let feedback = 'Filtro aplicado';
                     if (tag.dataset.quickFilter) {
                         filterManager.setQuickFilter(tag.dataset.quickFilter);
+                        feedback = `Filtro aplicado: ${QUICK_FILTER_LABELS[tag.dataset.quickFilter] || tag.dataset.quickFilter}`;
                     } else if (tag.dataset.filterKey && tag.dataset.filterValue) {
                         const k = tag.dataset.filterKey;
                         const v = tag.dataset.filterValue;
                         if (!state.selectedFilters[k]) state.selectedFilters[k] = [];
                         if (!state.selectedFilters[k].includes(v)) state.selectedFilters[k].push(v);
                         filterManager.apply();
+                        const cat = CONFIG.FILTER_CATEGORIES.find(c => c.key === k);
+                        feedback = `Filtro aplicado: ${cat ? cat.label : k}`;
                     }
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    utils.showToast(feedback, 'theme-toast filter-toast');
+                    filterManager.scrollToActiveFilters();
                     return;
                 }
                 if (!state.visitedJobs.has(jobKey)) {
@@ -1700,15 +1877,21 @@
             // Clone current filters to temp
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
             state.tempDatePeriod = state.datePeriod;
+            state.tempQuickFilter = state.quickFilter;
             state.tempSortBy = state.sortBy;
+            this._openFiltersTrigger = document.activeElement;
 
             // Build filter sections
             this.buildSections();
             this.updateCount();
 
             // Initial count calculation for the modal state
-            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.quickFilter, state.searchQuery);
+            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.tempQuickFilter, state.searchQuery);
             this.updateOptionCounts();
+
+            elements.filterSheet.setAttribute('role', 'dialog');
+            elements.filterSheet.setAttribute('aria-modal', 'true');
+            elements.filterSheet.setAttribute('aria-labelledby', 'filterSheetTitle');
 
             // Show
             elements.scrim.classList.remove('hidden');
@@ -1718,6 +1901,7 @@
             requestAnimationFrame(() => {
                 elements.scrim.classList.add('visible');
                 elements.filterSheet.classList.add('visible');
+                elements.closeSheet?.focus();
             });
         },
 
@@ -1729,6 +1913,8 @@
                 elements.scrim.classList.add('hidden');
                 elements.filterSheet.classList.add('hidden');
                 document.body.style.overflow = '';
+                const trigger = this._openFiltersTrigger;
+                if (trigger && typeof trigger.focus === 'function') trigger.focus();
             }, 400);
         },
 
@@ -1748,14 +1934,14 @@
                         <div class="filter-section-header-left">
                             <span class="material-symbols-rounded">tune</span>
                             <span class="filter-section-title">Tipo</span>
-                            ${state.quickFilter !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
+                            ${state.tempQuickFilter !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
                         </div>
                         <span class="material-symbols-rounded filter-section-icon">expand_more</span>
                     </div>
                     <div class="filter-section-body">
                         <div class="filter-options-list" id="sheetQuickFilters">
                             ${quickOpts.map(o => `
-                                <button class="filter-option-chip ${state.quickFilter === o.key ? 'selected' : ''}" data-quick="${o.key}">
+                                <button class="filter-option-chip ${state.tempQuickFilter === o.key ? 'selected' : ''}" data-quick="${o.key}">
                                     <span class="material-symbols-rounded check-icon">check</span>
                                     <span>${o.label}</span>
                                 </button>
@@ -1819,6 +2005,7 @@
             }).join('');
 
             elements.filterSheetContent.innerHTML =
+                '<p class="filter-sheet-hint">Combina todos os grupos; dentro de cada grupo, qualquer opção marcada vale.</p>' +
                 quickSection +
                 buildCats(beforeDate) +
                 datePeriodSection +
@@ -1835,6 +2022,9 @@
 
             return options.map(opt => {
                 const count = counts[opt] || 0;
+                if (state.hideZeroFilterOptions && count === 0 && !selected.includes(opt)) {
+                    return '';
+                }
                 const countStr = count.toLocaleString('pt-BR');
                 return `
                     <button class="filter-option-chip ${selected.includes(opt) ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}">
@@ -1859,10 +2049,20 @@
             elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const q = chip.dataset.quick;
-                    filterManager.setQuickFilter(q);
+                    state.tempQuickFilter = q;
                     elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(c => {
                         c.classList.toggle('selected', c.dataset.quick === q);
                     });
+                    const section = chip.closest('.filter-section');
+                    const badge = section?.querySelector('.filter-section-count');
+                    if (q !== 'all') {
+                        if (badge) badge.textContent = '1';
+                        else section?.querySelector('.filter-section-header-left')
+                            ?.insertAdjacentHTML('beforeend', '<span class="filter-section-count">1</span>');
+                    } else if (badge) {
+                        badge.remove();
+                    }
+                    this.updateCount();
                     this.updateOptionCounts();
                 });
             });
@@ -1963,7 +2163,7 @@
 
         updateOptionCounts() {
             // Recalculate counts based on current TEMP state
-            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.quickFilter, state.searchQuery);
+            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.tempQuickFilter, state.searchQuery);
 
             // Update all visible option counts
             elements.filterSheetContent.querySelectorAll('.filter-option-chip').forEach(chip => {
@@ -1989,6 +2189,7 @@
                 .reduce((sum, arr) => sum + arr.length, 0);
 
             if (state.tempDatePeriod !== 'all') count++;
+            if (state.tempQuickFilter !== 'all') count++;
 
             elements.sheetFilterCount.textContent = count > 0
                 ? `${count} selecionado${count > 1 ? 's' : ''}`
@@ -2019,10 +2220,15 @@
         clearTemp() {
             state.tempFilters = {};
             state.tempDatePeriod = 'all';
+            state.tempQuickFilter = 'all';
             state.tempSortBy = 'date_desc';
 
             elements.filterSheetContent.querySelectorAll('.filter-option-chip.selected').forEach(chip => {
                 chip.classList.remove('selected');
+            });
+
+            elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(c => {
+                c.classList.toggle('selected', c.dataset.quick === 'all');
             });
 
             // Select default date and sort options
@@ -2040,7 +2246,9 @@
         applyAndClose() {
             state.selectedFilters = state.tempFilters;
             state.datePeriod = state.tempDatePeriod;
+            state.quickFilter = state.tempQuickFilter;
             state.sortBy = state.tempSortBy;
+            if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             filterManager.apply();
             this.close();
         }
@@ -2371,7 +2579,9 @@
         init() {
             document.querySelectorAll('[data-quick]').forEach(chip => {
                 chip.addEventListener('click', () => {
-                    filterManager.setQuickFilter(chip.dataset.quick);
+                    const q = chip.dataset.quick;
+                    const next = state.quickFilter === q ? 'all' : q;
+                    filterManager.setQuickFilter(next);
                     this.syncUI();
                 });
             });
@@ -2420,6 +2630,15 @@
             elements.emptyStateClear.addEventListener('click', () => {
                 filterManager.clearAll();
             });
+
+            document.getElementById('emptyStateRetry')?.addEventListener('click', () => {
+                elements.emptyState?.classList.add('hidden');
+                const retryBtn = document.getElementById('emptyStateRetry');
+                const clearBtn = document.getElementById('emptyStateClear');
+                retryBtn?.classList.add('hidden');
+                clearBtn?.classList.remove('hidden');
+                dataLoader.load();
+            });
         }
     };
 
@@ -2446,27 +2665,87 @@
                 if (e.key === '?') {
                     overlay.classList.toggle('hidden');
                 }
+                if (e.key === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    bottomSheet.open();
+                }
                 if (e.key === 't' && !e.metaKey && !e.ctrlKey && !e.altKey) {
                     themeManager.toggle();
                 }
             });
 
-            // g-t chord for top
+            // g-g chord for top (g then g within 800ms)
             let gPressed = false;
             document.addEventListener('keydown', (e) => {
                 const tag = document.activeElement?.tagName;
                 if (['INPUT', 'TEXTAREA'].includes(tag)) return;
-                if (e.key === 'g') {
+                if (e.key === 'g' && !gPressed) {
                     gPressed = true;
                     setTimeout(() => { gPressed = false; }, 800);
                     return;
                 }
-                if (e.key === 't' && gPressed) {
+                if (e.key === 'g' && gPressed) {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     gPressed = false;
                 }
             });
+        }
+    };
+
+    // ============================================
+    // LAST JOB NAVIGATOR
+    // ============================================
+    const lastJobNavigator = {
+        init() {
+            const btn = document.getElementById('lastJobBtn');
+            if (!btn) return;
+            const lastKey = localStorage.getItem('cv_last_clicked');
+            if (!lastKey) return;
+            btn.classList.remove('hidden');
+            btn.addEventListener('click', () => this.scrollToLast());
+        },
+
+        scrollToLast() {
+            const lastKey = localStorage.getItem('cv_last_clicked');
+            if (!lastKey) return;
+            for (const c of document.querySelectorAll('.job-card')) {
+                const href = c.getAttribute('href');
+                const match = state.allJobs.find(j => utils.getJobKey(j) === lastKey);
+                if (match && match.url === href) {
+                    c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    c.classList.add('flash-highlight');
+                    setTimeout(() => c.classList.remove('flash-highlight'), 2200);
+                    break;
+                }
+            }
+        }
+    };
+
+    // ============================================
+    // ONBOARDING
+    // ============================================
+    const onboardingManager = {
+        init() {
+            if (localStorage.getItem('cv_onboarding_seen')) return;
+            const banner = document.getElementById('onboardingBanner');
+            if (!banner) return;
+            banner.classList.remove('hidden');
+            document.getElementById('onboardingDismiss')?.addEventListener('click', () => {
+                banner.classList.add('hidden');
+                localStorage.setItem('cv_onboarding_seen', '1');
+            });
+        }
+    };
+
+    // ============================================
+    // SERVICE WORKER
+    // ============================================
+    const swManager = {
+        init() {
+            if (!('serviceWorker' in navigator)) return;
+            const swPath = new URL('service-worker.js', window.location.href).pathname;
+            navigator.serviceWorker.register(swPath).catch(() => {});
         }
     };
 
@@ -2508,7 +2787,7 @@
                 this.indicator.style.transform = '';
                 this.indicator.style.opacity = '';
                 if (dy > 80) {
-                    location.reload();
+                    dataLoader.load();
                 }
             }, { passive: true });
         }
@@ -2525,8 +2804,7 @@
             scrollProgress.init();
             // tweaksPanel removed — density toggle moved to header button
             sortManager.init();
-            // shareManager.init() — share button removed from UI; URL loading still works via shareManager.loadFromURL()
-            shareManager.loadFromURL();
+            shareManager.init();
             searchHistoryManager.init();
             searchManager.init();
             animationManager.init();
@@ -2535,6 +2813,8 @@
             bottomSheet.init();
             clearHandlers.init();
             shortcutsOverlay.init();
+            onboardingManager.init();
+            swManager.init();
             ptr.init();
 
             // Brand logo click → reset to initial state
@@ -2554,21 +2834,7 @@
             }
 
             dataLoader.load().then(() => {
-                const lastKey = localStorage.getItem('cv_last_clicked');
-                if (!lastKey) return;
-                setTimeout(() => {
-                    const allCards = document.querySelectorAll('.job-card');
-                    for (const c of allCards) {
-                        const href = c.getAttribute('href');
-                        const match = state.allJobs.find(j => utils.getJobKey(j) === lastKey);
-                        if (match && match.url === href) {
-                            c.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            c.classList.add('flash-highlight');
-                            setTimeout(() => c.classList.remove('flash-highlight'), 2200);
-                            break;
-                        }
-                    }
-                }, 300);
+                lastJobNavigator.init();
             });
 
             // Fallback: ensure app shows after 5 seconds no matter what
