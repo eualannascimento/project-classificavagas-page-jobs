@@ -103,6 +103,7 @@
         closeSheet: $('#closeSheet'),
         sheetClearFilters: $('#sheetClearFilters'),
         sheetApplyFilters: $('#sheetApplyFilters'),
+        sheetApplyLabel: $('#sheetApplyLabel'),
         themeToggle: $('#themeToggle'),
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
@@ -1214,14 +1215,19 @@
     // FILTER MANAGER
     // ============================================
     const filterManager = {
-        apply() {
-            let jobs = [...state.allJobs];
+        filterJobs(jobs, {
+            searchQuery = state.searchQuery,
+            showOnlyVisited = state.showOnlyVisited,
+            quickFilter = state.quickFilter,
+            datePeriod = state.datePeriod,
+            selectedFilters = state.selectedFilters
+        } = {}) {
+            let result = jobs;
 
-            // Search query (multi-term AND)
-            if (state.searchQuery) {
-                const terms = utils.normalize(state.searchQuery).split(/\s+/).filter(Boolean);
+            if (searchQuery) {
+                const terms = utils.normalize(searchQuery).split(/\s+/).filter(Boolean);
                 if (terms.length) {
-                    jobs = jobs.filter(job => {
+                    result = result.filter(job => {
                         const text = utils.normalize([
                             job.title, job.company, job.company_type,
                             job.level, job.category, job.sub_category,
@@ -1232,15 +1238,13 @@
                 }
             }
 
-            // Visited-only filter
-            if (state.showOnlyVisited) {
-                jobs = jobs.filter(j => utils.isVisited(j));
+            if (showOnlyVisited) {
+                result = result.filter(j => utils.isVisited(j));
             }
 
-            // Quick filter
-            if (state.quickFilter !== 'all') {
-                jobs = jobs.filter(job => {
-                    switch (state.quickFilter) {
+            if (quickFilter !== 'all') {
+                result = result.filter(job => {
+                    switch (quickFilter) {
                         case 'remote': return job['remote?'] === '01 - Sim';
                         case 'hybrid': return job.contract === 'HIBRIDO' || job.contract === 'HÍBRIDO';
                         case 'onsite': return job['remote?'] === '02 - Não';
@@ -1251,22 +1255,28 @@
                 });
             }
 
-            // Date period filter
-            if (state.datePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+            if (datePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === datePeriod);
                 if (period && period.days) {
-                    jobs = jobs.filter(job => utils.isWithinDays(job.inserted_date, period.days));
+                    result = result.filter(job => utils.isWithinDays(job.inserted_date, period.days));
                 }
             }
 
-            // Selected filters
-            Object.entries(state.selectedFilters).forEach(([key, values]) => {
+            Object.entries(selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
-                    jobs = jobs.filter(job => values.includes(job[key]));
+                    result = result.filter(job => values.includes(job[key]));
                 }
             });
 
-            // Sorting
+            return result;
+        },
+
+        getFilteredCount(overrides = {}) {
+            return this.filterJobs(state.allJobs, overrides).length;
+        },
+
+        apply() {
+            let jobs = this.filterJobs([...state.allJobs]);
             jobs = this.sortJobs(jobs);
 
             state.filteredJobs = jobs;
@@ -2016,7 +2026,7 @@
             }).join('');
 
             elements.filterSheetContent.innerHTML =
-                '<p class="filter-sheet-hint">Combina todos os grupos; dentro de cada grupo, qualquer opção marcada vale.</p>' +
+                '<p class="filter-sheet-hint"><strong>Entre grupos:</strong> todas as condições (E). <strong>Dentro do mesmo grupo:</strong> qualquer opção marcada (OU).</p>' +
                 quickSection +
                 buildCats(beforeDate) +
                 datePeriodSection +
@@ -2205,6 +2215,21 @@
             elements.sheetFilterCount.textContent = count > 0
                 ? `${count} selecionado${count > 1 ? 's' : ''}`
                 : 'Nenhum selecionado';
+
+            this.updateApplyPreview();
+        },
+
+        updateApplyPreview() {
+            const n = filterManager.getFilteredCount({
+                selectedFilters: state.tempFilters,
+                datePeriod: state.tempDatePeriod,
+                quickFilter: state.tempQuickFilter
+            });
+            const label = elements.sheetApplyLabel;
+            if (!label) return;
+            const formatted = n.toLocaleString('pt-BR');
+            label.textContent = n === 1 ? 'Ver 1 vaga' : `Ver ${formatted} vagas`;
+            elements.sheetApplyFilters?.setAttribute('aria-label', label.textContent);
         },
 
         updateSectionBadges() {
@@ -2586,10 +2611,12 @@
     // ============================================
     const quickFilters = {
         init() {
-            document.querySelectorAll('[data-quick]').forEach(chip => {
+            document.querySelectorAll('.filter-chip-quick, .quick-segment-btn').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const q = chip.dataset.quick;
-                    const next = state.quickFilter === q ? 'all' : q;
+                    const next = chip.classList.contains('quick-segment-btn')
+                        ? q
+                        : (state.quickFilter === q ? 'all' : q);
                     filterManager.setQuickFilter(next);
                     this.syncUI();
                 });
@@ -2597,8 +2624,16 @@
             this.syncUI();
         },
         syncUI() {
-            document.querySelectorAll('[data-quick]').forEach(chip => {
+            document.querySelectorAll('.filter-chip-quick').forEach(chip => {
                 chip.classList.toggle('selected', chip.dataset.quick === state.quickFilter);
+            });
+            document.querySelectorAll('.quick-segment-btn').forEach(btn => {
+                const q = btn.dataset.quick;
+                const active = q === 'all'
+                    ? (state.quickFilter === 'all' || !['remote', 'today'].includes(state.quickFilter))
+                    : state.quickFilter === q;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
             });
         }
     };

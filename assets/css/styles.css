@@ -793,7 +793,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .job-card:hover::after { opacity: 0.35; }
 .job-card:active { transform: translateY(0); }
 
-.job-card.visited { opacity: 0.65; }
+.job-card.visited { opacity: 0.78; }
 .job-card.visited .job-card-title h3,
 .job-card.visited .job-list-main h3,
 .job-card.visited .job-compact-title { color: var(--ink-2); }
@@ -859,7 +859,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     border-radius: var(--radius-pill);
     font-family: var(--font-mono);
     font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--ink-3);
+    color: var(--ink-2);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     max-width: 130px;
 }
@@ -916,7 +916,11 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-size: 0.60rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
     flex-shrink: 0; white-space: nowrap;
 }
-.job-badge-new { background: var(--success-soft); color: var(--success); }
+.job-badge-new {
+    background: color-mix(in oklch, var(--success) 16%, var(--bg-elevated));
+    color: color-mix(in oklch, var(--success) 85%, var(--ink));
+    border: 1px solid color-mix(in oklch, var(--success) 28%, transparent);
+}
 
 .job-compact-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -1025,7 +1029,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 /* Visited in list */
 .jobs-grid.list-view .job-card.visited .job-card-icon::after { display: none; }
-.jobs-grid.list-view .job-card.visited { opacity: 0.55; }
+.jobs-grid.list-view .job-card.visited { opacity: 0.72; }
 .jobs-grid.list-view .job-card.visited .job-list-main h3,
 .jobs-grid.list-view .job-card.visited .job-list-company { color: var(--ink-3); }
 
@@ -1196,6 +1200,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    FAB
    ============================================ */
+.fab-stack > .fab,
 .fab {
     position: fixed;
     bottom: calc(24px + var(--safe-bottom)); right: 20px;
@@ -1802,7 +1807,45 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     padding: 0 4px;
     font-size: 12px;
     color: var(--ink-3);
-    line-height: 1.4;
+    line-height: 1.45;
+}
+.filter-sheet-hint strong {
+    color: var(--ink-2);
+    font-weight: 600;
+}
+
+/* Quick segment (mobile) */
+.quick-segment {
+    display: none;
+    margin: 0 var(--shell-pad) 10px;
+    padding: 3px;
+    background: var(--bg-sunk);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--rule-2);
+}
+.quick-segment-btn {
+    flex: 1;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.quick-segment-btn.active {
+    background: var(--bg-elevated);
+    color: var(--ink);
+    box-shadow: 0 1px 4px oklch(0.2 0.02 250 / 0.08);
+}
+.quick-segment-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.sheet-apply-btn {
+    min-width: 148px;
+    justify-content: center;
 }
 
 .copy-link-btn {
@@ -2016,6 +2059,14 @@ body.footer-hidden .footer-fixed {
     }
 
     .filter-chip-quick { display: none !important; }
+
+    .quick-segment {
+        display: flex;
+    }
+
+    body.chrome-compact .quick-segment {
+        margin-bottom: 6px;
+    }
 
     .filter-chip-main {
         min-height: 44px;

@@ -11,10 +11,18 @@
     <meta property="og:description" content="Agregador de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://classificavagas.com">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.svg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="classificavagas — agregador de vagas no Brasil">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="classifica vagas">
     <meta name="twitter:description" content="Agregador de vagas de emprego no Brasil.">
+    <meta name="twitter:image" content="https://classificavagas.com/assets/images/og-image.svg">
     <title>classifica vagas</title>
+
+    <link rel="icon" href="assets/images/brand-icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/images/brand-icon.svg">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -88,6 +96,12 @@
                     <span class="material-symbols-rounded">close</span>
                 </button>
             </div>
+        </div>
+
+        <div class="quick-segment" id="quickSegment" role="tablist" aria-label="Filtro rápido">
+            <button type="button" class="quick-segment-btn" role="tab" data-quick="remote" aria-selected="false">Remoto</button>
+            <button type="button" class="quick-segment-btn" role="tab" data-quick="today" aria-selected="false">Hoje</button>
+            <button type="button" class="quick-segment-btn" role="tab" data-quick="all" aria-selected="true">Todas</button>
         </div>
 
         <div class="filter-chips-container">
@@ -195,9 +209,9 @@
             <div class="bottom-sheet-content" id="filterSheetContent"></div>
             <div class="bottom-sheet-actions">
                 <button class="text-button" id="sheetClearFilters">Limpar tudo</button>
-                <button class="filled-button" id="sheetApplyFilters">
-                    <span class="material-symbols-rounded">check</span>
-                    Aplicar
+                <button class="filled-button sheet-apply-btn" id="sheetApplyFilters">
+                    <span class="material-symbols-rounded" aria-hidden="true">check</span>
+                    <span id="sheetApplyLabel">Ver vagas</span>
                 </button>
             </div>
         </div>
