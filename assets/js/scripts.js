@@ -81,7 +81,6 @@
         splash: $('#splash'),
         app: $('#app'),
         jobCount: $('#jobCount'),
-        jobCountMobile: $('#jobCountMobile'),
         searchInput: $('#searchInput'),
         searchClear: $('#searchClear'),
         searchBar: $('#searchBar'),
@@ -103,6 +102,9 @@
         closeSheet: $('#closeSheet'),
         sheetClearFilters: $('#sheetClearFilters'),
         sheetApplyFilters: $('#sheetApplyFilters'),
+        sheetApplyLabel: $('#sheetApplyLabel'),
+        sortSheet: $('#sortSheet'),
+        closeSortSheet: $('#closeSortSheet'),
         themeToggle: $('#themeToggle'),
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
@@ -144,13 +146,18 @@
             return `${Math.floor(diffDays / 365)}a atrás`;
         },
 
+        isMobile() {
+            return window.matchMedia('(max-width: 720px)').matches;
+        },
+
         showToast(message, className = 'theme-toast', duration = 2000) {
             const baseClass = className.split(' ')[0];
             const existing = document.querySelector(`.${baseClass}`);
             if (existing) existing.remove();
 
             const toast = document.createElement('div');
-            toast.className = className;
+            const mobileClass = this.isMobile() ? ' toast-mobile-top' : '';
+            toast.className = className + mobileClass;
             toast.setAttribute('role', 'status');
             toast.setAttribute('aria-live', 'polite');
             toast.textContent = message;
@@ -302,8 +309,12 @@
 
         init() {
             const saved = localStorage.getItem('cv_theme');
-            // Default to light theme if no preference saved
-            const theme = saved && THEMES.includes(saved) ? saved : 'light';
+            let theme = 'light';
+            if (saved && THEMES.includes(saved)) {
+                theme = saved;
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                theme = 'dark';
+            }
             this.apply(theme);
             this._initialized = true;
 
@@ -360,8 +371,9 @@
     const viewModeManager = {
         init() {
             const saved = localStorage.getItem('cv_view');
-            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : 'cards';
-            this.apply(state.viewMode);
+            const defaultMode = utils.isMobile() ? 'list' : 'cards';
+            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : defaultMode;
+            this.apply(state.viewMode, true);
 
             if (elements.viewToggle) {
                 elements.viewToggle.addEventListener('click', () => this.toggle());
@@ -629,6 +641,46 @@
     };
 
     // ============================================
+    // SHEET SWIPE (mobile dismiss)
+    // ============================================
+    const sheetSwipe = {
+        bind(sheetEl, onClose) {
+            const header = sheetEl?.querySelector('.sheet-draggable');
+            if (!header || header.dataset.swipeBound) return;
+            header.dataset.swipeBound = '1';
+            let startY = 0;
+            let dragging = false;
+
+            header.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                dragging = true;
+            }, { passive: true });
+
+            header.addEventListener('touchmove', (e) => {
+                if (!dragging) return;
+                const dy = e.touches[0].clientY - startY;
+                if (dy > 0) {
+                    sheetEl.style.transition = 'none';
+                    sheetEl.style.transform = `translateY(${Math.min(dy, 140)}px)`;
+                }
+            }, { passive: true });
+
+            const end = (clientY) => {
+                if (!dragging) return;
+                dragging = false;
+                const dy = clientY - startY;
+                sheetEl.style.transition = '';
+                sheetEl.style.transform = '';
+                if (dy > 72) onClose();
+            };
+
+            header.addEventListener('touchend', (e) => {
+                end(e.changedTouches[0].clientY);
+            }, { passive: true });
+        }
+    };
+
+    // ============================================
     // SORT MANAGER
     // ============================================
     const SORT_LABELS = {
@@ -651,8 +703,10 @@
 
     const sortManager = {
         isOpen: false,
+        sortSheetOpen: false,
 
         init() {
+            this.initSortSheet();
             if (elements.sortToggle && elements.sortDropdown) {
                 // Simplified event listener - Click handles both mouse and touch correctly
                 elements.sortToggle.addEventListener('click', (e) => {
@@ -688,12 +742,69 @@
             }
         },
 
+        initSortSheet() {
+            const sheet = elements.sortSheet;
+            if (!sheet) return;
+
+            elements.closeSortSheet?.addEventListener('click', () => this.closeSortSheet());
+
+            sheet.querySelectorAll('.sort-sheet-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    this.setSort(opt.dataset.sort);
+                    this.closeSortSheet();
+                });
+            });
+
+            if (utils.isMobile()) {
+                sheetSwipe.bind(sheet, () => this.closeSortSheet());
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.sortSheetOpen) this.closeSortSheet();
+            });
+        },
+
         toggleDropdown() {
+            if (utils.isMobile()) {
+                if (this.sortSheetOpen) this.closeSortSheet();
+                else this.openSortSheet();
+                return;
+            }
             if (this.isOpen) {
                 this.closeDropdown();
             } else {
                 this.openDropdown();
             }
+        },
+
+        openSortSheet() {
+            if (this.isOpen) this.closeDropdown();
+            this.updateLabel();
+            elements.scrim.classList.remove('hidden');
+            elements.sortSheet.classList.remove('hidden');
+            elements.sortSheet.setAttribute('role', 'dialog');
+            elements.sortSheet.setAttribute('aria-modal', 'true');
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => {
+                elements.scrim.classList.add('visible');
+                elements.sortSheet.classList.add('visible');
+                elements.closeSortSheet?.focus();
+            });
+            this.sortSheetOpen = true;
+            elements.sortToggle?.setAttribute('aria-expanded', 'true');
+        },
+
+        closeSortSheet() {
+            elements.scrim.classList.remove('visible');
+            elements.sortSheet.classList.remove('visible');
+            setTimeout(() => {
+                elements.sortSheet.classList.add('hidden');
+                if (!elements.filterSheet.classList.contains('hidden')) return;
+                elements.scrim.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 400);
+            this.sortSheetOpen = false;
+            elements.sortToggle?.setAttribute('aria-expanded', 'false');
         },
 
         openDropdown() {
@@ -738,9 +849,13 @@
             if (elements.sortLabel) {
                 elements.sortLabel.textContent = SORT_LABELS[state.sortBy] || 'Ordenar';
             }
-            // Update active state
-            elements.sortDropdown.querySelectorAll('.sort-option').forEach(opt => {
+            elements.sortDropdown?.querySelectorAll('.sort-option').forEach(opt => {
                 opt.classList.toggle('active', opt.dataset.sort === state.sortBy);
+            });
+            elements.sortSheet?.querySelectorAll('.sort-sheet-option').forEach(opt => {
+                const selected = opt.dataset.sort === state.sortBy;
+                opt.classList.toggle('selected', selected);
+                opt.setAttribute('aria-selected', selected ? 'true' : 'false');
             });
         }
     };
@@ -1204,14 +1319,19 @@
     // FILTER MANAGER
     // ============================================
     const filterManager = {
-        apply() {
-            let jobs = [...state.allJobs];
+        filterJobs(jobs, {
+            searchQuery = state.searchQuery,
+            showOnlyVisited = state.showOnlyVisited,
+            quickFilter = state.quickFilter,
+            datePeriod = state.datePeriod,
+            selectedFilters = state.selectedFilters
+        } = {}) {
+            let result = jobs;
 
-            // Search query (multi-term AND)
-            if (state.searchQuery) {
-                const terms = utils.normalize(state.searchQuery).split(/\s+/).filter(Boolean);
+            if (searchQuery) {
+                const terms = utils.normalize(searchQuery).split(/\s+/).filter(Boolean);
                 if (terms.length) {
-                    jobs = jobs.filter(job => {
+                    result = result.filter(job => {
                         const text = utils.normalize([
                             job.title, job.company, job.company_type,
                             job.level, job.category, job.sub_category,
@@ -1222,15 +1342,13 @@
                 }
             }
 
-            // Visited-only filter
-            if (state.showOnlyVisited) {
-                jobs = jobs.filter(j => utils.isVisited(j));
+            if (showOnlyVisited) {
+                result = result.filter(j => utils.isVisited(j));
             }
 
-            // Quick filter
-            if (state.quickFilter !== 'all') {
-                jobs = jobs.filter(job => {
-                    switch (state.quickFilter) {
+            if (quickFilter !== 'all') {
+                result = result.filter(job => {
+                    switch (quickFilter) {
                         case 'remote': return job['remote?'] === '01 - Sim';
                         case 'hybrid': return job.contract === 'HIBRIDO' || job.contract === 'HÍBRIDO';
                         case 'onsite': return job['remote?'] === '02 - Não';
@@ -1241,22 +1359,28 @@
                 });
             }
 
-            // Date period filter
-            if (state.datePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+            if (datePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === datePeriod);
                 if (period && period.days) {
-                    jobs = jobs.filter(job => utils.isWithinDays(job.inserted_date, period.days));
+                    result = result.filter(job => utils.isWithinDays(job.inserted_date, period.days));
                 }
             }
 
-            // Selected filters
-            Object.entries(state.selectedFilters).forEach(([key, values]) => {
+            Object.entries(selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
-                    jobs = jobs.filter(job => values.includes(job[key]));
+                    result = result.filter(job => values.includes(job[key]));
                 }
             });
 
-            // Sorting
+            return result;
+        },
+
+        getFilteredCount(overrides = {}) {
+            return this.filterJobs(state.allJobs, overrides).length;
+        },
+
+        apply() {
+            let jobs = this.filterJobs([...state.allJobs]);
             jobs = this.sortJobs(jobs);
 
             state.filteredJobs = jobs;
@@ -1391,10 +1515,6 @@
                     ? `${total.toLocaleString('pt-BR')} vagas · ${todayCount.toLocaleString('pt-BR')} novas hoje`
                     : `${total.toLocaleString('pt-BR')} vagas`;
             }
-            if (elements.jobCountMobile) {
-                elements.jobCountMobile.textContent = elements.jobCount.textContent;
-            }
-
             // Filter badge (counts everything: categories, datePeriod, quickFilter, visited)
             let count = 0;
             Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
@@ -1693,7 +1813,7 @@
             card.rel = 'noopener noreferrer';
             card.className = `job-card${isVisited ? ' visited' : ''}`;
 
-            if (typeof animationManager !== 'undefined') {
+            if (typeof animationManager !== 'undefined' && !utils.isMobile()) {
                 animationManager.observe(card);
             }
             card.dataset.id = job.id;
@@ -1836,6 +1956,7 @@
                     if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
                 }
                 localStorage.setItem('cv_last_clicked', jobKey);
+                if (typeof fabMenuManager !== 'undefined') fabMenuManager.updateLastJobVisibility();
             });
 
             return card;
@@ -1861,7 +1982,16 @@
         init() {
             elements.openFilters.addEventListener('click', () => this.open());
             elements.closeSheet.addEventListener('click', () => this.close());
-            elements.scrim.addEventListener('click', () => this.close());
+            elements.scrim.addEventListener('click', () => {
+                if (sortManager.sortSheetOpen) {
+                    sortManager.closeSortSheet();
+                    return;
+                }
+                this.close();
+            });
+            if (utils.isMobile()) {
+                sheetSwipe.bind(elements.filterSheet, () => this.close());
+            }
             elements.sheetClearFilters.addEventListener('click', () => this.clearTemp());
             elements.sheetApplyFilters.addEventListener('click', () => this.applyAndClose());
 
@@ -1874,6 +2004,8 @@
         },
 
         open() {
+            if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
+
             // Clone current filters to temp
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
             state.tempDatePeriod = state.datePeriod;
@@ -1910,9 +2042,11 @@
             elements.filterSheet.classList.remove('visible');
 
             setTimeout(() => {
-                elements.scrim.classList.add('hidden');
                 elements.filterSheet.classList.add('hidden');
-                document.body.style.overflow = '';
+                if (!sortManager.sortSheetOpen) {
+                    elements.scrim.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
                 const trigger = this._openFiltersTrigger;
                 if (trigger && typeof trigger.focus === 'function') trigger.focus();
             }, 400);
@@ -2005,7 +2139,7 @@
             }).join('');
 
             elements.filterSheetContent.innerHTML =
-                '<p class="filter-sheet-hint">Combina todos os grupos; dentro de cada grupo, qualquer opção marcada vale.</p>' +
+                '<p class="filter-sheet-hint"><strong>Entre grupos:</strong> todas as condições (E). <strong>Dentro do mesmo grupo:</strong> qualquer opção marcada (OU).</p>' +
                 quickSection +
                 buildCats(beforeDate) +
                 datePeriodSection +
@@ -2013,6 +2147,20 @@
 
             // Add event listeners
             this.addSectionListeners();
+            this.expandActiveSections();
+        },
+
+        expandActiveSections() {
+            elements.filterSheetContent.querySelectorAll('.filter-section').forEach(section => {
+                const key = section.dataset.key;
+                let expand = false;
+                if (key === '_quick' && state.tempQuickFilter !== 'all') expand = true;
+                if (key === '_date' && state.tempDatePeriod !== 'all') expand = true;
+                if (key && key !== '_quick' && key !== '_date' && (state.tempFilters[key] || []).length > 0) {
+                    expand = true;
+                }
+                if (expand) section.classList.add('expanded');
+            });
         },
 
         renderOptions(key, options) {
@@ -2194,6 +2342,21 @@
             elements.sheetFilterCount.textContent = count > 0
                 ? `${count} selecionado${count > 1 ? 's' : ''}`
                 : 'Nenhum selecionado';
+
+            this.updateApplyPreview();
+        },
+
+        updateApplyPreview() {
+            const n = filterManager.getFilteredCount({
+                selectedFilters: state.tempFilters,
+                datePeriod: state.tempDatePeriod,
+                quickFilter: state.tempQuickFilter
+            });
+            const label = elements.sheetApplyLabel;
+            if (!label) return;
+            const formatted = n.toLocaleString('pt-BR');
+            label.textContent = n === 1 ? 'Ver 1 vaga' : `Ver ${formatted} vagas`;
+            elements.sheetApplyFilters?.setAttribute('aria-label', label.textContent);
         },
 
         updateSectionBadges() {
@@ -2459,7 +2622,8 @@
         observer: null,
 
         init() {
-            // Options for intersection observer
+            if (utils.isMobile()) return;
+
             const options = {
                 root: null,
                 rootMargin: '0px',
@@ -2481,9 +2645,7 @@
 
         animateSections() {
             const sections = [
-                elements.topAppBar,
-                elements.searchBar?.parentElement,
-                document.querySelector('.filter-chips-container'),
+                document.getElementById('appChrome'),
                 elements.jobsGrid
             ];
 
@@ -2514,9 +2676,9 @@
         init() {
             let ticking = false;
 
-            // Set CSS var for mobile sticky bar positioning
             const setHeaderHeight = () => {
-                const h = elements.topAppBar ? elements.topAppBar.offsetHeight : 60;
+                const chrome = document.getElementById('appChrome');
+                const h = chrome ? chrome.offsetHeight : (elements.topAppBar ? elements.topAppBar.offsetHeight : 60);
                 document.documentElement.style.setProperty('--header-h', h + 'px');
             };
             setHeaderHeight();
@@ -2526,34 +2688,33 @@
                 if (!ticking) {
                     requestAnimationFrame(() => {
                         this.onScroll();
+                        setHeaderHeight();
                         ticking = false;
                     });
                     ticking = true;
                 }
-            });
-
-            elements.scrollTopFab.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            }, { passive: true });
         },
 
         onScroll() {
             const scrollY = window.scrollY;
             const windowH = window.innerHeight;
             const docH = document.documentElement.scrollHeight;
+            const isMobile = utils.isMobile();
 
-            // Top app bar elevation
-            if (scrollY > 10) {
-                elements.topAppBar.classList.add('elevated');
-            } else {
-                elements.topAppBar.classList.remove('elevated');
+            document.body.classList.toggle('chrome-scrolled', scrollY > 10);
+            document.body.classList.toggle('chrome-compact', isMobile && scrollY > 56);
+            document.body.classList.toggle('footer-hidden', scrollY > 72);
+
+            if (elements.topAppBar) {
+                elements.topAppBar.classList.toggle('elevated', scrollY > 10);
             }
 
-            // FAB visibility
-            if (scrollY > CONFIG.SCROLL_THRESHOLD) {
-                elements.scrollTopFab.classList.add('visible');
-            } else {
-                elements.scrollTopFab.classList.remove('visible');
+            const fabStack = document.getElementById('fabStack');
+            if (fabStack) {
+                fabStack.classList.toggle('visible', scrollY > CONFIG.SCROLL_THRESHOLD);
+            } else if (elements.scrollTopFab) {
+                elements.scrollTopFab.classList.toggle('visible', scrollY > CONFIG.SCROLL_THRESHOLD);
             }
 
             // FAB ring progress
@@ -2577,10 +2738,12 @@
     // ============================================
     const quickFilters = {
         init() {
-            document.querySelectorAll('[data-quick]').forEach(chip => {
+            document.querySelectorAll('.filter-chip-quick, .quick-segment-btn').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const q = chip.dataset.quick;
-                    const next = state.quickFilter === q ? 'all' : q;
+                    const next = chip.classList.contains('quick-segment-btn')
+                        ? q
+                        : (state.quickFilter === q ? 'all' : q);
                     filterManager.setQuickFilter(next);
                     this.syncUI();
                 });
@@ -2588,8 +2751,16 @@
             this.syncUI();
         },
         syncUI() {
-            document.querySelectorAll('[data-quick]').forEach(chip => {
+            document.querySelectorAll('.filter-chip-quick').forEach(chip => {
                 chip.classList.toggle('selected', chip.dataset.quick === state.quickFilter);
+            });
+            document.querySelectorAll('.quick-segment-btn').forEach(btn => {
+                const q = btn.dataset.quick;
+                const active = q === 'all'
+                    ? (state.quickFilter === 'all' || !['remote', 'today'].includes(state.quickFilter))
+                    : state.quickFilter === q;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
             });
         }
     };
@@ -2694,17 +2865,138 @@
     };
 
     // ============================================
+    // MOBILE LAYOUT
+    // ============================================
+    const mobileLayout = {
+        init() {
+            const apply = () => {
+                const mobile = utils.isMobile();
+                document.documentElement.setAttribute('data-mobile', mobile ? 'true' : 'false');
+                if (mobile) {
+                    document.documentElement.setAttribute('data-density', 'regular');
+                }
+                const input = elements.searchInput;
+                if (input?.dataset.placeholderDesktop) {
+                    input.placeholder = mobile
+                        ? 'Buscar vagas, empresas, cargos...'
+                        : input.dataset.placeholderDesktop;
+                }
+            };
+            apply();
+            window.matchMedia('(max-width: 720px)').addEventListener('change', apply);
+        }
+    };
+
+    // ============================================
+    // FAB MENU
+    // ============================================
+    const fabMenuManager = {
+        isOpen: false,
+
+        init() {
+            const stack = document.getElementById('fabStack');
+            const fab = elements.scrollTopFab;
+            const menu = document.getElementById('fabMenu');
+            const lastBtn = document.getElementById('fabLastJob');
+            const topBtn = document.getElementById('fabScrollTop');
+            if (!fab || !stack) return;
+
+            this.updateLastJobVisibility();
+
+            if (utils.isMobile()) {
+                fab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggle();
+                });
+
+                document.getElementById('fabChangeView')?.addEventListener('click', () => {
+                    this.close();
+                    viewModeManager.toggle();
+                    this.updateFabViewIcon();
+                });
+
+                document.getElementById('fabOpenSort')?.addEventListener('click', () => {
+                    this.close();
+                    sortManager.openSortSheet();
+                });
+
+                lastBtn?.addEventListener('click', () => {
+                    this.close();
+                    lastJobNavigator.scrollToLast();
+                });
+
+                topBtn?.addEventListener('click', () => {
+                    this.close();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                this.updateFabViewIcon();
+
+                document.addEventListener('click', (e) => {
+                    if (!this.isOpen) return;
+                    if (!stack.contains(e.target)) this.close();
+                });
+            } else {
+                if (menu) menu.classList.add('hidden');
+                const icon = fab.querySelector('.fab-icon-main');
+                if (icon) icon.textContent = 'keyboard_arrow_up';
+                fab.setAttribute('aria-label', 'Voltar ao topo');
+                fab.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+        },
+
+        updateLastJobVisibility() {
+            const lastBtn = document.getElementById('fabLastJob');
+            if (!lastBtn) return;
+            const has = !!localStorage.getItem('cv_last_clicked');
+            lastBtn.classList.toggle('hidden', !has);
+        },
+
+        updateFabViewIcon() {
+            const icon = document.getElementById('fabViewIcon');
+            if (!icon) return;
+            const nextIdx = (VIEW_MODES.indexOf(state.viewMode) + 1) % VIEW_MODES.length;
+            const nextMode = VIEW_MODES[nextIdx];
+            icon.textContent = VIEW_MODE_ICONS[nextMode] || 'view_list';
+        },
+
+        toggle() {
+            if (this.isOpen) this.close();
+            else this.open();
+        },
+
+        open() {
+            const menu = document.getElementById('fabMenu');
+            const fab = elements.scrollTopFab;
+            const stack = document.getElementById('fabStack');
+            if (!menu || !fab) return;
+            this.updateLastJobVisibility();
+            menu.classList.remove('hidden');
+            stack?.classList.add('fab-open');
+            fab.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('fab-menu-open');
+            this.isOpen = true;
+        },
+
+        close() {
+            const menu = document.getElementById('fabMenu');
+            const fab = elements.scrollTopFab;
+            const stack = document.getElementById('fabStack');
+            if (menu) menu.classList.add('hidden');
+            stack?.classList.remove('fab-open');
+            fab?.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('fab-menu-open');
+            this.isOpen = false;
+        }
+    };
+
+    // ============================================
     // LAST JOB NAVIGATOR
     // ============================================
     const lastJobNavigator = {
-        init() {
-            const btn = document.getElementById('lastJobBtn');
-            if (!btn) return;
-            const lastKey = localStorage.getItem('cv_last_clicked');
-            if (!lastKey) return;
-            btn.classList.remove('hidden');
-            btn.addEventListener('click', () => this.scrollToLast());
-        },
+        init() {},
 
         scrollToLast() {
             const lastKey = localStorage.getItem('cv_last_clicked');
@@ -2728,10 +3020,12 @@
     const onboardingManager = {
         init() {
             if (localStorage.getItem('cv_onboarding_seen')) return;
-            const banner = document.getElementById('onboardingBanner');
+            const mobile = utils.isMobile();
+            const banner = document.getElementById(mobile ? 'onboardingBannerMobile' : 'onboardingBanner');
+            const dismissId = mobile ? 'onboardingDismissMobile' : 'onboardingDismiss';
             if (!banner) return;
             banner.classList.remove('hidden');
-            document.getElementById('onboardingDismiss')?.addEventListener('click', () => {
+            document.getElementById(dismissId)?.addEventListener('click', () => {
                 banner.classList.add('hidden');
                 localStorage.setItem('cv_onboarding_seen', '1');
             });
@@ -2756,6 +3050,15 @@
         startY: 0,
         pulling: false,
         indicator: null,
+
+        canPull() {
+            if (window.scrollY > 0) return false;
+            if (document.body.classList.contains('fab-menu-open')) return false;
+            if (!elements.filterSheet.classList.contains('hidden')) return false;
+            if (elements.sortSheet && !elements.sortSheet.classList.contains('hidden')) return false;
+            return true;
+        },
+
         init() {
             if (!('ontouchstart' in window)) return;
             const ind = document.createElement('div');
@@ -2765,7 +3068,7 @@
             this.indicator = ind;
 
             document.addEventListener('touchstart', (e) => {
-                if (window.scrollY === 0) {
+                if (this.canPull()) {
                     this.startY = e.touches[0].clientY;
                     this.pulling = true;
                 }
@@ -2787,6 +3090,7 @@
                 this.indicator.style.transform = '';
                 this.indicator.style.opacity = '';
                 if (dy > 80) {
+                    utils.showToast('Atualizando vagas…', 'filter-toast toast-mobile-top', 1800);
                     dataLoader.load();
                 }
             }, { passive: true });
@@ -2814,6 +3118,8 @@
             clearHandlers.init();
             shortcutsOverlay.init();
             onboardingManager.init();
+            mobileLayout.init();
+            fabMenuManager.init();
             swManager.init();
             ptr.init();
 
@@ -2834,7 +3140,7 @@
             }
 
             dataLoader.load().then(() => {
-                lastJobNavigator.init();
+                fabMenuManager.updateLastJobVisibility();
             });
 
             // Fallback: ensure app shows after 5 seconds no matter what

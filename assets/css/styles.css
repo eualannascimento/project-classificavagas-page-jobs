@@ -793,7 +793,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .job-card:hover::after { opacity: 0.35; }
 .job-card:active { transform: translateY(0); }
 
-.job-card.visited { opacity: 0.65; }
+.job-card.visited { opacity: 0.78; }
 .job-card.visited .job-card-title h3,
 .job-card.visited .job-list-main h3,
 .job-card.visited .job-compact-title { color: var(--ink-2); }
@@ -859,7 +859,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     border-radius: var(--radius-pill);
     font-family: var(--font-mono);
     font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--ink-3);
+    color: var(--ink-2);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     max-width: 130px;
 }
@@ -916,7 +916,11 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-size: 0.60rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
     flex-shrink: 0; white-space: nowrap;
 }
-.job-badge-new { background: var(--success-soft); color: var(--success); }
+.job-badge-new {
+    background: color-mix(in oklch, var(--success) 16%, var(--bg-elevated));
+    color: color-mix(in oklch, var(--success) 85%, var(--ink));
+    border: 1px solid color-mix(in oklch, var(--success) 28%, transparent);
+}
 
 .job-compact-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -1025,7 +1029,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 /* Visited in list */
 .jobs-grid.list-view .job-card.visited .job-card-icon::after { display: none; }
-.jobs-grid.list-view .job-card.visited { opacity: 0.55; }
+.jobs-grid.list-view .job-card.visited { opacity: 0.72; }
 .jobs-grid.list-view .job-card.visited .job-list-main h3,
 .jobs-grid.list-view .job-card.visited .job-list-company { color: var(--ink-3); }
 
@@ -1196,6 +1200,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 /* ============================================
    FAB
    ============================================ */
+.fab-stack > .fab,
 .fab {
     position: fixed;
     bottom: calc(24px + var(--safe-bottom)); right: 20px;
@@ -1802,7 +1807,45 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     padding: 0 4px;
     font-size: 12px;
     color: var(--ink-3);
-    line-height: 1.4;
+    line-height: 1.45;
+}
+.filter-sheet-hint strong {
+    color: var(--ink-2);
+    font-weight: 600;
+}
+
+/* Quick segment (mobile) */
+.quick-segment {
+    display: none;
+    margin: 0 var(--shell-pad) 10px;
+    padding: 3px;
+    background: var(--bg-sunk);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--rule-2);
+}
+.quick-segment-btn {
+    flex: 1;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink-2);
+    transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.quick-segment-btn.active {
+    background: var(--bg-elevated);
+    color: var(--ink);
+    box-shadow: 0 1px 4px oklch(0.2 0.02 250 / 0.08);
+}
+.quick-segment-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.sheet-apply-btn {
+    min-width: 148px;
+    justify-content: center;
 }
 
 .copy-link-btn {
@@ -1823,25 +1866,6 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     color: var(--ink-3);
 }
 
-.last-job-btn {
-    position: fixed;
-    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-    left: var(--shell-pad);
-    z-index: 80;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--rule);
-    background: var(--bg-elev);
-    color: var(--ink-2);
-    font-size: 12px;
-    box-shadow: 0 2px 12px oklch(0 0 0 / 0.12);
-    cursor: pointer;
-}
-.last-job-btn .material-symbols-rounded { font-size: 18px; }
-
 .filter-chip.selected {
     background: var(--accent-soft);
     color: var(--accent-ink);
@@ -1850,4 +1874,370 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .empty-state .filled-button + .filled-button {
     margin-top: 8px;
+}
+
+.onboarding-desktop-only { display: none; }
+.onboarding-mobile-only { display: none; }
+@media (min-width: 721px) {
+    .onboarding-desktop-only:not(.hidden) { display: flex; }
+}
+@media (max-width: 720px) {
+    .onboarding-mobile-only:not(.hidden) { display: flex; }
+}
+
+/* Sticky chrome block */
+.app-chrome {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: color-mix(in oklch, var(--bg) 94%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.25s var(--ease);
+}
+body.chrome-scrolled .app-chrome {
+    border-bottom-color: var(--rule-2);
+}
+.app-chrome .top-app-bar {
+    position: relative;
+    top: auto;
+    border-bottom: none;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* FAB menu */
+.fab-stack {
+    position: fixed;
+    bottom: calc(16px + var(--safe-bottom));
+    right: 16px;
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+}
+.fab-stack.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.fab-stack .fab {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+.fab-stack .fab.visible { transform: none; }
+.fab-stack.fab-open .fab-icon-main { transform: rotate(180deg); }
+.fab-icon-main { transition: transform 0.25s var(--ease); }
+
+.fab-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 148px;
+    padding: 6px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 28px -6px oklch(0.15 0.02 250 / 0.22);
+}
+.fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+    color: var(--ink);
+    text-align: left;
+    transition: background 0.15s var(--ease);
+}
+.fab-menu-item:hover { background: var(--bg-sunk); }
+.fab-menu-item .material-symbols-rounded { font-size: 20px; color: var(--ink-3); }
+
+.theme-toast.toast-mobile-top,
+.filter-toast.toast-mobile-top,
+.share-toast.toast-mobile-top {
+    bottom: auto;
+    top: calc(12px + var(--safe-top));
+}
+
+body.footer-hidden .footer-fixed {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(100%);
+}
+.footer-fixed {
+    transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+}
+
+/* Chip scroll fade */
+.filter-chips-container { position: relative; }
+.filter-chips-container::before,
+.filter-chips-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 8px;
+    width: 20px;
+    z-index: 2;
+    pointer-events: none;
+}
+.filter-chips-container::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg) 0%, transparent 100%);
+}
+.filter-chips-container::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg) 0%, transparent 100%);
+}
+
+/* ============================================
+   SPRINT VISUAL 1 — iPhone / mobile
+   ============================================ */
+@media (max-width: 720px) {
+    :root {
+        --shell-pad: 16px;
+        --card-pad: 16px;
+        --gap: 8px;
+    }
+
+    html { font-size: 15px; }
+
+    [data-mobile="true"] {
+        --shell-pad: 16px;
+        --card-pad: 16px;
+    }
+
+    .mobile-jobcount-row { display: none !important; }
+
+    .masthead-brand .job-count,
+    .masthead-brand .brand-pulse {
+        display: inline-flex !important;
+    }
+
+    .brand-meta {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .job-count { font-size: 0.75rem; }
+
+    .brand-update { font-size: 0.68rem; max-width: 100%; }
+
+    body.chrome-compact .brand-update { display: none; }
+
+    body.chrome-compact .masthead-inner {
+        min-height: 44px;
+        padding: 6px 0;
+    }
+
+    body.chrome-compact .brand-mark { font-size: 1.15rem; }
+
+    body.chrome-compact .filter-chip-view,
+    body.chrome-compact .filter-chip-quick {
+        display: none !important;
+    }
+
+    body.chrome-compact .filter-chip-visited {
+        min-width: 44px;
+        padding: 0 10px;
+    }
+
+    body.chrome-compact .search-bar-container {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+
+    body.chrome-compact .filter-chips-container {
+        padding-bottom: 4px;
+    }
+
+    .filter-chip-quick { display: none !important; }
+
+    .quick-segment {
+        display: flex;
+    }
+
+    body.chrome-compact .quick-segment {
+        margin-bottom: 6px;
+    }
+
+    .filter-chip-main {
+        min-height: 44px;
+        padding: 0 16px;
+        background: var(--ink);
+        border-color: var(--ink);
+        color: var(--bg);
+    }
+    .filter-chip-main .material-symbols-rounded,
+    .filter-chip-main span:not(.filter-badge) { color: inherit; }
+    .filter-chip-main .filter-badge {
+        background: var(--bg);
+        color: var(--ink);
+    }
+
+    .filter-chip-sort { min-height: 44px; }
+
+    .search-bar { height: 48px; }
+    .search-bar input {
+        font-size: 16px;
+    }
+
+    .partial-data-banner {
+        margin: 0;
+        padding: 6px var(--shell-pad);
+        font-size: 11px;
+        border-radius: 0;
+        border-bottom: 1px solid var(--rule-2);
+    }
+
+    .main-content {
+        padding-bottom: calc(72px + var(--safe-bottom));
+    }
+
+    .app { padding-bottom: 0; }
+
+    .footer-fixed {
+        height: calc(28px + var(--safe-bottom));
+        font-size: 0.65rem;
+    }
+    .footer-quote { font-size: 0.65rem; }
+
+    .job-tag {
+        height: 26px;
+        font-size: 0.72rem;
+        max-width: 160px;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .jobs-grid.list-view .job-card {
+        border-radius: var(--radius-md);
+        margin-bottom: 4px;
+    }
+
+    .jobs-grid.list-view .job-list-main h3 {
+        font-size: 0.95rem;
+        line-height: 1.3;
+    }
+
+    .active-filter-chip {
+        height: 30px;
+        font-size: 0.72rem;
+    }
+
+    .section-animate {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .fab-stack { right: 14px; bottom: calc(12px + var(--safe-bottom)); }
+    .fab-stack.visible ~ .footer-fixed,
+    body.fab-menu-open .footer-fixed {
+        opacity: 0;
+    }
+
+    .filter-chips-container::before,
+    .filter-chips-container::after {
+        width: 28px;
+    }
+}
+
+@media (min-width: 721px) {
+    .fab-menu { display: none !important; }
+    .fab-menu-mobile-only { display: none !important; }
+}
+
+/* ============================================
+   SPRINT VISUAL 3 — iPhone polish
+   ============================================ */
+@media (max-width: 720px) {
+    .filter-search-input {
+        font-size: 16px;
+    }
+
+    .filter-section-header {
+        min-height: 48px;
+    }
+
+    .filter-option-chip {
+        min-height: 44px;
+    }
+
+    .sheet-draggable {
+        touch-action: none;
+        cursor: grab;
+    }
+
+    .jobs-grid.list-view .job-list-arrow {
+        opacity: 0.4;
+        transform: translateX(0);
+    }
+
+    .jobs-grid.list-view .job-card:active .job-list-arrow {
+        opacity: 1;
+        color: var(--accent);
+    }
+
+    .jobs-grid.list-view .job-list-content {
+        padding: 14px 4px;
+    }
+
+    .sort-sheet {
+        max-height: 58vh;
+    }
+
+    .sort-sheet-content {
+        padding: 8px 12px 20px;
+    }
+
+    .sort-sheet-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sort-sheet-option {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 48px;
+        padding: 0 16px;
+        border-radius: var(--radius-md);
+        font-size: 0.92rem;
+        color: var(--ink);
+        text-align: left;
+        transition: background 0.15s var(--ease);
+    }
+
+    .sort-sheet-option:active,
+    .sort-sheet-option:hover {
+        background: var(--bg-sunk);
+    }
+
+    .sort-sheet-option.selected {
+        background: var(--ink);
+        color: var(--bg);
+        font-weight: 500;
+    }
+
+    .onboarding-banner strong {
+        color: var(--ink);
+        font-weight: 600;
+    }
 }
