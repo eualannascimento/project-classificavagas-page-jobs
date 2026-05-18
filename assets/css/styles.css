@@ -1877,8 +1877,12 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 .onboarding-desktop-only { display: none; }
+.onboarding-mobile-only { display: none; }
 @media (min-width: 721px) {
     .onboarding-desktop-only:not(.hidden) { display: flex; }
+}
+@media (max-width: 720px) {
+    .onboarding-mobile-only:not(.hidden) { display: flex; }
 }
 
 /* Sticky chrome block */
@@ -2043,10 +2047,14 @@ body.footer-hidden .footer-fixed {
 
     body.chrome-compact .brand-mark { font-size: 1.15rem; }
 
-    body.chrome-compact .filter-chip-visited,
     body.chrome-compact .filter-chip-view,
     body.chrome-compact .filter-chip-quick {
         display: none !important;
+    }
+
+    body.chrome-compact .filter-chip-visited {
+        min-width: 44px;
+        padding: 0 10px;
     }
 
     body.chrome-compact .search-bar-container {
@@ -2152,4 +2160,84 @@ body.footer-hidden .footer-fixed {
 
 @media (min-width: 721px) {
     .fab-menu { display: none !important; }
+    .fab-menu-mobile-only { display: none !important; }
+}
+
+/* ============================================
+   SPRINT VISUAL 3 — iPhone polish
+   ============================================ */
+@media (max-width: 720px) {
+    .filter-search-input {
+        font-size: 16px;
+    }
+
+    .filter-section-header {
+        min-height: 48px;
+    }
+
+    .filter-option-chip {
+        min-height: 44px;
+    }
+
+    .sheet-draggable {
+        touch-action: none;
+        cursor: grab;
+    }
+
+    .jobs-grid.list-view .job-list-arrow {
+        opacity: 0.4;
+        transform: translateX(0);
+    }
+
+    .jobs-grid.list-view .job-card:active .job-list-arrow {
+        opacity: 1;
+        color: var(--accent);
+    }
+
+    .jobs-grid.list-view .job-list-content {
+        padding: 14px 4px;
+    }
+
+    .sort-sheet {
+        max-height: 58vh;
+    }
+
+    .sort-sheet-content {
+        padding: 8px 12px 20px;
+    }
+
+    .sort-sheet-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sort-sheet-option {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 48px;
+        padding: 0 16px;
+        border-radius: var(--radius-md);
+        font-size: 0.92rem;
+        color: var(--ink);
+        text-align: left;
+        transition: background 0.15s var(--ease);
+    }
+
+    .sort-sheet-option:active,
+    .sort-sheet-option:hover {
+        background: var(--bg-sunk);
+    }
+
+    .sort-sheet-option.selected {
+        background: var(--ink);
+        color: var(--bg);
+        font-weight: 500;
+    }
+
+    .onboarding-banner strong {
+        color: var(--ink);
+        font-weight: 600;
+    }
 }

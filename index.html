@@ -58,6 +58,15 @@
             <button type="button" class="onboarding-dismiss" id="onboardingDismiss">Entendi</button>
         </div>
 
+        <div id="onboardingBannerMobile" class="onboarding-banner onboarding-mobile-only hidden" role="region" aria-label="Dicas de uso no celular">
+            <ul class="onboarding-list">
+                <li>Use <strong>Remoto</strong>, <strong>Hoje</strong> ou <strong>Todas</strong> abaixo da busca</li>
+                <li>Toque nas tags das vagas para filtrar na hora</li>
+                <li>Puxe a lista para baixo para atualizar as vagas</li>
+            </ul>
+            <button type="button" class="onboarding-dismiss" id="onboardingDismissMobile">Entendi</button>
+        </div>
+
         <div class="app-chrome" id="appChrome">
         <header class="top-app-bar" id="topAppBar">
             <div class="masthead-inner">
@@ -175,6 +184,14 @@
 
         <div class="fab-stack" id="fabStack">
             <div class="fab-menu hidden" id="fabMenu" role="menu" aria-label="Ações rápidas">
+                <button type="button" class="fab-menu-item fab-menu-mobile-only" id="fabChangeView" role="menuitem">
+                    <span class="material-symbols-rounded" id="fabViewIcon">view_list</span>
+                    <span>Visualização</span>
+                </button>
+                <button type="button" class="fab-menu-item fab-menu-mobile-only" id="fabOpenSort" role="menuitem">
+                    <span class="material-symbols-rounded">swap_vert</span>
+                    <span>Ordenar</span>
+                </button>
                 <button type="button" class="fab-menu-item hidden" id="fabLastJob" role="menuitem">
                     <span class="material-symbols-rounded">history</span>
                     <span>Última vaga</span>
@@ -195,8 +212,30 @@
 
         <div class="scrim hidden" id="scrim"></div>
 
+        <div class="bottom-sheet sort-sheet hidden" id="sortSheet" aria-labelledby="sortSheetTitle">
+            <div class="bottom-sheet-header sheet-draggable">
+                <div class="bottom-sheet-handle"></div>
+                <div class="bottom-sheet-title">
+                    <h2 id="sortSheetTitle">Ordenar</h2>
+                </div>
+                <button class="icon-btn" id="closeSortSheet" aria-label="Fechar ordenação">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="bottom-sheet-content sort-sheet-content">
+                <div class="sort-sheet-list" id="sortSheetList" role="listbox" aria-label="Ordenação">
+                    <button type="button" class="sort-sheet-option" data-sort="date_desc" role="option">Mais recentes</button>
+                    <button type="button" class="sort-sheet-option" data-sort="date_asc" role="option">Mais antigas</button>
+                    <button type="button" class="sort-sheet-option" data-sort="company_asc" role="option">Empresa A–Z</button>
+                    <button type="button" class="sort-sheet-option" data-sort="company_desc" role="option">Empresa Z–A</button>
+                    <button type="button" class="sort-sheet-option" data-sort="title_asc" role="option">Título A–Z</button>
+                    <button type="button" class="sort-sheet-option" data-sort="title_desc" role="option">Título Z–A</button>
+                </div>
+            </div>
+        </div>
+
         <div class="bottom-sheet hidden" id="filterSheet" aria-labelledby="filterSheetTitle">
-            <div class="bottom-sheet-header">
+            <div class="bottom-sheet-header sheet-draggable">
                 <div class="bottom-sheet-handle"></div>
                 <div class="bottom-sheet-title">
                     <h2 id="filterSheetTitle">Filtros</h2>

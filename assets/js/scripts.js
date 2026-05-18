@@ -81,7 +81,6 @@
         splash: $('#splash'),
         app: $('#app'),
         jobCount: $('#jobCount'),
-        jobCountMobile: $('#jobCountMobile'),
         searchInput: $('#searchInput'),
         searchClear: $('#searchClear'),
         searchBar: $('#searchBar'),
@@ -104,6 +103,8 @@
         sheetClearFilters: $('#sheetClearFilters'),
         sheetApplyFilters: $('#sheetApplyFilters'),
         sheetApplyLabel: $('#sheetApplyLabel'),
+        sortSheet: $('#sortSheet'),
+        closeSortSheet: $('#closeSortSheet'),
         themeToggle: $('#themeToggle'),
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
@@ -640,6 +641,46 @@
     };
 
     // ============================================
+    // SHEET SWIPE (mobile dismiss)
+    // ============================================
+    const sheetSwipe = {
+        bind(sheetEl, onClose) {
+            const header = sheetEl?.querySelector('.sheet-draggable');
+            if (!header || header.dataset.swipeBound) return;
+            header.dataset.swipeBound = '1';
+            let startY = 0;
+            let dragging = false;
+
+            header.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                dragging = true;
+            }, { passive: true });
+
+            header.addEventListener('touchmove', (e) => {
+                if (!dragging) return;
+                const dy = e.touches[0].clientY - startY;
+                if (dy > 0) {
+                    sheetEl.style.transition = 'none';
+                    sheetEl.style.transform = `translateY(${Math.min(dy, 140)}px)`;
+                }
+            }, { passive: true });
+
+            const end = (clientY) => {
+                if (!dragging) return;
+                dragging = false;
+                const dy = clientY - startY;
+                sheetEl.style.transition = '';
+                sheetEl.style.transform = '';
+                if (dy > 72) onClose();
+            };
+
+            header.addEventListener('touchend', (e) => {
+                end(e.changedTouches[0].clientY);
+            }, { passive: true });
+        }
+    };
+
+    // ============================================
     // SORT MANAGER
     // ============================================
     const SORT_LABELS = {
@@ -662,8 +703,10 @@
 
     const sortManager = {
         isOpen: false,
+        sortSheetOpen: false,
 
         init() {
+            this.initSortSheet();
             if (elements.sortToggle && elements.sortDropdown) {
                 // Simplified event listener - Click handles both mouse and touch correctly
                 elements.sortToggle.addEventListener('click', (e) => {
@@ -699,12 +742,69 @@
             }
         },
 
+        initSortSheet() {
+            const sheet = elements.sortSheet;
+            if (!sheet) return;
+
+            elements.closeSortSheet?.addEventListener('click', () => this.closeSortSheet());
+
+            sheet.querySelectorAll('.sort-sheet-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    this.setSort(opt.dataset.sort);
+                    this.closeSortSheet();
+                });
+            });
+
+            if (utils.isMobile()) {
+                sheetSwipe.bind(sheet, () => this.closeSortSheet());
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.sortSheetOpen) this.closeSortSheet();
+            });
+        },
+
         toggleDropdown() {
+            if (utils.isMobile()) {
+                if (this.sortSheetOpen) this.closeSortSheet();
+                else this.openSortSheet();
+                return;
+            }
             if (this.isOpen) {
                 this.closeDropdown();
             } else {
                 this.openDropdown();
             }
+        },
+
+        openSortSheet() {
+            if (this.isOpen) this.closeDropdown();
+            this.updateLabel();
+            elements.scrim.classList.remove('hidden');
+            elements.sortSheet.classList.remove('hidden');
+            elements.sortSheet.setAttribute('role', 'dialog');
+            elements.sortSheet.setAttribute('aria-modal', 'true');
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => {
+                elements.scrim.classList.add('visible');
+                elements.sortSheet.classList.add('visible');
+                elements.closeSortSheet?.focus();
+            });
+            this.sortSheetOpen = true;
+            elements.sortToggle?.setAttribute('aria-expanded', 'true');
+        },
+
+        closeSortSheet() {
+            elements.scrim.classList.remove('visible');
+            elements.sortSheet.classList.remove('visible');
+            setTimeout(() => {
+                elements.sortSheet.classList.add('hidden');
+                if (!elements.filterSheet.classList.contains('hidden')) return;
+                elements.scrim.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 400);
+            this.sortSheetOpen = false;
+            elements.sortToggle?.setAttribute('aria-expanded', 'false');
         },
 
         openDropdown() {
@@ -749,9 +849,13 @@
             if (elements.sortLabel) {
                 elements.sortLabel.textContent = SORT_LABELS[state.sortBy] || 'Ordenar';
             }
-            // Update active state
-            elements.sortDropdown.querySelectorAll('.sort-option').forEach(opt => {
+            elements.sortDropdown?.querySelectorAll('.sort-option').forEach(opt => {
                 opt.classList.toggle('active', opt.dataset.sort === state.sortBy);
+            });
+            elements.sortSheet?.querySelectorAll('.sort-sheet-option').forEach(opt => {
+                const selected = opt.dataset.sort === state.sortBy;
+                opt.classList.toggle('selected', selected);
+                opt.setAttribute('aria-selected', selected ? 'true' : 'false');
             });
         }
     };
@@ -1411,10 +1515,6 @@
                     ? `${total.toLocaleString('pt-BR')} vagas · ${todayCount.toLocaleString('pt-BR')} novas hoje`
                     : `${total.toLocaleString('pt-BR')} vagas`;
             }
-            if (elements.jobCountMobile) {
-                elements.jobCountMobile.textContent = elements.jobCount.textContent;
-            }
-
             // Filter badge (counts everything: categories, datePeriod, quickFilter, visited)
             let count = 0;
             Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
@@ -1882,7 +1982,16 @@
         init() {
             elements.openFilters.addEventListener('click', () => this.open());
             elements.closeSheet.addEventListener('click', () => this.close());
-            elements.scrim.addEventListener('click', () => this.close());
+            elements.scrim.addEventListener('click', () => {
+                if (sortManager.sortSheetOpen) {
+                    sortManager.closeSortSheet();
+                    return;
+                }
+                this.close();
+            });
+            if (utils.isMobile()) {
+                sheetSwipe.bind(elements.filterSheet, () => this.close());
+            }
             elements.sheetClearFilters.addEventListener('click', () => this.clearTemp());
             elements.sheetApplyFilters.addEventListener('click', () => this.applyAndClose());
 
@@ -1895,6 +2004,8 @@
         },
 
         open() {
+            if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
+
             // Clone current filters to temp
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
             state.tempDatePeriod = state.datePeriod;
@@ -1931,9 +2042,11 @@
             elements.filterSheet.classList.remove('visible');
 
             setTimeout(() => {
-                elements.scrim.classList.add('hidden');
                 elements.filterSheet.classList.add('hidden');
-                document.body.style.overflow = '';
+                if (!sortManager.sortSheetOpen) {
+                    elements.scrim.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
                 const trigger = this._openFiltersTrigger;
                 if (trigger && typeof trigger.focus === 'function') trigger.focus();
             }, 400);
@@ -2034,6 +2147,20 @@
 
             // Add event listeners
             this.addSectionListeners();
+            this.expandActiveSections();
+        },
+
+        expandActiveSections() {
+            elements.filterSheetContent.querySelectorAll('.filter-section').forEach(section => {
+                const key = section.dataset.key;
+                let expand = false;
+                if (key === '_quick' && state.tempQuickFilter !== 'all') expand = true;
+                if (key === '_date' && state.tempDatePeriod !== 'all') expand = true;
+                if (key && key !== '_quick' && key !== '_date' && (state.tempFilters[key] || []).length > 0) {
+                    expand = true;
+                }
+                if (expand) section.classList.add('expanded');
+            });
         },
 
         renderOptions(key, options) {
@@ -2782,6 +2909,17 @@
                     this.toggle();
                 });
 
+                document.getElementById('fabChangeView')?.addEventListener('click', () => {
+                    this.close();
+                    viewModeManager.toggle();
+                    this.updateFabViewIcon();
+                });
+
+                document.getElementById('fabOpenSort')?.addEventListener('click', () => {
+                    this.close();
+                    sortManager.openSortSheet();
+                });
+
                 lastBtn?.addEventListener('click', () => {
                     this.close();
                     lastJobNavigator.scrollToLast();
@@ -2791,6 +2929,8 @@
                     this.close();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
+
+                this.updateFabViewIcon();
 
                 document.addEventListener('click', (e) => {
                     if (!this.isOpen) return;
@@ -2812,6 +2952,14 @@
             if (!lastBtn) return;
             const has = !!localStorage.getItem('cv_last_clicked');
             lastBtn.classList.toggle('hidden', !has);
+        },
+
+        updateFabViewIcon() {
+            const icon = document.getElementById('fabViewIcon');
+            if (!icon) return;
+            const nextIdx = (VIEW_MODES.indexOf(state.viewMode) + 1) % VIEW_MODES.length;
+            const nextMode = VIEW_MODES[nextIdx];
+            icon.textContent = VIEW_MODE_ICONS[nextMode] || 'view_list';
         },
 
         toggle() {
@@ -2871,12 +3019,13 @@
     // ============================================
     const onboardingManager = {
         init() {
-            if (utils.isMobile()) return;
             if (localStorage.getItem('cv_onboarding_seen')) return;
-            const banner = document.getElementById('onboardingBanner');
+            const mobile = utils.isMobile();
+            const banner = document.getElementById(mobile ? 'onboardingBannerMobile' : 'onboardingBanner');
+            const dismissId = mobile ? 'onboardingDismissMobile' : 'onboardingDismiss';
             if (!banner) return;
             banner.classList.remove('hidden');
-            document.getElementById('onboardingDismiss')?.addEventListener('click', () => {
+            document.getElementById(dismissId)?.addEventListener('click', () => {
                 banner.classList.add('hidden');
                 localStorage.setItem('cv_onboarding_seen', '1');
             });
@@ -2901,6 +3050,15 @@
         startY: 0,
         pulling: false,
         indicator: null,
+
+        canPull() {
+            if (window.scrollY > 0) return false;
+            if (document.body.classList.contains('fab-menu-open')) return false;
+            if (!elements.filterSheet.classList.contains('hidden')) return false;
+            if (elements.sortSheet && !elements.sortSheet.classList.contains('hidden')) return false;
+            return true;
+        },
+
         init() {
             if (!('ontouchstart' in window)) return;
             const ind = document.createElement('div');
@@ -2910,7 +3068,7 @@
             this.indicator = ind;
 
             document.addEventListener('touchstart', (e) => {
-                if (window.scrollY === 0) {
+                if (this.canPull()) {
                     this.startY = e.touches[0].clientY;
                     this.pulling = true;
                 }
@@ -2932,6 +3090,7 @@
                 this.indicator.style.transform = '';
                 this.indicator.style.opacity = '';
                 if (dy > 80) {
+                    utils.showToast('Atualizando vagas…', 'filter-toast toast-mobile-top', 1800);
                     dataLoader.load();
                 }
             }, { passive: true });
