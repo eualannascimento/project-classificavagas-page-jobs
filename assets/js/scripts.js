@@ -144,13 +144,18 @@
             return `${Math.floor(diffDays / 365)}a atrás`;
         },
 
+        isMobile() {
+            return window.matchMedia('(max-width: 720px)').matches;
+        },
+
         showToast(message, className = 'theme-toast', duration = 2000) {
             const baseClass = className.split(' ')[0];
             const existing = document.querySelector(`.${baseClass}`);
             if (existing) existing.remove();
 
             const toast = document.createElement('div');
-            toast.className = className;
+            const mobileClass = this.isMobile() ? ' toast-mobile-top' : '';
+            toast.className = className + mobileClass;
             toast.setAttribute('role', 'status');
             toast.setAttribute('aria-live', 'polite');
             toast.textContent = message;
@@ -302,8 +307,12 @@
 
         init() {
             const saved = localStorage.getItem('cv_theme');
-            // Default to light theme if no preference saved
-            const theme = saved && THEMES.includes(saved) ? saved : 'light';
+            let theme = 'light';
+            if (saved && THEMES.includes(saved)) {
+                theme = saved;
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                theme = 'dark';
+            }
             this.apply(theme);
             this._initialized = true;
 
@@ -360,8 +369,9 @@
     const viewModeManager = {
         init() {
             const saved = localStorage.getItem('cv_view');
-            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : 'cards';
-            this.apply(state.viewMode);
+            const defaultMode = utils.isMobile() ? 'list' : 'cards';
+            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : defaultMode;
+            this.apply(state.viewMode, true);
 
             if (elements.viewToggle) {
                 elements.viewToggle.addEventListener('click', () => this.toggle());
@@ -1693,7 +1703,7 @@
             card.rel = 'noopener noreferrer';
             card.className = `job-card${isVisited ? ' visited' : ''}`;
 
-            if (typeof animationManager !== 'undefined') {
+            if (typeof animationManager !== 'undefined' && !utils.isMobile()) {
                 animationManager.observe(card);
             }
             card.dataset.id = job.id;
@@ -1836,6 +1846,7 @@
                     if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
                 }
                 localStorage.setItem('cv_last_clicked', jobKey);
+                if (typeof fabMenuManager !== 'undefined') fabMenuManager.updateLastJobVisibility();
             });
 
             return card;
@@ -2459,7 +2470,8 @@
         observer: null,
 
         init() {
-            // Options for intersection observer
+            if (utils.isMobile()) return;
+
             const options = {
                 root: null,
                 rootMargin: '0px',
@@ -2481,9 +2493,7 @@
 
         animateSections() {
             const sections = [
-                elements.topAppBar,
-                elements.searchBar?.parentElement,
-                document.querySelector('.filter-chips-container'),
+                document.getElementById('appChrome'),
                 elements.jobsGrid
             ];
 
@@ -2514,9 +2524,9 @@
         init() {
             let ticking = false;
 
-            // Set CSS var for mobile sticky bar positioning
             const setHeaderHeight = () => {
-                const h = elements.topAppBar ? elements.topAppBar.offsetHeight : 60;
+                const chrome = document.getElementById('appChrome');
+                const h = chrome ? chrome.offsetHeight : (elements.topAppBar ? elements.topAppBar.offsetHeight : 60);
                 document.documentElement.style.setProperty('--header-h', h + 'px');
             };
             setHeaderHeight();
@@ -2526,34 +2536,33 @@
                 if (!ticking) {
                     requestAnimationFrame(() => {
                         this.onScroll();
+                        setHeaderHeight();
                         ticking = false;
                     });
                     ticking = true;
                 }
-            });
-
-            elements.scrollTopFab.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            }, { passive: true });
         },
 
         onScroll() {
             const scrollY = window.scrollY;
             const windowH = window.innerHeight;
             const docH = document.documentElement.scrollHeight;
+            const isMobile = utils.isMobile();
 
-            // Top app bar elevation
-            if (scrollY > 10) {
-                elements.topAppBar.classList.add('elevated');
-            } else {
-                elements.topAppBar.classList.remove('elevated');
+            document.body.classList.toggle('chrome-scrolled', scrollY > 10);
+            document.body.classList.toggle('chrome-compact', isMobile && scrollY > 56);
+            document.body.classList.toggle('footer-hidden', scrollY > 72);
+
+            if (elements.topAppBar) {
+                elements.topAppBar.classList.toggle('elevated', scrollY > 10);
             }
 
-            // FAB visibility
-            if (scrollY > CONFIG.SCROLL_THRESHOLD) {
-                elements.scrollTopFab.classList.add('visible');
-            } else {
-                elements.scrollTopFab.classList.remove('visible');
+            const fabStack = document.getElementById('fabStack');
+            if (fabStack) {
+                fabStack.classList.toggle('visible', scrollY > CONFIG.SCROLL_THRESHOLD);
+            } else if (elements.scrollTopFab) {
+                elements.scrollTopFab.classList.toggle('visible', scrollY > CONFIG.SCROLL_THRESHOLD);
             }
 
             // FAB ring progress
@@ -2694,17 +2703,117 @@
     };
 
     // ============================================
+    // MOBILE LAYOUT
+    // ============================================
+    const mobileLayout = {
+        init() {
+            const apply = () => {
+                const mobile = utils.isMobile();
+                document.documentElement.setAttribute('data-mobile', mobile ? 'true' : 'false');
+                if (mobile) {
+                    document.documentElement.setAttribute('data-density', 'regular');
+                }
+                const input = elements.searchInput;
+                if (input?.dataset.placeholderDesktop) {
+                    input.placeholder = mobile
+                        ? 'Buscar vagas, empresas, cargos...'
+                        : input.dataset.placeholderDesktop;
+                }
+            };
+            apply();
+            window.matchMedia('(max-width: 720px)').addEventListener('change', apply);
+        }
+    };
+
+    // ============================================
+    // FAB MENU
+    // ============================================
+    const fabMenuManager = {
+        isOpen: false,
+
+        init() {
+            const stack = document.getElementById('fabStack');
+            const fab = elements.scrollTopFab;
+            const menu = document.getElementById('fabMenu');
+            const lastBtn = document.getElementById('fabLastJob');
+            const topBtn = document.getElementById('fabScrollTop');
+            if (!fab || !stack) return;
+
+            this.updateLastJobVisibility();
+
+            if (utils.isMobile()) {
+                fab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggle();
+                });
+
+                lastBtn?.addEventListener('click', () => {
+                    this.close();
+                    lastJobNavigator.scrollToLast();
+                });
+
+                topBtn?.addEventListener('click', () => {
+                    this.close();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.isOpen) return;
+                    if (!stack.contains(e.target)) this.close();
+                });
+            } else {
+                if (menu) menu.classList.add('hidden');
+                const icon = fab.querySelector('.fab-icon-main');
+                if (icon) icon.textContent = 'keyboard_arrow_up';
+                fab.setAttribute('aria-label', 'Voltar ao topo');
+                fab.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+        },
+
+        updateLastJobVisibility() {
+            const lastBtn = document.getElementById('fabLastJob');
+            if (!lastBtn) return;
+            const has = !!localStorage.getItem('cv_last_clicked');
+            lastBtn.classList.toggle('hidden', !has);
+        },
+
+        toggle() {
+            if (this.isOpen) this.close();
+            else this.open();
+        },
+
+        open() {
+            const menu = document.getElementById('fabMenu');
+            const fab = elements.scrollTopFab;
+            const stack = document.getElementById('fabStack');
+            if (!menu || !fab) return;
+            this.updateLastJobVisibility();
+            menu.classList.remove('hidden');
+            stack?.classList.add('fab-open');
+            fab.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('fab-menu-open');
+            this.isOpen = true;
+        },
+
+        close() {
+            const menu = document.getElementById('fabMenu');
+            const fab = elements.scrollTopFab;
+            const stack = document.getElementById('fabStack');
+            if (menu) menu.classList.add('hidden');
+            stack?.classList.remove('fab-open');
+            fab?.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('fab-menu-open');
+            this.isOpen = false;
+        }
+    };
+
+    // ============================================
     // LAST JOB NAVIGATOR
     // ============================================
     const lastJobNavigator = {
-        init() {
-            const btn = document.getElementById('lastJobBtn');
-            if (!btn) return;
-            const lastKey = localStorage.getItem('cv_last_clicked');
-            if (!lastKey) return;
-            btn.classList.remove('hidden');
-            btn.addEventListener('click', () => this.scrollToLast());
-        },
+        init() {},
 
         scrollToLast() {
             const lastKey = localStorage.getItem('cv_last_clicked');
@@ -2727,6 +2836,7 @@
     // ============================================
     const onboardingManager = {
         init() {
+            if (utils.isMobile()) return;
             if (localStorage.getItem('cv_onboarding_seen')) return;
             const banner = document.getElementById('onboardingBanner');
             if (!banner) return;
@@ -2814,6 +2924,8 @@
             clearHandlers.init();
             shortcutsOverlay.init();
             onboardingManager.init();
+            mobileLayout.init();
+            fabMenuManager.init();
             swManager.init();
             ptr.init();
 
@@ -2834,7 +2946,7 @@
             }
 
             dataLoader.load().then(() => {
-                lastJobNavigator.init();
+                fabMenuManager.updateLastJobVisibility();
             });
 
             // Fallback: ensure app shows after 5 seconds no matter what

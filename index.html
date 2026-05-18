@@ -14,7 +14,7 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="classifica vagas">
     <meta name="twitter:description" content="Agregador de vagas de emprego no Brasil.">
-    <title>💼 classifica vagas</title>
+    <title>classifica vagas</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,7 @@
 
     <div id="app" class="app">
 
-        <div id="onboardingBanner" class="onboarding-banner hidden" role="region" aria-label="Dicas de uso">
+        <div id="onboardingBanner" class="onboarding-banner onboarding-desktop-only hidden" role="region" aria-label="Dicas de uso">
             <ul class="onboarding-list">
                 <li>Pressione <kbd>/</kbd> para buscar e <kbd>?</kbd> para ver atalhos</li>
                 <li>Toque nas tags das vagas para filtrar rapidamente</li>
@@ -50,7 +50,8 @@
             <button type="button" class="onboarding-dismiss" id="onboardingDismiss">Entendi</button>
         </div>
 
-        <header class="top-app-bar">
+        <div class="app-chrome" id="appChrome">
+        <header class="top-app-bar" id="topAppBar">
             <div class="masthead-inner">
                 <div class="masthead-brand">
                     <h1 class="brand-mark" id="brandLink" role="button" tabindex="0" style="cursor:pointer"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas</h1>
@@ -70,11 +71,6 @@
             </div>
         </header>
 
-        <div class="mobile-jobcount-row">
-            <span class="brand-pulse"></span>
-            <span id="jobCountMobile">Carregando...</span>
-        </div>
-
         <p id="partialDataBanner" class="partial-data-banner hidden" aria-live="polite"></p>
 
         <div class="search-bar-container">
@@ -83,7 +79,8 @@
                 <input
                     type="text"
                     id="searchInput"
-                    placeholder="Buscar vagas, empresas, cargos... (pressione /)"
+                    placeholder="Buscar vagas, empresas, cargos..."
+                    data-placeholder-desktop="Buscar vagas, empresas, cargos... (pressione /)"
                     autocomplete="off"
                     aria-label="Buscar vagas, empresas e cargos"
                 >
@@ -104,9 +101,9 @@
                     <span class="material-symbols-rounded">view_list</span>
                 </button>
 
-                <button type="button" class="filter-chip" data-quick="remote" data-filter="remote" aria-label="Filtrar vagas remotas">Remoto</button>
-                <button type="button" class="filter-chip" data-quick="today" data-filter="today" aria-label="Filtrar vagas de hoje">Hoje</button>
-                <button type="button" class="filter-chip" data-quick="affirmative" data-filter="affirmative" aria-label="Filtrar vagas afirmativas">Afirmativa</button>
+                <button type="button" class="filter-chip filter-chip-quick" data-quick="remote" data-filter="remote" aria-label="Filtrar vagas remotas">Remoto</button>
+                <button type="button" class="filter-chip filter-chip-quick" data-quick="today" data-filter="today" aria-label="Filtrar vagas de hoje">Hoje</button>
+                <button type="button" class="filter-chip filter-chip-quick" data-quick="affirmative" data-filter="affirmative" aria-label="Filtrar vagas afirmativas">Afirmativa</button>
 
                 <button class="filter-chip filter-chip-main" id="openFilters" aria-haspopup="dialog" aria-controls="filterSheet">
                     <span class="material-symbols-rounded">filter_list</span>
@@ -140,7 +137,7 @@
                 <span class="material-symbols-rounded">delete_sweep</span>
                 Limpar
             </button>
-            <div class="version-label">v2.1</div>
+        </div>
         </div>
 
         <main class="main-content">
@@ -162,18 +159,25 @@
             </div>
         </main>
 
-        <button class="fab" id="scrollTopFab" aria-label="Voltar ao topo">
-            <svg class="fab-ring" viewBox="0 0 36 36" aria-hidden="true">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="var(--rule)" stroke-width="2"/>
-                <circle id="fabRingProgress" cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" transform="rotate(-90 18 18)"/>
-            </svg>
-            <span class="material-symbols-rounded">keyboard_arrow_up</span>
-        </button>
-
-        <button type="button" class="last-job-btn hidden" id="lastJobBtn" aria-label="Ir para última vaga aberta">
-            <span class="material-symbols-rounded">history</span>
-            <span>Última vaga</span>
-        </button>
+        <div class="fab-stack" id="fabStack">
+            <div class="fab-menu hidden" id="fabMenu" role="menu" aria-label="Ações rápidas">
+                <button type="button" class="fab-menu-item hidden" id="fabLastJob" role="menuitem">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Última vaga</span>
+                </button>
+                <button type="button" class="fab-menu-item" id="fabScrollTop" role="menuitem">
+                    <span class="material-symbols-rounded">keyboard_arrow_up</span>
+                    <span>Topo</span>
+                </button>
+            </div>
+            <button type="button" class="fab" id="scrollTopFab" aria-label="Ações rápidas" aria-expanded="false" aria-haspopup="menu">
+                <svg class="fab-ring" viewBox="0 0 36 36" aria-hidden="true">
+                    <circle cx="18" cy="18" r="16" fill="none" stroke="var(--rule)" stroke-width="2"/>
+                    <circle id="fabRingProgress" cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" transform="rotate(-90 18 18)"/>
+                </svg>
+                <span class="material-symbols-rounded fab-icon-main">expand_less</span>
+            </button>
+        </div>
 
         <div class="scrim hidden" id="scrim"></div>
 
