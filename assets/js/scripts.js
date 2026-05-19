@@ -66,8 +66,8 @@
         filterOptions: {},
         filterCounts: {}, // counts per filter option
         visitedJobs: new Set(),
-        datePeriod: 'all',
-        publishedDatePeriod: 'all',
+        insertedDateRange: { from: '', to: '' },
+        publishedDateRange: { from: '', to: '' },
         sortBy: 'date_desc',
         viewMode: 'cards', // 'cards', 'list', or 'compact'
         searchHistory: [], // recent searches
@@ -140,8 +140,9 @@
             };
         },
 
-        DATE_MISSING_PUBLISHED: 'Não publicada',
+        DATE_MISSING_PUBLISHED_LINE: 'Data de publicação não foi obtida',
         DATE_MISSING_INSERTED: 'Não obtida',
+        EMPTY_DATE_RANGE: Object.freeze({ from: '', to: '' }),
 
         hasDateValue(dateStr) {
             return Boolean(dateStr && String(dateStr).trim());
@@ -155,20 +156,66 @@
 
         formatJobDateDisplay(dateStr, kind = 'inserted') {
             if (!this.hasDateValue(dateStr)) {
-                return kind === 'published' ? this.DATE_MISSING_PUBLISHED : this.DATE_MISSING_INSERTED;
+                return kind === 'inserted' ? this.DATE_MISSING_INSERTED : '';
             }
             return this.formatDate(dateStr);
         },
 
+        cloneDateRange(range) {
+            return { from: range?.from || '', to: range?.to || '' };
+        },
+
+        hasDateRange(range) {
+            return Boolean(range?.from || range?.to);
+        },
+
+        isDateInRange(dateStr, range) {
+            if (!this.hasDateRange(range)) return true;
+            if (!this.hasDateValue(dateStr)) return false;
+            if (range.from && dateStr < range.from) return false;
+            if (range.to && dateStr > range.to) return false;
+            return true;
+        },
+
+        formatDateRangeLabel(range) {
+            if (!this.hasDateRange(range)) return '';
+            const from = range.from ? this.formatDate(range.from) : '…';
+            const to = range.to ? this.formatDate(range.to) : '…';
+            return `${from} – ${to}`;
+        },
+
+        periodKeyToRange(periodKey) {
+            const period = CONFIG.DATE_PERIODS.find(p => p.key === periodKey);
+            if (!period || period.key === 'all' || !period.days) return this.cloneDateRange(this.EMPTY_DATE_RANGE);
+            const to = new Date();
+            const from = new Date();
+            from.setDate(from.getDate() - period.days);
+            const iso = (d) => d.toISOString().split('T')[0];
+            return { from: iso(from), to: iso(to) };
+        },
+
+        normalizeDateRange(range) {
+            const normalized = this.cloneDateRange(range);
+            if (normalized.from && normalized.to && normalized.from > normalized.to) {
+                return { from: normalized.to, to: normalized.from };
+            }
+            return normalized;
+        },
+
         renderJobDatesHtml(job, variant = 'card') {
-            const pub = this.escapeHtml(this.formatJobDateDisplay(job.published_date, 'published'));
+            const hasPublished = this.hasDateValue(job.published_date);
+            const pub = hasPublished ? this.escapeHtml(this.formatDate(job.published_date)) : '';
             const ins = this.escapeHtml(this.formatJobDateDisplay(job.inserted_date, 'inserted'));
             const isInsertedToday = this.isToday(job.inserted_date);
             const todayClass = isInsertedToday ? ' job-date-today' : '';
+            const publishedLine = hasPublished
+                ? `<span class="job-date-line">Publicada em: <strong>${pub}</strong></span>`
+                : `<span class="job-date-line job-date-missing">${this.DATE_MISSING_PUBLISHED_LINE}</span>`;
+            const publishedCompact = hasPublished ? `Pub.: ${pub}` : 'Pub.: não obtida';
 
             if (variant === 'compact') {
-                return `<span class="job-dates job-dates-compact${todayClass}" title="Publicada em: ${pub} · Obtida no Classifica Vagas: ${ins}">
-                    <span class="job-date-line">Pub.: ${pub}</span>
+                return `<span class="job-dates job-dates-compact${todayClass}" title="${hasPublished ? `Publicada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE} · Obtida no Classifica Vagas: ${ins}">
+                    <span class="job-date-line">${publishedCompact}</span>
                     <span class="job-date-sep">·</span>
                     <span class="job-date-line">Obt.: ${ins}</span>
                 </span>`;
@@ -176,7 +223,7 @@
 
             const listClass = variant === 'list' ? ' job-dates-list' : '';
             return `<div class="job-dates${listClass}${todayClass}">
-                <span class="job-date-line">Publicada em: <strong>${pub}</strong></span>
+                ${publishedLine}
                 <span class="job-date-line">Obtida no Classifica Vagas: <strong>${ins}</strong></span>
             </div>`;
         },
@@ -875,8 +922,14 @@
         },
 
         toggleDropdown() {
-            if (this.sortSheetOpen) this.closeSortSheet();
-            else this.openSortSheet();
+            if (utils.isMobile()) {
+                if (this.sortSheetOpen) this.closeSortSheet();
+                else this.openSortSheet();
+            } else if (this.isOpen) {
+                this.closeDropdown();
+            } else {
+                this.openDropdown();
+            }
         },
 
         openSortSheet() {
@@ -901,9 +954,12 @@
             elements.sortSheet.classList.remove('visible');
             setTimeout(() => {
                 elements.sortSheet.classList.add('hidden');
-                if (!elements.filterSheet.classList.contains('hidden')) return;
-                elements.scrim.classList.add('hidden');
-                document.body.style.overflow = '';
+                const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
+                if (!filterOpen) {
+                    elements.scrim.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+                elements.sortToggle?.focus();
             }, 400);
             this.sortSheetOpen = false;
             elements.sortToggle?.setAttribute('aria-expanded', 'false');
@@ -986,11 +1042,13 @@
             if (state.quickFilter !== 'all') {
                 url.searchParams.set('qf', state.quickFilter);
             }
-            if (state.datePeriod !== 'all') {
-                url.searchParams.set('dp', state.datePeriod);
+            if (utils.hasDateRange(state.insertedDateRange)) {
+                if (state.insertedDateRange.from) url.searchParams.set('idf', state.insertedDateRange.from);
+                if (state.insertedDateRange.to) url.searchParams.set('idt', state.insertedDateRange.to);
             }
-            if (state.publishedDatePeriod !== 'all') {
-                url.searchParams.set('pdp', state.publishedDatePeriod);
+            if (utils.hasDateRange(state.publishedDateRange)) {
+                if (state.publishedDateRange.from) url.searchParams.set('pdf', state.publishedDateRange.from);
+                if (state.publishedDateRange.to) url.searchParams.set('pdt', state.publishedDateRange.to);
             }
             if (state.showOnlyVisited) {
                 url.searchParams.set('v', '1');
@@ -1022,11 +1080,25 @@
                 state.quickFilter = params.get('qf');
             }
             if (params.has('dp')) {
-                state.datePeriod = params.get('dp');
+                state.insertedDateRange = utils.periodKeyToRange(params.get('dp'));
             }
             if (params.has('pdp')) {
-                state.publishedDatePeriod = params.get('pdp');
+                state.publishedDateRange = utils.periodKeyToRange(params.get('pdp'));
             }
+            if (params.has('idf') || params.has('idt')) {
+                state.insertedDateRange = {
+                    from: params.get('idf') || '',
+                    to: params.get('idt') || ''
+                };
+            }
+            if (params.has('pdf') || params.has('pdt')) {
+                state.publishedDateRange = {
+                    from: params.get('pdf') || '',
+                    to: params.get('pdt') || ''
+                };
+            }
+            state.insertedDateRange = utils.normalizeDateRange(state.insertedDateRange);
+            state.publishedDateRange = utils.normalizeDateRange(state.publishedDateRange);
             if (params.has('v') && params.get('v') === '1') {
                 state.showOnlyVisited = true;
             }
@@ -1545,8 +1617,8 @@
             searchQuery = state.searchQuery,
             showOnlyVisited = state.showOnlyVisited,
             quickFilter = state.quickFilter,
-            datePeriod = state.datePeriod,
-            publishedDatePeriod = state.publishedDatePeriod,
+            insertedDateRange = state.insertedDateRange,
+            publishedDateRange = state.publishedDateRange,
             selectedFilters = state.selectedFilters
         } = {}) {
             let result = jobs;
@@ -1573,24 +1645,14 @@
                 });
             }
 
-            if (datePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === datePeriod);
-                if (period && period.days) {
-                    result = result.filter(job =>
-                        utils.hasDateValue(job.inserted_date) &&
-                        utils.isWithinDays(job.inserted_date, period.days)
-                    );
-                }
+            if (utils.hasDateRange(insertedDateRange)) {
+                const range = utils.normalizeDateRange(insertedDateRange);
+                result = result.filter(job => utils.isDateInRange(job.inserted_date, range));
             }
 
-            if (publishedDatePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === publishedDatePeriod);
-                if (period && period.days) {
-                    result = result.filter(job =>
-                        utils.hasDateValue(job.published_date) &&
-                        utils.isWithinDays(job.published_date, period.days)
-                    );
-                }
+            if (utils.hasDateRange(publishedDateRange)) {
+                const range = utils.normalizeDateRange(publishedDateRange);
+                result = result.filter(job => utils.isDateInRange(job.published_date, range));
             }
 
             Object.entries(selectedFilters).forEach(([key, values]) => {
@@ -1622,8 +1684,8 @@
         recalculateFilterCounts(
             currentJobs,
             filters = state.selectedFilters,
-            datePeriod = state.datePeriod,
-            publishedDatePeriod = state.publishedDatePeriod,
+            insertedDateRange = state.insertedDateRange,
+            publishedDateRange = state.publishedDateRange,
             quickFilter = state.quickFilter,
             searchQuery = state.searchQuery
         ) {
@@ -1646,8 +1708,8 @@
                     searchQuery,
                     showOnlyVisited: state.showOnlyVisited,
                     quickFilter,
-                    datePeriod,
-                    publishedDatePeriod,
+                    insertedDateRange,
+                    publishedDateRange,
                     selectedFilters: otherFilters
                 });
 
@@ -1703,7 +1765,7 @@
             const todayCount = state.allJobs.filter(j => utils.isToday(j.inserted_date)).length;
             const hasActiveFilters = state.searchQuery || state.quickFilter !== 'all' ||
                 Object.values(state.selectedFilters).some(v => v && v.length > 0) ||
-                state.datePeriod !== 'all' || state.publishedDatePeriod !== 'all';
+                utils.hasDateRange(state.insertedDateRange) || utils.hasDateRange(state.publishedDateRange);
 
             if (hasActiveFilters) {
                 elements.jobCount.textContent = `${filtered.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} vagas`;
@@ -1715,8 +1777,8 @@
             // Filter badge (counts everything: categories, datePeriod, quickFilter, visited)
             let count = 0;
             Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
-            if (state.datePeriod && state.datePeriod !== 'all') count += 1;
-            if (state.publishedDatePeriod && state.publishedDatePeriod !== 'all') count += 1;
+            if (utils.hasDateRange(state.insertedDateRange)) count += 1;
+            if (utils.hasDateRange(state.publishedDateRange)) count += 1;
             if (state.quickFilter && state.quickFilter !== 'all') count += 1;
             if (state.showOnlyVisited) count += 1;
             elements.filterBadge.textContent = count;
@@ -1735,8 +1797,8 @@
             return Boolean(filterState.searchQuery ||
                 filterState.quickFilter !== 'all' ||
                 filterState.showOnlyVisited ||
-                filterState.datePeriod !== 'all' ||
-                filterState.publishedDatePeriod !== 'all' ||
+                utils.hasDateRange(filterState.insertedDateRange) ||
+                utils.hasDateRange(filterState.publishedDateRange) ||
                 Object.values(filterState.selectedFilters || {}).some(v => v && v.length > 0));
         },
 
@@ -1767,17 +1829,21 @@
                 groups.push({ key: '_visited', label: 'Visitadas', values: ['Só visualizadas'], chipType: 'visited' });
             }
 
-            if (filterState.publishedDatePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === filterState.publishedDatePeriod);
-                if (period) {
-                    groups.push({ key: '_date_published', label: 'Publicação', values: [period.label], chipType: 'date_published' });
-                }
+            if (utils.hasDateRange(filterState.publishedDateRange)) {
+                groups.push({
+                    key: '_date_published',
+                    label: 'Publicação',
+                    values: [utils.formatDateRangeLabel(filterState.publishedDateRange)],
+                    chipType: 'date_published'
+                });
             }
-            if (filterState.datePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === filterState.datePeriod);
-                if (period) {
-                    groups.push({ key: '_date_inserted', label: 'Obtida', values: [period.label], chipType: 'date_inserted' });
-                }
+            if (utils.hasDateRange(filterState.insertedDateRange)) {
+                groups.push({
+                    key: '_date_inserted',
+                    label: 'Obtida',
+                    values: [utils.formatDateRangeLabel(filterState.insertedDateRange)],
+                    chipType: 'date_inserted'
+                });
             }
 
             // Group filters by category
@@ -1866,9 +1932,9 @@
                         const visitedBtn = document.getElementById('visitedToggle');
                         if (visitedBtn) visitedBtn.setAttribute('aria-pressed', 'false');
                     } else if (chipType === 'date_inserted') {
-                        state.datePeriod = 'all';
+                        state.insertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
                     } else if (chipType === 'date_published') {
-                        state.publishedDatePeriod = 'all';
+                        state.publishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
                     } else if (chipType === 'category') {
                         if (isGrouped) {
                             delete state.selectedFilters[key];
@@ -1920,8 +1986,8 @@
             state.selectedFilters = {};
             state.searchQuery = '';
             state.quickFilter = 'all';
-            state.datePeriod = 'all';
-            state.publishedDatePeriod = 'all';
+            state.insertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
+            state.publishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.sortBy = 'date_desc';
             state.showOnlyVisited = false;
             elements.searchInput.value = '';
@@ -2011,8 +2077,8 @@
             return {
                 searchQuery: state.searchQuery || '',
                 quickFilter: state.quickFilter || 'all',
-                datePeriod: state.datePeriod || 'all',
-                publishedDatePeriod: state.publishedDatePeriod || 'all',
+                insertedDateRange: utils.cloneDateRange(state.insertedDateRange),
+                publishedDateRange: utils.cloneDateRange(state.publishedDateRange),
                 selectedFilters: JSON.parse(JSON.stringify(state.selectedFilters || {})),
                 showOnlyVisited: Boolean(state.showOnlyVisited),
                 sortBy: state.sortBy || 'date_desc'
@@ -2023,8 +2089,18 @@
             return {
                 searchQuery: savedState.searchQuery || '',
                 quickFilter: savedState.quickFilter || 'all',
-                datePeriod: savedState.datePeriod || 'all',
-                publishedDatePeriod: savedState.publishedDatePeriod || 'all',
+                insertedDateRange: utils.normalizeDateRange(
+                    savedState.insertedDateRange ||
+                    (savedState.datePeriod && savedState.datePeriod !== 'all'
+                        ? utils.periodKeyToRange(savedState.datePeriod)
+                        : utils.EMPTY_DATE_RANGE)
+                ),
+                publishedDateRange: utils.normalizeDateRange(
+                    savedState.publishedDateRange ||
+                    (savedState.publishedDatePeriod && savedState.publishedDatePeriod !== 'all'
+                        ? utils.periodKeyToRange(savedState.publishedDatePeriod)
+                        : utils.EMPTY_DATE_RANGE)
+                ),
                 selectedFilters: JSON.parse(JSON.stringify(savedState.selectedFilters || {})),
                 showOnlyVisited: Boolean(savedState.showOnlyVisited),
                 sortBy: savedState.sortBy || 'date_desc'
@@ -2206,8 +2282,8 @@
 
             state.searchQuery = savedState.searchQuery;
             state.quickFilter = savedState.quickFilter;
-            state.datePeriod = savedState.datePeriod;
-            state.publishedDatePeriod = savedState.publishedDatePeriod;
+            state.insertedDateRange = savedState.insertedDateRange;
+            state.publishedDateRange = savedState.publishedDateRange;
             state.selectedFilters = savedState.selectedFilters;
             state.showOnlyVisited = savedState.showOnlyVisited;
             state.sortBy = savedState.sortBy;
@@ -2420,7 +2496,7 @@
             const isValidCompanyType = job.company_type && job.company_type !== 'A Classificar' && job.company_type !== 'Não definido';
 
             const affirmativeTag = isAffirmative
-                ? `<span class="job-tag job-tag-affirmative"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span>Afirmativa</span>`
+                ? `<button type="button" class="job-tag job-tag-affirmative job-tag-clickable" data-quick-filter="affirmative"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span>Afirmativa</button>`
                 : '';
 
             const contractQuick = contractInfo
@@ -2462,7 +2538,7 @@
                                 ${contractInfo ? (contractQuick
                                     ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-compact job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
                                     : `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`) : ''}
-                                ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</span>` : ''}
+                                ${isAffirmative ? `<button type="button" class="job-tag job-tag-affirmative job-tag-compact job-tag-clickable" data-quick-filter="affirmative"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</button>` : ''}
                             </div>
                         </div>
                         <div class="job-list-meta">
@@ -2617,8 +2693,8 @@
 
             // Clone current filters to temp
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
-            state.tempDatePeriod = state.datePeriod;
-            state.tempPublishedDatePeriod = state.publishedDatePeriod;
+            state.tempInsertedDateRange = utils.cloneDateRange(state.insertedDateRange);
+            state.tempPublishedDateRange = utils.cloneDateRange(state.publishedDateRange);
             state.tempQuickFilter = state.quickFilter;
             state.tempSortBy = state.sortBy;
             this._openFiltersTrigger = document.activeElement;
@@ -2631,8 +2707,8 @@
             filterManager.recalculateFilterCounts(
                 state.allJobs,
                 state.tempFilters,
-                state.tempDatePeriod,
-                state.tempPublishedDatePeriod,
+                state.tempInsertedDateRange,
+                state.tempPublishedDateRange,
                 state.tempQuickFilter,
                 state.searchQuery
             );
@@ -2702,44 +2778,50 @@
                 </div>
             `;
 
-            const buildDatePeriodSection = (key, title, icon, tempPeriod, optionsClass, dataAttr) => `
+            const buildDateRangeSection = (key, title, icon, tempRange, rangeKind) => {
+                const active = utils.hasDateRange(tempRange);
+                return `
                 <div class="filter-section" data-key="${key}">
                     <div class="filter-section-header">
                         <div class="filter-section-header-left">
                             <span class="material-symbols-rounded">${icon}</span>
                             <span class="filter-section-title">${title}</span>
-                            ${tempPeriod !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
+                            ${active ? '<span class="filter-section-count">1</span>' : ''}
                         </div>
                         <span class="material-symbols-rounded filter-section-icon">expand_more</span>
                     </div>
                     <div class="filter-section-body">
-                        <div class="filter-options-list ${optionsClass}">
-                            ${CONFIG.DATE_PERIODS.map(period => `
-                                <button class="filter-option-chip ${tempPeriod === period.key ? 'selected' : ''}" ${dataAttr}="${period.key}">
-                                    <span class="material-symbols-rounded check-icon">check</span>
-                                    <span>${period.label}</span>
-                                </button>
-                            `).join('')}
+                        <div class="date-range-filter" data-date-range="${rangeKind}">
+                            <div class="date-range-row">
+                                <label class="date-range-label">
+                                    <span>De</span>
+                                    <input type="date" class="date-range-input" data-range-part="from" value="${tempRange.from || ''}">
+                                </label>
+                                <label class="date-range-label">
+                                    <span>Até</span>
+                                    <input type="date" class="date-range-input" data-range-part="to" value="${tempRange.to || ''}">
+                                </label>
+                            </div>
+                            <button type="button" class="date-range-clear-btn"${active ? '' : ' disabled'}>Limpar período</button>
                         </div>
                     </div>
                 </div>
             `;
+            };
 
-            const publishedDateSection = buildDatePeriodSection(
+            const publishedDateSection = buildDateRangeSection(
                 '_date_published',
                 'Data de publicação',
                 'event',
-                state.tempPublishedDatePeriod,
-                'date-options-published',
-                'data-published-period'
+                state.tempPublishedDateRange,
+                'published'
             );
-            const insertedDateSection = buildDatePeriodSection(
+            const insertedDateSection = buildDateRangeSection(
                 '_date_inserted',
                 'Obtida no Classifica Vagas',
                 'calendar_today',
-                state.tempDatePeriod,
-                'date-options-inserted',
-                'data-inserted-period'
+                state.tempInsertedDateRange,
+                'inserted'
             );
 
             // Order: Tipo | Ramo Nível Categoria Especialidade | Data | Empresa Abrangência Plataforma Localização País Estado Cidade
@@ -2789,8 +2871,8 @@
                 const key = section.dataset.key;
                 let expand = false;
                 if (key === '_quick' && state.tempQuickFilter !== 'all') expand = true;
-                if (key === '_date_inserted' && state.tempDatePeriod !== 'all') expand = true;
-                if (key === '_date_published' && state.tempPublishedDatePeriod !== 'all') expand = true;
+                if (key === '_date_inserted' && utils.hasDateRange(state.tempInsertedDateRange)) expand = true;
+                if (key === '_date_published' && utils.hasDateRange(state.tempPublishedDateRange)) expand = true;
                 if (key && key !== '_quick' && key !== '_date_inserted' && key !== '_date_published' && (state.tempFilters[key] || []).length > 0) {
                     expand = true;
                 }
@@ -2850,37 +2932,49 @@
                 });
             });
 
-            const bindDatePeriodOptions = (selector, stateKey, periodAttr) => {
-                elements.filterSheetContent.querySelectorAll(selector).forEach(chip => {
-                    chip.addEventListener('click', () => {
-                        const period = chip.getAttribute(periodAttr);
-                        state[stateKey] = period;
-
-                        elements.filterSheetContent.querySelectorAll(selector).forEach(c => {
-                            c.classList.toggle('selected', c.getAttribute(periodAttr) === period);
-                        });
-
-                        const section = chip.closest('.filter-section');
-                        const badge = section.querySelector('.filter-section-count');
-                        if (period !== 'all') {
-                            if (badge) {
-                                badge.textContent = '1';
-                            } else {
-                                section.querySelector('.filter-section-header-left')
-                                    ?.insertAdjacentHTML('beforeend', '<span class="filter-section-count">1</span>');
-                            }
-                        } else if (badge) {
-                            badge.remove();
-                        }
-
-                        this.updateCount();
-                        this.updateOptionCounts();
-                    });
-                });
+            const updateDateRangeBadge = (section, active) => {
+                const badge = section?.querySelector('.filter-section-count');
+                if (active) {
+                    if (badge) badge.textContent = '1';
+                    else section?.querySelector('.filter-section-header-left')
+                        ?.insertAdjacentHTML('beforeend', '<span class="filter-section-count">1</span>');
+                } else if (badge) {
+                    badge.remove();
+                }
             };
 
-            bindDatePeriodOptions('.date-options-inserted .filter-option-chip', 'tempDatePeriod', 'data-inserted-period');
-            bindDatePeriodOptions('.date-options-published .filter-option-chip', 'tempPublishedDatePeriod', 'data-published-period');
+            elements.filterSheetContent.querySelectorAll('.date-range-filter').forEach(block => {
+                const kind = block.dataset.dateRange;
+                const stateKey = kind === 'inserted' ? 'tempInsertedDateRange' : 'tempPublishedDateRange';
+                const clearBtn = block.querySelector('.date-range-clear-btn');
+
+                const syncFromInputs = () => {
+                    const from = block.querySelector('[data-range-part="from"]')?.value || '';
+                    const to = block.querySelector('[data-range-part="to"]')?.value || '';
+                    state[stateKey] = utils.normalizeDateRange({ from, to });
+                    block.querySelector('[data-range-part="from"]').value = state[stateKey].from;
+                    block.querySelector('[data-range-part="to"]').value = state[stateKey].to;
+                    const active = utils.hasDateRange(state[stateKey]);
+                    if (clearBtn) clearBtn.disabled = !active;
+                    updateDateRangeBadge(block.closest('.filter-section'), active);
+                    this.updateCount();
+                    this.updateOptionCounts();
+                };
+
+                block.querySelectorAll('.date-range-input').forEach(input => {
+                    input.addEventListener('change', syncFromInputs);
+                });
+
+                clearBtn?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    state[stateKey] = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
+                    block.querySelectorAll('.date-range-input').forEach(i => { i.value = ''; });
+                    if (clearBtn) clearBtn.disabled = true;
+                    updateDateRangeBadge(block.closest('.filter-section'), false);
+                    this.updateCount();
+                    this.updateOptionCounts();
+                });
+            });
 
             // Sort options
             elements.filterSheetContent.querySelectorAll('.sort-options .filter-option-chip').forEach(chip => {
@@ -2953,8 +3047,8 @@
             filterManager.recalculateFilterCounts(
                 state.allJobs,
                 state.tempFilters,
-                state.tempDatePeriod,
-                state.tempPublishedDatePeriod,
+                state.tempInsertedDateRange,
+                state.tempPublishedDateRange,
                 state.tempQuickFilter,
                 state.searchQuery
             );
@@ -2982,8 +3076,8 @@
                 .filter(arr => arr && arr.length > 0)
                 .reduce((sum, arr) => sum + arr.length, 0);
 
-            if (state.tempDatePeriod !== 'all') count++;
-            if (state.tempPublishedDatePeriod !== 'all') count++;
+            if (utils.hasDateRange(state.tempInsertedDateRange)) count++;
+            if (utils.hasDateRange(state.tempPublishedDateRange)) count++;
             if (state.tempQuickFilter !== 'all') count++;
 
             elements.sheetFilterCount.textContent = count > 0
@@ -2996,8 +3090,8 @@
         updateApplyPreview() {
             const n = filterManager.getFilteredCount({
                 selectedFilters: state.tempFilters,
-                datePeriod: state.tempDatePeriod,
-                publishedDatePeriod: state.tempPublishedDatePeriod,
+                insertedDateRange: state.tempInsertedDateRange,
+                publishedDateRange: state.tempPublishedDateRange,
                 quickFilter: state.tempQuickFilter
             });
             const label = elements.sheetApplyLabel;
@@ -3030,8 +3124,8 @@
 
         clearTemp() {
             state.tempFilters = {};
-            state.tempDatePeriod = 'all';
-            state.tempPublishedDatePeriod = 'all';
+            state.tempInsertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
+            state.tempPublishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.tempQuickFilter = 'all';
             state.tempSortBy = 'date_desc';
 
@@ -3043,8 +3137,12 @@
                 c.classList.toggle('selected', c.dataset.quick === 'all');
             });
 
-            elements.filterSheetContent.querySelector('.date-options-inserted .filter-option-chip[data-inserted-period="all"]')?.classList.add('selected');
-            elements.filterSheetContent.querySelector('.date-options-published .filter-option-chip[data-published-period="all"]')?.classList.add('selected');
+            elements.filterSheetContent.querySelectorAll('.date-range-input').forEach(input => {
+                input.value = '';
+            });
+            elements.filterSheetContent.querySelectorAll('.date-range-clear-btn').forEach(btn => {
+                btn.disabled = true;
+            });
             elements.filterSheetContent.querySelector('.sort-options .filter-option-chip[data-sort="date_desc"]')?.classList.add('selected');
 
             elements.filterSheetContent.querySelectorAll('.filter-section-count').forEach(badge => {
@@ -3057,8 +3155,8 @@
 
         applyAndClose() {
             state.selectedFilters = state.tempFilters;
-            state.datePeriod = state.tempDatePeriod;
-            state.publishedDatePeriod = state.tempPublishedDatePeriod;
+            state.insertedDateRange = utils.normalizeDateRange(state.tempInsertedDateRange);
+            state.publishedDateRange = utils.normalizeDateRange(state.tempPublishedDateRange);
             state.quickFilter = state.tempQuickFilter;
             state.sortBy = state.tempSortBy;
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();

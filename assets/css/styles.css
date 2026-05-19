@@ -697,12 +697,20 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .filter-chip .material-symbols-rounded { font-size: 16px; }
 
-/* Sort dropdown */
-.sort-dropdown-container .sort-dropdown {
-    display: none !important;
+/* Sort dropdown (desktop); mobile uses bottom sheet */
+.sort-dropdown-container { position: relative; }
+
+@media (max-width: 720px) {
+    .sort-dropdown-container .sort-dropdown {
+        display: none !important;
+    }
 }
 
-.sort-dropdown-container { position: relative; }
+@media (min-width: 721px) {
+  #sortSheet {
+        display: none !important;
+    }
+}
 
 .sort-dropdown {
     position: fixed;
@@ -1102,6 +1110,74 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-family: var(--font-mono);
     font-weight: 500;
     font-size: 0.58rem;
+}
+.job-date-missing {
+    font-style: italic;
+    white-space: normal;
+    text-align: right;
+    max-width: 11rem;
+    line-height: 1.2;
+}
+
+.date-range-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px 0 8px;
+}
+.date-range-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.date-range-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: var(--ink-2);
+}
+.date-range-label span:first-child {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-3);
+}
+.date-range-input {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+}
+.date-range-input:focus {
+    outline: 2px solid color-mix(in oklch, var(--accent) 40%, transparent);
+    border-color: var(--accent);
+}
+.date-range-clear-btn {
+    align-self: flex-start;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-2);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    background: transparent;
+}
+.date-range-clear-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.date-range-clear-btn:not(:disabled):hover {
+    background: var(--bg-sunk);
+    color: var(--ink);
 }
 .job-date-sep { color: var(--ink-3); opacity: 0.45; font-size: 0.58rem; }
 .job-dates.job-date-today .job-date-line:last-child,
