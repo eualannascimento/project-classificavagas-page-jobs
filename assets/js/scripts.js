@@ -90,6 +90,17 @@
         activeFilters: $('#activeFilters'),
         activeFiltersList: $('#activeFiltersList'),
         clearAllFilters: $('#clearAllFilters'),
+        saveFilterBtn: $('#saveFilterBtn'),
+        savedFiltersBar: $('#savedFiltersBar'),
+        saveFilterSheet: $('#saveFilterSheet'),
+        closeSaveFilterSheet: $('#closeSaveFilterSheet'),
+        saveFilterSummary: $('#saveFilterSummary'),
+        saveFilterName: $('#saveFilterName'),
+        saveFilterLimit: $('#saveFilterLimit'),
+        confirmSaveFilter: $('#confirmSaveFilter'),
+        confirmSaveFilterLabel: $('#confirmSaveFilterLabel'),
+        removeSavedFilter: $('#removeSavedFilter'),
+        cancelSaveFilter: $('#cancelSaveFilter'),
         jobsGrid: $('#jobsGrid'),
         loadingMore: $('#loadingMore'),
         emptyState: $('#emptyState'),
@@ -184,6 +195,69 @@
         normalize(str) {
             if (!str) return '';
             return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        },
+
+        parseSearchQuery(query) {
+            const raw = String(query || '').trim();
+            if (!raw) return [];
+
+            const tokens = [];
+            let buffer = '';
+            let quoteBuffer = '';
+            let inQuote = false;
+
+            const pushWords = (value) => {
+                this.normalize(value).split(/\s+/).filter(Boolean).forEach(word => {
+                    tokens.push({ type: 'word', value: word });
+                });
+            };
+
+            for (let i = 0; i < raw.length; i++) {
+                const char = raw[i];
+                if (char === '"') {
+                    if (inQuote) {
+                        const phrase = this.normalize(quoteBuffer).trim().replace(/\s+/g, ' ');
+                        if (phrase) tokens.push({ type: 'phrase', value: phrase });
+                        quoteBuffer = '';
+                        inQuote = false;
+                    } else {
+                        pushWords(buffer);
+                        buffer = '';
+                        inQuote = true;
+                    }
+                    continue;
+                }
+
+                if (inQuote) quoteBuffer += char;
+                else buffer += char;
+            }
+
+            if (inQuote) {
+                pushWords(quoteBuffer);
+            }
+            pushWords(buffer);
+
+            const phraseTokens = tokens.filter(token => token.type === 'phrase');
+            const wordTokens = tokens.filter(token => token.type === 'word');
+            if (phraseTokens.length === 1 && wordTokens.length === 0) {
+                return phraseTokens[0].value.split(/\s+/).filter(Boolean).map(word => ({ type: 'word', value: word }));
+            }
+
+            return tokens;
+        },
+
+        getSearchText(job) {
+            return this.normalize([
+                job.title, job.company, job.company_type,
+                job.level, job.category, job.sub_category,
+                job.location, job.location_city, job.location_state
+            ].filter(Boolean).join(' '));
+        },
+
+        jobMatchesSearch(job, parsedQuery) {
+            if (!parsedQuery || parsedQuery.length === 0) return true;
+            const text = this.getSearchText(job);
+            return parsedQuery.every(token => text.includes(token.value));
         },
 
         toTitleCase(str) {
@@ -1431,17 +1505,8 @@
             let result = jobs;
 
             if (searchQuery) {
-                const terms = utils.normalize(searchQuery).split(/\s+/).filter(Boolean);
-                if (terms.length) {
-                    result = result.filter(job => {
-                        const text = utils.normalize([
-                            job.title, job.company, job.company_type,
-                            job.level, job.category, job.sub_category,
-                            job.location, job.location_city, job.location_state
-                        ].filter(Boolean).join(' '));
-                        return terms.every(t => text.includes(t));
-                    });
-                }
+                const parsedQuery = utils.parseSearchQuery(searchQuery);
+                if (parsedQuery.length) result = result.filter(job => utils.jobMatchesSearch(job, parsedQuery));
             }
 
             if (showOnlyVisited) {
@@ -1509,56 +1574,13 @@
                 delete otherFilters[key];
 
                 // Base set of jobs to count from:
-                // Start with all jobs
-                let baseJobs = state.allJobs;
-
-                // Apply search query (multi-term AND)
-                if (searchQuery) {
-                    const terms = utils.normalize(searchQuery).split(/\s+/).filter(Boolean);
-                    if (terms.length) {
-                        baseJobs = baseJobs.filter(job => {
-                            const text = utils.normalize([
-                                job.title, job.company, job.company_type,
-                                job.level, job.category, job.sub_category,
-                                job.location, job.location_city, job.location_state
-                            ].filter(Boolean).join(' '));
-                            return terms.every(t => text.includes(t));
-                        });
-                    }
-                }
-
-                // Apply visited-only
-                if (state.showOnlyVisited) {
-                    baseJobs = baseJobs.filter(j => utils.isVisited(j));
-                }
-
-                // Apply quick filter
-                if (quickFilter !== 'all') {
-                    baseJobs = baseJobs.filter(job => {
-                        switch (quickFilter) {
-                            case 'remote': return job['remote?'] === '01 - Sim';
-                            case 'hybrid': return job.contract === 'HIBRIDO' || job.contract === 'HÍBRIDO';
-                            case 'onsite': return job['remote?'] === '02 - Não';
-                            case 'affirmative': return job['affirmative?'] === '01 - Sim';
-                            case 'today': return utils.isToday(job.inserted_date);
-                            default: return true;
-                        }
-                    });
-                }
-
-                // Apply date period
-                if (datePeriod !== 'all') {
-                    const period = CONFIG.DATE_PERIODS.find(p => p.key === datePeriod);
-                    if (period && period.days) {
-                        baseJobs = baseJobs.filter(job => utils.isWithinDays(job.inserted_date, period.days));
-                    }
-                }
-
-                // Apply other active filters
-                Object.entries(otherFilters).forEach(([otherKey, values]) => {
-                    if (values && values.length > 0) {
-                        baseJobs = baseJobs.filter(job => values.includes(job[otherKey]));
-                    }
+                // Start with all jobs and apply all current filters except the category being counted.
+                let baseJobs = this.filterJobs(state.allJobs, {
+                    searchQuery,
+                    showOnlyVisited: state.showOnlyVisited,
+                    quickFilter,
+                    datePeriod,
+                    selectedFilters: otherFilters
                 });
 
                 // Now count the occurrences of each value in this category
@@ -1633,34 +1655,42 @@
             this.renderActiveFilters();
         },
 
-        renderActiveFilters() {
+        hasShareableState(filterState = state) {
+            return Boolean(filterState.searchQuery ||
+                filterState.quickFilter !== 'all' ||
+                filterState.showOnlyVisited ||
+                filterState.datePeriod !== 'all' ||
+                Object.values(filterState.selectedFilters || {}).some(v => v && v.length > 0));
+        },
+
+        buildFilterSummaryItems(filterState = state, { includeSort = false } = {}) {
             const groups = [];
 
-            if (state.searchQuery) {
-                groups.push({ key: '_search', label: 'Busca', values: [state.searchQuery], chipType: 'search' });
+            if (filterState.searchQuery) {
+                groups.push({ key: '_search', label: 'Busca', values: [filterState.searchQuery], chipType: 'search' });
             }
-            if (state.quickFilter !== 'all') {
+            if (filterState.quickFilter !== 'all') {
                 groups.push({
                     key: '_quick',
                     label: 'Tipo',
-                    values: [QUICK_FILTER_LABELS[state.quickFilter] || state.quickFilter],
+                    values: [QUICK_FILTER_LABELS[filterState.quickFilter] || filterState.quickFilter],
                     chipType: 'quick'
                 });
             }
-            if (state.showOnlyVisited) {
+            if (filterState.showOnlyVisited) {
                 groups.push({ key: '_visited', label: 'Visitadas', values: ['Só visualizadas'], chipType: 'visited' });
             }
 
             // Add date period chip if active
-            if (state.datePeriod !== 'all') {
-                const period = CONFIG.DATE_PERIODS.find(p => p.key === state.datePeriod);
+            if (filterState.datePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === filterState.datePeriod);
                 if (period) {
                     groups.push({ key: '_date', label: 'Data', values: [period.label], chipType: 'date' });
                 }
             }
 
             // Group filters by category
-            Object.entries(state.selectedFilters).forEach(([key, values]) => {
+            Object.entries(filterState.selectedFilters || {}).forEach(([key, values]) => {
                 if (values && values.length > 0) {
                     const category = CONFIG.FILTER_CATEGORIES.find(c => c.key === key);
                     const label = category ? category.label : key;
@@ -1668,14 +1698,29 @@
                 }
             });
 
+            if (includeSort && filterState.sortBy && filterState.sortBy !== 'date_desc') {
+                groups.push({
+                    key: '_sort',
+                    label: 'Ordenação',
+                    values: [SORT_LABELS[filterState.sortBy] || filterState.sortBy],
+                    chipType: 'sort'
+                });
+            }
+
+            return groups;
+        },
+
+        renderActiveFilters() {
+            const groups = this.buildFilterSummaryItems(state);
             const copyBtn = document.getElementById('copySearchLink');
-            const hasShareableState = state.searchQuery || state.quickFilter !== 'all' ||
-                state.showOnlyVisited || state.datePeriod !== 'all' ||
-                Object.values(state.selectedFilters).some(v => v && v.length > 0);
+            const saveBtn = document.getElementById('saveFilterBtn');
+            const hasShareableState = this.hasShareableState(state);
             if (copyBtn) copyBtn.classList.toggle('hidden', !hasShareableState);
+            if (saveBtn) saveBtn.classList.toggle('hidden', !hasShareableState);
 
             if (groups.length === 0) {
                 elements.activeFilters.classList.add('hidden');
+                elements.activeFiltersList.innerHTML = '';
                 return;
             }
 
@@ -1796,6 +1841,7 @@
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             const visitedBtn = document.getElementById('visitedToggle');
             if (visitedBtn) visitedBtn.setAttribute('aria-pressed', 'false');
+            sortManager.updateLabel();
 
             this.apply();
         },
@@ -1811,6 +1857,355 @@
                 ? elements.activeFilters
                 : document.querySelector('.filter-chips-container');
             target?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    };
+
+    // ============================================
+    // SAVED FILTERS
+    // ============================================
+    const savedFiltersManager = {
+        storageKey: 'cv_saved_filters',
+        maxItems: 6,
+        items: [],
+        mode: 'create',
+        editingId: null,
+        isOpen: false,
+        _trigger: null,
+        _longPressTimer: null,
+        _suppressClickUntil: 0,
+
+        init() {
+            this.load();
+            this.renderBar();
+
+            elements.saveFilterBtn?.addEventListener('click', () => this.openCreate());
+            elements.closeSaveFilterSheet?.addEventListener('click', () => this.close());
+            elements.cancelSaveFilter?.addEventListener('click', () => this.close());
+            elements.confirmSaveFilter?.addEventListener('click', () => this.saveFromSheet());
+            elements.removeSavedFilter?.addEventListener('click', () => {
+                if (this.editingId) this.remove(this.editingId, { closeSheet: true });
+            });
+
+            elements.saveFilterName?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.saveFromSheet();
+                }
+            });
+
+            if (elements.saveFilterSheet && utils.isMobile()) {
+                sheetSwipe.bind(elements.saveFilterSheet, () => this.close());
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.isOpen) this.close();
+            });
+        },
+
+        load() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+                this.items = Array.isArray(parsed)
+                    ? parsed.filter(item => item && item.id && item.label && item.state).slice(0, this.maxItems)
+                    : [];
+            } catch (err) {
+                this.items = [];
+            }
+        },
+
+        persist() {
+            localStorage.setItem(this.storageKey, JSON.stringify(this.items.slice(0, this.maxItems)));
+        },
+
+        captureState() {
+            return {
+                searchQuery: state.searchQuery || '',
+                quickFilter: state.quickFilter || 'all',
+                datePeriod: state.datePeriod || 'all',
+                selectedFilters: JSON.parse(JSON.stringify(state.selectedFilters || {})),
+                showOnlyVisited: Boolean(state.showOnlyVisited),
+                sortBy: state.sortBy || 'date_desc'
+            };
+        },
+
+        sanitizeState(savedState = {}) {
+            return {
+                searchQuery: savedState.searchQuery || '',
+                quickFilter: savedState.quickFilter || 'all',
+                datePeriod: savedState.datePeriod || 'all',
+                selectedFilters: JSON.parse(JSON.stringify(savedState.selectedFilters || {})),
+                showOnlyVisited: Boolean(savedState.showOnlyVisited),
+                sortBy: savedState.sortBy || 'date_desc'
+            };
+        },
+
+        buildSummaryHtml(filterState) {
+            const groups = filterManager.buildFilterSummaryItems(this.sanitizeState(filterState), { includeSort: true });
+            if (groups.length === 0) {
+                return '<p class="save-filter-empty">Nenhum filtro ativo.</p>';
+            }
+
+            return `
+                <ul class="save-filter-summary-list">
+                    ${groups.map(group => `
+                        <li>
+                            <span class="save-filter-summary-label">${utils.escapeHtml(group.label)}</span>
+                            <span class="save-filter-summary-value">${utils.escapeHtml(group.values.join(', '))}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        },
+
+        suggestLabel(filterState) {
+            const groups = filterManager.buildFilterSummaryItems(this.sanitizeState(filterState));
+            if (groups.length === 0) return 'Filtro personalizado';
+
+            const parts = groups.slice(0, 3).map(group => {
+                if (group.chipType === 'search') return `"${group.values[0]}"`;
+                if (group.values.length === 1) return group.values[0];
+                return `${group.label}: ${group.values.length}`;
+            });
+
+            const extra = groups.length > 3 ? ` +${groups.length - 3}` : '';
+            return utils.truncate(`${parts.join(' · ')}${extra}`, 40);
+        },
+
+        openCreate() {
+            if (!filterManager.hasShareableState(state)) {
+                utils.showToast('Aplique um filtro para salvar', 'theme-toast');
+                return;
+            }
+
+            if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
+            this.mode = 'create';
+            this.editingId = null;
+            this._trigger = document.activeElement;
+            const snapshot = this.captureState();
+            this.populateSheet({
+                title: 'Salvar filtro',
+                subtitle: 'Resumo do filtro atual',
+                stateSnapshot: snapshot,
+                label: this.suggestLabel(snapshot),
+                submitLabel: 'Salvar',
+                canSubmit: this.items.length < this.maxItems,
+                showRemove: false
+            });
+            if (this.items.length >= this.maxItems) {
+                utils.showToast('Máximo de 6 filtros salvos', 'theme-toast');
+            }
+            this.openSheet();
+        },
+
+        openEdit(id) {
+            const item = this.items.find(saved => saved.id === id);
+            if (!item) return;
+
+            if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
+            this.mode = 'edit';
+            this.editingId = id;
+            this._trigger = document.activeElement;
+            this.populateSheet({
+                title: 'Editar filtro salvo',
+                subtitle: 'Resumo do filtro salvo',
+                stateSnapshot: item.state,
+                label: item.label,
+                submitLabel: 'Salvar alterações',
+                canSubmit: true,
+                showRemove: true
+            });
+            this.openSheet();
+        },
+
+        populateSheet({ title, subtitle, stateSnapshot, label, submitLabel, canSubmit, showRemove }) {
+            const titleEl = document.getElementById('saveFilterSheetTitle');
+            const subtitleEl = document.getElementById('saveFilterSheetSubtitle');
+            if (titleEl) titleEl.textContent = title;
+            if (subtitleEl) subtitleEl.textContent = subtitle;
+            if (elements.saveFilterSummary) elements.saveFilterSummary.innerHTML = this.buildSummaryHtml(stateSnapshot);
+            if (elements.saveFilterName) {
+                elements.saveFilterName.value = label || '';
+                elements.saveFilterName.disabled = !canSubmit && this.mode === 'create';
+            }
+            if (elements.confirmSaveFilter) elements.confirmSaveFilter.disabled = !canSubmit;
+            if (elements.confirmSaveFilterLabel) elements.confirmSaveFilterLabel.textContent = submitLabel;
+            elements.saveFilterLimit?.classList.toggle('hidden', canSubmit || this.mode !== 'create');
+            elements.removeSavedFilter?.classList.toggle('hidden', !showRemove);
+        },
+
+        openSheet() {
+            if (!elements.saveFilterSheet) return;
+            elements.saveFilterSheet.setAttribute('role', 'dialog');
+            elements.saveFilterSheet.setAttribute('aria-modal', 'true');
+            elements.scrim.classList.remove('hidden');
+            elements.saveFilterSheet.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            this.isOpen = true;
+
+            requestAnimationFrame(() => {
+                elements.scrim.classList.add('visible');
+                elements.saveFilterSheet.classList.add('visible');
+                elements.saveFilterName?.focus();
+                elements.saveFilterName?.select();
+            });
+        },
+
+        close() {
+            if (!this.isOpen || !elements.saveFilterSheet) return;
+            elements.scrim.classList.remove('visible');
+            elements.saveFilterSheet.classList.remove('visible');
+            this.isOpen = false;
+
+            setTimeout(() => {
+                elements.saveFilterSheet.classList.add('hidden');
+                const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
+                if (!sortManager.sortSheetOpen && !filterOpen) {
+                    elements.scrim.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+                const trigger = this._trigger;
+                this._trigger = null;
+                if (trigger && typeof trigger.focus === 'function') trigger.focus();
+            }, 400);
+        },
+
+        saveFromSheet() {
+            const label = (elements.saveFilterName?.value || '').trim();
+            if (!label) {
+                utils.showToast('Informe um nome para salvar', 'theme-toast');
+                elements.saveFilterName?.focus();
+                return;
+            }
+
+            if (this.mode === 'edit') {
+                const item = this.items.find(saved => saved.id === this.editingId);
+                if (!item) return;
+                item.label = utils.truncate(label, 40);
+                this.persist();
+                this.renderBar();
+                this.close();
+                utils.showToast('Filtro atualizado', 'theme-toast');
+                return;
+            }
+
+            if (this.items.length >= this.maxItems) {
+                utils.showToast('Máximo de 6 filtros salvos', 'theme-toast');
+                return;
+            }
+
+            const item = {
+                id: `sf_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+                label: utils.truncate(label, 40),
+                savedAt: new Date().toISOString().split('T')[0],
+                state: this.captureState()
+            };
+
+            this.items.push(item);
+            this.persist();
+            this.renderBar();
+            this.close();
+            utils.showToast('Filtro salvo', 'theme-toast');
+        },
+
+        apply(id) {
+            const item = this.items.find(saved => saved.id === id);
+            if (!item) return;
+            const savedState = this.sanitizeState(item.state);
+
+            state.searchQuery = savedState.searchQuery;
+            state.quickFilter = savedState.quickFilter;
+            state.datePeriod = savedState.datePeriod;
+            state.selectedFilters = savedState.selectedFilters;
+            state.showOnlyVisited = savedState.showOnlyVisited;
+            state.sortBy = savedState.sortBy;
+
+            if (elements.searchInput) elements.searchInput.value = state.searchQuery;
+            elements.searchClear?.classList.toggle('hidden', !state.searchQuery);
+            document.getElementById('visitedToggle')?.setAttribute('aria-pressed', state.showOnlyVisited ? 'true' : 'false');
+            if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
+            sortManager.updateLabel();
+            filterManager.apply();
+            utils.showToast(`Filtro aplicado: ${item.label}`, 'theme-toast');
+            filterManager.scrollToActiveFilters();
+        },
+
+        remove(id, { closeSheet = false } = {}) {
+            const item = this.items.find(saved => saved.id === id);
+            this.items = this.items.filter(saved => saved.id !== id);
+            this.persist();
+            this.renderBar();
+            if (closeSheet) this.close();
+            if (item) utils.showToast('Filtro removido', 'theme-toast');
+        },
+
+        renderBar() {
+            if (!elements.savedFiltersBar) return;
+            this.load();
+
+            if (this.items.length === 0) {
+                elements.savedFiltersBar.innerHTML = '';
+                elements.savedFiltersBar.classList.add('hidden');
+                return;
+            }
+
+            elements.savedFiltersBar.classList.remove('hidden');
+            elements.savedFiltersBar.innerHTML = this.items.map(item => `
+                <span class="filter-chip saved-filter-chip" role="button" tabindex="0" data-saved-filter-id="${utils.escapeHtml(item.id)}" title="${utils.escapeHtml(item.label)}">
+                    <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+                    <span class="saved-filter-label">${utils.escapeHtml(item.label)}</span>
+                    <button type="button" class="saved-filter-remove" aria-label="Remover ${utils.escapeHtml(item.label)}">
+                        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                    </button>
+                </span>
+            `).join('');
+
+            elements.savedFiltersBar.querySelectorAll('.saved-filter-chip').forEach(chip => {
+                const id = chip.dataset.savedFilterId;
+                const removeBtn = chip.querySelector('.saved-filter-remove');
+
+                const clearLongPress = () => {
+                    clearTimeout(this._longPressTimer);
+                    this._longPressTimer = null;
+                };
+
+                chip.addEventListener('pointerdown', (e) => {
+                    if (e.target.closest('.saved-filter-remove')) return;
+                    clearLongPress();
+                    this._longPressTimer = setTimeout(() => {
+                        this._suppressClickUntil = Date.now() + 700;
+                        this.openEdit(id);
+                    }, 550);
+                });
+                chip.addEventListener('pointerup', clearLongPress);
+                chip.addEventListener('pointerleave', clearLongPress);
+                chip.addEventListener('pointercancel', clearLongPress);
+                chip.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    this.openEdit(id);
+                });
+                chip.addEventListener('click', (e) => {
+                    if (e.target.closest('.saved-filter-remove')) return;
+                    if (Date.now() < this._suppressClickUntil) return;
+                    this.apply(id);
+                });
+                chip.addEventListener('keydown', (e) => {
+                    if (e.target.closest('.saved-filter-remove')) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.apply(id);
+                    }
+                });
+
+                const remove = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.remove(id);
+                };
+                removeBtn?.addEventListener('click', remove);
+                removeBtn?.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') remove(e);
+                });
+            });
         }
     };
 
@@ -2101,6 +2496,10 @@
             elements.openFilters.addEventListener('click', () => this.open());
             elements.closeSheet.addEventListener('click', () => this.close());
             elements.scrim.addEventListener('click', () => {
+                if (typeof savedFiltersManager !== 'undefined' && savedFiltersManager.isOpen) {
+                    savedFiltersManager.close();
+                    return;
+                }
                 if (sortManager.sortSheetOpen) {
                     sortManager.closeSortSheet();
                     return;
@@ -3210,6 +3609,7 @@
             animationManager.init();
             scrollManager.init();
             quickFilters.init();
+            savedFiltersManager.init();
             bottomSheet.init();
             clearHandlers.init();
             shortcutsOverlay.init();
