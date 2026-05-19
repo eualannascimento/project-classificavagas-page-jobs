@@ -1651,6 +1651,8 @@
             // Update quick filter chips (sheet)
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
 
+            this.updateSaveActionVisibility();
+
             // Active filters chips
             this.renderActiveFilters();
         },
@@ -1661,6 +1663,15 @@
                 filterState.showOnlyVisited ||
                 filterState.datePeriod !== 'all' ||
                 Object.values(filterState.selectedFilters || {}).some(v => v && v.length > 0));
+        },
+
+        updateSaveActionVisibility() {
+            const hasShareableState = this.hasShareableState(state);
+            if (elements.saveFilterBtn) {
+                elements.saveFilterBtn.classList.toggle('hidden', !hasShareableState);
+            }
+            const copyBtn = document.getElementById('copySearchLink');
+            if (copyBtn) copyBtn.classList.toggle('hidden', !hasShareableState);
         },
 
         buildFilterSummaryItems(filterState = state, { includeSort = false } = {}) {
@@ -1712,11 +1723,7 @@
 
         renderActiveFilters() {
             const groups = this.buildFilterSummaryItems(state);
-            const copyBtn = document.getElementById('copySearchLink');
-            const saveBtn = document.getElementById('saveFilterBtn');
-            const hasShareableState = this.hasShareableState(state);
-            if (copyBtn) copyBtn.classList.toggle('hidden', !hasShareableState);
-            if (saveBtn) saveBtn.classList.toggle('hidden', !hasShareableState);
+            this.updateSaveActionVisibility();
 
             if (groups.length === 0) {
                 elements.activeFilters.classList.add('hidden');
@@ -1893,7 +1900,7 @@
                 }
             });
 
-            if (elements.saveFilterSheet && utils.isMobile()) {
+            if (elements.saveFilterSheet) {
                 sheetSwipe.bind(elements.saveFilterSheet, () => this.close());
             }
 
@@ -2150,60 +2157,59 @@
 
             elements.savedFiltersBar.classList.remove('hidden');
             elements.savedFiltersBar.innerHTML = this.items.map(item => `
-                <span class="filter-chip saved-filter-chip" role="button" tabindex="0" data-saved-filter-id="${utils.escapeHtml(item.id)}" title="${utils.escapeHtml(item.label)}">
-                    <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
-                    <span class="saved-filter-label">${utils.escapeHtml(item.label)}</span>
-                    <button type="button" class="saved-filter-remove" aria-label="Remover ${utils.escapeHtml(item.label)}">
+                <span class="saved-filter-group" data-saved-filter-id="${utils.escapeHtml(item.id)}">
+                    <button type="button" class="filter-chip saved-filter-chip" data-saved-filter-id="${utils.escapeHtml(item.id)}" title="Aplicar: ${utils.escapeHtml(item.label)}">
+                        <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+                        <span class="saved-filter-label">${utils.escapeHtml(item.label)}</span>
+                    </button>
+                    <button type="button" class="saved-filter-edit icon-btn" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Editar ${utils.escapeHtml(item.label)}" title="Editar filtro salvo">
+                        <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
+                    </button>
+                    <button type="button" class="saved-filter-remove icon-btn" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Remover ${utils.escapeHtml(item.label)}" title="Remover dos salvos">
                         <span class="material-symbols-rounded" aria-hidden="true">close</span>
                     </button>
                 </span>
             `).join('');
 
-            elements.savedFiltersBar.querySelectorAll('.saved-filter-chip').forEach(chip => {
-                const id = chip.dataset.savedFilterId;
-                const removeBtn = chip.querySelector('.saved-filter-remove');
+            elements.savedFiltersBar.querySelectorAll('.saved-filter-group').forEach(group => {
+                const id = group.dataset.savedFilterId;
+                const applyBtn = group.querySelector('.saved-filter-chip');
+                const editBtn = group.querySelector('.saved-filter-edit');
+                const removeBtn = group.querySelector('.saved-filter-remove');
 
                 const clearLongPress = () => {
                     clearTimeout(this._longPressTimer);
                     this._longPressTimer = null;
                 };
 
-                chip.addEventListener('pointerdown', (e) => {
-                    if (e.target.closest('.saved-filter-remove')) return;
+                applyBtn?.addEventListener('pointerdown', (e) => {
+                    if (!utils.isMobile()) return;
                     clearLongPress();
                     this._longPressTimer = setTimeout(() => {
                         this._suppressClickUntil = Date.now() + 700;
                         this.openEdit(id);
                     }, 550);
                 });
-                chip.addEventListener('pointerup', clearLongPress);
-                chip.addEventListener('pointerleave', clearLongPress);
-                chip.addEventListener('pointercancel', clearLongPress);
-                chip.addEventListener('contextmenu', (e) => {
+                applyBtn?.addEventListener('pointerup', clearLongPress);
+                applyBtn?.addEventListener('pointerleave', clearLongPress);
+                applyBtn?.addEventListener('pointercancel', clearLongPress);
+
+                applyBtn?.addEventListener('click', (e) => {
                     e.preventDefault();
-                    this.openEdit(id);
-                });
-                chip.addEventListener('click', (e) => {
-                    if (e.target.closest('.saved-filter-remove')) return;
                     if (Date.now() < this._suppressClickUntil) return;
                     this.apply(id);
                 });
-                chip.addEventListener('keydown', (e) => {
-                    if (e.target.closest('.saved-filter-remove')) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        this.apply(id);
-                    }
+
+                editBtn?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.openEdit(id);
                 });
 
-                const remove = (e) => {
+                removeBtn?.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     this.remove(id);
-                };
-                removeBtn?.addEventListener('click', remove);
-                removeBtn?.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') remove(e);
                 });
             });
         }

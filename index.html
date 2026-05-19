@@ -136,6 +136,11 @@
                     </div>
                 </div>
 
+                <button type="button" class="filter-chip filter-chip-save hidden" id="saveFilterBtn" aria-label="Salvar filtro atual" title="Salvar filtro atual">
+                    <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+                    <span class="save-filter-text">Salvar</span>
+                </button>
+
                 <div class="saved-filters-bar" id="savedFiltersBar" aria-label="Filtros salvos"></div>
             </div>
         </div>
@@ -143,9 +148,6 @@
         <div class="active-filters hidden" id="activeFilters">
             <div class="active-filters-scroll" id="activeFiltersList"></div>
             <div class="active-filters-actions">
-                <button type="button" class="icon-btn save-filter-btn hidden" id="saveFilterBtn" aria-label="Salvar filtro atual" title="Salvar filtro">
-                    <span class="material-symbols-rounded">favorite</span>
-                </button>
                 <button type="button" class="icon-btn copy-link-btn hidden" id="copySearchLink" aria-label="Copiar link desta busca" title="Copiar link">
                     <span class="material-symbols-rounded">link</span>
                 </button>

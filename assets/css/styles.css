@@ -545,6 +545,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .filter-chip-sort::before,
 .filter-chip-main::before,
 .filter-chip-visited::before,
+.filter-chip-save::before,
 .saved-filter-chip::before { display: none; }
 
 .filter-chip:hover { border-color: var(--ink-3); color: var(--ink); }
@@ -568,7 +569,37 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .filter-chip-view,
 .filter-chip-sort,
-.filter-chip-main { padding: 0 10px; gap: 5px; }
+.filter-chip-main,
+.filter-chip-save { padding: 0 10px; gap: 5px; }
+
+.filter-chip-save {
+    color: var(--accent-ink);
+    border-color: color-mix(in oklch, var(--accent) 36%, var(--rule));
+    background: color-mix(in oklch, var(--accent-soft) 70%, var(--bg-elevated));
+}
+
+.filter-chip-save .material-symbols-rounded {
+    color: var(--accent);
+    font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+}
+
+.filter-chip-save .save-filter-text {
+    display: none;
+}
+
+@media (min-width: 721px) {
+    .filter-chip-save {
+        padding: 0 12px;
+    }
+
+    .filter-chip-save .save-filter-text {
+        display: inline;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+}
 
 /* Visualizadas: icon-only chip, compact */
 .filter-chip-visited {
@@ -596,12 +627,25 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     flex-shrink: 0;
 }
 
-.saved-filter-chip {
-    max-width: 220px;
-    padding: 0 8px 0 10px;
-    color: var(--accent-ink);
-    border-color: color-mix(in oklch, var(--accent) 36%, var(--rule));
+.saved-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    max-width: min(240px, 42vw);
+    padding: 0 2px 0 0;
+    border: 1px solid color-mix(in oklch, var(--accent) 36%, var(--rule));
+    border-radius: var(--radius-pill);
     background: color-mix(in oklch, var(--accent-soft) 78%, var(--bg-elevated));
+}
+
+.saved-filter-chip {
+    max-width: 100%;
+    min-width: 0;
+    padding: 0 8px 0 10px;
+    border: none;
+    background: transparent;
+    color: var(--accent-ink);
 }
 
 .saved-filter-chip .material-symbols-rounded {
@@ -613,31 +657,41 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     text-overflow: ellipsis;
 }
 
+.saved-filter-edit,
 .saved-filter-remove {
-    width: 18px;
-    height: 18px;
-    margin-left: 2px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: var(--ink-3);
-    opacity: 0;
-    transition: opacity 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease);
+    flex-shrink: 0;
+    transition: background 0.2s var(--ease), color 0.2s var(--ease), opacity 0.2s var(--ease);
 }
 
-.saved-filter-chip:hover .saved-filter-remove,
-.saved-filter-remove:focus-visible {
+.saved-filter-edit {
+    opacity: 0;
+}
+
+.saved-filter-group:hover .saved-filter-edit,
+.saved-filter-edit:focus-visible {
     opacity: 1;
 }
 
+.saved-filter-remove {
+    opacity: 1;
+}
+
+.saved-filter-edit:hover,
 .saved-filter-remove:hover {
     background: var(--accent-ink);
     color: var(--accent-soft);
 }
 
+.saved-filter-edit .material-symbols-rounded,
 .saved-filter-remove .material-symbols-rounded {
-    font-size: 13px;
+    font-size: 15px;
     color: inherit;
 }
 
@@ -689,10 +743,15 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
    ACTIVE FILTERS
    ============================================ */
 .active-filters {
-    display: flex; align-items: center; gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
     padding: 0 var(--shell-pad) 10px;
     max-width: calc(1240px + var(--shell-pad) * 2);
-    margin: 0 auto; width: 100%;
+    margin: 0 auto;
+    width: 100%;
+    min-width: 0;
 }
 
 .active-filters:not(.hidden) {
@@ -808,21 +867,6 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 .clear-filters-btn:hover { background: var(--bg-sunk); color: var(--ink); }
 .clear-filters-btn .material-symbols-rounded { font-size: 14px; }
-
-.save-filter-btn {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--rule);
-    background: var(--bg);
-    color: var(--ink-2);
-}
-.save-filter-btn:hover { color: var(--accent); border-color: var(--accent); }
-.save-filter-btn .material-symbols-rounded {
-    font-size: 17px;
-    font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 20;
-}
 
 .version-label {
     font-family: var(--font-mono);
@@ -1807,10 +1851,29 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     .active-filters-actions {
         gap: 4px;
     }
-    .copy-link-btn,
-    .save-filter-btn {
+    .copy-link-btn {
         width: 36px;
         height: 36px;
+    }
+
+    .filter-chip-save {
+        min-height: 44px;
+    }
+
+    .filter-chip-save .save-filter-text {
+        display: none;
+    }
+
+    .saved-filter-edit {
+        opacity: 1;
+    }
+
+    .saved-filter-group {
+        max-width: 180px;
+    }
+
+    .saved-filter-chip {
+        min-height: 44px;
     }
     .clear-filters-btn {
         width: 36px;
@@ -1845,12 +1908,17 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 @media (min-width: 600px) {
     .bottom-sheet {
-        max-width: 540px; left: 50%;
+        right: auto;
+        left: 50%;
+        width: min(540px, calc(100vw - 48px));
+        max-width: 540px;
         transform: translateX(-50%) translateY(100%);
-        border-radius: var(--radius-xl); bottom: 24px;
+        border-radius: var(--radius-xl);
+        bottom: 24px;
         max-height: calc(100dvh - 48px);
     }
     .bottom-sheet.visible { transform: translateX(-50%) translateY(0); }
+    .save-filter-sheet .bottom-sheet-handle { display: none; }
     .fab { right: 24px; }
 }
 
