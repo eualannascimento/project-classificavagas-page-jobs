@@ -148,17 +148,91 @@
             return Boolean(dateStr && String(dateStr).trim());
         },
 
+        _datePartsFromDate(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return { iso: `${y}-${m}-${d}`, display: `${d}/${m}/${y}` };
+        },
+
+        _parsePostedRelative(str) {
+            const s = String(str).toLowerCase();
+            const daysMatch = s.match(/posted\s+(\d+)\+?\s*days?\s+ago/);
+            if (daysMatch) {
+                const date = new Date();
+                date.setDate(date.getDate() - parseInt(daysMatch[1], 10));
+                return this._datePartsFromDate(date);
+            }
+            const weeksMatch = s.match(/posted\s+(\d+)\s*weeks?\s+ago/);
+            if (weeksMatch) {
+                const date = new Date();
+                date.setDate(date.getDate() - parseInt(weeksMatch[1], 10) * 7);
+                return this._datePartsFromDate(date);
+            }
+            if (/posted\s+yesterday/.test(s)) {
+                const date = new Date();
+                date.setDate(date.getDate() - 1);
+                return this._datePartsFromDate(date);
+            }
+            if (/posted\s+today/.test(s)) {
+                return this._datePartsFromDate(new Date());
+            }
+            return null;
+        },
+
+        parseJobDate(input) {
+            if (input === null || input === undefined) return null;
+
+            if (typeof input === 'number' && Number.isFinite(input)) {
+                const ms = input > 1e12 ? input : input * 1000;
+                return this._datePartsFromDate(new Date(ms));
+            }
+
+            const str = String(input).trim();
+            if (!str) return null;
+
+            const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (isoMatch) {
+                const [, y, m, d] = isoMatch;
+                return { iso: `${y}-${m}-${d}`, display: `${d}/${m}/${y}` };
+            }
+
+            const brMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (brMatch) {
+                const [, d, m, y] = brMatch;
+                const dd = d.padStart(2, '0');
+                const mm = m.padStart(2, '0');
+                return { iso: `${y}-${mm}-${dd}`, display: `${dd}/${mm}/${y}` };
+            }
+
+            const posted = this._parsePostedRelative(str);
+            if (posted) return posted;
+
+            if (!/^posted\s/i.test(str)) {
+                const parsed = new Date(str);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return this._datePartsFromDate(parsed);
+                }
+            }
+
+            return null;
+        },
+
+        getJobDateIso(dateStr) {
+            return this.parseJobDate(dateStr)?.iso || '';
+        },
+
         formatDate(dateStr) {
-            if (!this.hasDateValue(dateStr)) return '';
-            const [y, m, d] = dateStr.split('-');
-            return `${d}/${m}/${y}`;
+            return this.parseJobDate(dateStr)?.display || '';
         },
 
         formatJobDateDisplay(dateStr, kind = 'inserted') {
-            if (!this.hasDateValue(dateStr)) {
+            const parsed = this.parseJobDate(dateStr);
+            if (!parsed) {
                 return kind === 'inserted' ? this.DATE_MISSING_INSERTED : '';
             }
-            return this.formatDate(dateStr);
+            return parsed.display;
         },
 
         cloneDateRange(range) {
@@ -171,9 +245,10 @@
 
         isDateInRange(dateStr, range) {
             if (!this.hasDateRange(range)) return true;
-            if (!this.hasDateValue(dateStr)) return false;
-            if (range.from && dateStr < range.from) return false;
-            if (range.to && dateStr > range.to) return false;
+            const iso = this.getJobDateIso(dateStr);
+            if (!iso) return false;
+            if (range.from && iso < range.from) return false;
+            if (range.to && iso > range.to) return false;
             return true;
         },
 
@@ -203,8 +278,9 @@
         },
 
         renderJobDatesHtml(job, variant = 'card') {
-            const hasPublished = this.hasDateValue(job.published_date);
-            const pub = hasPublished ? this.escapeHtml(this.formatDate(job.published_date)) : '';
+            const publishedParsed = this.parseJobDate(job.published_date);
+            const hasPublished = Boolean(publishedParsed);
+            const pub = hasPublished ? this.escapeHtml(publishedParsed.display) : '';
             const ins = this.escapeHtml(this.formatJobDateDisplay(job.inserted_date, 'inserted'));
             const isInsertedToday = this.isToday(job.inserted_date);
             const todayClass = isInsertedToday ? ' job-date-today' : '';
@@ -1733,12 +1809,12 @@
 
                 switch (field) {
                     case 'date':
-                        valA = a.inserted_date || '0000-00-00';
-                        valB = b.inserted_date || '0000-00-00';
+                        valA = utils.getJobDateIso(a.inserted_date) || '0000-00-00';
+                        valB = utils.getJobDateIso(b.inserted_date) || '0000-00-00';
                         break;
                     case 'published':
-                        valA = a.published_date || '0000-00-00';
-                        valB = b.published_date || '0000-00-00';
+                        valA = utils.getJobDateIso(a.published_date) || '0000-00-00';
+                        valB = utils.getJobDateIso(b.published_date) || '0000-00-00';
                         break;
                     case 'company':
                         valA = (a.company || '').toLowerCase();
