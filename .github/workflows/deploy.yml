@@ -1,0 +1,49 @@
+name: Build and validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate open_jobs.json
+        run: |
+          python3 -c "
+          import json
+          from pathlib import Path
+          p = Path('assets/data/json/open_jobs.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          assert isinstance(data, list), 'expected array'
+          assert len(data) > 0, 'empty catalog'
+          print(f'OK: {len(data)} jobs')
+          "
+
+      - name: Build recent_jobs.json
+        run: python3 scripts/build-recent.py
+
+      - name: Verify recent_jobs.json artifact
+        run: |
+          test -f assets/data/json/recent_jobs.json
+          python3 -c "
+          import json
+          from pathlib import Path
+          r = json.loads(Path('assets/data/json/recent_jobs.json').read_text(encoding='utf-8'))
+          print(f'recent_jobs: {len(r)} jobs')
+          "
+
+      - name: Upload recent_jobs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: recent_jobs.json
+          path: assets/data/json/recent_jobs.json
+          if-no-files-found: error

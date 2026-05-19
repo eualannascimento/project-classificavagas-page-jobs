@@ -1,9 +1,11 @@
-const CACHE_NAME = 'classificavagas-v1';
+const CACHE_VERSION = '2';
+const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',
     './index.html',
     './assets/css/styles.css',
-    './assets/js/scripts.js'
+    './assets/js/scripts.js',
+    './assets/js/jobs-worker.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,7 +28,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
 
-    if (url.pathname.endsWith('.json')) {
+    if (url.pathname.endsWith('.json') || url.pathname.endsWith('.json.gz')) {
         event.respondWith(
             caches.open(CACHE_NAME).then(async (cache) => {
                 try {
