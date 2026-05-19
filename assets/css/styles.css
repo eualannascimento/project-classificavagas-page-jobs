@@ -1071,6 +1071,44 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-family: var(--font-mono);
     font-size: 0.64rem; color: var(--ink-3); white-space: nowrap; flex-shrink: 0;
 }
+
+.job-dates {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+    max-width: 52%;
+    text-align: right;
+}
+.job-dates-list { max-width: 100%; align-items: flex-end; }
+.job-dates-compact {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    max-width: 55%;
+    margin-left: auto;
+}
+.job-date-line {
+    font-family: var(--font-sans);
+    font-size: 0.58rem;
+    line-height: 1.25;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+.job-date-line strong {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.58rem;
+}
+.job-date-sep { color: var(--ink-3); opacity: 0.45; font-size: 0.58rem; }
+.job-dates.job-date-today .job-date-line:last-child,
+.job-dates.job-date-today .job-date-line:last-child strong {
+    color: var(--success);
+    font-weight: 600;
+}
 .job-date-today { color: var(--success); font-weight: 600; }
 
 .job-badge {
@@ -1168,7 +1206,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .job-list-meta {
     display: flex; flex-direction: column; align-items: flex-end;
-    gap: 4px; flex-shrink: 0; min-width: 90px;
+    gap: 4px; flex-shrink: 0; min-width: 120px;
 }
 .job-list-location {
     display: flex; align-items: center; gap: 3px;
@@ -1183,6 +1221,8 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-family: var(--font-mono);
     font-size: 0.64rem; color: var(--ink-3); white-space: nowrap;
 }
+.job-list-meta .job-dates { align-items: flex-end; max-width: 100%; }
+.job-list-meta .job-date-line { white-space: normal; text-align: right; }
 
 .job-list-arrow {
     color: var(--ink-3); opacity: 0;

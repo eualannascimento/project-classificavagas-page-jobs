@@ -38,8 +38,10 @@
             { key: '90d', label: 'Últimos 3 meses', days: 90 }
         ],
         SORT_OPTIONS: [
-            { key: 'date_desc', label: 'Mais recentes', icon: 'schedule' },
-            { key: 'date_asc', label: 'Mais antigas', icon: 'history' },
+            { key: 'date_desc', label: 'Obtidas: mais recentes', icon: 'schedule' },
+            { key: 'date_asc', label: 'Obtidas: mais antigas', icon: 'history' },
+            { key: 'published_desc', label: 'Publicadas: mais recentes', icon: 'event' },
+            { key: 'published_asc', label: 'Publicadas: mais antigas', icon: 'event' },
             { key: 'company_asc', label: 'Empresa A-Z', icon: 'sort_by_alpha' },
             { key: 'company_desc', label: 'Empresa Z-A', icon: 'sort_by_alpha' },
             { key: 'title_asc', label: 'Título A-Z', icon: 'sort_by_alpha' },
@@ -65,6 +67,7 @@
         filterCounts: {}, // counts per filter option
         visitedJobs: new Set(),
         datePeriod: 'all',
+        publishedDatePeriod: 'all',
         sortBy: 'date_desc',
         viewMode: 'cards', // 'cards', 'list', or 'compact'
         searchHistory: [], // recent searches
@@ -137,10 +140,45 @@
             };
         },
 
+        DATE_MISSING_PUBLISHED: 'Não publicada',
+        DATE_MISSING_INSERTED: 'Não obtida',
+
+        hasDateValue(dateStr) {
+            return Boolean(dateStr && String(dateStr).trim());
+        },
+
         formatDate(dateStr) {
-            if (!dateStr) return '';
+            if (!this.hasDateValue(dateStr)) return '';
             const [y, m, d] = dateStr.split('-');
             return `${d}/${m}/${y}`;
+        },
+
+        formatJobDateDisplay(dateStr, kind = 'inserted') {
+            if (!this.hasDateValue(dateStr)) {
+                return kind === 'published' ? this.DATE_MISSING_PUBLISHED : this.DATE_MISSING_INSERTED;
+            }
+            return this.formatDate(dateStr);
+        },
+
+        renderJobDatesHtml(job, variant = 'card') {
+            const pub = this.escapeHtml(this.formatJobDateDisplay(job.published_date, 'published'));
+            const ins = this.escapeHtml(this.formatJobDateDisplay(job.inserted_date, 'inserted'));
+            const isInsertedToday = this.isToday(job.inserted_date);
+            const todayClass = isInsertedToday ? ' job-date-today' : '';
+
+            if (variant === 'compact') {
+                return `<span class="job-dates job-dates-compact${todayClass}" title="Publicada em: ${pub} · Obtida no Classifica Vagas: ${ins}">
+                    <span class="job-date-line">Pub.: ${pub}</span>
+                    <span class="job-date-sep">·</span>
+                    <span class="job-date-line">Obt.: ${ins}</span>
+                </span>`;
+            }
+
+            const listClass = variant === 'list' ? ' job-dates-list' : '';
+            return `<div class="job-dates${listClass}${todayClass}">
+                <span class="job-date-line">Publicada em: <strong>${pub}</strong></span>
+                <span class="job-date-line">Obtida no Classifica Vagas: <strong>${ins}</strong></span>
+            </div>`;
         },
 
         formatRelativeDate(dateStr) {
@@ -756,8 +794,10 @@
     // SORT MANAGER
     // ============================================
     const SORT_LABELS = {
-        'date_desc': 'Recentes',
-        'date_asc': 'Antigas',
+        'date_desc': 'Obtidas ↓',
+        'date_asc': 'Obtidas ↑',
+        'published_desc': 'Publicadas ↓',
+        'published_asc': 'Publicadas ↑',
         'company_asc': 'A→Z',
         'company_desc': 'Z→A',
         'title_asc': 'Título ↑',
@@ -949,6 +989,9 @@
             if (state.datePeriod !== 'all') {
                 url.searchParams.set('dp', state.datePeriod);
             }
+            if (state.publishedDatePeriod !== 'all') {
+                url.searchParams.set('pdp', state.publishedDatePeriod);
+            }
             if (state.showOnlyVisited) {
                 url.searchParams.set('v', '1');
             }
@@ -980,6 +1023,9 @@
             }
             if (params.has('dp')) {
                 state.datePeriod = params.get('dp');
+            }
+            if (params.has('pdp')) {
+                state.publishedDatePeriod = params.get('pdp');
             }
             if (params.has('v') && params.get('v') === '1') {
                 state.showOnlyVisited = true;
@@ -1500,6 +1546,7 @@
             showOnlyVisited = state.showOnlyVisited,
             quickFilter = state.quickFilter,
             datePeriod = state.datePeriod,
+            publishedDatePeriod = state.publishedDatePeriod,
             selectedFilters = state.selectedFilters
         } = {}) {
             let result = jobs;
@@ -1529,7 +1576,20 @@
             if (datePeriod !== 'all') {
                 const period = CONFIG.DATE_PERIODS.find(p => p.key === datePeriod);
                 if (period && period.days) {
-                    result = result.filter(job => utils.isWithinDays(job.inserted_date, period.days));
+                    result = result.filter(job =>
+                        utils.hasDateValue(job.inserted_date) &&
+                        utils.isWithinDays(job.inserted_date, period.days)
+                    );
+                }
+            }
+
+            if (publishedDatePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === publishedDatePeriod);
+                if (period && period.days) {
+                    result = result.filter(job =>
+                        utils.hasDateValue(job.published_date) &&
+                        utils.isWithinDays(job.published_date, period.days)
+                    );
                 }
             }
 
@@ -1559,7 +1619,14 @@
         },
 
         // Calculate counts for other filters based on current selection
-        recalculateFilterCounts(currentJobs, filters = state.selectedFilters, datePeriod = state.datePeriod, quickFilter = state.quickFilter, searchQuery = state.searchQuery) {
+        recalculateFilterCounts(
+            currentJobs,
+            filters = state.selectedFilters,
+            datePeriod = state.datePeriod,
+            publishedDatePeriod = state.publishedDatePeriod,
+            quickFilter = state.quickFilter,
+            searchQuery = state.searchQuery
+        ) {
             // Reset counts
             state.dynamicFilterCounts = {};
 
@@ -1580,6 +1647,7 @@
                     showOnlyVisited: state.showOnlyVisited,
                     quickFilter,
                     datePeriod,
+                    publishedDatePeriod,
                     selectedFilters: otherFilters
                 });
 
@@ -1606,6 +1674,10 @@
                         valA = a.inserted_date || '0000-00-00';
                         valB = b.inserted_date || '0000-00-00';
                         break;
+                    case 'published':
+                        valA = a.published_date || '0000-00-00';
+                        valB = b.published_date || '0000-00-00';
+                        break;
                     case 'company':
                         valA = (a.company || '').toLowerCase();
                         valB = (b.company || '').toLowerCase();
@@ -1630,7 +1702,8 @@
             const filtered = state.filteredJobs.length;
             const todayCount = state.allJobs.filter(j => utils.isToday(j.inserted_date)).length;
             const hasActiveFilters = state.searchQuery || state.quickFilter !== 'all' ||
-                Object.values(state.selectedFilters).some(v => v && v.length > 0) || state.datePeriod !== 'all';
+                Object.values(state.selectedFilters).some(v => v && v.length > 0) ||
+                state.datePeriod !== 'all' || state.publishedDatePeriod !== 'all';
 
             if (hasActiveFilters) {
                 elements.jobCount.textContent = `${filtered.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} vagas`;
@@ -1643,6 +1716,7 @@
             let count = 0;
             Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
             if (state.datePeriod && state.datePeriod !== 'all') count += 1;
+            if (state.publishedDatePeriod && state.publishedDatePeriod !== 'all') count += 1;
             if (state.quickFilter && state.quickFilter !== 'all') count += 1;
             if (state.showOnlyVisited) count += 1;
             elements.filterBadge.textContent = count;
@@ -1662,6 +1736,7 @@
                 filterState.quickFilter !== 'all' ||
                 filterState.showOnlyVisited ||
                 filterState.datePeriod !== 'all' ||
+                filterState.publishedDatePeriod !== 'all' ||
                 Object.values(filterState.selectedFilters || {}).some(v => v && v.length > 0));
         },
 
@@ -1692,11 +1767,16 @@
                 groups.push({ key: '_visited', label: 'Visitadas', values: ['Só visualizadas'], chipType: 'visited' });
             }
 
-            // Add date period chip if active
+            if (filterState.publishedDatePeriod !== 'all') {
+                const period = CONFIG.DATE_PERIODS.find(p => p.key === filterState.publishedDatePeriod);
+                if (period) {
+                    groups.push({ key: '_date_published', label: 'Publicação', values: [period.label], chipType: 'date_published' });
+                }
+            }
             if (filterState.datePeriod !== 'all') {
                 const period = CONFIG.DATE_PERIODS.find(p => p.key === filterState.datePeriod);
                 if (period) {
-                    groups.push({ key: '_date', label: 'Data', values: [period.label], chipType: 'date' });
+                    groups.push({ key: '_date_inserted', label: 'Obtida', values: [period.label], chipType: 'date_inserted' });
                 }
             }
 
@@ -1785,8 +1865,10 @@
                         state.showOnlyVisited = false;
                         const visitedBtn = document.getElementById('visitedToggle');
                         if (visitedBtn) visitedBtn.setAttribute('aria-pressed', 'false');
-                    } else if (chipType === 'date') {
+                    } else if (chipType === 'date_inserted') {
                         state.datePeriod = 'all';
+                    } else if (chipType === 'date_published') {
+                        state.publishedDatePeriod = 'all';
                     } else if (chipType === 'category') {
                         if (isGrouped) {
                             delete state.selectedFilters[key];
@@ -1839,6 +1921,7 @@
             state.searchQuery = '';
             state.quickFilter = 'all';
             state.datePeriod = 'all';
+            state.publishedDatePeriod = 'all';
             state.sortBy = 'date_desc';
             state.showOnlyVisited = false;
             elements.searchInput.value = '';
@@ -1929,6 +2012,7 @@
                 searchQuery: state.searchQuery || '',
                 quickFilter: state.quickFilter || 'all',
                 datePeriod: state.datePeriod || 'all',
+                publishedDatePeriod: state.publishedDatePeriod || 'all',
                 selectedFilters: JSON.parse(JSON.stringify(state.selectedFilters || {})),
                 showOnlyVisited: Boolean(state.showOnlyVisited),
                 sortBy: state.sortBy || 'date_desc'
@@ -1940,6 +2024,7 @@
                 searchQuery: savedState.searchQuery || '',
                 quickFilter: savedState.quickFilter || 'all',
                 datePeriod: savedState.datePeriod || 'all',
+                publishedDatePeriod: savedState.publishedDatePeriod || 'all',
                 selectedFilters: JSON.parse(JSON.stringify(savedState.selectedFilters || {})),
                 showOnlyVisited: Boolean(savedState.showOnlyVisited),
                 sortBy: savedState.sortBy || 'date_desc'
@@ -2122,6 +2207,7 @@
             state.searchQuery = savedState.searchQuery;
             state.quickFilter = savedState.quickFilter;
             state.datePeriod = savedState.datePeriod;
+            state.publishedDatePeriod = savedState.publishedDatePeriod;
             state.selectedFilters = savedState.selectedFilters;
             state.showOnlyVisited = savedState.showOnlyVisited;
             state.sortBy = savedState.sortBy;
@@ -2304,8 +2390,10 @@
             const isNew = utils.isToday(job.inserted_date) || utils.isNewSinceLastVisit(job.inserted_date);
             const jobKey = utils.getJobKey(job);
             const isVisited = state.visitedJobs.has(jobKey);
-            const relativeDate = utils.formatRelativeDate(job.inserted_date);
-            const fullDate = utils.formatDate(job.inserted_date);
+            const fullInsertedDate = utils.formatDate(job.inserted_date);
+            const jobDatesCard = utils.renderJobDatesHtml(job, 'card');
+            const jobDatesList = utils.renderJobDatesHtml(job, 'list');
+            const jobDatesCompact = utils.renderJobDatesHtml(job, 'compact');
             const smartLocation = utils.getSmartLocation(job);
             const contractInfo = utils.getContractInfo(job);
             const title = utils.toTitleCase(job.title);
@@ -2313,7 +2401,7 @@
             const jobUrl = job.url || '#';
             const stretchLink = `<a href="${utils.escapeHtml(jobUrl)}" class="job-card-stretch-link" target="_blank" rel="noopener noreferrer" aria-label="Abrir vaga: ${utils.escapeHtml(title)}"></a>`;
             const newTitle = isNew
-                ? ` title="Adicionada ao classificavagas${fullDate ? ' em ' + fullDate : ''}"`
+                ? ` title="Adicionada ao classificavagas${fullInsertedDate ? ' em ' + fullInsertedDate : ''}"`
                 : '';
 
             const card = document.createElement('article');
@@ -2348,8 +2436,6 @@
                 ? `<span class="job-badge job-badge-new"${newTitle}>Novo</span>`
                 : '';
 
-            const dateClass = isNew ? ' job-date-today' : '';
-
             if (state.viewMode === 'compact') {
                 card.innerHTML = `
                     ${stretchLink}
@@ -2358,7 +2444,7 @@
                         <a class="job-compact-title job-card-title-link" href="${utils.escapeHtml(jobUrl)}" target="_blank" rel="noopener noreferrer">${utils.escapeHtml(utils.truncate(title, 45))}</a>
                         <span class="job-compact-separator">·</span>
                         <span class="job-compact-company">${utils.escapeHtml(utils.truncate(job.company, 20))}</span>
-                        <span class="job-compact-date${dateClass}" title="${fullDate}">${relativeDate}</span>
+                        ${jobDatesCompact}
                     </div>
                 `;
             } else if (state.viewMode === 'list') {
@@ -2381,7 +2467,7 @@
                         </div>
                         <div class="job-list-meta">
                             ${smartLocation ? `<span class="job-list-location"><span class="material-symbols-rounded">location_on</span>${utils.escapeHtml(utils.truncate(smartLocation, 18))}</span>` : ''}
-                            <span class="job-list-date${dateClass}" title="${fullDate}">${relativeDate}</span>
+                            ${jobDatesList}
                         </div>
                         <span class="job-list-arrow">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -2415,7 +2501,7 @@
                             <span class="material-symbols-rounded">location_on</span>
                             <span>${smartLocation ? utils.escapeHtml(smartLocation) : '<span class="job-location-empty">—</span>'}</span>
                         </div>
-                        <span class="job-date${dateClass}" title="${fullDate}">${relativeDate}</span>
+                        ${jobDatesCard}
                     </div>
                 `;
             }
@@ -2532,6 +2618,7 @@
             // Clone current filters to temp
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
             state.tempDatePeriod = state.datePeriod;
+            state.tempPublishedDatePeriod = state.publishedDatePeriod;
             state.tempQuickFilter = state.quickFilter;
             state.tempSortBy = state.sortBy;
             this._openFiltersTrigger = document.activeElement;
@@ -2541,7 +2628,14 @@
             this.updateCount();
 
             // Initial count calculation for the modal state
-            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.tempQuickFilter, state.searchQuery);
+            filterManager.recalculateFilterCounts(
+                state.allJobs,
+                state.tempFilters,
+                state.tempDatePeriod,
+                state.tempPublishedDatePeriod,
+                state.tempQuickFilter,
+                state.searchQuery
+            );
             this.updateOptionCounts();
 
             elements.filterSheet.setAttribute('role', 'dialog');
@@ -2608,21 +2702,20 @@
                 </div>
             `;
 
-            // Data da vaga section (position: after Especialidade, before Empresa)
-            const datePeriodSection = `
-                <div class="filter-section" data-key="_date">
+            const buildDatePeriodSection = (key, title, icon, tempPeriod, optionsClass, dataAttr) => `
+                <div class="filter-section" data-key="${key}">
                     <div class="filter-section-header">
                         <div class="filter-section-header-left">
-                            <span class="material-symbols-rounded">calendar_today</span>
-                            <span class="filter-section-title">Data da vaga</span>
-                            ${state.tempDatePeriod !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
+                            <span class="material-symbols-rounded">${icon}</span>
+                            <span class="filter-section-title">${title}</span>
+                            ${tempPeriod !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
                         </div>
                         <span class="material-symbols-rounded filter-section-icon">expand_more</span>
                     </div>
                     <div class="filter-section-body">
-                        <div class="filter-options-list date-options">
+                        <div class="filter-options-list ${optionsClass}">
                             ${CONFIG.DATE_PERIODS.map(period => `
-                                <button class="filter-option-chip ${state.tempDatePeriod === period.key ? 'selected' : ''}" data-period="${period.key}">
+                                <button class="filter-option-chip ${tempPeriod === period.key ? 'selected' : ''}" ${dataAttr}="${period.key}">
                                     <span class="material-symbols-rounded check-icon">check</span>
                                     <span>${period.label}</span>
                                 </button>
@@ -2631,6 +2724,23 @@
                     </div>
                 </div>
             `;
+
+            const publishedDateSection = buildDatePeriodSection(
+                '_date_published',
+                'Data de publicação',
+                'event',
+                state.tempPublishedDatePeriod,
+                'date-options-published',
+                'data-published-period'
+            );
+            const insertedDateSection = buildDatePeriodSection(
+                '_date_inserted',
+                'Obtida no Classifica Vagas',
+                'calendar_today',
+                state.tempDatePeriod,
+                'date-options-inserted',
+                'data-inserted-period'
+            );
 
             // Order: Tipo | Ramo Nível Categoria Especialidade | Data | Empresa Abrangência Plataforma Localização País Estado Cidade
             // FILTER_CATEGORIES is already ordered; split at index 4 (Empresa) to insert date section
@@ -2665,7 +2775,8 @@
                 '<p class="filter-sheet-hint"><strong>Entre grupos:</strong> todas as condições (E). <strong>Dentro do mesmo grupo:</strong> qualquer opção marcada (OU).</p>' +
                 quickSection +
                 buildCats(beforeDate) +
-                datePeriodSection +
+                publishedDateSection +
+                insertedDateSection +
                 buildCats(afterDate);
 
             // Add event listeners
@@ -2678,8 +2789,9 @@
                 const key = section.dataset.key;
                 let expand = false;
                 if (key === '_quick' && state.tempQuickFilter !== 'all') expand = true;
-                if (key === '_date' && state.tempDatePeriod !== 'all') expand = true;
-                if (key && key !== '_quick' && key !== '_date' && (state.tempFilters[key] || []).length > 0) {
+                if (key === '_date_inserted' && state.tempDatePeriod !== 'all') expand = true;
+                if (key === '_date_published' && state.tempPublishedDatePeriod !== 'all') expand = true;
+                if (key && key !== '_quick' && key !== '_date_inserted' && key !== '_date_published' && (state.tempFilters[key] || []).length > 0) {
                     expand = true;
                 }
                 if (expand) section.classList.add('expanded');
@@ -2738,35 +2850,37 @@
                 });
             });
 
-            // Date period options
-            elements.filterSheetContent.querySelectorAll('.date-options .filter-option-chip').forEach(chip => {
-                chip.addEventListener('click', () => {
-                    const period = chip.dataset.period;
-                    state.tempDatePeriod = period;
+            const bindDatePeriodOptions = (selector, stateKey, periodAttr) => {
+                elements.filterSheetContent.querySelectorAll(selector).forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        const period = chip.getAttribute(periodAttr);
+                        state[stateKey] = period;
 
-                    // Update UI
-                    elements.filterSheetContent.querySelectorAll('.date-options .filter-option-chip').forEach(c => {
-                        c.classList.toggle('selected', c.dataset.period === period);
-                    });
+                        elements.filterSheetContent.querySelectorAll(selector).forEach(c => {
+                            c.classList.toggle('selected', c.getAttribute(periodAttr) === period);
+                        });
 
-                    // Update badge
-                    const section = chip.closest('.filter-section');
-                    const badge = section.querySelector('.filter-section-count');
-                    if (period !== 'all') {
-                        if (badge) {
-                            badge.textContent = '1';
-                        } else {
-                            const left = section.querySelector('.filter-section-header-left');
-                            left.insertAdjacentHTML('beforeend', `<span class="filter-section-count">1</span>`);
+                        const section = chip.closest('.filter-section');
+                        const badge = section.querySelector('.filter-section-count');
+                        if (period !== 'all') {
+                            if (badge) {
+                                badge.textContent = '1';
+                            } else {
+                                section.querySelector('.filter-section-header-left')
+                                    ?.insertAdjacentHTML('beforeend', '<span class="filter-section-count">1</span>');
+                            }
+                        } else if (badge) {
+                            badge.remove();
                         }
-                    } else if (badge) {
-                        badge.remove();
-                    }
 
-                    this.updateCount();
-                    this.updateOptionCounts();
+                        this.updateCount();
+                        this.updateOptionCounts();
+                    });
                 });
-            });
+            };
+
+            bindDatePeriodOptions('.date-options-inserted .filter-option-chip', 'tempDatePeriod', 'data-inserted-period');
+            bindDatePeriodOptions('.date-options-published .filter-option-chip', 'tempPublishedDatePeriod', 'data-published-period');
 
             // Sort options
             elements.filterSheetContent.querySelectorAll('.sort-options .filter-option-chip').forEach(chip => {
@@ -2800,7 +2914,9 @@
 
             // Option chips
             elements.filterSheetContent.querySelectorAll('.filter-options-list[data-key]').forEach(list => {
-                if (!list.classList.contains('date-options') && !list.classList.contains('sort-options')) {
+                if (!list.classList.contains('date-options-inserted') &&
+                    !list.classList.contains('date-options-published') &&
+                    !list.classList.contains('sort-options')) {
                     this.addOptionListeners(list);
                 }
             });
@@ -2834,7 +2950,14 @@
 
         updateOptionCounts() {
             // Recalculate counts based on current TEMP state
-            filterManager.recalculateFilterCounts(state.allJobs, state.tempFilters, state.tempDatePeriod, state.tempQuickFilter, state.searchQuery);
+            filterManager.recalculateFilterCounts(
+                state.allJobs,
+                state.tempFilters,
+                state.tempDatePeriod,
+                state.tempPublishedDatePeriod,
+                state.tempQuickFilter,
+                state.searchQuery
+            );
 
             // Update all visible option counts
             elements.filterSheetContent.querySelectorAll('.filter-option-chip').forEach(chip => {
@@ -2842,7 +2965,7 @@
                 const value = chip.dataset.value;
 
                 // Skip date/sort options which don't have dynamic counts in the same way
-                if (!key || key === '_date' || key === '_sort') return;
+                if (!key || key === '_date_inserted' || key === '_date_published' || key === '_sort') return;
 
                 const counts = state.dynamicFilterCounts[key] || {};
                 const count = counts[value] || 0;
@@ -2860,6 +2983,7 @@
                 .reduce((sum, arr) => sum + arr.length, 0);
 
             if (state.tempDatePeriod !== 'all') count++;
+            if (state.tempPublishedDatePeriod !== 'all') count++;
             if (state.tempQuickFilter !== 'all') count++;
 
             elements.sheetFilterCount.textContent = count > 0
@@ -2873,6 +2997,7 @@
             const n = filterManager.getFilteredCount({
                 selectedFilters: state.tempFilters,
                 datePeriod: state.tempDatePeriod,
+                publishedDatePeriod: state.tempPublishedDatePeriod,
                 quickFilter: state.tempQuickFilter
             });
             const label = elements.sheetApplyLabel;
@@ -2906,6 +3031,7 @@
         clearTemp() {
             state.tempFilters = {};
             state.tempDatePeriod = 'all';
+            state.tempPublishedDatePeriod = 'all';
             state.tempQuickFilter = 'all';
             state.tempSortBy = 'date_desc';
 
@@ -2917,8 +3043,8 @@
                 c.classList.toggle('selected', c.dataset.quick === 'all');
             });
 
-            // Select default date and sort options
-            elements.filterSheetContent.querySelector('.date-options .filter-option-chip[data-period="all"]')?.classList.add('selected');
+            elements.filterSheetContent.querySelector('.date-options-inserted .filter-option-chip[data-inserted-period="all"]')?.classList.add('selected');
+            elements.filterSheetContent.querySelector('.date-options-published .filter-option-chip[data-published-period="all"]')?.classList.add('selected');
             elements.filterSheetContent.querySelector('.sort-options .filter-option-chip[data-sort="date_desc"]')?.classList.add('selected');
 
             elements.filterSheetContent.querySelectorAll('.filter-section-count').forEach(badge => {
@@ -2932,6 +3058,7 @@
         applyAndClose() {
             state.selectedFilters = state.tempFilters;
             state.datePeriod = state.tempDatePeriod;
+            state.publishedDatePeriod = state.tempPublishedDatePeriod;
             state.quickFilter = state.tempQuickFilter;
             state.sortBy = state.tempSortBy;
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
