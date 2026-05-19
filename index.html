@@ -49,22 +49,15 @@
 
     <div id="app" class="app">
 
-        <div id="onboardingBanner" class="onboarding-banner onboarding-desktop-only hidden" role="region" aria-label="Dicas de uso">
+        <div id="onboardingBanner" class="onboarding-banner hidden" role="region" aria-label="Dicas de uso">
             <ul class="onboarding-list">
                 <li>Pressione <kbd>/</kbd> para buscar e <kbd>?</kbd> para ver atalhos</li>
+                <li>Use os chips <strong>Remoto</strong>, <strong>Adicionadas hoje</strong> e <strong>Afirmativa</strong> na barra de filtros</li>
                 <li>Toque nas tags das vagas para filtrar rapidamente</li>
                 <li>Use o ícone de link para compartilhar sua busca</li>
+                <li class="onboarding-ptr-hint">Puxe a lista para baixo para atualizar as vagas</li>
             </ul>
             <button type="button" class="onboarding-dismiss" id="onboardingDismiss">Entendi</button>
-        </div>
-
-        <div id="onboardingBannerMobile" class="onboarding-banner onboarding-mobile-only hidden" role="region" aria-label="Dicas de uso no celular">
-            <ul class="onboarding-list">
-                <li>Use <strong>Remoto</strong>, <strong>Hoje</strong> ou <strong>Todas</strong> abaixo da busca</li>
-                <li>Toque nas tags das vagas para filtrar na hora</li>
-                <li>Puxe a lista para baixo para atualizar as vagas</li>
-            </ul>
-            <button type="button" class="onboarding-dismiss" id="onboardingDismissMobile">Entendi</button>
         </div>
 
         <div class="app-chrome" id="appChrome">
@@ -107,12 +100,6 @@
             </div>
         </div>
 
-        <div class="quick-segment" id="quickSegment" role="tablist" aria-label="Filtro rápido">
-            <button type="button" class="quick-segment-btn" role="tab" data-quick="remote" aria-selected="false">Remoto</button>
-            <button type="button" class="quick-segment-btn" role="tab" data-quick="today" aria-selected="false">Hoje</button>
-            <button type="button" class="quick-segment-btn" role="tab" data-quick="all" aria-selected="true">Todas</button>
-        </div>
-
         <div class="filter-chips-container">
             <div class="filter-chips-scroll">
                 <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas" title="Vagas que você já abriu">
@@ -125,7 +112,7 @@
                 </button>
 
                 <button type="button" class="filter-chip filter-chip-quick" data-quick="remote" data-filter="remote" aria-label="Filtrar vagas remotas">Remoto</button>
-                <button type="button" class="filter-chip filter-chip-quick" data-quick="today" data-filter="today" aria-label="Filtrar vagas de hoje">Hoje</button>
+                <button type="button" class="filter-chip filter-chip-quick" data-quick="today" data-filter="today" aria-label="Filtrar vagas adicionadas hoje" title="Vagas adicionadas ao classificavagas hoje">Adicionadas hoje</button>
                 <button type="button" class="filter-chip filter-chip-quick" data-quick="affirmative" data-filter="affirmative" aria-label="Filtrar vagas afirmativas">Afirmativa</button>
 
                 <button class="filter-chip filter-chip-main" id="openFilters" aria-haspopup="dialog" aria-controls="filterSheet">
@@ -184,14 +171,6 @@
 
         <div class="fab-stack" id="fabStack">
             <div class="fab-menu hidden" id="fabMenu" role="menu" aria-label="Ações rápidas">
-                <button type="button" class="fab-menu-item fab-menu-mobile-only" id="fabChangeView" role="menuitem">
-                    <span class="material-symbols-rounded" id="fabViewIcon">view_list</span>
-                    <span>Visualização</span>
-                </button>
-                <button type="button" class="fab-menu-item fab-menu-mobile-only" id="fabOpenSort" role="menuitem">
-                    <span class="material-symbols-rounded">swap_vert</span>
-                    <span>Ordenar</span>
-                </button>
                 <button type="button" class="fab-menu-item hidden" id="fabLastJob" role="menuitem">
                     <span class="material-symbols-rounded">history</span>
                     <span>Última vaga</span>

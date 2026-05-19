@@ -156,8 +156,7 @@
             if (existing) existing.remove();
 
             const toast = document.createElement('div');
-            const mobileClass = this.isMobile() ? ' toast-mobile-top' : '';
-            toast.className = className + mobileClass;
+            toast.className = className;
             toast.setAttribute('role', 'status');
             toast.setAttribute('aria-live', 'polite');
             toast.textContent = message;
@@ -371,8 +370,7 @@
     const viewModeManager = {
         init() {
             const saved = localStorage.getItem('cv_view');
-            const defaultMode = utils.isMobile() ? 'list' : 'cards';
-            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : defaultMode;
+            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : 'cards';
             this.apply(state.viewMode, true);
 
             if (elements.viewToggle) {
@@ -698,7 +696,7 @@
         hybrid: 'Híbrido',
         onsite: 'Presencial',
         affirmative: 'Afirmativa',
-        today: 'Hoje'
+        today: 'Adicionadas hoje'
     };
 
     const sortManager = {
@@ -755,9 +753,7 @@
                 });
             });
 
-            if (utils.isMobile()) {
-                sheetSwipe.bind(sheet, () => this.closeSortSheet());
-            }
+            sheetSwipe.bind(sheet, () => this.closeSortSheet());
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && this.sortSheetOpen) this.closeSortSheet();
@@ -765,16 +761,8 @@
         },
 
         toggleDropdown() {
-            if (utils.isMobile()) {
-                if (this.sortSheetOpen) this.closeSortSheet();
-                else this.openSortSheet();
-                return;
-            }
-            if (this.isOpen) {
-                this.closeDropdown();
-            } else {
-                this.openDropdown();
-            }
+            if (this.sortSheetOpen) this.closeSortSheet();
+            else this.openSortSheet();
         },
 
         openSortSheet() {
@@ -1093,28 +1081,109 @@
         if (msg && msgEl) msgEl.textContent = msg;
     }
 
+    const jobsWorkerBridge = {
+        _worker: null,
+        _seq: 0,
+
+        getWorker() {
+            if (!this._worker && typeof Worker !== 'undefined') {
+                try {
+                    this._worker = new Worker('assets/js/jobs-worker.js');
+                } catch (_) {
+                    this._worker = null;
+                }
+            }
+            return this._worker;
+        },
+
+        parseJsonText(text) {
+            const worker = this.getWorker();
+            if (!worker) {
+                return Promise.resolve(JSON.parse(text));
+            }
+            const id = ++this._seq;
+            return new Promise((resolve, reject) => {
+                const onMessage = (e) => {
+                    if (e.data?.id !== id) return;
+                    worker.removeEventListener('message', onMessage);
+                    if (e.data.type === 'parsed') resolve(e.data.data);
+                    else reject(new Error(e.data.message || 'Parse failed'));
+                };
+                worker.addEventListener('message', onMessage);
+                worker.postMessage({ id, type: 'parse', text });
+            });
+        }
+    };
+
     const dataLoader = {
         _slowNetworkTimer: null,
+        _loadPromise: null,
 
         setSplashMsg(msg) {
             const el = document.getElementById('splashMsg');
             if (el) el.textContent = msg;
         },
 
-        fetchJson(url, onProgress) {
+        async fetchJson(url, onProgress, { preferGzip = true } = {}) {
+            if (preferGzip && typeof DecompressionStream !== 'undefined') {
+                try {
+                    return await this._fetchGzipJson(url + '.gz', onProgress);
+                } catch (_) {
+                    /* fallback to plain JSON */
+                }
+            }
+            return this._fetchJsonXHR(url, onProgress);
+        },
+
+        _fetchGzipJson(url, onProgress) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('GET', url);
-                xhr.responseType = 'json';
+                xhr.responseType = 'arraybuffer';
                 xhr.onprogress = (e) => {
                     if (onProgress) onProgress(e);
                 };
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
+                xhr.onload = async () => {
+                    if (xhr.status < 200 || xhr.status >= 300) {
+                        reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
+                        return;
+                    }
+                    try {
+                        const stream = new Blob([xhr.response]).stream().pipeThrough(new DecompressionStream('gzip'));
+                        const text = await new Response(stream).text();
+                        const data = await jobsWorkerBridge.parseJsonText(text);
                         resolve({
-                            data: xhr.response,
+                            data,
                             lastModified: xhr.getResponseHeader('last-modified')
                         });
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.send();
+            });
+        },
+
+        _fetchJsonXHR(url, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.responseType = 'text';
+                xhr.onprogress = (e) => {
+                    if (onProgress) onProgress(e);
+                };
+                xhr.onload = async () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const data = await jobsWorkerBridge.parseJsonText(xhr.responseText);
+                            resolve({
+                                data,
+                                lastModified: xhr.getResponseHeader('last-modified')
+                            });
+                        } catch (err) {
+                            reject(err);
+                        }
                     } else {
                         reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
                     }
@@ -1168,7 +1237,40 @@
             }
         },
 
-        async load() {
+        load(options = {}) {
+            if (this._loadPromise) return this._loadPromise;
+            this._loadPromise = this._loadInternal(options).finally(() => {
+                this._loadPromise = null;
+            });
+            return this._loadPromise;
+        },
+
+        async _loadInternal({ soft = false } = {}) {
+            if (soft && state.allJobs.length > 0) {
+                try {
+                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: false });
+                    if (recentResult.data?.length) {
+                        this.ingestJobs(recentResult.data, recentResult.lastModified);
+                        state.isPartialData = true;
+                        this.updatePartialBanner();
+                        filterManager.apply();
+                        if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
+                    }
+                } catch (_) { /* optional */ }
+                try {
+                    const fullResult = await this.fetchJson(CONFIG.DATA_URL);
+                    this.ingestJobs(fullResult.data, fullResult.lastModified);
+                    state.isPartialData = false;
+                    this.updatePartialBanner();
+                    filterManager.apply();
+                    if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
+                    utils.showToast('Vagas atualizadas', 'theme-toast', 2500);
+                } catch (_) {
+                    utils.showToast('Não foi possível atualizar o catálogo', 'theme-toast', 3000);
+                }
+                return;
+            }
+
             skeletonLoader.show();
             let _lastSplashAt = Date.now();
             const _setProgress = (pct, msg) => {
@@ -1192,7 +1294,7 @@
 
             try {
                 try {
-                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL);
+                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: false });
                     if (recentResult.data?.length) {
                         this.ingestJobs(recentResult.data, recentResult.lastModified);
                         state.isPartialData = true;
@@ -1807,13 +1909,17 @@
             const contractInfo = utils.getContractInfo(job);
             const title = utils.toTitleCase(job.title);
 
-            const card = document.createElement('a');
-            card.href = job.url;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
-            card.className = `job-card${isVisited ? ' visited' : ''}`;
+            const jobUrl = job.url || '#';
+            const stretchLink = `<a href="${utils.escapeHtml(jobUrl)}" class="job-card-stretch-link" target="_blank" rel="noopener noreferrer" aria-label="Abrir vaga: ${utils.escapeHtml(title)}"></a>`;
+            const newTitle = isNew
+                ? ` title="Adicionada ao classificavagas${fullDate ? ' em ' + fullDate : ''}"`
+                : '';
 
-            if (typeof animationManager !== 'undefined' && !utils.isMobile()) {
+            const card = document.createElement('article');
+            card.className = `job-card${isVisited ? ' visited' : ''}`;
+            card.dataset.url = jobUrl;
+
+            if (typeof animationManager !== 'undefined') {
                 animationManager.observe(card);
             }
             card.dataset.id = job.id;
@@ -1832,20 +1938,23 @@
                 ? (contractInfo.cls === 'remote' ? 'remote' : contractInfo.cls === 'hybrid' ? 'hybrid' : contractInfo.cls === 'onsite' ? 'onsite' : null)
                 : null;
             const contractTag = contractInfo
-                ? `<span class="job-tag job-tag-${contractInfo.cls}${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}" role="button" tabindex="0"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`
+                ? (contractQuick
+                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
+                    : `<span class="job-tag job-tag-${contractInfo.cls}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`)
                 : '';
 
             const newBadge = isNew
-                ? `<span class="job-badge job-badge-new">Novo</span>`
+                ? `<span class="job-badge job-badge-new"${newTitle}>Novo</span>`
                 : '';
 
             const dateClass = isNew ? ' job-date-today' : '';
 
             if (state.viewMode === 'compact') {
                 card.innerHTML = `
+                    ${stretchLink}
                     <div class="job-compact-content">
                         ${isNew ? '<span class="job-compact-dot"></span>' : ''}
-                        <span class="job-compact-title">${utils.escapeHtml(utils.truncate(title, 45))}</span>
+                        <a class="job-compact-title job-card-title-link" href="${utils.escapeHtml(jobUrl)}" target="_blank" rel="noopener noreferrer">${utils.escapeHtml(utils.truncate(title, 45))}</a>
                         <span class="job-compact-separator">·</span>
                         <span class="job-compact-company">${utils.escapeHtml(utils.truncate(job.company, 20))}</span>
                         <span class="job-compact-date${dateClass}" title="${fullDate}">${relativeDate}</span>
@@ -1853,16 +1962,19 @@
                 `;
             } else if (state.viewMode === 'list') {
                 card.innerHTML = `
+                    ${stretchLink}
                     <div class="job-list-content">
                         <div class="job-list-index">
                             ${isNew ? '<span class="list-new-dot"></span>' : ''}
                         </div>
                         <div class="job-list-main">
-                            <h3>${utils.escapeHtml(title)}</h3>
+                            <h3><a class="job-card-title-link" href="${utils.escapeHtml(jobUrl)}" target="_blank" rel="noopener noreferrer">${utils.escapeHtml(title)}</a></h3>
                             <div class="job-list-company-row">
                                 <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                                 ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
-                                ${contractInfo ? `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact${contractQuick ? ' job-tag-clickable' : ''}"${contractQuick ? ` data-quick-filter="${contractQuick}" role="button" tabindex="0"` : ''}>${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>` : ''}
+                                ${contractInfo ? (contractQuick
+                                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-compact job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
+                                    : `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`) : ''}
                                 ${isAffirmative ? `<span class="job-tag job-tag-affirmative job-tag-compact"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</span>` : ''}
                             </div>
                         </div>
@@ -1879,12 +1991,13 @@
                 `;
             } else {
                 card.innerHTML = `
+                    ${stretchLink}
                     <div class="job-card-header">
                         <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
                             <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
                         </div>
                         <div class="job-card-title">
-                            <h3>${utils.escapeHtml(title)}</h3>
+                            <h3><a class="job-card-title-link" href="${utils.escapeHtml(jobUrl)}" target="_blank" rel="noopener noreferrer">${utils.escapeHtml(title)}</a></h3>
                             <p>${utils.escapeHtml(job.company)}</p>
                         </div>
                         ${newBadge}
@@ -1892,9 +2005,9 @@
                     <div class="job-card-body">
                         ${contractTag}
                         ${affirmativeTag}
-                        ${isValidLevel ? `<span class="job-tag job-tag-clickable" role="button" tabindex="0" data-filter-key="level" data-filter-value="${utils.escapeHtml(job.level)}">${utils.escapeHtml(utils.truncate(levelName, 16))}</span>` : ''}
-                        ${isValidCategory ? `<span class="job-tag job-tag-clickable" role="button" tabindex="0" data-filter-key="category" data-filter-value="${utils.escapeHtml(job.category)}">${utils.escapeHtml(utils.truncate(categoryName, 16))}</span>` : ''}
-                        ${isValidCompanyType ? `<span class="job-tag job-tag-clickable" role="button" tabindex="0" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</span>` : ''}
+                        ${isValidLevel ? `<button type="button" class="job-tag job-tag-clickable" data-filter-key="level" data-filter-value="${utils.escapeHtml(job.level)}">${utils.escapeHtml(utils.truncate(levelName, 16))}</button>` : ''}
+                        ${isValidCategory ? `<button type="button" class="job-tag job-tag-clickable" data-filter-key="category" data-filter-value="${utils.escapeHtml(job.category)}">${utils.escapeHtml(utils.truncate(categoryName, 16))}</button>` : ''}
+                        ${isValidCompanyType ? `<button type="button" class="job-tag job-tag-clickable" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</button>` : ''}
                     </div>
                     <div class="job-card-footer">
                         <div class="job-location">
@@ -1928,9 +2041,22 @@
                 el.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
             });
 
-            card.addEventListener('click', (e) => {
-                const tag = e.target.closest('.job-tag-clickable');
-                if (tag) {
+            const markOpened = () => {
+                if (!state.visitedJobs.has(jobKey)) {
+                    utils.markVisited(job);
+                    card.classList.add('visited');
+                    if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
+                }
+                localStorage.setItem('cv_last_clicked', jobKey);
+                if (typeof fabMenuManager !== 'undefined') fabMenuManager.updateLastJobVisibility();
+            };
+
+            card.querySelectorAll('.job-card-stretch-link, .job-card-title-link').forEach((link) => {
+                link.addEventListener('click', () => markOpened());
+            });
+
+            card.querySelectorAll('.job-tag-clickable').forEach((tag) => {
+                tag.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     let feedback = 'Filtro aplicado';
@@ -1948,15 +2074,7 @@
                     }
                     utils.showToast(feedback, 'theme-toast filter-toast');
                     filterManager.scrollToActiveFilters();
-                    return;
-                }
-                if (!state.visitedJobs.has(jobKey)) {
-                    utils.markVisited(job);
-                    card.classList.add('visited');
-                    if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
-                }
-                localStorage.setItem('cv_last_clicked', jobKey);
-                if (typeof fabMenuManager !== 'undefined') fabMenuManager.updateLastJobVisibility();
+                });
             });
 
             return card;
@@ -2060,7 +2178,7 @@
                 { key: 'hybrid', label: 'Híbrido' },
                 { key: 'onsite', label: 'Presencial' },
                 { key: 'affirmative', label: 'Afirmativa' },
-                { key: 'today', label: 'Hoje' }
+                { key: 'today', label: 'Adicionadas hoje' }
             ];
             const quickSection = `
                 <div class="filter-section" data-key="_quick">
@@ -2622,7 +2740,7 @@
         observer: null,
 
         init() {
-            if (utils.isMobile()) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
             const options = {
                 root: null,
@@ -2703,8 +2821,7 @@
             const isMobile = utils.isMobile();
 
             document.body.classList.toggle('chrome-scrolled', scrollY > 10);
-            document.body.classList.toggle('chrome-compact', isMobile && scrollY > 56);
-            document.body.classList.toggle('footer-hidden', scrollY > 72);
+            document.body.classList.toggle('chrome-compact', scrollY > 56);
 
             if (elements.topAppBar) {
                 elements.topAppBar.classList.toggle('elevated', scrollY > 10);
@@ -2738,12 +2855,10 @@
     // ============================================
     const quickFilters = {
         init() {
-            document.querySelectorAll('.filter-chip-quick, .quick-segment-btn').forEach(chip => {
+            document.querySelectorAll('.filter-chip-quick').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const q = chip.dataset.quick;
-                    const next = chip.classList.contains('quick-segment-btn')
-                        ? q
-                        : (state.quickFilter === q ? 'all' : q);
+                    const next = state.quickFilter === q ? 'all' : q;
                     filterManager.setQuickFilter(next);
                     this.syncUI();
                 });
@@ -2752,15 +2867,9 @@
         },
         syncUI() {
             document.querySelectorAll('.filter-chip-quick').forEach(chip => {
-                chip.classList.toggle('selected', chip.dataset.quick === state.quickFilter);
-            });
-            document.querySelectorAll('.quick-segment-btn').forEach(btn => {
-                const q = btn.dataset.quick;
-                const active = q === 'all'
-                    ? (state.quickFilter === 'all' || !['remote', 'today'].includes(state.quickFilter))
-                    : state.quickFilter === q;
-                btn.classList.toggle('active', active);
-                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                const selected = chip.dataset.quick === state.quickFilter;
+                chip.classList.toggle('selected', selected);
+                chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
             });
         }
     };
@@ -2820,21 +2929,45 @@
     // SHORTCUTS OVERLAY
     // ============================================
     const shortcutsOverlay = {
+        _trigger: null,
+
         init() {
             const overlay = document.getElementById('shortcutsOverlay');
             const closeBtn = document.getElementById('closeShortcuts');
+            const app = document.getElementById('app');
             if (!overlay) return;
 
-            closeBtn?.addEventListener('click', () => overlay.classList.add('hidden'));
+            const close = () => {
+                overlay.classList.add('hidden');
+                if (app) app.removeAttribute('aria-hidden');
+                const trigger = this._trigger;
+                this._trigger = null;
+                if (trigger && typeof trigger.focus === 'function') trigger.focus();
+            };
+
+            const open = () => {
+                this._trigger = document.activeElement;
+                overlay.classList.remove('hidden');
+                if (app) app.setAttribute('aria-hidden', 'true');
+                closeBtn?.focus();
+            };
+
+            closeBtn?.addEventListener('click', close);
             overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.classList.add('hidden');
+                if (e.target === overlay) close();
             });
 
             document.addEventListener('keydown', (e) => {
                 const tag = document.activeElement?.tagName;
                 if (['INPUT', 'TEXTAREA'].includes(tag)) return;
+                if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+                    e.preventDefault();
+                    close();
+                    return;
+                }
                 if (e.key === '?') {
-                    overlay.classList.toggle('hidden');
+                    if (overlay.classList.contains('hidden')) open();
+                    else close();
                 }
                 if (e.key === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey) {
                     e.preventDefault();
@@ -2872,9 +3005,6 @@
             const apply = () => {
                 const mobile = utils.isMobile();
                 document.documentElement.setAttribute('data-mobile', mobile ? 'true' : 'false');
-                if (mobile) {
-                    document.documentElement.setAttribute('data-density', 'regular');
-                }
                 const input = elements.searchInput;
                 if (input?.dataset.placeholderDesktop) {
                     input.placeholder = mobile
@@ -2896,55 +3026,31 @@
         init() {
             const stack = document.getElementById('fabStack');
             const fab = elements.scrollTopFab;
-            const menu = document.getElementById('fabMenu');
             const lastBtn = document.getElementById('fabLastJob');
             const topBtn = document.getElementById('fabScrollTop');
             if (!fab || !stack) return;
 
             this.updateLastJobVisibility();
 
-            if (utils.isMobile()) {
-                fab.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.toggle();
-                });
+            fab.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
 
-                document.getElementById('fabChangeView')?.addEventListener('click', () => {
-                    this.close();
-                    viewModeManager.toggle();
-                    this.updateFabViewIcon();
-                });
+            lastBtn?.addEventListener('click', () => {
+                this.close();
+                lastJobNavigator.scrollToLast();
+            });
 
-                document.getElementById('fabOpenSort')?.addEventListener('click', () => {
-                    this.close();
-                    sortManager.openSortSheet();
-                });
+            topBtn?.addEventListener('click', () => {
+                this.close();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
 
-                lastBtn?.addEventListener('click', () => {
-                    this.close();
-                    lastJobNavigator.scrollToLast();
-                });
-
-                topBtn?.addEventListener('click', () => {
-                    this.close();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-
-                this.updateFabViewIcon();
-
-                document.addEventListener('click', (e) => {
-                    if (!this.isOpen) return;
-                    if (!stack.contains(e.target)) this.close();
-                });
-            } else {
-                if (menu) menu.classList.add('hidden');
-                const icon = fab.querySelector('.fab-icon-main');
-                if (icon) icon.textContent = 'keyboard_arrow_up';
-                fab.setAttribute('aria-label', 'Voltar ao topo');
-                fab.addEventListener('click', () => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            }
+            document.addEventListener('click', (e) => {
+                if (!this.isOpen) return;
+                if (!stack.contains(e.target)) this.close();
+            });
         },
 
         updateLastJobVisibility() {
@@ -2952,14 +3058,6 @@
             if (!lastBtn) return;
             const has = !!localStorage.getItem('cv_last_clicked');
             lastBtn.classList.toggle('hidden', !has);
-        },
-
-        updateFabViewIcon() {
-            const icon = document.getElementById('fabViewIcon');
-            if (!icon) return;
-            const nextIdx = (VIEW_MODES.indexOf(state.viewMode) + 1) % VIEW_MODES.length;
-            const nextMode = VIEW_MODES[nextIdx];
-            icon.textContent = VIEW_MODE_ICONS[nextMode] || 'view_list';
         },
 
         toggle() {
@@ -3002,9 +3100,9 @@
             const lastKey = localStorage.getItem('cv_last_clicked');
             if (!lastKey) return;
             for (const c of document.querySelectorAll('.job-card')) {
-                const href = c.getAttribute('href');
+                const cardUrl = c.dataset.url;
                 const match = state.allJobs.find(j => utils.getJobKey(j) === lastKey);
-                if (match && match.url === href) {
+                if (match && match.url === cardUrl) {
                     c.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     c.classList.add('flash-highlight');
                     setTimeout(() => c.classList.remove('flash-highlight'), 2200);
@@ -3020,12 +3118,10 @@
     const onboardingManager = {
         init() {
             if (localStorage.getItem('cv_onboarding_seen')) return;
-            const mobile = utils.isMobile();
-            const banner = document.getElementById(mobile ? 'onboardingBannerMobile' : 'onboardingBanner');
-            const dismissId = mobile ? 'onboardingDismissMobile' : 'onboardingDismiss';
+            const banner = document.getElementById('onboardingBanner');
             if (!banner) return;
             banner.classList.remove('hidden');
-            document.getElementById(dismissId)?.addEventListener('click', () => {
+            document.getElementById('onboardingDismiss')?.addEventListener('click', () => {
                 banner.classList.add('hidden');
                 localStorage.setItem('cv_onboarding_seen', '1');
             });
@@ -3091,7 +3187,7 @@
                 this.indicator.style.opacity = '';
                 if (dy > 80) {
                     utils.showToast('Atualizando vagas…', 'filter-toast toast-mobile-top', 1800);
-                    dataLoader.load();
+                    dataLoader.load({ soft: true });
                 }
             }, { passive: true });
         }
@@ -3143,15 +3239,16 @@
                 fabMenuManager.updateLastJobVisibility();
             });
 
-            // Fallback: ensure app shows after 5 seconds no matter what
+            // Fallback: avoid empty app if load is still in progress
             setTimeout(() => {
                 const app = document.getElementById('app');
                 const splash = document.getElementById('splash');
-                if (app && !app.classList.contains('visible')) {
-                    app.classList.add('visible');
-                    if (splash) {
-                        splash.style.display = 'none';
-                    }
+                const splashMsg = document.getElementById('splashMsg');
+                if (state.allJobs.length > 0 && app && !app.classList.contains('visible')) {
+                    dataLoader.showApp();
+                    if (splash) splash.style.display = 'none';
+                } else if (splashMsg && state.allJobs.length === 0) {
+                    splashMsg.textContent = 'Ainda carregando o catálogo…';
                 }
             }, 5000);
 
