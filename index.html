@@ -135,12 +135,16 @@
                     </div>
                 </div>
 
-                <button type="button" class="filter-chip filter-chip-save hidden" id="saveFilterBtn" aria-label="Salvar filtro atual" title="Salvar filtro atual">
-                    <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
-                    <span class="save-filter-text">Salvar</span>
-                </button>
-
-                <div class="saved-filters-bar" id="savedFiltersBar" aria-label="Filtros salvos"></div>
+                <div class="saved-filters-menu-container" id="savedFiltersMenuContainer">
+                    <button type="button" class="filter-chip filter-chip-save hidden" id="saveFilterBtn"
+                        aria-label="Filtros salvos" aria-haspopup="true" aria-expanded="false"
+                        aria-controls="savedFiltersDropdown" title="Filtros salvos">
+                        <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+                        <span class="save-filter-text">Salvos</span>
+                        <span class="saved-count-badge hidden" id="savedFilterCountBadge" aria-hidden="true">0</span>
+                    </button>
+                    <div class="saved-filters-dropdown hidden" id="savedFiltersDropdown" role="menu" aria-label="Filtros salvos"></div>
+                </div>
             </div>
         </div>
 
@@ -220,6 +224,23 @@
                     <button type="button" class="sort-sheet-option" data-sort="title_asc" role="option">Título A–Z</button>
                     <button type="button" class="sort-sheet-option" data-sort="title_desc" role="option">Título Z–A</button>
                 </div>
+            </div>
+        </div>
+
+        <div class="bottom-sheet saved-filters-menu-sheet hidden" id="savedFiltersMenuSheet" aria-labelledby="savedFiltersMenuSheetTitle">
+            <div class="bottom-sheet-header sheet-draggable">
+                <div class="bottom-sheet-handle"></div>
+                <div class="bottom-sheet-title">
+                    <h2 id="savedFiltersMenuSheetTitle">Filtros salvos</h2>
+                    <span class="filter-count-label" id="savedFiltersMenuSheetCount"></span>
+                </div>
+                <button class="icon-btn" id="closeSavedFiltersMenuSheet" aria-label="Fechar filtros salvos">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="bottom-sheet-content saved-filters-menu-sheet-content">
+                <div class="saved-filters-menu-list" id="savedFiltersMenuSheetList" role="menu"></div>
+                <div class="saved-filters-menu-actions" id="savedFiltersMenuSheetActions"></div>
             </div>
         </div>
 

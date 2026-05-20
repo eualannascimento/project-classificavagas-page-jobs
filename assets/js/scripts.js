@@ -93,7 +93,13 @@
         activeFiltersList: $('#activeFiltersList'),
         clearAllFilters: $('#clearAllFilters'),
         saveFilterBtn: $('#saveFilterBtn'),
-        savedFiltersBar: $('#savedFiltersBar'),
+        savedFilterCountBadge: $('#savedFilterCountBadge'),
+        savedFiltersDropdown: $('#savedFiltersDropdown'),
+        savedFiltersMenuSheet: $('#savedFiltersMenuSheet'),
+        savedFiltersMenuSheetList: $('#savedFiltersMenuSheetList'),
+        savedFiltersMenuSheetActions: $('#savedFiltersMenuSheetActions'),
+        savedFiltersMenuSheetCount: $('#savedFiltersMenuSheetCount'),
+        closeSavedFiltersMenuSheet: $('#closeSavedFiltersMenuSheet'),
         saveFilterSheet: $('#saveFilterSheet'),
         closeSaveFilterSheet: $('#closeSaveFilterSheet'),
         saveFilterSummary: $('#saveFilterSummary'),
@@ -1094,6 +1100,9 @@
         },
 
         openSortSheet() {
+            if (typeof savedFiltersManager !== 'undefined' && savedFiltersManager.menuSheetOpen) {
+                savedFiltersManager.closeMenuSheet();
+            }
             if (this.isOpen) this.closeDropdown();
             this.updateLabel();
             elements.scrim.classList.remove('hidden');
@@ -1116,7 +1125,8 @@
             setTimeout(() => {
                 elements.sortSheet.classList.add('hidden');
                 const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
-                if (!filterOpen) {
+                const savedMenuOpen = typeof savedFiltersManager !== 'undefined' && savedFiltersManager.menuSheetOpen;
+                if (!filterOpen && !savedMenuOpen) {
                     elements.scrim.classList.add('hidden');
                     document.body.style.overflow = '';
                 }
@@ -2062,10 +2072,8 @@
         },
 
         updateSaveActionVisibility() {
+            savedFiltersManager.updateButton();
             const hasShareableState = this.hasShareableState(state);
-            if (elements.saveFilterBtn) {
-                elements.saveFilterBtn.classList.toggle('hidden', !hasShareableState);
-            }
             const copyBtn = document.getElementById('copySearchLink');
             if (copyBtn) copyBtn.classList.toggle('hidden', !hasShareableState);
         },
@@ -2296,15 +2304,36 @@
         mode: 'create',
         editingId: null,
         isOpen: false,
+        menuOpen: false,
+        menuSheetOpen: false,
         _trigger: null,
-        _longPressTimer: null,
-        _suppressClickUntil: 0,
 
         init() {
             this.load();
-            this.renderBar();
+            this.updateButton();
 
-            elements.saveFilterBtn?.addEventListener('click', () => this.openCreate());
+            elements.saveFilterBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleMenu();
+            });
+
+            elements.closeSavedFiltersMenuSheet?.addEventListener('click', () => this.closeMenuSheet());
+
+            document.addEventListener('click', (e) => {
+                if (!this.menuOpen) return;
+                const inMenu = elements.saveFilterBtn?.contains(e.target) ||
+                    elements.savedFiltersDropdown?.contains(e.target);
+                if (!inMenu) this.closeMenuDropdown();
+            });
+
+            window.addEventListener('scroll', () => {
+                if (this.menuOpen) this.closeMenuDropdown();
+            }, { passive: true });
+
+            if (elements.savedFiltersMenuSheet) {
+                sheetSwipe.bind(elements.savedFiltersMenuSheet, () => this.closeMenuSheet());
+            }
             elements.closeSaveFilterSheet?.addEventListener('click', () => this.close());
             elements.cancelSaveFilter?.addEventListener('click', () => this.close());
             elements.confirmSaveFilter?.addEventListener('click', () => this.saveFromSheet());
@@ -2324,8 +2353,233 @@
             }
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && this.isOpen) this.close();
+                if (e.key !== 'Escape') return;
+                if (this.isOpen) this.close();
+                else if (this.menuSheetOpen) this.closeMenuSheet();
+                else if (this.menuOpen) this.closeMenuDropdown();
             });
+        },
+
+        toggleMenu() {
+            if (utils.isMobile()) {
+                if (this.menuSheetOpen) this.closeMenuSheet();
+                else this.openMenuSheet();
+            } else if (this.menuOpen) {
+                this.closeMenuDropdown();
+            } else {
+                this.openMenuDropdown();
+            }
+        },
+
+        buildMenuParts() {
+            const hasShareable = filterManager.hasShareableState(state);
+            const canSave = hasShareable && this.items.length < this.maxItems;
+            const countLabel = `${this.items.length}/${this.maxItems}`;
+
+            const listHtml = this.items.length === 0
+                ? '<p class="saved-filters-menu-empty">Nenhum filtro salvo ainda.</p>'
+                : this.items.map(item => `
+                    <div class="saved-filters-menu-item" role="menuitem">
+                        <button type="button" class="saved-filters-menu-item-main" data-saved-filter-id="${utils.escapeHtml(item.id)}" title="Aplicar: ${utils.escapeHtml(item.label)}">
+                            <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+                            <span class="saved-filters-menu-item-label">${utils.escapeHtml(item.label)}</span>
+                        </button>
+                        <div class="saved-filters-menu-item-actions">
+                            <button type="button" class="icon-btn" data-action="edit" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Editar ${utils.escapeHtml(item.label)}" title="Editar">
+                                <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+                            </button>
+                            <button type="button" class="icon-btn" data-action="remove" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Remover ${utils.escapeHtml(item.label)}" title="Remover">
+                                <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+            const footerHtml = `
+                <button type="button" class="saved-filters-menu-action primary" data-action="save-current"${canSave ? '' : ' disabled'}>
+                    <span class="material-symbols-rounded" aria-hidden="true">add</span>
+                    Salvar filtro atual
+                </button>
+                ${this.items.length > 0 ? `
+                <button type="button" class="saved-filters-menu-action danger" data-action="clear-all">
+                    Limpar todos os salvos
+                </button>` : ''}
+            `;
+
+            return { countLabel, listHtml, footerHtml };
+        },
+
+        bindMenuEvents(container) {
+            container.querySelectorAll('[data-saved-filter-id].saved-filters-menu-item-main, [data-saved-filter-id][data-action="apply"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const id = btn.dataset.savedFilterId;
+                    this.closeMenu();
+                    this.apply(id);
+                });
+            });
+
+            container.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.closeMenu();
+                    this.openEdit(btn.dataset.savedFilterId);
+                });
+            });
+
+            container.querySelectorAll('[data-action="remove"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.remove(btn.dataset.savedFilterId);
+                });
+            });
+
+            container.querySelector('[data-action="save-current"]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.closeMenu();
+                this.openCreate();
+            });
+
+            container.querySelector('[data-action="clear-all"]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearAllSaved();
+            });
+        },
+
+        refreshMenuContent() {
+            const { countLabel, listHtml, footerHtml } = this.buildMenuParts();
+            if (elements.savedFiltersMenuSheetCount) {
+                elements.savedFiltersMenuSheetCount.textContent = countLabel;
+            }
+            if (elements.savedFiltersMenuSheetList) {
+                elements.savedFiltersMenuSheetList.innerHTML = listHtml;
+            }
+            if (elements.savedFiltersMenuSheetActions) {
+                elements.savedFiltersMenuSheetActions.innerHTML = footerHtml;
+            }
+            if (this.menuSheetOpen && elements.savedFiltersMenuSheet) {
+                this.bindMenuEvents(elements.savedFiltersMenuSheet);
+            }
+            if (this.menuOpen && elements.savedFiltersDropdown) {
+                const listEl = elements.savedFiltersDropdown.querySelector('.saved-filters-menu-list');
+                const footerEl = elements.savedFiltersDropdown.querySelector('.saved-filters-menu-footer');
+                const countEl = elements.savedFiltersDropdown.querySelector('.saved-filters-menu-header strong');
+                if (listEl) listEl.innerHTML = listHtml;
+                if (footerEl) footerEl.innerHTML = footerHtml;
+                if (countEl) countEl.textContent = countLabel;
+                this.bindMenuEvents(elements.savedFiltersDropdown);
+            }
+        },
+
+        openMenuDropdown() {
+            if (!elements.savedFiltersDropdown || !elements.saveFilterBtn) return;
+            if (sortManager.isOpen) sortManager.closeDropdown();
+
+            const { countLabel, listHtml, footerHtml } = this.buildMenuParts();
+            elements.savedFiltersDropdown.innerHTML = `
+                <div class="saved-filters-menu-header">
+                    <span>Filtros salvos</span>
+                    <strong>${countLabel}</strong>
+                </div>
+                <div class="saved-filters-menu-list" role="none">${listHtml}</div>
+                <div class="saved-filters-menu-footer">${footerHtml}</div>
+            `;
+
+            document.body.appendChild(elements.savedFiltersDropdown);
+            const rect = elements.saveFilterBtn.getBoundingClientRect();
+            elements.savedFiltersDropdown.style.position = 'fixed';
+            elements.savedFiltersDropdown.style.top = `${rect.bottom + 8}px`;
+            if (rect.left + 280 > window.innerWidth) {
+                elements.savedFiltersDropdown.style.left = 'auto';
+                elements.savedFiltersDropdown.style.right = '16px';
+            } else {
+                elements.savedFiltersDropdown.style.left = `${Math.max(8, rect.left)}px`;
+                elements.savedFiltersDropdown.style.right = 'auto';
+            }
+
+            elements.savedFiltersDropdown.classList.remove('hidden');
+            elements.saveFilterBtn.setAttribute('aria-expanded', 'true');
+            this.bindMenuEvents(elements.savedFiltersDropdown);
+            this.menuOpen = true;
+        },
+
+        closeMenuDropdown() {
+            if (!elements.savedFiltersDropdown) return;
+            elements.savedFiltersDropdown.classList.add('hidden');
+            elements.saveFilterBtn?.setAttribute('aria-expanded', 'false');
+            this.menuOpen = false;
+        },
+
+        openMenuSheet() {
+            if (!elements.savedFiltersMenuSheet) return;
+            if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
+
+            this.refreshMenuContent();
+            elements.scrim?.classList.remove('hidden');
+            elements.savedFiltersMenuSheet.classList.remove('hidden');
+            elements.savedFiltersMenuSheet.setAttribute('role', 'dialog');
+            elements.savedFiltersMenuSheet.setAttribute('aria-modal', 'true');
+            document.body.style.overflow = 'hidden';
+
+            requestAnimationFrame(() => {
+                elements.scrim?.classList.add('visible');
+                elements.savedFiltersMenuSheet.classList.add('visible');
+                elements.closeSavedFiltersMenuSheet?.focus();
+            });
+
+            this.bindMenuEvents(elements.savedFiltersMenuSheet);
+            elements.saveFilterBtn?.setAttribute('aria-expanded', 'true');
+            this.menuSheetOpen = true;
+        },
+
+        closeMenuSheet() {
+            if (!elements.savedFiltersMenuSheet) return;
+            elements.scrim?.classList.remove('visible');
+            elements.savedFiltersMenuSheet.classList.remove('visible');
+
+            setTimeout(() => {
+                elements.savedFiltersMenuSheet.classList.add('hidden');
+                const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
+                const sortOpen = sortManager.sortSheetOpen;
+                const saveOpen = this.isOpen;
+                if (!filterOpen && !sortOpen && !saveOpen) {
+                    elements.scrim?.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+                elements.saveFilterBtn?.focus();
+            }, 400);
+
+            elements.saveFilterBtn?.setAttribute('aria-expanded', 'false');
+            this.menuSheetOpen = false;
+        },
+
+        closeMenu() {
+            this.closeMenuDropdown();
+            this.closeMenuSheet();
+        },
+
+        updateButton() {
+            this.load();
+            const hasShareable = filterManager.hasShareableState(state);
+            const show = hasShareable || this.items.length > 0;
+            elements.saveFilterBtn?.classList.toggle('hidden', !show);
+            if (elements.savedFilterCountBadge) {
+                elements.savedFilterCountBadge.textContent = String(this.items.length);
+                elements.savedFilterCountBadge.classList.toggle('hidden', this.items.length === 0);
+            }
+            if (this.menuOpen || this.menuSheetOpen) this.refreshMenuContent();
+        },
+
+        clearAllSaved() {
+            if (this.items.length === 0) return;
+            this.items = [];
+            this.persist();
+            this.updateButton();
+            this.closeMenu();
+            utils.showToast('Filtros salvos removidos', 'theme-toast');
         },
 
         load() {
@@ -2415,6 +2669,7 @@
                 return;
             }
 
+            this.closeMenu();
             if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
             this.mode = 'create';
             this.editingId = null;
@@ -2439,6 +2694,7 @@
             const item = this.items.find(saved => saved.id === id);
             if (!item) return;
 
+            this.closeMenu();
             if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
             this.mode = 'edit';
             this.editingId = id;
@@ -2497,7 +2753,7 @@
             setTimeout(() => {
                 elements.saveFilterSheet.classList.add('hidden');
                 const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
-                if (!sortManager.sortSheetOpen && !filterOpen) {
+                if (!sortManager.sortSheetOpen && !filterOpen && !this.menuSheetOpen) {
                     elements.scrim.classList.add('hidden');
                     document.body.style.overflow = '';
                 }
@@ -2520,7 +2776,7 @@
                 if (!item) return;
                 item.label = utils.truncate(label, 40);
                 this.persist();
-                this.renderBar();
+                this.updateButton();
                 this.close();
                 utils.showToast('Filtro atualizado', 'theme-toast');
                 return;
@@ -2540,7 +2796,7 @@
 
             this.items.push(item);
             this.persist();
-            this.renderBar();
+            this.updateButton();
             this.close();
             utils.showToast('Filtro salvo', 'theme-toast');
         },
@@ -2572,78 +2828,10 @@
             const item = this.items.find(saved => saved.id === id);
             this.items = this.items.filter(saved => saved.id !== id);
             this.persist();
-            this.renderBar();
+            this.updateButton();
+            if (this.menuOpen || this.menuSheetOpen) this.refreshMenuContent();
             if (closeSheet) this.close();
             if (item) utils.showToast('Filtro removido', 'theme-toast');
-        },
-
-        renderBar() {
-            if (!elements.savedFiltersBar) return;
-            this.load();
-
-            if (this.items.length === 0) {
-                elements.savedFiltersBar.innerHTML = '';
-                elements.savedFiltersBar.classList.add('hidden');
-                return;
-            }
-
-            elements.savedFiltersBar.classList.remove('hidden');
-            elements.savedFiltersBar.innerHTML = this.items.map(item => `
-                <span class="saved-filter-group" data-saved-filter-id="${utils.escapeHtml(item.id)}">
-                    <button type="button" class="filter-chip saved-filter-chip" data-saved-filter-id="${utils.escapeHtml(item.id)}" title="Aplicar: ${utils.escapeHtml(item.label)}">
-                        <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
-                        <span class="saved-filter-label">${utils.escapeHtml(item.label)}</span>
-                    </button>
-                    <button type="button" class="saved-filter-edit icon-btn" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Editar ${utils.escapeHtml(item.label)}" title="Editar filtro salvo">
-                        <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
-                    </button>
-                    <button type="button" class="saved-filter-remove icon-btn" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Remover ${utils.escapeHtml(item.label)}" title="Remover dos salvos">
-                        <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                    </button>
-                </span>
-            `).join('');
-
-            elements.savedFiltersBar.querySelectorAll('.saved-filter-group').forEach(group => {
-                const id = group.dataset.savedFilterId;
-                const applyBtn = group.querySelector('.saved-filter-chip');
-                const editBtn = group.querySelector('.saved-filter-edit');
-                const removeBtn = group.querySelector('.saved-filter-remove');
-
-                const clearLongPress = () => {
-                    clearTimeout(this._longPressTimer);
-                    this._longPressTimer = null;
-                };
-
-                applyBtn?.addEventListener('pointerdown', (e) => {
-                    if (!utils.isMobile()) return;
-                    clearLongPress();
-                    this._longPressTimer = setTimeout(() => {
-                        this._suppressClickUntil = Date.now() + 700;
-                        this.openEdit(id);
-                    }, 550);
-                });
-                applyBtn?.addEventListener('pointerup', clearLongPress);
-                applyBtn?.addEventListener('pointerleave', clearLongPress);
-                applyBtn?.addEventListener('pointercancel', clearLongPress);
-
-                applyBtn?.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (Date.now() < this._suppressClickUntil) return;
-                    this.apply(id);
-                });
-
-                editBtn?.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.openEdit(id);
-                });
-
-                removeBtn?.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.remove(id);
-                });
-            });
         }
     };
 
@@ -2934,9 +3122,15 @@
             elements.openFilters.addEventListener('click', () => this.open());
             elements.closeSheet.addEventListener('click', () => this.close());
             elements.scrim.addEventListener('click', () => {
-                if (typeof savedFiltersManager !== 'undefined' && savedFiltersManager.isOpen) {
-                    savedFiltersManager.close();
-                    return;
+                if (typeof savedFiltersManager !== 'undefined') {
+                    if (savedFiltersManager.menuSheetOpen) {
+                        savedFiltersManager.closeMenuSheet();
+                        return;
+                    }
+                    if (savedFiltersManager.isOpen) {
+                        savedFiltersManager.close();
+                        return;
+                    }
                 }
                 if (sortManager.sortSheetOpen) {
                     sortManager.closeSortSheet();
@@ -2959,6 +3153,9 @@
         },
 
         open() {
+            if (typeof savedFiltersManager !== 'undefined' && savedFiltersManager.menuSheetOpen) {
+                savedFiltersManager.closeMenuSheet();
+            }
             if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
 
             // Clone current filters to temp
@@ -3006,7 +3203,8 @@
 
             setTimeout(() => {
                 elements.filterSheet.classList.add('hidden');
-                if (!sortManager.sortSheetOpen) {
+                const menuOpen = typeof savedFiltersManager !== 'undefined' && savedFiltersManager.menuSheetOpen;
+                if (!sortManager.sortSheetOpen && !menuOpen) {
                     elements.scrim.classList.add('hidden');
                     document.body.style.overflow = '';
                 }
@@ -4054,6 +4252,7 @@
             if (document.body.classList.contains('fab-menu-open')) return false;
             if (!elements.filterSheet.classList.contains('hidden')) return false;
             if (elements.sortSheet && !elements.sortSheet.classList.contains('hidden')) return false;
+            if (elements.savedFiltersMenuSheet && !elements.savedFiltersMenuSheet.classList.contains('hidden')) return false;
             return true;
         },
 
