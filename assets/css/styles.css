@@ -482,13 +482,18 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 .search-bar {
-    max-width: 1240px; margin: 0 auto;
-    display: flex; align-items: center; gap: 10px;
-    padding: 0 14px; height: 42px;
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px 0 14px;
+    height: 42px;
     background: var(--bg-elevated);
     border: 1px solid var(--rule);
     border-radius: var(--radius-lg);
     transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    cursor: text;
 }
 
 .search-bar:focus-within {
@@ -496,11 +501,25 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.search-icon { color: var(--ink-3); flex-shrink: 0; }
+.search-bar-field {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: text;
+}
+
+.search-icon {
+    color: var(--ink-3);
+    flex-shrink: 0;
+    pointer-events: none;
+}
 
 .search-bar input {
     flex: 1;
     min-width: 0;
+    width: 100%;
     padding: 0;
     border: none;
     background: transparent;
@@ -508,9 +527,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-size: 0.9rem;
     line-height: 1.35;
     color: var(--ink);
-    position: relative;
-    z-index: 1;
-    pointer-events: auto;
+    cursor: text;
 }
 .search-bar input::placeholder {
     color: var(--ink-3);
