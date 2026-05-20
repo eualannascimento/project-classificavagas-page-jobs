@@ -3676,6 +3676,8 @@
     // ============================================
     const searchManager = {
         init() {
+            if (!elements.searchInput) return;
+
             const search = utils.debounce(() => {
                 state.searchQuery = elements.searchInput.value.trim();
                 filterManager.apply();
