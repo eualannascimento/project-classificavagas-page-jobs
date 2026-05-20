@@ -68,7 +68,7 @@
         visitedJobs: new Set(),
         insertedDateRange: { from: '', to: '' },
         publishedDateRange: { from: '', to: '' },
-        sortBy: 'date_desc',
+        sortBy: 'published_desc',
         viewMode: 'cards', // 'cards', 'list', or 'compact'
         searchHistory: [], // recent searches
         showOnlyVisited: false
@@ -358,53 +358,79 @@
             return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
 
-        parseSearchQuery(query) {
-            const raw = String(query || '').trim();
-            if (!raw) return [];
-
-            const tokens = [];
-            let buffer = '';
-            let quoteBuffer = '';
+        splitOutsideQuotes(str, operator) {
+            const parts = [];
+            let current = '';
             let inQuote = false;
+            let i = 0;
+            const opPattern = new RegExp(`^\\s+${operator}\\s+`, 'i');
 
-            const pushWords = (value) => {
-                this.normalize(value).split(/\s+/).filter(Boolean).forEach(word => {
-                    tokens.push({ type: 'word', value: word });
-                });
-            };
-
-            for (let i = 0; i < raw.length; i++) {
-                const char = raw[i];
-                if (char === '"') {
-                    if (inQuote) {
-                        const phrase = this.normalize(quoteBuffer).trim().replace(/\s+/g, ' ');
-                        if (phrase) tokens.push({ type: 'phrase', value: phrase });
-                        quoteBuffer = '';
-                        inQuote = false;
-                    } else {
-                        pushWords(buffer);
-                        buffer = '';
-                        inQuote = true;
-                    }
+            while (i < str.length) {
+                const ch = str[i];
+                if (ch === '"') {
+                    inQuote = !inQuote;
+                    current += ch;
+                    i++;
                     continue;
                 }
+                if (!inQuote) {
+                    const tail = str.slice(i);
+                    const match = tail.match(opPattern);
+                    if (match) {
+                        parts.push(current);
+                        current = '';
+                        i += match[0].length;
+                        continue;
+                    }
+                }
+                current += ch;
+                i++;
+            }
+            if (current.trim()) parts.push(current);
+            return parts;
+        },
 
-                if (inQuote) quoteBuffer += char;
-                else buffer += char;
+        parseSearchTerm(part) {
+            const trimmed = String(part || '').trim();
+            if (!trimmed) return null;
+
+            if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 2) {
+                const phrase = this.normalize(trimmed.slice(1, -1)).trim().replace(/\s+/g, ' ');
+                return phrase ? { type: 'phrase', value: phrase } : null;
             }
 
-            if (inQuote) {
-                pushWords(quoteBuffer);
-            }
-            pushWords(buffer);
+            const words = this.normalize(trimmed).split(/\s+/).filter(Boolean);
+            if (!words.length) return null;
+            if (words.length === 1) return { type: 'phrase', value: words[0] };
+            return { type: 'words', values: words };
+        },
 
-            const phraseTokens = tokens.filter(token => token.type === 'phrase');
-            const wordTokens = tokens.filter(token => token.type === 'word');
-            if (phraseTokens.length === 1 && wordTokens.length === 0) {
-                return phraseTokens[0].value.split(/\s+/).filter(Boolean).map(word => ({ type: 'word', value: word }));
+        parseSearchQuery(query) {
+            const raw = String(query || '').trim();
+            if (!raw) return { type: 'empty' };
+
+            const hasOu = /\s+ou\s+/i.test(raw);
+            const hasE = /\s+e\s+/i.test(raw);
+
+            if (!hasOu && !hasE) {
+                const part = this.parseSearchTerm(raw);
+                if (!part) return { type: 'empty' };
+                if (part.type === 'words') {
+                    return {
+                        type: 'and',
+                        terms: part.values.map(value => ({ type: 'phrase', value }))
+                    };
+                }
+                return { type: 'and', terms: [part] };
             }
 
-            return tokens;
+            const groups = this.splitOutsideQuotes(raw, 'ou')
+                .map(segment => this.splitOutsideQuotes(segment, 'e')
+                    .map(part => this.parseSearchTerm(part))
+                    .filter(Boolean))
+                .filter(group => group.length > 0);
+
+            return groups.length ? { type: 'expr', groups } : { type: 'empty' };
         },
 
         getSearchText(job) {
@@ -416,21 +442,29 @@
         },
 
         jobMatchesSearch(job, parsedQuery) {
-            if (!parsedQuery || parsedQuery.length === 0) return true;
+            if (!parsedQuery || parsedQuery.type === 'empty') return true;
             const text = this.getSearchText(job);
-            return parsedQuery.every(token => text.includes(token.value));
+
+            const matchTerm = (term) => {
+                if (!term) return true;
+                if (term.type === 'phrase') return text.includes(term.value);
+                if (term.type === 'words') return term.values.every(value => text.includes(value));
+                if (term.type === 'word') return text.includes(term.value);
+                return true;
+            };
+
+            if (parsedQuery.type === 'and') {
+                return parsedQuery.terms.every(matchTerm);
+            }
+            if (parsedQuery.type === 'expr') {
+                return parsedQuery.groups.some(andGroup => andGroup.every(matchTerm));
+            }
+            return true;
         },
 
-        toTitleCase(str) {
+        formatJobTitle(str) {
             if (!str) return '';
-            const skipWords = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'com', 'para', 'por', 'que', 'e', 'a', 'o', 'as', 'os', 'um', 'uma', 'no', 'na', 'nos', 'nas', 'ao', 'aos', '\u00e0', '\u00e0s', 'se', '\u00e9']);
-            return str.toLowerCase().split(/\s+/).map((word, i) => {
-                if (!word) return word;
-                if (i === 0 || !skipWords.has(word)) {
-                    return word.charAt(0).toUpperCase() + word.slice(1);
-                }
-                return word;
-            }).join(' ');
+            return String(str).toLocaleUpperCase('pt-BR');
         },
 
         getSmartLocation(job) {
@@ -538,26 +572,54 @@
         'black': '#000000'
     };
 
+    const preferencesManager = {
+        VISITED_KEY: 'cv_has_visited',
+        SORT_KEY: 'cv_sort',
+        DEFAULT_SORT: 'published_desc',
+
+        hasVisitedBefore() {
+            return localStorage.getItem(this.VISITED_KEY) === '1';
+        },
+
+        markVisited() {
+            localStorage.setItem(this.VISITED_KEY, '1');
+        },
+
+        getDefaultSort() {
+            return this.hasVisitedBefore()
+                ? (localStorage.getItem(this.SORT_KEY) || this.DEFAULT_SORT)
+                : this.DEFAULT_SORT;
+        },
+
+        saveSort(sortBy) {
+            if (sortBy) localStorage.setItem(this.SORT_KEY, sortBy);
+        },
+
+        applyDefaults() {
+            state.sortBy = this.getDefaultSort();
+        }
+    };
+
     const themeManager = {
         _initialized: false,
 
         init() {
             const saved = localStorage.getItem('cv_theme');
             let theme = 'light';
-            if (saved && THEMES.includes(saved)) {
+            if (preferencesManager.hasVisitedBefore() && saved && THEMES.includes(saved)) {
                 theme = saved;
-            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                theme = 'dark';
             }
-            this.apply(theme);
+            this.apply(theme, { silent: true, persist: false });
             this._initialized = true;
 
             elements.themeToggle.addEventListener('click', () => this.toggle());
         },
 
-        apply(theme) {
+        apply(theme, { silent = false, persist = true } = {}) {
             document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('cv_theme', theme);
+            if (persist && preferencesManager.hasVisitedBefore()) {
+                localStorage.setItem('cv_theme', theme);
+            }
 
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) {
@@ -579,7 +641,7 @@
                 btn.title = `Tema: ${map[theme]} — clique para ${map[next]}`;
             }
 
-            if (this._initialized) {
+            if (this._initialized && !silent) {
                 this.showThemeToast(theme);
             }
         },
@@ -588,7 +650,9 @@
             const current = document.documentElement.getAttribute('data-theme');
             const idx = THEMES.indexOf(current);
             const next = THEMES[(idx + 1) % THEMES.length];
-            this.apply(next);
+            preferencesManager.markVisited();
+            this.apply(next, { persist: true });
+            localStorage.setItem('cv_theme', next);
         },
 
         showThemeToast(theme) {
@@ -1075,6 +1139,8 @@
 
         setSort(sortKey) {
             state.sortBy = sortKey;
+            preferencesManager.saveSort(sortKey);
+            preferencesManager.markVisited();
             this.updateLabel();
             filterManager.apply();
         },
@@ -1129,7 +1195,7 @@
             if (state.showOnlyVisited) {
                 url.searchParams.set('v', '1');
             }
-            if (state.sortBy !== 'date_desc') {
+            if (state.sortBy !== preferencesManager.DEFAULT_SORT) {
                 url.searchParams.set('sort', state.sortBy);
             }
 
@@ -1180,6 +1246,7 @@
             }
             if (params.has('sort')) {
                 state.sortBy = params.get('sort');
+                preferencesManager.saveSort(state.sortBy);
             }
 
             params.forEach((value, key) => {
@@ -1701,7 +1768,9 @@
 
             if (searchQuery) {
                 const parsedQuery = utils.parseSearchQuery(searchQuery);
-                if (parsedQuery.length) result = result.filter(job => utils.jobMatchesSearch(job, parsedQuery));
+                if (parsedQuery.type !== 'empty') {
+                    result = result.filter(job => utils.jobMatchesSearch(job, parsedQuery));
+                }
             }
 
             if (showOnlyVisited) {
@@ -1931,7 +2000,7 @@
                 }
             });
 
-            if (includeSort && filterState.sortBy && filterState.sortBy !== 'date_desc') {
+            if (includeSort && filterState.sortBy && filterState.sortBy !== preferencesManager.DEFAULT_SORT) {
                 groups.push({
                     key: '_sort',
                     label: 'Ordenação',
@@ -2023,9 +2092,46 @@
                 });
 
                 if (isGrouped) {
+                    const positionGroupedDropdown = () => {
+                        const dropdown = chip.querySelector('.filter-dropdown');
+                        if (!dropdown || !chip.classList.contains('expanded')) return;
+                        const rect = chip.getBoundingClientRect();
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.top = `${rect.bottom + 6}px`;
+                        dropdown.style.left = `${Math.max(8, rect.left)}px`;
+                        dropdown.style.minWidth = `${Math.max(rect.width, 200)}px`;
+                        dropdown.style.zIndex = '400';
+                    };
+
                     chip.addEventListener('click', (e) => {
                         if (e.target.closest('.filter-dropdown') || e.target.closest('.chip-close')) return;
+                        const willExpand = !chip.classList.contains('expanded');
+                        elements.activeFiltersList.querySelectorAll('.active-filter-chip.expanded').forEach(other => {
+                            if (other !== chip) {
+                                other.classList.remove('expanded');
+                                const dd = other.querySelector('.filter-dropdown');
+                                if (dd) {
+                                    dd.style.position = '';
+                                    dd.style.top = '';
+                                    dd.style.left = '';
+                                    dd.style.minWidth = '';
+                                    dd.style.zIndex = '';
+                                }
+                            }
+                        });
                         chip.classList.toggle('expanded');
+                        if (willExpand) {
+                            requestAnimationFrame(positionGroupedDropdown);
+                        } else {
+                            const dropdown = chip.querySelector('.filter-dropdown');
+                            if (dropdown) {
+                                dropdown.style.position = '';
+                                dropdown.style.top = '';
+                                dropdown.style.left = '';
+                                dropdown.style.minWidth = '';
+                                dropdown.style.zIndex = '';
+                            }
+                        }
                     });
 
                     chip.querySelectorAll('.filter-dropdown-item button').forEach(btn => {
@@ -2038,14 +2144,26 @@
                 }
             });
 
-            // Close dropdowns when clicking outside
+            const closeGroupedDropdowns = () => {
+                elements.activeFiltersList.querySelectorAll('.active-filter-chip.expanded').forEach(c => {
+                    c.classList.remove('expanded');
+                    const dd = c.querySelector('.filter-dropdown');
+                    if (dd) {
+                        dd.style.position = '';
+                        dd.style.top = '';
+                        dd.style.left = '';
+                        dd.style.minWidth = '';
+                        dd.style.zIndex = '';
+                    }
+                });
+            };
+
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.active-filter-chip')) {
-                    elements.activeFiltersList.querySelectorAll('.active-filter-chip.expanded').forEach(c => {
-                        c.classList.remove('expanded');
-                    });
-                }
+                if (!e.target.closest('.active-filter-chip')) closeGroupedDropdowns();
             }, { once: true });
+
+            window.addEventListener('scroll', closeGroupedDropdowns, { once: true, passive: true });
+            window.addEventListener('resize', closeGroupedDropdowns, { once: true });
         },
 
         removeFilter(key, value) {
@@ -2064,7 +2182,7 @@
             state.quickFilter = 'all';
             state.insertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.publishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
-            state.sortBy = 'date_desc';
+            state.sortBy = preferencesManager.getDefaultSort();
             state.showOnlyVisited = false;
             elements.searchInput.value = '';
             elements.searchClear.classList.add('hidden');
@@ -2157,7 +2275,7 @@
                 publishedDateRange: utils.cloneDateRange(state.publishedDateRange),
                 selectedFilters: JSON.parse(JSON.stringify(state.selectedFilters || {})),
                 showOnlyVisited: Boolean(state.showOnlyVisited),
-                sortBy: state.sortBy || 'date_desc'
+                sortBy: state.sortBy || preferencesManager.DEFAULT_SORT
             };
         },
 
@@ -2179,7 +2297,7 @@
                 ),
                 selectedFilters: JSON.parse(JSON.stringify(savedState.selectedFilters || {})),
                 showOnlyVisited: Boolean(savedState.showOnlyVisited),
-                sortBy: savedState.sortBy || 'date_desc'
+                sortBy: savedState.sortBy || preferencesManager.DEFAULT_SORT
             };
         },
 
@@ -2548,7 +2666,7 @@
             const jobDatesCompact = utils.renderJobDatesHtml(job, 'compact');
             const smartLocation = utils.getSmartLocation(job);
             const contractInfo = utils.getContractInfo(job);
-            const title = utils.toTitleCase(job.title);
+            const title = utils.formatJobTitle(job.title);
 
             const jobUrl = job.url || '#';
             const stretchLink = `<a href="${utils.escapeHtml(jobUrl)}" class="job-card-stretch-link" target="_blank" rel="noopener noreferrer" aria-label="Abrir vaga: ${utils.escapeHtml(title)}"></a>`;
@@ -3235,6 +3353,8 @@
             state.publishedDateRange = utils.normalizeDateRange(state.tempPublishedDateRange);
             state.quickFilter = state.tempQuickFilter;
             state.sortBy = state.tempSortBy;
+            preferencesManager.saveSort(state.sortBy);
+            preferencesManager.markVisited();
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             filterManager.apply();
             this.close();
@@ -3899,9 +4019,37 @@
         }
     };
 
+    const aboutInfoManager = {
+        init() {
+            const btn = document.getElementById('aboutInfoBtn');
+            const popover = document.getElementById('infoPopover');
+            if (!btn || !popover) return;
+
+            const close = () => {
+                popover.classList.add('hidden');
+                btn.setAttribute('aria-expanded', 'false');
+            };
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = popover.classList.toggle('hidden');
+                btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#aboutInfoBtn') && !e.target.closest('#infoPopover')) close();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') close();
+            });
+        }
+    };
+
     function init() {
         try {
             utils.markSessionStart();
+            preferencesManager.applyDefaults();
             themeManager.init();
             // styleManager.init() / fontManager.init() — not called; defaults applied via HTML attrs
             densityManager.init();
@@ -3911,6 +4059,7 @@
             // tweaksPanel removed — density toggle moved to header button
             sortManager.init();
             shareManager.init();
+            aboutInfoManager.init();
             searchHistoryManager.init();
             searchManager.init();
             animationManager.init();
@@ -3943,6 +4092,8 @@
             }
 
             dataLoader.load().then(() => {
+                preferencesManager.markVisited();
+                sortManager.updateLabel();
                 fabMenuManager.updateLastJobVisibility();
             });
 

@@ -76,6 +76,14 @@
                     </div>
                 </div>
                 <div class="top-app-bar-actions">
+                    <div class="info-btn-wrap">
+                        <button type="button" class="icon-btn" id="aboutInfoBtn" aria-label="Sobre o projeto" aria-expanded="false" aria-controls="infoPopover">
+                            <span class="material-symbols-rounded">info</span>
+                        </button>
+                        <div id="infoPopover" class="info-popover hidden" role="dialog" aria-labelledby="infoPopoverTitle">
+                            <p id="infoPopoverTitle">Projeto idealizado para apoiar na busca da vaga correta ao perfil correto, classificando elas para que essa descoberta seja simples e fácil. Aproveite!</p>
+                        </div>
+                    </div>
                     <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">
                         <span class="material-symbols-rounded theme-icon-light">light_mode</span>
                         <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
@@ -93,8 +101,8 @@
                 <input
                     type="text"
                     id="searchInput"
-                    placeholder="Buscar vagas, empresas, cargos..."
-                    data-placeholder-desktop="Buscar vagas, empresas, cargos... (pressione /)"
+                    placeholder='Ex.: "data engineer" ou "engenheiro de dados"'
+                    data-placeholder-desktop='Buscar com "termo" ou "outro" · "termo" e "empresa" (/)'
                     autocomplete="off"
                     aria-label="Buscar vagas, empresas e cargos"
                 >
@@ -124,7 +132,7 @@
                 <div class="sort-dropdown-container">
                     <button class="filter-chip filter-chip-sort" id="sortToggle" aria-label="Ordenar" aria-expanded="false" aria-controls="sortDropdown">
                         <span class="material-symbols-rounded">swap_vert</span>
-                        <span class="sort-label">Recentes</span>
+                        <span class="sort-label">Publicadas</span>
                     </button>
                     <div class="sort-dropdown hidden" id="sortDropdown" role="menu">
                         <button class="sort-option" data-sort="date_desc" role="menuitem">Obtidas: mais recentes</button>

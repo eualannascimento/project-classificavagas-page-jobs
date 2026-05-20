@@ -175,7 +175,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 .splash-amp { color: var(--accent); }
-.splash-brand .brand-v { color: var(--accent); }
+.splash-brand .brand-v { color: inherit; }
 .splash-brand .brand-c { color: var(--accent); display: inline-block; }
 
 .splash-msg {
@@ -283,10 +283,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 .brand-v {
-    color: var(--accent);
     display: inline-block;
-    animation: brandFloat 6s ease-in-out infinite;
-    animation-delay: 3s;
 }
 
 .sr-only {
@@ -347,6 +344,28 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .top-app-bar-actions {
     display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
+
+.info-btn-wrap {
+    position: relative;
+}
+
+.info-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(280px, calc(100vw - 24px));
+    padding: 12px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 28px -10px oklch(0.20 0.02 250 / 0.2);
+    z-index: 250;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+}
+
+.info-popover p { margin: 0; }
 
 /* Icon button — new & legacy */
 .icon-btn,
@@ -790,8 +809,19 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 .active-filters-scroll {
     flex: 1; display: flex; gap: 6px;
-    overflow-x: auto; scrollbar-width: none;
+    overflow-x: auto; overflow-y: visible;
+    scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+}
+
+.active-filters:has(.active-filter-chip.expanded) {
+    overflow: visible;
+    z-index: 200;
+}
+
+.active-filters:has(.active-filter-chip.expanded) .active-filters-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
 }
 .active-filters-scroll::-webkit-scrollbar { display: none; }
 
