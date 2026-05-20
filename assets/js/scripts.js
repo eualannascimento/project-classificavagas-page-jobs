@@ -3709,15 +3709,19 @@
                 setTimeout(() => searchHistoryManager.hide(), 200);
             });
 
-            const focusSearchInput = (e) => {
-                if (e?.target?.closest?.('#searchClear')) return;
-                elements.searchInput?.focus();
-            };
             elements.searchBar?.addEventListener('mousedown', (e) => {
                 if (e.target.closest('#searchClear')) return;
-                if (e.target === elements.searchInput) return;
-                e.preventDefault();
-                focusSearchInput(e);
+                if (e.target !== elements.searchInput) e.preventDefault();
+                elements.searchInput?.focus();
+            });
+            elements.searchBar?.addEventListener('click', (e) => {
+                const popover = document.getElementById('infoPopover');
+                const infoBtn = document.getElementById('aboutInfoBtn');
+                if (popover && infoBtn && !popover.classList.contains('hidden')) {
+                    popover.classList.add('hidden');
+                    infoBtn.setAttribute('aria-expanded', 'false');
+                }
+                e.stopPropagation();
             });
 
             elements.searchClear.addEventListener('click', () => {
@@ -4189,10 +4193,11 @@
             const popover = document.getElementById('infoPopover');
             if (!btn || !popover) return;
 
-            const close = () => {
+            const close = ({ restoreFocus = false } = {}) => {
+                if (popover.classList.contains('hidden')) return;
                 popover.classList.add('hidden');
                 btn.setAttribute('aria-expanded', 'false');
-                btn.focus();
+                if (restoreFocus) btn.focus();
             };
 
             const open = () => {
@@ -4204,13 +4209,13 @@
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (popover.classList.contains('hidden')) open();
-                else close();
+                else close({ restoreFocus: true });
             });
 
             popover.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     e.preventDefault();
-                    close();
+                    close({ restoreFocus: true });
                 }
                 if (e.key === 'Tab') {
                     e.preventDefault();
@@ -4222,7 +4227,7 @@
             });
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && !popover.classList.contains('hidden')) close();
+                if (e.key === 'Escape' && !popover.classList.contains('hidden')) close({ restoreFocus: true });
             });
         }
     };
