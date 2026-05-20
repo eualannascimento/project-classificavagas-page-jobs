@@ -844,6 +844,20 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     cursor: default; position: relative;
 }
 
+.active-filter-chip-search {
+    text-transform: none;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    letter-spacing: 0;
+    max-width: min(42vw, 168px);
+}
+
+.active-filter-chip-search .chip-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 @keyframes chipIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
 
 .active-filter-chip .chip-close {
@@ -2002,10 +2016,6 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
         height: 36px;
     }
 
-    .filter-chip-save {
-        min-height: 44px;
-    }
-
     .filter-chip-save .save-filter-text {
         display: none;
     }
@@ -2186,7 +2196,31 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     .job-card:active { transform: scale(0.99); }
     .filter-chip, .icon-btn, .icon-button, .filter-option-chip { min-height: 44px; }
     .filter-chip[data-filter] { padding-left: 22px; }
-    .filter-chip-view, .filter-chip-sort, .filter-chip-main { padding: 0 12px; min-height: 36px; }
+    .filter-chip-view,
+    .filter-chip-sort,
+    .filter-chip-main,
+    .filter-chip-visited,
+    .filter-chip-save {
+        padding: 0 8px;
+        min-height: 36px;
+        height: 36px;
+        max-height: 36px;
+    }
+
+    .filter-chip-visited {
+        width: 36px;
+        min-width: 36px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .filter-chip-main span:not(.filter-badge):not(.material-symbols-rounded) {
+        display: none;
+    }
+
+    .filter-chip-sort .sort-label {
+        display: none;
+    }
 }
 
 /* No-select on interactive elements */
@@ -2504,8 +2538,10 @@ body.chrome-scrolled .app-chrome {
     }
 
     .filter-chip-main {
-        min-height: 44px;
-        padding: 0 16px;
+        min-height: 36px;
+        height: 36px;
+        max-height: 36px;
+        padding: 0 10px;
         background: var(--ink);
         border-color: var(--ink);
         color: var(--bg);
@@ -2517,14 +2553,38 @@ body.chrome-scrolled .app-chrome {
         color: var(--ink);
     }
 
-    .filter-chip-sort { min-height: 44px; }
+    .filter-chip-sort,
+    .filter-chip-view {
+        min-height: 36px;
+        height: 36px;
+        max-height: 36px;
+        padding: 0 8px;
+    }
+
+    .filter-chip-sort .sort-label {
+        display: none;
+    }
+
+    .filter-chip-main span:not(.filter-badge):not(.material-symbols-rounded) {
+        display: none;
+    }
 
     .filter-chip-visited {
         flex-shrink: 0;
-        width: 40px;
-        min-width: 40px;
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        max-height: 36px;
         padding: 0;
         justify-content: center;
+    }
+
+    .filter-chip-save {
+        min-height: 36px;
+        height: 36px;
+        max-height: 36px;
+        padding: 0 8px;
+        flex-shrink: 0;
     }
 
     .filter-chip-visited .visited-count {
