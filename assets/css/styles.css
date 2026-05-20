@@ -868,8 +868,22 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .active-filter-chip .chip-close:hover { background: var(--accent-ink); color: var(--accent-soft); }
 .active-filter-chip .material-symbols-rounded { font-size: 13px; }
 
+.active-filter-chip .chip-text {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: inherit;
+    line-height: inherit;
+}
+
 .active-filter-chip.grouped { cursor: pointer; }
-.active-filter-chip.grouped .chip-text::after {
+.active-filter-chip.grouped .chip-text-grouped { cursor: pointer; }
+.active-filter-chip.grouped .chip-text-grouped::after {
     content: '';
     display: inline-block; width: 0; height: 0;
     border-left: 3px solid transparent; border-right: 3px solid transparent;
@@ -877,7 +891,17 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     margin-left: 5px; vertical-align: middle;
     transition: transform 0.2s var(--ease);
 }
-.active-filter-chip.grouped.expanded .chip-text::after { transform: rotate(180deg); }
+.active-filter-chip.grouped.expanded .chip-text-grouped::after { transform: rotate(180deg); }
+
+.filter-dropdown-portal {
+    flex-direction: column;
+    padding: 6px;
+    box-shadow: 0 12px 32px -8px oklch(0.20 0.02 250 / 0.22);
+}
+
+.filter-dropdown-portal.hidden {
+    display: none !important;
+}
 
 .filter-dropdown {
     position: absolute; top: 100%; left: 0; margin-top: 4px;
@@ -899,11 +923,13 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .filter-dropdown-item:hover { background: var(--bg-sunk); }
 .filter-dropdown-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .filter-dropdown-item button {
-    width: 20px; height: 20px; border-radius: var(--radius-sm);
+    width: 28px; height: 28px; border-radius: var(--radius-sm);
     display: flex; align-items: center; justify-content: center;
-    color: var(--ink-3); opacity: 0;
-    transition: opacity 0.15s var(--ease), background 0.15s var(--ease), color 0.15s var(--ease);
+    color: var(--ink-3);
+    flex-shrink: 0;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
 }
+.filter-dropdown-portal .filter-dropdown-item button,
 .filter-dropdown-item:hover button { opacity: 1; }
 .filter-dropdown-item button:hover { background: var(--bg-sunk); color: var(--ink); }
 .filter-dropdown-item button .material-symbols-rounded { font-size: 13px; }

@@ -1777,6 +1777,99 @@
     // FILTER MANAGER
     // ============================================
     const filterManager = {
+        _groupedDropdown: { chip: null, key: null },
+        _groupedDropdownInit: false,
+
+        initGroupedFilterDropdown() {
+            if (this._groupedDropdownInit) return;
+            this._groupedDropdownInit = true;
+
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.active-filter-chip.grouped') ||
+                    e.target.closest('#activeFilterDropdownPortal')) {
+                    return;
+                }
+                this.closeGroupedFilterDropdown();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') this.closeGroupedFilterDropdown();
+            });
+
+            window.addEventListener('scroll', () => this.closeGroupedFilterDropdown(), { passive: true });
+            window.addEventListener('resize', () => this.closeGroupedFilterDropdown());
+        },
+
+        closeGroupedFilterDropdown() {
+            if (this._groupedDropdown.chip) {
+                this._groupedDropdown.chip.classList.remove('expanded');
+                this._groupedDropdown.chip.setAttribute('aria-expanded', 'false');
+            }
+            const portal = document.getElementById('activeFilterDropdownPortal');
+            if (portal) {
+                portal.classList.add('hidden');
+                portal.innerHTML = '';
+                portal.removeAttribute('style');
+            }
+            this._groupedDropdown = { chip: null, key: null };
+        },
+
+        formatFilterOptionLabel(value) {
+            if (!value) return '';
+            const str = String(value);
+            const match = str.match(/^\d+\s*-\s*(.+)$/);
+            return match ? match[1].trim() : str;
+        },
+
+        openGroupedFilterDropdown(chip, key, values) {
+            this.closeGroupedFilterDropdown();
+
+            let portal = document.getElementById('activeFilterDropdownPortal');
+            if (!portal) {
+                portal = document.createElement('div');
+                portal.id = 'activeFilterDropdownPortal';
+                portal.className = 'filter-dropdown filter-dropdown-portal hidden';
+                portal.setAttribute('role', 'listbox');
+                document.body.appendChild(portal);
+            }
+
+            chip.classList.add('expanded');
+            chip.setAttribute('aria-expanded', 'true');
+            this._groupedDropdown = { chip, key };
+
+            portal.innerHTML = values.map(v => `
+                <div class="filter-dropdown-item" data-value="${utils.escapeHtml(v)}" role="option">
+                    <span>${utils.escapeHtml(this.formatFilterOptionLabel(v))}</span>
+                    <button type="button" aria-label="Remover ${utils.escapeHtml(this.formatFilterOptionLabel(v))}">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+            `).join('');
+
+            portal.querySelectorAll('.filter-dropdown-item button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const item = btn.closest('.filter-dropdown-item');
+                    this.removeFilter(key, item.dataset.value);
+                    this.closeGroupedFilterDropdown();
+                });
+            });
+
+            const rect = chip.getBoundingClientRect();
+            const maxLeft = Math.max(8, Math.min(rect.left, window.innerWidth - 220));
+            portal.style.cssText = `
+                position: fixed;
+                top: ${rect.bottom + 6}px;
+                left: ${maxLeft}px;
+                min-width: ${Math.max(rect.width, 220)}px;
+                max-width: min(92vw, 320px);
+                z-index: 600;
+                display: flex;
+            `;
+            portal.classList.remove('hidden');
+        },
+
         filterJobs(jobs, {
             searchQuery = state.searchQuery,
             showOnlyVisited = state.showOnlyVisited,
@@ -2052,6 +2145,7 @@
         },
 
         renderActiveFilters() {
+            this.closeGroupedFilterDropdown();
             const groups = this.buildFilterSummaryItems(state);
             this.updateSaveActionVisibility();
 
@@ -2079,20 +2173,8 @@
                          ${chipType === 'search_or' ? `data-search-index="${searchIndex}"` : ''}
                          ${chipType === 'category' && count === 1 ? `data-value="${utils.escapeHtml(values[0])}"` : ''}
                          ${isGrouped ? `data-tooltip="${tooltipItems}"` : ''}>
-                        <span class="chip-text">${chipText}</span>
-                        ${isGrouped ? `
-                            <div class="filter-dropdown">
-                                ${values.map(v => `
-                                    <div class="filter-dropdown-item" data-value="${utils.escapeHtml(v)}">
-                                        <span>${utils.escapeHtml(v)}</span>
-                                        <button aria-label="Remover ${utils.escapeHtml(v)}">
-                                            <span class="material-symbols-rounded">close</span>
-                                        </button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                        <button class="chip-close" aria-label="Remover filtro">
+                        <button type="button" class="chip-text${isGrouped ? ' chip-text-grouped' : ''}" ${isGrouped ? 'aria-expanded="false" aria-haspopup="listbox"' : ''}>${chipText}</button>
+                        <button type="button" class="chip-close" aria-label="Remover filtro">
                             <span class="material-symbols-rounded">close</span>
                         </button>
                     </div>
@@ -2138,78 +2220,26 @@
                 });
 
                 if (isGrouped) {
-                    const positionGroupedDropdown = () => {
-                        const dropdown = chip.querySelector('.filter-dropdown');
-                        if (!dropdown || !chip.classList.contains('expanded')) return;
-                        const rect = chip.getBoundingClientRect();
-                        dropdown.style.position = 'fixed';
-                        dropdown.style.top = `${rect.bottom + 6}px`;
-                        dropdown.style.left = `${Math.max(8, rect.left)}px`;
-                        dropdown.style.minWidth = `${Math.max(rect.width, 200)}px`;
-                        dropdown.style.zIndex = '400';
-                    };
-
-                    chip.addEventListener('click', (e) => {
-                        if (e.target.closest('.filter-dropdown') || e.target.closest('.chip-close')) return;
-                        const willExpand = !chip.classList.contains('expanded');
-                        elements.activeFiltersList.querySelectorAll('.active-filter-chip.expanded').forEach(other => {
-                            if (other !== chip) {
-                                other.classList.remove('expanded');
-                                const dd = other.querySelector('.filter-dropdown');
-                                if (dd) {
-                                    dd.style.position = '';
-                                    dd.style.top = '';
-                                    dd.style.left = '';
-                                    dd.style.minWidth = '';
-                                    dd.style.zIndex = '';
-                                }
-                            }
-                        });
-                        chip.classList.toggle('expanded');
-                        if (willExpand) {
-                            requestAnimationFrame(positionGroupedDropdown);
+                    const openChip = (e) => {
+                        if (e.target.closest('.chip-close')) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const values = state.selectedFilters[key] || [];
+                        if (this._groupedDropdown.chip === chip) {
+                            this.closeGroupedFilterDropdown();
                         } else {
-                            const dropdown = chip.querySelector('.filter-dropdown');
-                            if (dropdown) {
-                                dropdown.style.position = '';
-                                dropdown.style.top = '';
-                                dropdown.style.left = '';
-                                dropdown.style.minWidth = '';
-                                dropdown.style.zIndex = '';
-                            }
+                            this.openGroupedFilterDropdown(chip, key, values);
                         }
-                    });
-
-                    chip.querySelectorAll('.filter-dropdown-item button').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const item = btn.closest('.filter-dropdown-item');
-                            this.removeFilter(key, item.dataset.value);
-                        });
+                    };
+                    chip.querySelector('.chip-text-grouped')?.addEventListener('click', openChip);
+                    chip.querySelector('.chip-text-grouped')?.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openChip(e);
+                        }
                     });
                 }
             });
-
-            const closeGroupedDropdowns = () => {
-                elements.activeFiltersList.querySelectorAll('.active-filter-chip.expanded').forEach(c => {
-                    c.classList.remove('expanded');
-                    const dd = c.querySelector('.filter-dropdown');
-                    if (dd) {
-                        dd.style.position = '';
-                        dd.style.top = '';
-                        dd.style.left = '';
-                        dd.style.minWidth = '';
-                        dd.style.zIndex = '';
-                    }
-                });
-            };
-
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.active-filter-chip')) closeGroupedDropdowns();
-            }, { once: true });
-
-            window.addEventListener('scroll', closeGroupedDropdowns, { once: true, passive: true });
-            window.addEventListener('resize', closeGroupedDropdowns, { once: true });
         },
 
         removeFilter(key, value) {
@@ -4105,6 +4135,7 @@
             // tweaksPanel removed — density toggle moved to header button
             sortManager.init();
             shareManager.init();
+            filterManager.initGroupedFilterDropdown();
             aboutInfoManager.init();
             searchHistoryManager.init();
             searchManager.init();
