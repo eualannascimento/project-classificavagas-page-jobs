@@ -3231,7 +3231,7 @@
                             <span class="material-symbols-rounded filter-section-icon">expand_more</span>
                         </div>
                         <div class="filter-section-body">
-                            <input type="text" class="filter-search-input" placeholder="Buscar ${label.toLowerCase()}..." data-key="${key}">
+                            <input type="text" class="filter-search-input" placeholder="Filtrar ${label.toLowerCase()}…" data-key="${key}" aria-label="Filtrar opções de ${label}">
                             <div class="filter-options-list" data-key="${key}">
                                 ${this.renderOptions(key, options)}
                             </div>
@@ -3241,7 +3241,6 @@
             }).join('');
 
             elements.filterSheetContent.innerHTML =
-                '<p class="filter-sheet-hint"><strong>Entre grupos:</strong> todas as condições (E). <strong>Dentro do mesmo grupo:</strong> qualquer opção marcada (OU).</p>' +
                 quickSection +
                 buildCats(beforeDate) +
                 publishedDateSection +
@@ -3454,8 +3453,8 @@
             if (state.tempQuickFilter !== 'all') count++;
 
             elements.sheetFilterCount.textContent = count > 0
-                ? `${count} selecionado${count > 1 ? 's' : ''}`
-                : 'Nenhum selecionado';
+                ? `${count} filtro${count > 1 ? 's' : ''} ativo${count > 1 ? 's' : ''}`
+                : 'Refine sua busca abaixo';
 
             this.updateApplyPreview();
         },
@@ -3997,14 +3996,10 @@
     const mobileLayout = {
         init() {
             const apply = () => {
-                const mobile = utils.isMobile();
-                document.documentElement.setAttribute('data-mobile', mobile ? 'true' : 'false');
-                const input = elements.searchInput;
-                if (input?.dataset.placeholderDesktop) {
-                    input.placeholder = mobile
-                        ? 'Buscar vagas, empresas, cargos...'
-                        : input.dataset.placeholderDesktop;
-                }
+                document.documentElement.setAttribute(
+                    'data-mobile',
+                    utils.isMobile() ? 'true' : 'false'
+                );
             };
             apply();
             window.matchMedia('(max-width: 720px)').addEventListener('change', apply);
