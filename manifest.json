@@ -1,0 +1,18 @@
+{
+  "name": "classificavagas.com",
+  "short_name": "classificavagas",
+  "description": "Agregador de vagas de emprego no Brasil",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f9ff",
+  "theme_color": "#f9f9ff",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/images/brand-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -7,26 +7,27 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="classificavagas.com — agregador de vagas de emprego no Brasil. Busque, filtre e encontre oportunidades em um só lugar.">
-    <meta property="og:title" content="classifica vagas">
+    <meta property="og:title" content="classificavagas.com">
     <meta property="og:description" content="Agregador de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://classificavagas.com">
     <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.svg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="classificavagas — agregador de vagas no Brasil">
+    <meta property="og:image:alt" content="classificavagas.com — agregador de vagas no Brasil">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="classifica vagas">
+    <meta name="twitter:title" content="classificavagas.com">
     <meta name="twitter:description" content="Agregador de vagas de emprego no Brasil.">
     <meta name="twitter:image" content="https://classificavagas.com/assets/images/og-image.svg">
-    <title>classifica vagas</title>
+    <title>classificavagas.com</title>
 
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/images/brand-icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/images/brand-icon.svg">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&family=EB+Garamond:ital,wght@0,400;1,400&family=DM+Serif+Display:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,300,0,0" />
 
     <link rel="stylesheet" href="assets/css/styles.css">
@@ -34,11 +35,9 @@
 <body>
     <a href="#jobsGrid" class="skip-link">Pular para vagas</a>
 
-    <div class="scroll-progress hidden" id="scrollProgress"></div>
-
     <div id="splash" class="splash">
         <div class="splash-content">
-            <div class="splash-brand"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas</div>
+            <div class="splash-brand"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></div>
             <div class="splash-loader-wrap">
                 <div class="splash-loader"><div class="splash-progress" id="splashProgress"></div></div>
                 <span class="splash-pct" id="splashPct">0%</span>
@@ -53,7 +52,7 @@
         <header class="top-app-bar" id="topAppBar">
             <div class="masthead-inner">
                 <div class="masthead-brand">
-                    <h1 class="brand-mark" id="brandLink" role="button" tabindex="0" style="cursor:pointer"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas</h1>
+                    <h1 class="brand-mark" id="brandLink" role="button" tabindex="0" aria-label="classificavagas.com — voltar ao início"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></h1>
                     <div class="brand-meta">
                         <div class="brand-meta-line brand-meta-count">
                             <span class="job-count" id="jobCount">Carregando...</span>
@@ -69,8 +68,9 @@
                         <button type="button" class="icon-btn" id="aboutInfoBtn" aria-label="Sobre o projeto" aria-expanded="false" aria-controls="infoPopover">
                             <span class="material-symbols-rounded">info</span>
                         </button>
-                        <div id="infoPopover" class="info-popover hidden" role="dialog" aria-labelledby="infoPopoverTitle">
-                            <p id="infoPopoverTitle">Projeto idealizado para apoiar na busca da vaga correta ao perfil correto, classificando elas para que essa descoberta seja simples e fácil. Aproveite!</p>
+                        <div id="infoPopover" class="info-popover hidden" role="dialog" aria-modal="true" aria-labelledby="infoPopoverTitle" tabindex="-1">
+                            <p id="infoPopoverTitle">O projeto &quot;classificavagas.com&quot; reúne vagas abertas e as organiza para você achar a oportunidade certa, com busca, filtros e combinações salvas. Mais simplicidade e clareza para encontrar sua oportunidade!</p>
+                            <p class="info-popover-hint">Na busca: use aspas para termos exatos e <strong>ou</strong> / <strong>e</strong> para combinar palavras.</p>
                         </div>
                     </div>
                     <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">

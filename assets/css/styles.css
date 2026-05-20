@@ -286,6 +286,25 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     display: inline-block;
 }
 
+.brand-tld {
+    font-size: 0.78em;
+    color: var(--ink-3);
+    letter-spacing: -0.01em;
+}
+
+.splash-brand .brand-tld {
+    font-size: 0.72em;
+}
+
+.info-popover-hint {
+    margin: 10px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    line-height: 1.4;
+}
+
 .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
