@@ -85,16 +85,17 @@
 
         <div class="search-bar-container">
             <div class="search-bar" id="searchBar">
-                <span class="material-symbols-rounded search-icon">search</span>
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Buscar vagas, empresas ou cargos…"
-                    title="Atalho: / para focar. Use aspas, ou e e para combinar termos."
-                    autocomplete="off"
-                    aria-label="Buscar vagas, empresas ou cargos"
-                >
-                <button class="icon-btn search-clear hidden" id="searchClear" aria-label="Limpar">
+                <label class="search-bar-field" for="searchInput">
+                    <span class="material-symbols-rounded search-icon" aria-hidden="true">search</span>
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Buscar vagas, empresas ou cargos…"
+                        title="Atalho: / para focar. Use aspas, ou e e para combinar termos."
+                        autocomplete="off"
+                    >
+                </label>
+                <button type="button" class="icon-btn search-clear hidden" id="searchClear" aria-label="Limpar busca">
                     <span class="material-symbols-rounded">close</span>
                 </button>
             </div>
