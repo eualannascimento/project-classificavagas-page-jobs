@@ -118,6 +118,10 @@
         sheetApplyLabel: $('#sheetApplyLabel'),
         sortSheet: $('#sortSheet'),
         closeSortSheet: $('#closeSortSheet'),
+        groupedFilterSheet: $('#groupedFilterSheet'),
+        groupedFilterSheetTitle: $('#groupedFilterSheetTitle'),
+        groupedFilterSheetList: $('#groupedFilterSheetList'),
+        closeGroupedFilterSheet: $('#closeGroupedFilterSheet'),
         themeToggle: $('#themeToggle'),
         lastUpdate: $('#lastUpdate'),
         topAppBar: $('.top-app-bar'),
@@ -1094,6 +1098,7 @@
         },
 
         openSortSheet() {
+            if (filterManager.groupedSheetOpen) filterManager.closeGroupedFilterSheet();
             if (this.isOpen) this.closeDropdown();
             this.updateLabel();
             elements.scrim.classList.remove('hidden');
@@ -1116,7 +1121,8 @@
             setTimeout(() => {
                 elements.sortSheet.classList.add('hidden');
                 const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
-                if (!filterOpen) {
+                const groupedOpen = filterManager.groupedSheetOpen;
+                if (!filterOpen && !groupedOpen) {
                     elements.scrim.classList.add('hidden');
                     document.body.style.overflow = '';
                 }
@@ -1779,25 +1785,87 @@
     const filterManager = {
         _groupedDropdown: { chip: null, key: null },
         _groupedDropdownInit: false,
+        groupedSheetOpen: false,
+        _ignoreScrollUntil: 0,
 
         initGroupedFilterDropdown() {
             if (this._groupedDropdownInit) return;
             this._groupedDropdownInit = true;
 
+            elements.activeFiltersList?.addEventListener('click', (e) => {
+                if (e.target.closest('.chip-close')) return;
+                const chip = e.target.closest('.active-filter-chip.grouped');
+                if (!chip) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const key = chip.dataset.key;
+                const values = state.selectedFilters[key] || [];
+                const category = CONFIG.FILTER_CATEGORIES.find(c => c.key === key);
+                const label = category ? category.label : key;
+                this.toggleGroupedFilterMenu(chip, key, values, label);
+            });
+
+            elements.closeGroupedFilterSheet?.addEventListener('click', () => this.closeGroupedFilterSheet());
+            elements.groupedFilterSheet?.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('[data-remove-value]');
+                if (!removeBtn) return;
+                e.preventDefault();
+                const key = removeBtn.dataset.filterKey;
+                const value = removeBtn.dataset.removeValue;
+                this.removeFilter(key, value);
+                const remaining = state.selectedFilters[key] || [];
+                if (remaining.length <= 1) {
+                    this.closeGroupedFilterSheet();
+                } else if (this.groupedSheetOpen) {
+                    const category = CONFIG.FILTER_CATEGORIES.find(c => c.key === key);
+                    this.populateGroupedFilterSheet(key, remaining, category?.label || key);
+                }
+            });
+
+            if (elements.groupedFilterSheet) {
+                sheetSwipe.bind(elements.groupedFilterSheet, () => this.closeGroupedFilterSheet());
+            }
+
             document.addEventListener('click', (e) => {
                 if (e.target.closest('.active-filter-chip.grouped') ||
-                    e.target.closest('#activeFilterDropdownPortal')) {
+                    e.target.closest('#activeFilterDropdownPortal') ||
+                    e.target.closest('#groupedFilterSheet')) {
                     return;
                 }
                 this.closeGroupedFilterDropdown();
             });
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') this.closeGroupedFilterDropdown();
+                if (e.key === 'Escape') {
+                    if (this.groupedSheetOpen) this.closeGroupedFilterSheet();
+                    else this.closeGroupedFilterDropdown();
+                }
             });
 
-            window.addEventListener('scroll', () => this.closeGroupedFilterDropdown(), { passive: true });
-            window.addEventListener('resize', () => this.closeGroupedFilterDropdown());
+            window.addEventListener('scroll', () => {
+                if (Date.now() < this._ignoreScrollUntil) return;
+                this.closeGroupedFilterDropdown();
+            }, { passive: true });
+            window.addEventListener('resize', () => {
+                if (this.groupedSheetOpen) this.closeGroupedFilterSheet();
+                else this.closeGroupedFilterDropdown();
+            });
+        },
+
+        toggleGroupedFilterMenu(chip, key, values, label) {
+            if (utils.isMobile()) {
+                if (this.groupedSheetOpen && this._groupedDropdown.key === key) {
+                    this.closeGroupedFilterSheet();
+                } else {
+                    this.openGroupedFilterSheet(chip, key, values, label);
+                }
+                return;
+            }
+            if (this._groupedDropdown.chip === chip) {
+                this.closeGroupedFilterDropdown();
+            } else {
+                this.openGroupedFilterDropdown(chip, key, values);
+            }
         },
 
         closeGroupedFilterDropdown() {
@@ -1814,6 +1882,71 @@
             this._groupedDropdown = { chip: null, key: null };
         },
 
+        closeGroupedFilterSheet() {
+            if (!elements.groupedFilterSheet) return;
+            elements.scrim?.classList.remove('visible');
+            elements.groupedFilterSheet.classList.remove('visible');
+            setTimeout(() => {
+                elements.groupedFilterSheet.classList.add('hidden');
+                const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
+                const sortOpen = sortManager.sortSheetOpen;
+                if (!filterOpen && !sortOpen) {
+                    elements.scrim?.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+                this._groupedDropdown.chip?.focus();
+            }, 400);
+            if (this._groupedDropdown.chip) {
+                this._groupedDropdown.chip.classList.remove('expanded');
+                this._groupedDropdown.chip.setAttribute('aria-expanded', 'false');
+            }
+            this.groupedSheetOpen = false;
+            this._groupedDropdown = { chip: null, key: null };
+        },
+
+        populateGroupedFilterSheet(key, values, label) {
+            if (!elements.groupedFilterSheetList || !elements.groupedFilterSheetTitle) return;
+            elements.groupedFilterSheetTitle.textContent = label;
+            elements.groupedFilterSheetList.innerHTML = values.map(v => `
+                <div class="grouped-filter-sheet-item" role="option">
+                    <span>${utils.escapeHtml(this.formatFilterOptionLabel(v))}</span>
+                    <button type="button" class="grouped-filter-sheet-remove"
+                            data-filter-key="${utils.escapeHtml(key)}"
+                            data-remove-value="${utils.escapeHtml(v)}"
+                            aria-label="Remover ${utils.escapeHtml(this.formatFilterOptionLabel(v))}">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+            `).join('');
+        },
+
+        openGroupedFilterSheet(chip, key, values, label) {
+            if (!elements.groupedFilterSheet) {
+                this.openGroupedFilterDropdown(chip, key, values);
+                return;
+            }
+            this.closeGroupedFilterDropdown();
+            if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
+
+            this._groupedDropdown = { chip, key };
+            chip.classList.add('expanded');
+            chip.setAttribute('aria-expanded', 'true');
+            this.populateGroupedFilterSheet(key, values, label);
+
+            elements.scrim?.classList.remove('hidden');
+            elements.groupedFilterSheet.classList.remove('hidden');
+            elements.groupedFilterSheet.setAttribute('role', 'dialog');
+            elements.groupedFilterSheet.setAttribute('aria-modal', 'true');
+            document.body.style.overflow = 'hidden';
+            requestAnimationFrame(() => {
+                elements.scrim?.classList.add('visible');
+                elements.groupedFilterSheet.classList.add('visible');
+                elements.closeGroupedFilterSheet?.focus();
+            });
+            this.groupedSheetOpen = true;
+            this._ignoreScrollUntil = Date.now() + 400;
+        },
+
         formatFilterOptionLabel(value) {
             if (!value) return '';
             const str = String(value);
@@ -1822,6 +1955,7 @@
         },
 
         openGroupedFilterDropdown(chip, key, values) {
+            this.closeGroupedFilterSheet();
             this.closeGroupedFilterDropdown();
 
             let portal = document.getElementById('activeFilterDropdownPortal');
@@ -1868,6 +2002,7 @@
                 display: flex;
             `;
             portal.classList.remove('hidden');
+            this._ignoreScrollUntil = Date.now() + 350;
         },
 
         filterJobs(jobs, {
@@ -2145,6 +2280,7 @@
         },
 
         renderActiveFilters() {
+            this.closeGroupedFilterSheet();
             this.closeGroupedFilterDropdown();
             const groups = this.buildFilterSummaryItems(state);
             this.updateSaveActionVisibility();
@@ -2220,22 +2356,13 @@
                 });
 
                 if (isGrouped) {
-                    const openChip = (e) => {
-                        if (e.target.closest('.chip-close')) return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const values = state.selectedFilters[key] || [];
-                        if (this._groupedDropdown.chip === chip) {
-                            this.closeGroupedFilterDropdown();
-                        } else {
-                            this.openGroupedFilterDropdown(chip, key, values);
-                        }
-                    };
-                    chip.querySelector('.chip-text-grouped')?.addEventListener('click', openChip);
                     chip.querySelector('.chip-text-grouped')?.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            openChip(e);
+                            const values = state.selectedFilters[key] || [];
+                            const category = CONFIG.FILTER_CATEGORIES.find(c => c.key === key);
+                            const label = category ? category.label : key;
+                            this.toggleGroupedFilterMenu(chip, key, values, label);
                         }
                     });
                 }
@@ -2415,6 +2542,7 @@
                 return;
             }
 
+            if (filterManager.groupedSheetOpen) filterManager.closeGroupedFilterSheet();
             if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
             this.mode = 'create';
             this.editingId = null;
@@ -2439,6 +2567,7 @@
             const item = this.items.find(saved => saved.id === id);
             if (!item) return;
 
+            if (filterManager.groupedSheetOpen) filterManager.closeGroupedFilterSheet();
             if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
             this.mode = 'edit';
             this.editingId = id;
@@ -2497,7 +2626,8 @@
             setTimeout(() => {
                 elements.saveFilterSheet.classList.add('hidden');
                 const filterOpen = elements.filterSheet && !elements.filterSheet.classList.contains('hidden');
-                if (!sortManager.sortSheetOpen && !filterOpen) {
+                const groupedOpen = filterManager.groupedSheetOpen;
+                if (!sortManager.sortSheetOpen && !filterOpen && !groupedOpen) {
                     elements.scrim.classList.add('hidden');
                     document.body.style.overflow = '';
                 }
@@ -2938,6 +3068,10 @@
                     savedFiltersManager.close();
                     return;
                 }
+                if (filterManager.groupedSheetOpen) {
+                    filterManager.closeGroupedFilterSheet();
+                    return;
+                }
                 if (sortManager.sortSheetOpen) {
                     sortManager.closeSortSheet();
                     return;
@@ -2959,6 +3093,7 @@
         },
 
         open() {
+            if (filterManager.groupedSheetOpen) filterManager.closeGroupedFilterSheet();
             if (sortManager.sortSheetOpen) sortManager.closeSortSheet();
 
             // Clone current filters to temp
@@ -3006,7 +3141,7 @@
 
             setTimeout(() => {
                 elements.filterSheet.classList.add('hidden');
-                if (!sortManager.sortSheetOpen) {
+                if (!sortManager.sortSheetOpen && !filterManager.groupedSheetOpen) {
                     elements.scrim.classList.add('hidden');
                     document.body.style.overflow = '';
                 }
@@ -4054,6 +4189,7 @@
             if (document.body.classList.contains('fab-menu-open')) return false;
             if (!elements.filterSheet.classList.contains('hidden')) return false;
             if (elements.sortSheet && !elements.sortSheet.classList.contains('hidden')) return false;
+            if (elements.groupedFilterSheet && !elements.groupedFilterSheet.classList.contains('hidden')) return false;
             return true;
         },
 

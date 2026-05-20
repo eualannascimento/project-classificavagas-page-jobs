@@ -223,6 +223,21 @@
             </div>
         </div>
 
+        <div class="bottom-sheet grouped-filter-sheet hidden" id="groupedFilterSheet" aria-labelledby="groupedFilterSheetTitle">
+            <div class="bottom-sheet-header sheet-draggable">
+                <div class="bottom-sheet-handle"></div>
+                <div class="bottom-sheet-title">
+                    <h2 id="groupedFilterSheetTitle">Filtros</h2>
+                </div>
+                <button class="icon-btn" id="closeGroupedFilterSheet" aria-label="Fechar lista de filtros">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="bottom-sheet-content grouped-filter-sheet-content">
+                <div class="grouped-filter-sheet-list" id="groupedFilterSheetList" role="listbox" aria-label="Filtros selecionados"></div>
+            </div>
+        </div>
+
         <div class="bottom-sheet hidden" id="filterSheet" aria-labelledby="filterSheetTitle">
             <div class="bottom-sheet-header sheet-draggable">
                 <div class="bottom-sheet-handle"></div>

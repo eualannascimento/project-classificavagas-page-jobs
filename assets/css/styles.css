@@ -881,8 +881,8 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     line-height: inherit;
 }
 
-.active-filter-chip.grouped { cursor: pointer; }
-.active-filter-chip.grouped .chip-text-grouped { cursor: pointer; }
+.active-filter-chip.grouped { cursor: pointer; touch-action: manipulation; }
+.active-filter-chip.grouped .chip-text-grouped { cursor: pointer; touch-action: manipulation; }
 .active-filter-chip.grouped .chip-text-grouped::after {
     content: '';
     display: inline-block; width: 0; height: 0;
@@ -2776,6 +2776,62 @@ body.chrome-scrolled .app-chrome {
     .sort-sheet-option:active,
     .sort-sheet-option:hover {
         background: var(--bg-sunk);
+    }
+
+    .grouped-filter-sheet {
+        max-height: 58vh;
+    }
+
+    .grouped-filter-sheet-content {
+        padding: 8px 12px 20px;
+    }
+
+    .grouped-filter-sheet-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .grouped-filter-sheet-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 48px;
+        padding: 0 12px 0 16px;
+        border-radius: var(--radius-md);
+        font-size: 0.92rem;
+        color: var(--ink);
+        background: var(--bg-sunk);
+    }
+
+    .grouped-filter-sheet-item span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .grouped-filter-sheet-remove {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ink-3);
+        flex-shrink: 0;
+        transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+
+    .grouped-filter-sheet-remove:active,
+    .grouped-filter-sheet-remove:hover {
+        background: var(--bg-elevated);
+        color: var(--ink);
+    }
+
+    .grouped-filter-sheet-remove .material-symbols-rounded {
+        font-size: 18px;
     }
 
     .sort-sheet-option.selected {
