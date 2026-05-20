@@ -21,7 +21,6 @@
             { key: 'company_type', label: 'Ramo', icon: 'category' },
             { key: 'level', label: 'Nível', icon: 'trending_up' },
             { key: 'category', label: 'Categoria', icon: 'work' },
-            { key: 'sub_category', label: 'Especialidade', icon: 'star' },
             { key: 'company', label: 'Empresa', icon: 'business' },
             { key: 'location_scope', label: 'Abrangência', icon: 'public' },
             { key: 'site_type', label: 'Plataforma', icon: 'language' },
