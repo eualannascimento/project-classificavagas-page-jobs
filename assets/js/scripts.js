@@ -3709,15 +3709,19 @@
                 setTimeout(() => searchHistoryManager.hide(), 200);
             });
 
-            const focusSearchInput = (e) => {
-                if (e?.target?.closest?.('#searchClear')) return;
-                elements.searchInput?.focus();
-            };
             elements.searchBar?.addEventListener('mousedown', (e) => {
                 if (e.target.closest('#searchClear')) return;
-                if (e.target === elements.searchInput) return;
-                e.preventDefault();
-                focusSearchInput(e);
+                if (e.target !== elements.searchInput) e.preventDefault();
+                elements.searchInput?.focus();
+            });
+            elements.searchBar?.addEventListener('click', (e) => {
+                const popover = document.getElementById('infoPopover');
+                const infoBtn = document.getElementById('aboutInfoBtn');
+                if (popover && infoBtn && !popover.classList.contains('hidden')) {
+                    popover.classList.add('hidden');
+                    infoBtn.setAttribute('aria-expanded', 'false');
+                }
+                e.stopPropagation();
             });
 
             elements.searchClear.addEventListener('click', () => {
