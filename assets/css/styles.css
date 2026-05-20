@@ -508,6 +508,9 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     font-size: 0.9rem;
     line-height: 1.35;
     color: var(--ink);
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
 }
 .search-bar input::placeholder {
     color: var(--ink-3);
@@ -1767,13 +1770,21 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
    SCRIM & BOTTOM SHEET
    ============================================ */
 .scrim {
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background: oklch(0.05 0.01 250 / 0.45);
     backdrop-filter: blur(2px);
-    opacity: 0; z-index: 200;
-    transition: opacity 0.3s var(--ease);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 200;
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease), visibility 0.3s var(--ease);
 }
-.scrim.visible { opacity: 1; }
+.scrim.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
 
 .bottom-sheet {
     position: fixed; bottom: 0; left: 0; right: 0;
