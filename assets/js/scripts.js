@@ -433,6 +433,28 @@
             return groups.length ? { type: 'expr', groups } : { type: 'empty' };
         },
 
+        getSearchOrSegments(query) {
+            const raw = String(query || '').trim();
+            if (!raw) return [];
+            if (!/\s+ou\s+/i.test(raw)) return [raw];
+            return this.splitOutsideQuotes(raw, 'ou').map(s => s.trim()).filter(Boolean);
+        },
+
+        formatSearchSegmentLabel(segment) {
+            const parsed = this.parseSearchTerm(segment);
+            if (!parsed) return String(segment || '').trim();
+            if (parsed.type === 'phrase') return parsed.value;
+            if (parsed.type === 'words') return parsed.values.join(' ');
+            return String(segment || '').trim();
+        },
+
+        removeSearchOrSegment(query, index) {
+            const segments = this.getSearchOrSegments(query);
+            if (index < 0 || index >= segments.length) return String(query || '').trim();
+            segments.splice(index, 1);
+            return segments.length ? segments.join(' ou ') : '';
+        },
+
         getSearchText(job) {
             return this.normalize([
                 job.title, job.company, job.company_type,
@@ -1960,7 +1982,25 @@
             const groups = [];
 
             if (filterState.searchQuery) {
-                groups.push({ key: '_search', label: 'Busca', values: [filterState.searchQuery], chipType: 'search' });
+                const segments = utils.getSearchOrSegments(filterState.searchQuery);
+                if (segments.length > 1) {
+                    segments.forEach((segment, index) => {
+                        groups.push({
+                            key: `_search_${index}`,
+                            label: 'Busca',
+                            values: [utils.formatSearchSegmentLabel(segment)],
+                            chipType: 'search_or',
+                            searchIndex: index
+                        });
+                    });
+                } else {
+                    groups.push({
+                        key: '_search',
+                        label: 'Busca',
+                        values: [utils.formatSearchSegmentLabel(segments[0] || filterState.searchQuery)],
+                        chipType: 'search'
+                    });
+                }
             }
             if (filterState.quickFilter !== 'all') {
                 groups.push({
@@ -2023,19 +2063,21 @@
             }
 
             elements.activeFilters.classList.remove('hidden');
-            elements.activeFiltersList.innerHTML = groups.map(({ key, label, values, chipType }) => {
+            elements.activeFiltersList.innerHTML = groups.map(({ key, label, values, chipType, searchIndex }) => {
                 const count = values.length;
                 const displayText = count === 1 ? values[0] : `${label}: ${count}`;
                 const tooltipItems = count > 1 ? values.map(v => utils.escapeHtml(v)).join(', ') : '';
                 const isGrouped = chipType === 'category' && count > 1;
-                const chipText = chipType === 'search'
-                    ? `"${utils.truncate(displayText, 22)}"`
+                const isSearchChip = chipType === 'search' || chipType === 'search_or';
+                const chipText = isSearchChip
+                    ? utils.escapeHtml(displayText)
                     : (count === 1 ? utils.truncate(displayText, 18) : displayText);
 
                 return `
-                    <div class="active-filter-chip ${isGrouped ? 'grouped' : ''}"
+                    <div class="active-filter-chip ${isGrouped ? 'grouped' : ''}${isSearchChip ? ' active-filter-chip-search' : ''}"
                          data-key="${key}"
                          data-chip-type="${chipType}"
+                         ${chipType === 'search_or' ? `data-search-index="${searchIndex}"` : ''}
                          ${chipType === 'category' && count === 1 ? `data-value="${utils.escapeHtml(values[0])}"` : ''}
                          ${isGrouped ? `data-tooltip="${tooltipItems}"` : ''}>
                         <span class="chip-text">${chipText}</span>
@@ -2069,6 +2111,11 @@
                         state.searchQuery = '';
                         elements.searchInput.value = '';
                         elements.searchClear.classList.add('hidden');
+                    } else if (chipType === 'search_or') {
+                        const idx = Number.parseInt(chip.dataset.searchIndex, 10);
+                        state.searchQuery = utils.removeSearchOrSegment(state.searchQuery, idx);
+                        elements.searchInput.value = state.searchQuery;
+                        elements.searchClear.classList.toggle('hidden', !state.searchQuery);
                     } else if (chipType === 'quick') {
                         state.quickFilter = 'all';
                         if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
@@ -4069,7 +4116,6 @@
             bottomSheet.init();
             clearHandlers.init();
             shortcutsOverlay.init();
-            onboardingManager.init();
             mobileLayout.init();
             fabMenuManager.init();
             swManager.init();
