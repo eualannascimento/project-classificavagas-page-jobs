@@ -3064,11 +3064,11 @@
                 'inserted'
             );
 
-            // Order: Tipo | Ramo Nível Categoria Especialidade | Data | Empresa Abrangência Plataforma Localização País Estado Cidade
-            // FILTER_CATEGORIES is already ordered; split at index 4 (Empresa) to insert date section
+            // Order: Tipo | Ramo Nível Categoria | Data | Empresa Abrangência Plataforma Localização País Estado Cidade
+            // FILTER_CATEGORIES is already ordered; split at index 3 (Empresa) to insert date section
             const cats = CONFIG.FILTER_CATEGORIES;
-            const beforeDate = cats.slice(0, 4); // Ramo Nível Categoria Especialidade
-            const afterDate  = cats.slice(4);    // Empresa Abrangência Plataforma Localização País Estado Cidade
+            const beforeDate = cats.slice(0, 3); // Ramo Nível Categoria
+            const afterDate  = cats.slice(3);    // Empresa Abrangência Plataforma Localização País Estado Cidade
 
             const buildCats = (list) => list.map(({ key, label, icon }) => {
                 const options = state.filterOptions[key] || [];
