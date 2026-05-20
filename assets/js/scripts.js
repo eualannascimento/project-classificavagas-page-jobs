@@ -274,6 +274,44 @@
             return { from: iso(from), to: iso(to) };
         },
 
+        rangeToPeriodKey(range) {
+            if (!this.hasDateRange(range)) return null;
+            const normalized = this.normalizeDateRange(range);
+            const today = new Date().toISOString().split('T')[0];
+            if (normalized.to !== today) return null;
+            for (const period of CONFIG.DATE_PERIODS) {
+                if (!period.days) continue;
+                const expected = this.periodKeyToRange(period.key);
+                if (expected.from === normalized.from && expected.to === normalized.to) {
+                    return period.key;
+                }
+            }
+            return null;
+        },
+
+        matchesQuickFilter(job, quickFilter) {
+            if (!quickFilter || quickFilter === 'all') return true;
+            const contractInfo = this.getContractInfo(job);
+            const contractCls = contractInfo?.cls;
+            const isRemoteFlag = job['remote?'] === '01 - Sim';
+            const isOnsiteFlag = job['remote?'] === '02 - Não';
+
+            switch (quickFilter) {
+                case 'remote':
+                    return contractCls === 'remote' || isRemoteFlag;
+                case 'hybrid':
+                    return contractCls === 'hybrid';
+                case 'onsite':
+                    return contractCls === 'onsite' || (isOnsiteFlag && contractCls !== 'hybrid');
+                case 'affirmative':
+                    return job['affirmative?'] === '01 - Sim';
+                case 'today':
+                    return this.isToday(job.inserted_date);
+                default:
+                    return true;
+            }
+        },
+
         normalizeDateRange(range) {
             const normalized = this.cloneDateRange(range);
             if (normalized.from && normalized.to && normalized.from > normalized.to) {
@@ -555,10 +593,30 @@
             return localStorage.getItem(key) === '1';
         },
 
+        VISITED_INDEX_KEY: 'cv_visited_index',
+        MAX_VISITED_KEYS: 400,
+
         markVisited(job) {
             const key = this.getJobKey(job);
             localStorage.setItem(key, '1');
             state.visitedJobs.add(key);
+
+            let index = [];
+            try {
+                index = JSON.parse(localStorage.getItem(this.VISITED_INDEX_KEY) || '[]');
+            } catch (err) {
+                index = [];
+            }
+            index = index.filter(k => k !== key);
+            index.push(key);
+            if (index.length > this.MAX_VISITED_KEYS) {
+                const removed = index.splice(0, index.length - this.MAX_VISITED_KEYS);
+                removed.forEach(k => {
+                    localStorage.removeItem(k);
+                    state.visitedJobs.delete(k);
+                });
+            }
+            localStorage.setItem(this.VISITED_INDEX_KEY, JSON.stringify(index));
         },
 
         markSessionStart() {
@@ -832,139 +890,6 @@
     };
 
     // ============================================
-    // TWEAKS PANEL
-    // ============================================
-    const tweaksPanel = {
-        isOpen: false,
-
-        init() {
-            const toggleBtn = document.getElementById('tweaksToggle');
-            const panel = document.getElementById('tweaksPanel');
-            const closeBtn = document.getElementById('closeTweaks');
-            if (!toggleBtn || !panel) return;
-
-            // Remove 'hidden' class so the panel is controlled by 'open' class
-            panel.classList.remove('hidden');
-
-            toggleBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggle();
-            });
-
-            if (closeBtn) closeBtn.addEventListener('click', () => this.close());
-
-            document.addEventListener('click', (e) => {
-                if (this.isOpen && !panel.contains(e.target) && e.target !== toggleBtn) {
-                    this.close();
-                }
-            });
-
-            // Style buttons (#tweaksStyle [data-value])
-            const styleGroup = panel.querySelector('#tweaksStyle');
-            if (styleGroup) {
-                styleGroup.querySelectorAll('[data-value]').forEach(btn => {
-                    btn.addEventListener('click', () => styleManager.apply(btn.dataset.value));
-                });
-            }
-
-            // Font buttons (#tweaksFont [data-font])
-            const fontGroup = panel.querySelector('#tweaksFont');
-            if (fontGroup) {
-                fontGroup.querySelectorAll('[data-font]').forEach(btn => {
-                    btn.addEventListener('click', () => fontManager.apply(btn.dataset.font));
-                });
-            }
-
-            // View mode buttons (#tweaksView [data-value])
-            const viewGroup = panel.querySelector('#tweaksView');
-            if (viewGroup) {
-                viewGroup.querySelectorAll('[data-value]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const mode = btn.dataset.value;
-                        if (VIEW_MODES.includes(mode)) {
-                            viewModeManager.apply(mode, true);
-                            this.syncGroup(viewGroup, mode);
-                        }
-                    });
-                });
-            }
-
-            // Density buttons (#tweaksDensity [data-value])
-            const densityGroup = panel.querySelector('#tweaksDensity');
-            if (densityGroup) {
-                densityGroup.querySelectorAll('[data-value]').forEach(btn => {
-                    btn.addEventListener('click', () => densityManager.apply(btn.dataset.value));
-                });
-            }
-
-            // Theme buttons (#tweaksTheme [data-value])
-            const themeGroup = panel.querySelector('#tweaksTheme');
-            if (themeGroup) {
-                themeGroup.querySelectorAll('[data-value]').forEach(btn => {
-                    btn.addEventListener('click', () => themeManager.apply(btn.dataset.value));
-                });
-            }
-
-            // Sync all groups to initial state
-            this.syncAll();
-        },
-
-        syncGroup(group, activeValue) {
-            if (!group) return;
-            group.querySelectorAll('[data-value],[data-font]').forEach(btn => {
-                const val = btn.dataset.value || btn.dataset.font;
-                btn.classList.toggle('active', val === activeValue);
-            });
-        },
-
-        syncAll() {
-            const panel = document.getElementById('tweaksPanel');
-            if (!panel) return;
-            const theme = document.documentElement.getAttribute('data-theme') || 'light';
-            const style = document.documentElement.getAttribute('data-style') || 'editorial';
-            const font  = document.documentElement.getAttribute('data-font')  || 'instrument';
-            const density = document.documentElement.getAttribute('data-density') || 'compact';
-
-            this.syncGroup(panel.querySelector('#tweaksTheme'), theme);
-            this.syncGroup(panel.querySelector('#tweaksStyle'), style);
-            this.syncGroup(panel.querySelector('#tweaksFont'), font);
-            this.syncGroup(panel.querySelector('#tweaksDensity'), density);
-            this.syncGroup(panel.querySelector('#tweaksView'), state.viewMode);
-        },
-
-        toggle() {
-            this.isOpen ? this.close() : this.open();
-        },
-
-        open() {
-            this.isOpen = true;
-            this.syncAll();
-            document.getElementById('tweaksPanel')?.classList.add('open');
-        },
-
-        close() {
-            this.isOpen = false;
-            document.getElementById('tweaksPanel')?.classList.remove('open');
-        }
-    };
-
-    // ============================================
-    // SCROLL PROGRESS
-    // ============================================
-    const scrollProgress = {
-        init() {
-            const bar = document.getElementById('scrollProgress');
-            if (!bar) return;
-            window.addEventListener('scroll', () => {
-                const scrollY = window.scrollY;
-                const docH = document.documentElement.scrollHeight - window.innerHeight;
-                const pct = docH > 0 ? scrollY / docH : 0;
-                bar.style.transform = `scaleX(${pct})`;
-            }, { passive: true });
-        }
-    };
-
-    // ============================================
     // SHEET SWIPE (mobile dismiss)
     // ============================================
     const sheetSwipe = {
@@ -1215,11 +1140,17 @@
             if (state.quickFilter !== 'all') {
                 url.searchParams.set('qf', state.quickFilter);
             }
-            if (utils.hasDateRange(state.insertedDateRange)) {
+            const insertedPeriod = utils.rangeToPeriodKey(state.insertedDateRange);
+            if (insertedPeriod) {
+                url.searchParams.set('dp', insertedPeriod);
+            } else if (utils.hasDateRange(state.insertedDateRange)) {
                 if (state.insertedDateRange.from) url.searchParams.set('idf', state.insertedDateRange.from);
                 if (state.insertedDateRange.to) url.searchParams.set('idt', state.insertedDateRange.to);
             }
-            if (utils.hasDateRange(state.publishedDateRange)) {
+            const publishedPeriod = utils.rangeToPeriodKey(state.publishedDateRange);
+            if (publishedPeriod) {
+                url.searchParams.set('pdp', publishedPeriod);
+            } else if (utils.hasDateRange(state.publishedDateRange)) {
                 if (state.publishedDateRange.from) url.searchParams.set('pdf', state.publishedDateRange.from);
                 if (state.publishedDateRange.to) url.searchParams.set('pdt', state.publishedDateRange.to);
             }
@@ -1252,23 +1183,21 @@
             if (params.has('qf')) {
                 state.quickFilter = params.get('qf');
             }
-            if (params.has('dp')) {
-                state.insertedDateRange = utils.periodKeyToRange(params.get('dp'));
-            }
-            if (params.has('pdp')) {
-                state.publishedDateRange = utils.periodKeyToRange(params.get('pdp'));
-            }
             if (params.has('idf') || params.has('idt')) {
                 state.insertedDateRange = {
                     from: params.get('idf') || '',
                     to: params.get('idt') || ''
                 };
+            } else if (params.has('dp')) {
+                state.insertedDateRange = utils.periodKeyToRange(params.get('dp'));
             }
             if (params.has('pdf') || params.has('pdt')) {
                 state.publishedDateRange = {
                     from: params.get('pdf') || '',
                     to: params.get('pdt') || ''
                 };
+            } else if (params.has('pdp')) {
+                state.publishedDateRange = utils.periodKeyToRange(params.get('pdp'));
             }
             state.insertedDateRange = utils.normalizeDateRange(state.insertedDateRange);
             state.publishedDateRange = utils.normalizeDateRange(state.publishedDateRange);
@@ -1902,16 +1831,7 @@
             }
 
             if (quickFilter !== 'all') {
-                result = result.filter(job => {
-                    switch (quickFilter) {
-                        case 'remote': return job['remote?'] === '01 - Sim';
-                        case 'hybrid': return job.contract === 'HIBRIDO' || job.contract === 'HÍBRIDO';
-                        case 'onsite': return job['remote?'] === '02 - Não';
-                        case 'affirmative': return job['affirmative?'] === '01 - Sim';
-                        case 'today': return utils.isToday(job.inserted_date);
-                        default: return true;
-                    }
-                });
+                result = result.filter(job => utils.matchesQuickFilter(job, quickFilter));
             }
 
             if (utils.hasDateRange(insertedDateRange)) {
@@ -3163,7 +3083,6 @@
             state.tempInsertedDateRange = utils.cloneDateRange(state.insertedDateRange);
             state.tempPublishedDateRange = utils.cloneDateRange(state.publishedDateRange);
             state.tempQuickFilter = state.quickFilter;
-            state.tempSortBy = state.sortBy;
             this._openFiltersTrigger = document.activeElement;
 
             // Build filter sections
@@ -3444,19 +3363,6 @@
                 });
             });
 
-            // Sort options
-            elements.filterSheetContent.querySelectorAll('.sort-options .filter-option-chip').forEach(chip => {
-                chip.addEventListener('click', () => {
-                    const sort = chip.dataset.sort;
-                    state.tempSortBy = sort;
-
-                    // Update UI
-                    elements.filterSheetContent.querySelectorAll('.sort-options .filter-option-chip').forEach(c => {
-                        c.classList.toggle('selected', c.dataset.sort === sort);
-                    });
-                });
-            });
-
             // Search inputs
             elements.filterSheetContent.querySelectorAll('.filter-search-input').forEach(input => {
                 input.addEventListener('input', utils.debounce((e) => {
@@ -3477,8 +3383,7 @@
             // Option chips
             elements.filterSheetContent.querySelectorAll('.filter-options-list[data-key]').forEach(list => {
                 if (!list.classList.contains('date-options-inserted') &&
-                    !list.classList.contains('date-options-published') &&
-                    !list.classList.contains('sort-options')) {
+                    !list.classList.contains('date-options-published')) {
                     this.addOptionListeners(list);
                 }
             });
@@ -3595,7 +3500,6 @@
             state.tempInsertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.tempPublishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.tempQuickFilter = 'all';
-            state.tempSortBy = 'date_desc';
 
             elements.filterSheetContent.querySelectorAll('.filter-option-chip.selected').forEach(chip => {
                 chip.classList.remove('selected');
@@ -3611,7 +3515,6 @@
             elements.filterSheetContent.querySelectorAll('.date-range-clear-btn').forEach(btn => {
                 btn.disabled = true;
             });
-            elements.filterSheetContent.querySelector('.sort-options .filter-option-chip[data-sort="date_desc"]')?.classList.add('selected');
 
             elements.filterSheetContent.querySelectorAll('.filter-section-count').forEach(badge => {
                 badge.remove();
@@ -3626,8 +3529,6 @@
             state.insertedDateRange = utils.normalizeDateRange(state.tempInsertedDateRange);
             state.publishedDateRange = utils.normalizeDateRange(state.tempPublishedDateRange);
             state.quickFilter = state.tempQuickFilter;
-            state.sortBy = state.tempSortBy;
-            preferencesManager.saveSort(state.sortBy);
             preferencesManager.markVisited();
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             filterManager.apply();
@@ -3954,22 +3855,15 @@
     // QUICK FILTERS
     // ============================================
     const quickFilters = {
-        init() {
-            document.querySelectorAll('.filter-chip-quick').forEach(chip => {
-                chip.addEventListener('click', () => {
-                    const q = chip.dataset.quick;
-                    const next = state.quickFilter === q ? 'all' : q;
-                    filterManager.setQuickFilter(next);
-                    this.syncUI();
-                });
-            });
-            this.syncUI();
-        },
         syncUI() {
-            document.querySelectorAll('.filter-chip-quick').forEach(chip => {
-                const selected = chip.dataset.quick === state.quickFilter;
+            document.querySelectorAll('.filter-chip-quick, #sheetQuickFilters [data-quick]').forEach(chip => {
+                const q = chip.dataset.quick;
+                if (!q) return;
+                const selected = q === state.quickFilter;
                 chip.classList.toggle('selected', selected);
-                chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
+                if (chip.hasAttribute('aria-pressed')) {
+                    chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
+                }
             });
         }
     };
@@ -4215,19 +4109,6 @@
     // ============================================
     // ONBOARDING
     // ============================================
-    const onboardingManager = {
-        init() {
-            if (localStorage.getItem('cv_onboarding_seen')) return;
-            const banner = document.getElementById('onboardingBanner');
-            if (!banner) return;
-            banner.classList.remove('hidden');
-            document.getElementById('onboardingDismiss')?.addEventListener('click', () => {
-                banner.classList.add('hidden');
-                localStorage.setItem('cv_onboarding_seen', '1');
-            });
-        }
-    };
-
     // ============================================
     // SERVICE WORKER
     // ============================================
@@ -4303,12 +4184,29 @@
             const close = () => {
                 popover.classList.add('hidden');
                 btn.setAttribute('aria-expanded', 'false');
+                btn.focus();
+            };
+
+            const open = () => {
+                popover.classList.remove('hidden');
+                btn.setAttribute('aria-expanded', 'true');
+                popover.focus();
             };
 
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isHidden = popover.classList.toggle('hidden');
-                btn.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
+                if (popover.classList.contains('hidden')) open();
+                else close();
+            });
+
+            popover.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    close();
+                }
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                }
             });
 
             document.addEventListener('click', (e) => {
@@ -4316,7 +4214,7 @@
             });
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') close();
+                if (e.key === 'Escape' && !popover.classList.contains('hidden')) close();
             });
         }
     };
@@ -4326,12 +4224,10 @@
             utils.markSessionStart();
             preferencesManager.applyDefaults();
             themeManager.init();
-            // styleManager.init() / fontManager.init() — not called; defaults applied via HTML attrs
+            // styleManager / fontManager — optional prefs via data-* on <html>
             densityManager.init();
             visitedFilter.init();
             viewModeManager.init();
-            scrollProgress.init();
-            // tweaksPanel removed — density toggle moved to header button
             sortManager.init();
             shareManager.init();
             filterManager.initGroupedFilterDropdown();
@@ -4340,7 +4236,6 @@
             searchManager.init();
             animationManager.init();
             scrollManager.init();
-            quickFilters.init();
             savedFiltersManager.init();
             bottomSheet.init();
             clearHandlers.init();
