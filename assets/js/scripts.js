@@ -401,6 +401,50 @@
             return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
 
+        closeAboutInfoPopover() {
+            const popover = document.getElementById('infoPopover');
+            const infoBtn = document.getElementById('aboutInfoBtn');
+            if (popover && infoBtn && !popover.classList.contains('hidden')) {
+                popover.classList.add('hidden');
+                infoBtn.setAttribute('aria-expanded', 'false');
+            }
+        },
+
+        /** Evita que listeners globais no document roubem foco de inputs em sheets/dialogs. */
+        guardTextInputFocus(input) {
+            if (!input || input.dataset.focusGuard) return;
+            input.dataset.focusGuard = '1';
+
+            input.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                input.focus();
+            });
+
+            input.addEventListener('click', (e) => {
+                this.closeAboutInfoPopover();
+                e.stopPropagation();
+            });
+        },
+
+        bindFilterSheetTextInputGuards(container) {
+            if (!container || container.dataset.sheetInputGuards) return;
+            container.dataset.sheetInputGuards = '1';
+
+            container.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                const input = e.target.closest('input.filter-search-input, input.date-range-input');
+                if (!input) return;
+                input.focus();
+            });
+
+            container.addEventListener('click', (e) => {
+                const input = e.target.closest('input.filter-search-input, input.date-range-input');
+                if (!input) return;
+                this.closeAboutInfoPopover();
+                e.stopPropagation();
+            });
+        },
+
         splitOutsideQuotes(str, operator) {
             const parts = [];
             let current = '';
@@ -2267,6 +2311,7 @@
                     this.saveFromSheet();
                 }
             });
+            utils.guardTextInputFocus(elements.saveFilterName);
 
             if (elements.saveFilterSheet) {
                 sheetSwipe.bind(elements.saveFilterSheet, () => this.close());
@@ -3063,6 +3108,7 @@
             }
             elements.sheetClearFilters.addEventListener('click', () => this.clearTemp());
             elements.sheetApplyFilters.addEventListener('click', () => this.applyAndClose());
+            utils.bindFilterSheetTextInputGuards(elements.filterSheetContent);
 
             // ESC key
             document.addEventListener('keydown', (e) => {
@@ -3715,12 +3761,7 @@
                 elements.searchInput?.focus();
             });
             elements.searchBar?.addEventListener('click', (e) => {
-                const popover = document.getElementById('infoPopover');
-                const infoBtn = document.getElementById('aboutInfoBtn');
-                if (popover && infoBtn && !popover.classList.contains('hidden')) {
-                    popover.classList.add('hidden');
-                    infoBtn.setAttribute('aria-expanded', 'false');
-                }
+                utils.closeAboutInfoPopover();
                 e.stopPropagation();
             });
 
@@ -4223,7 +4264,9 @@
             });
 
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('#aboutInfoBtn') && !e.target.closest('#infoPopover')) close();
+                if (popover.classList.contains('hidden')) return;
+                if (e.target.closest('#aboutInfoBtn') || e.target.closest('#infoPopover')) return;
+                close();
             });
 
             document.addEventListener('keydown', (e) => {
