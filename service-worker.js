@@ -1,11 +1,14 @@
-const CACHE_VERSION = '3';
+const CACHE_VERSION = '4';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',
     './index.html',
+    './privacidade.html',
+    './termos.html',
     './manifest.json',
     './assets/css/styles.css',
     './assets/js/scripts.js',
+    './assets/js/legal.js',
     './assets/js/jobs-worker.js'
 ];
 
