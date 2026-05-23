@@ -402,10 +402,27 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .info-popover p {
     margin: 0;
 }
+.info-popover p + p {
+    margin-top: 8px;
+}
 
 .info-popover-brand {
     font-weight: 600;
     color: var(--accent-ink);
+}
+.info-popover a,
+.legal-disclaimer a,
+.footer-legal-links a,
+.legal-page a {
+    color: var(--accent-ink);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+.info-popover-links {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 @media (max-width: 720px) {
@@ -2155,7 +2172,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .footer-fixed {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: calc(36px + var(--safe-bottom));
+    min-height: calc(40px + var(--safe-bottom));
     padding: 0 var(--shell-pad);
     padding-bottom: var(--safe-bottom);
     display: flex; align-items: center; justify-content: center;
@@ -2164,6 +2181,20 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid var(--rule-2);
     z-index: 50;
+}
+.footer-legal-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    line-height: 1.35;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.055em;
+    text-align: center;
 }
 .footer-quote {
     font-family: var(--font-serif);
@@ -2182,7 +2213,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     letter-spacing: 0.06em;
     opacity: 0.7;
 }
-.app { padding-bottom: calc(36px + var(--safe-bottom)); }
+.app { padding-bottom: calc(48px + var(--safe-bottom)); }
 
 /* ============================================
    TOAST
@@ -2201,6 +2232,152 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .theme-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ============================================
+   LEGAL PAGES
+   ============================================ */
+body.legal-page {
+    background:
+        radial-gradient(circle at top left, color-mix(in oklch, var(--accent-soft) 50%, transparent), transparent 34rem),
+        var(--bg);
+}
+
+.legal-shell {
+    width: min(920px, 100%);
+    margin: 0 auto;
+    padding: 32px var(--shell-pad) calc(72px + var(--safe-bottom));
+}
+
+.legal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.legal-brand {
+    font-family: var(--font-serif);
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+
+.legal-back-link {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.055em;
+    color: var(--ink-2);
+    background: var(--bg-elevated);
+}
+
+.legal-card {
+    padding: clamp(20px, 5vw, 40px);
+    background: color-mix(in oklch, var(--bg-elevated) 94%, transparent);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 18px 50px -30px oklch(0.20 0.02 250 / 0.34);
+}
+
+.legal-card h1 {
+    margin-bottom: 8px;
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 7vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.055em;
+}
+
+.legal-updated {
+    margin-bottom: 24px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.legal-lead {
+    margin-bottom: 24px;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--ink-2);
+}
+
+.legal-section {
+    padding-top: 22px;
+    margin-top: 22px;
+    border-top: 1px solid var(--rule-2);
+}
+
+.legal-section h2 {
+    margin-bottom: 10px;
+    font-size: 1.08rem;
+    line-height: 1.25;
+}
+
+.legal-section p,
+.legal-section li {
+    color: var(--ink-2);
+    line-height: 1.7;
+}
+
+.legal-section p + p {
+    margin-top: 10px;
+}
+
+.legal-section ul,
+.legal-section ol {
+    margin-top: 10px;
+    padding-left: 1.2rem;
+}
+
+.legal-note {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in oklch, var(--accent) 22%, var(--rule));
+    border-radius: var(--radius-md);
+    background: color-mix(in oklch, var(--accent-soft) 62%, var(--bg));
+    color: var(--ink-2);
+}
+
+.legal-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    padding: 9px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--ink);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.legal-action-status {
+    display: block;
+    margin-top: 10px;
+    color: var(--success);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+}
+
+.legal-footer {
+    margin-top: 18px;
+    color: var(--ink-3);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 /* Mobile job count bar — sticky, hidden on desktop */
@@ -2210,6 +2387,15 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 
 @media (max-width: 720px) {
     :root { --shell-pad: 16px; }
+
+    .legal-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .legal-back-link {
+        align-self: flex-start;
+    }
 
     /* Header: logo on left, actions on right, update text below logo */
     .masthead-inner {
@@ -2566,6 +2752,18 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     color: var(--ink-2);
     background: var(--bg-sunk);
     border-radius: 6px;
+    text-align: center;
+}
+
+.legal-disclaimer {
+    margin: 0 var(--shell-pad) 8px;
+    padding: 8px 12px;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+    background: color-mix(in oklch, var(--accent-soft) 58%, var(--bg));
+    border: 1px solid color-mix(in oklch, var(--accent) 24%, var(--rule));
+    border-radius: var(--radius-md);
     text-align: center;
 }
 
