@@ -17,24 +17,38 @@
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/images/brand-icon.svg" type="image/svg+xml">
+    <link rel="preload" href="assets/fonts/inter-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/instrument-serif-normal-latin.woff2" as="font" type="font/woff2" crossorigin>
     <script src="assets/js/theme-init.js"></script>
+    <link rel="stylesheet" href="assets/css/fonts-text.css">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/fonts-icons.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="assets/css/fonts-icons.css"></noscript>
 </head>
 <body class="legal-page">
     <a href="#legalContent" class="skip-link">Pular para o conteúdo</a>
-
-    <main class="legal-shell">
-        <header class="legal-header">
-            <a class="legal-brand" href="index.html" aria-label="Voltar para classificavagas.com"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></a>
-            <div class="legal-header-actions">
-                <button type="button" class="icon-btn legal-theme-btn" id="themeToggle" aria-label="Alternar tema">
-                    <span class="material-symbols-rounded theme-icon-light">light_mode</span>
-                    <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
-                    <span class="material-symbols-rounded theme-icon-black">circle</span>
-                </button>
-                <a class="legal-back-link" href="index.html">Voltar às vagas</a>
-            </div>
-        </header>
+    <div class="app legal-app visible">
+        <div class="app-chrome legal-chrome">
+            <header class="top-app-bar" id="topAppBar">
+                <div class="masthead-inner">
+                    <div class="masthead-brand">
+                        <a class="brand-mark legal-brand-link" href="index.html" aria-label="Voltar para classificavagas.com"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></a>
+                        <div class="brand-meta">
+                            <span class="legal-page-label">Privacidade e LGPD</span>
+                        </div>
+                    </div>
+                    <div class="top-app-bar-actions">
+                        <button type="button" class="icon-btn" id="themeToggle" aria-label="Alternar tema">
+                            <span class="material-symbols-rounded theme-icon-light">light_mode</span>
+                            <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
+                            <span class="material-symbols-rounded theme-icon-black">circle</span>
+                        </button>
+                        <a class="legal-back-link" href="index.html">Voltar às vagas</a>
+                    </div>
+                </div>
+            </header>
+        </div>
+        <main class="legal-shell">
 
         <article class="legal-card" id="legalContent">
             <h1>Privacidade e LGPD</h1>
@@ -180,9 +194,7 @@
                 <p>Esta política pode ser atualizada para refletir mudanças no site, em fornecedores, funcionalidades, anúncios ou exigências legais. A data de atualização ficará indicada no topo desta página.</p>
             </section>
         </article>
-
         <p class="legal-footer">Leia também os <a href="termos.html">Termos de Uso</a>.</p>
-
         <footer class="footer-fixed" aria-label="Informações legais">
             <nav class="footer-legal-links" aria-label="Links legais">
                 <a href="termos.html">Termos</a>
@@ -192,8 +204,8 @@
                 <a href="termos.html#remocao">Remoção de vaga</a>
             </nav>
         </footer>
-    </main>
-
+    </div>
+    <script src="assets/js/link-prefetch.js"></script>
     <script src="assets/js/legal-chrome.js"></script>
     <script src="assets/js/legal.js"></script>
 </body>
