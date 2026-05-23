@@ -15,6 +15,7 @@
     const closeBtn = document.getElementById('closeLegalPanel');
     const tabTermos = document.getElementById('legalTabTermos');
     const tabPriv = document.getElementById('legalTabPrivacidade');
+    const fullPageLink = document.getElementById('legalPanelFullPage');
 
     const cache = Object.create(null);
     let currentPage = null;
@@ -41,6 +42,12 @@
         if (id === 'termos' || id === 'privacidade') return { page: id, hash: '' };
         if (id === 'remocao') return { page: 'termos', hash: '#remocao' };
         return null;
+    }
+
+    function updateFullPageLink(page, hash) {
+        if (!fullPageLink || !PAGES[page]) return;
+        fullPageLink.href = PAGES[page].url + (hash || '');
+        fullPageLink.textContent = 'Página completa';
     }
 
     function setTabsActive(page) {
@@ -102,6 +109,7 @@
         lastFocus = document.activeElement;
         currentPage = page;
         setTabsActive(page);
+        updateFullPageLink(page, hash);
 
         panel.classList.remove('hidden');
         if (scrim) scrim.classList.remove('hidden');
