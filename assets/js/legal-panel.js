@@ -2,8 +2,8 @@
     'use strict';
 
     const PAGES = {
-        termos: { url: 'termos.html', title: 'Termos de Uso' },
-        privacidade: { url: 'privacidade.html', title: 'Privacidade e LGPD' }
+        termos: { url: 'termos.html', title: 'Termos de Uso', panelHash: '#termos' },
+        privacidade: { url: 'privacidade.html', title: 'Privacidade e LGPD', panelHash: '#privacidade' }
     };
 
     const panel = document.getElementById('legalPanel');
@@ -20,7 +20,8 @@
     const cache = Object.create(null);
     let currentPage = null;
     let lastFocus = null;
-    let historyPushed = false;
+    /** Uma entrada pushState ao abrir o painel; abas/seções usam replaceState. */
+    let historyEntryActive = false;
 
     function resolveLegalPage(href) {
         if (!href) return null;
@@ -44,10 +45,39 @@
         return null;
     }
 
+    function panelUrlHash(page, sectionHash) {
+        if (sectionHash && sectionHash !== '#') return sectionHash;
+        return PAGES[page]?.panelHash || '#';
+    }
+
+    function syncHistory(page, sectionHash, { push = false } = {}) {
+        const urlHash = panelUrlHash(page, sectionHash);
+        const state = { cvLegalPanel: page };
+        const url = window.location.pathname + window.location.search + urlHash;
+
+        if (!historyEntryActive && push) {
+            history.pushState(state, '', url);
+            historyEntryActive = true;
+            return;
+        }
+        if (historyEntryActive || window.location.hash) {
+            history.replaceState(state, '', url);
+            historyEntryActive = true;
+        }
+    }
+
+    function clearHistoryEntry() {
+        if (!window.location.hash) {
+            historyEntryActive = false;
+            return;
+        }
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        historyEntryActive = false;
+    }
+
     function updateFullPageLink(page, hash) {
         if (!fullPageLink || !PAGES[page]) return;
         fullPageLink.href = PAGES[page].url + (hash || '');
-        fullPageLink.textContent = 'Página completa';
     }
 
     function setTabsActive(page) {
@@ -63,14 +93,36 @@
         }
     }
 
+    function isLegalPanelLink(anchor) {
+        if (!anchor || anchor.id === 'legalPanelFullPage') return false;
+        if (anchor.classList.contains('legal-panel-fullpage')) return false;
+        if (anchor.closest('#legalPanel') && anchor.dataset.legalFullPage === 'true') return false;
+        return true;
+    }
+
     function wirePanelLinks(root) {
         root.querySelectorAll('a[href]').forEach((anchor) => {
-            const resolved = resolveLegalPage(anchor.getAttribute('href'));
-            if (!resolved) return;
-            anchor.addEventListener('click', (e) => {
-                e.preventDefault();
-                open(resolved.page, resolved.hash, { push: true });
-            });
+            const href = anchor.getAttribute('href');
+            const resolved = resolveLegalPage(href);
+            if (resolved) {
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    open(resolved.page, resolved.hash, { updateHistory: true });
+                });
+                return;
+            }
+            if (href && href.startsWith('#') && href.length > 1) {
+                anchor.addEventListener('click', (e) => {
+                    const target = body.querySelector(href);
+                    if (!target) return;
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (currentPage) {
+                        syncHistory(currentPage, href, { push: false });
+                        updateFullPageLink(currentPage, href);
+                    }
+                });
+            }
         });
 
         const clearBtn = root.querySelector('#clearLocalData');
@@ -104,9 +156,24 @@
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    async function open(page, hash, { push = true } = {}) {
+    function renderContent(content) {
+        if (titleEl) titleEl.textContent = content.title;
+        body.innerHTML = content.html;
+        wirePanelLinks(body);
+        body.scrollTop = 0;
+    }
+
+    async function open(page, hash, { updateHistory = true, focusClose = false } = {}) {
         if (!PAGES[page]) return;
-        lastFocus = document.activeElement;
+
+        const wasOpen = !panel.classList.contains('hidden');
+        const samePage = currentPage === page;
+        const sectionOnly = samePage && wasOpen && hash;
+
+        if (!wasOpen) {
+            lastFocus = document.activeElement;
+        }
+
         currentPage = page;
         setTabsActive(page);
         updateFullPageLink(page, hash);
@@ -115,64 +182,93 @@
         if (scrim) scrim.classList.remove('hidden');
         document.body.classList.add('legal-panel-open');
         panel.setAttribute('aria-hidden', 'false');
-        if (closeBtn) closeBtn.focus();
 
-        body.innerHTML = '<p class="legal-panel-loading">Carregando…</p>';
-        if (titleEl) titleEl.textContent = PAGES[page].title;
+        if (sectionOnly && cache[page]) {
+            scrollToHash(hash);
+            if (updateHistory) syncHistory(page, hash, { push: !historyEntryActive });
+            return;
+        }
+
+        if (samePage && cache[page] && wasOpen && !hash) {
+            body.scrollTop = 0;
+            if (updateHistory) syncHistory(page, '', { push: !historyEntryActive });
+            return;
+        }
+
+        const needsFetch = !cache[page];
+        if (needsFetch) {
+            body.innerHTML = '<p class="legal-panel-loading">Carregando…</p>';
+            if (titleEl) titleEl.textContent = PAGES[page].title;
+        }
+
+        if (focusClose && closeBtn) {
+            closeBtn.focus();
+        }
 
         try {
             const content = await fetchPage(page);
-            if (titleEl) titleEl.textContent = content.title;
-            body.innerHTML = content.html;
-            wirePanelLinks(body);
+            if (!samePage || needsFetch || body.querySelector('.legal-panel-loading')) {
+                renderContent(content);
+            }
             scrollToHash(hash);
         } catch (_) {
-            body.innerHTML = '<p class="legal-panel-error">Não foi possível carregar esta página. <a href="' + PAGES[page].url + '">Abrir em página completa</a>.</p>';
+            body.innerHTML =
+                '<p class="legal-panel-error">Não foi possível carregar esta página. ' +
+                '<a href="' + PAGES[page].url + '">Abrir em página completa</a>.</p>';
         }
 
-        const newHash = hash || (page === 'termos' ? '#termos' : '#privacidade');
-        if (push && window.location.hash !== newHash) {
-            history.pushState({ cvLegalPanel: page }, '', newHash);
-            historyPushed = true;
+        if (updateHistory) {
+            syncHistory(page, hash, { push: !historyEntryActive && !wasOpen });
         }
     }
 
     function close({ fromHistory = false } = {}) {
+        const wasOpen = !panel.classList.contains('hidden');
         panel.classList.add('hidden');
         if (scrim) scrim.classList.add('hidden');
         document.body.classList.remove('legal-panel-open');
         panel.setAttribute('aria-hidden', 'true');
         currentPage = null;
 
-        if (!fromHistory && historyPushed && window.location.hash) {
-            history.back();
-        } else if (!fromHistory && window.location.hash.match(/^#(termos|privacidade|remocao)$/)) {
-            history.replaceState(null, '', window.location.pathname + window.location.search);
+        if (!fromHistory) {
+            if (historyEntryActive) {
+                historyEntryActive = false;
+                history.back();
+            } else if (window.location.hash.match(/^#(termos|privacidade|remocao)$/)) {
+                clearHistoryEntry();
+            }
+        } else {
+            historyEntryActive = false;
         }
-        historyPushed = false;
 
-        if (lastFocus && typeof lastFocus.focus === 'function') {
+        if (wasOpen && lastFocus && typeof lastFocus.focus === 'function') {
             lastFocus.focus();
         }
     }
 
     function onDocumentClick(e) {
         const anchor = e.target.closest('a[href]');
-        if (!anchor) return;
+        if (!anchor || !isLegalPanelLink(anchor)) return;
         const resolved = resolveLegalPage(anchor.getAttribute('href'));
         if (!resolved) return;
         e.preventDefault();
-        open(resolved.page, resolved.hash, { push: true });
+        const inPanel = !!anchor.closest('#legalPanel');
+        open(resolved.page, resolved.hash, {
+            updateHistory: true,
+            focusClose: !inPanel && panel.classList.contains('hidden')
+        });
     }
 
     function onPopState() {
         const fromHash = hashToPage(window.location.hash);
         if (fromHash) {
-            open(fromHash.page, fromHash.hash, { push: false });
+            open(fromHash.page, fromHash.hash, { updateHistory: false, focusClose: false });
             return;
         }
         if (!panel.classList.contains('hidden')) {
             close({ fromHistory: true });
+        } else {
+            historyEntryActive = false;
         }
     }
 
@@ -181,8 +277,26 @@
 
     if (closeBtn) closeBtn.addEventListener('click', () => close());
     if (scrim) scrim.addEventListener('click', () => close());
-    if (tabTermos) tabTermos.addEventListener('click', () => open('termos', '', { push: true }));
-    if (tabPriv) tabPriv.addEventListener('click', () => open('privacidade', '', { push: true }));
+    if (tabTermos) {
+        tabTermos.addEventListener('click', () => {
+            if (currentPage === 'termos' && !panel.classList.contains('hidden')) {
+                body.scrollTop = 0;
+                syncHistory('termos', '', { push: false });
+                return;
+            }
+            open('termos', '', { updateHistory: true, focusClose: false });
+        });
+    }
+    if (tabPriv) {
+        tabPriv.addEventListener('click', () => {
+            if (currentPage === 'privacidade' && !panel.classList.contains('hidden')) {
+                body.scrollTop = 0;
+                syncHistory('privacidade', '', { push: false });
+                return;
+            }
+            open('privacidade', '', { updateHistory: true, focusClose: false });
+        });
+    }
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || panel.classList.contains('hidden')) return;
@@ -192,6 +306,6 @@
 
     const initial = hashToPage(window.location.hash);
     if (initial) {
-        open(initial.page, initial.hash, { push: false });
+        open(initial.page, initial.hash, { updateHistory: false, focusClose: false });
     }
 }());
