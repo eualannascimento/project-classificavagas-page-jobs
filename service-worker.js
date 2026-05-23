@@ -1,22 +1,29 @@
-const CACHE_VERSION = '6';
+const CACHE_VERSION = '7';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
-const PRECACHE_SHELL = [
+const PRECACHE = [
     './',
     './index.html',
-    './termos.html',
     './privacidade.html',
+    './termos.html',
+    './manifest.json',
+    './robots.txt',
+    './sitemap.xml',
+    './.well-known/security.txt',
     './assets/css/fonts-text.css',
+    './assets/css/fonts-icons.css',
     './assets/css/styles.css',
     './assets/js/theme-init.js',
     './assets/js/link-prefetch.js',
     './assets/js/legal-chrome.js',
     './assets/js/legal.js',
-    './assets/js/privacy-notice.js'
+    './assets/js/privacy-notice.js',
+    './assets/js/scripts.js',
+    './assets/js/jobs-worker.js'
 ];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_SHELL).catch(() => {}))
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE).catch(() => {}))
     );
     self.skipWaiting();
 });
@@ -49,21 +56,6 @@ self.addEventListener('fetch', (event) => {
                     throw _;
                 }
             })
-        );
-        return;
-    }
-
-    if (event.request.mode === 'navigate') {
-        event.respondWith(
-            fetch(event.request)
-                .then((response) => {
-                    if (response.ok) {
-                        const clone = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-                    }
-                    return response;
-                })
-                .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
         );
         return;
     }

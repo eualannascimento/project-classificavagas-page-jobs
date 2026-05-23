@@ -391,6 +391,17 @@
             return el.innerHTML;
         },
 
+        sanitizeJobUrl(url) {
+            if (!url || typeof url !== 'string') return '#';
+            try {
+                const parsed = new URL(url.trim());
+                if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '#';
+                return parsed.href;
+            } catch (_) {
+                return '#';
+            }
+        },
+
         truncate(str, len) {
             if (!str || str.length <= len) return str || '';
             return str.slice(0, len) + '...';
@@ -2897,7 +2908,7 @@
             const contractInfo = utils.getContractInfo(job);
             const title = utils.formatJobTitle(job.title);
 
-            const jobUrl = job.url || '#';
+            const jobUrl = utils.sanitizeJobUrl(job.url);
             const stretchLink = `<a href="${utils.escapeHtml(jobUrl)}" class="job-card-stretch-link" target="_blank" rel="noopener noreferrer" aria-label="Abrir vaga: ${utils.escapeHtml(title)}"></a>`;
             const newTitle = isNew
                 ? ` title="Adicionada ao classificavagas${fullInsertedDate ? ' em ' + fullInsertedDate : ''}"`
