@@ -302,6 +302,23 @@
             </div>
         </div>
 
+        <div class="legal-scrim hidden" id="legalScrim" aria-hidden="true"></div>
+        <div class="legal-panel hidden" id="legalPanel" role="dialog" aria-modal="true" aria-labelledby="legalPanelTitle" aria-hidden="true">
+            <div class="legal-panel-inner">
+                <header class="legal-panel-toolbar">
+                    <div class="legal-panel-tabs" role="tablist" aria-label="Documentos legais">
+                        <button type="button" class="legal-panel-tab" id="legalTabTermos" role="tab" aria-selected="false">Termos</button>
+                        <button type="button" class="legal-panel-tab" id="legalTabPrivacidade" role="tab" aria-selected="false">Privacidade/LGPD</button>
+                    </div>
+                    <h2 class="legal-panel-title" id="legalPanelTitle">Termos de Uso</h2>
+                    <button type="button" class="icon-btn" id="closeLegalPanel" aria-label="Fechar">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </header>
+                <div class="legal-panel-body" id="legalPanelBody"></div>
+            </div>
+        </div>
+
         <div class="shortcuts-overlay hidden" id="shortcutsOverlay" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
             <div class="shortcuts-card">
                 <div class="shortcuts-header">
@@ -337,8 +354,10 @@
         <button type="button" class="privacy-notice-btn" id="privacyNoticeDismiss">Entendi</button>
     </aside>
 
+    <script src="assets/js/legal.js"></script>
     <script src="assets/js/link-prefetch.js"></script>
     <script src="assets/js/privacy-notice.js"></script>
+    <script src="assets/js/legal-panel.js"></script>
     <script src="assets/js/scripts.js"></script>
 </body>
 </html>

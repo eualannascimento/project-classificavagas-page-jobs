@@ -1,4 +1,4 @@
-const CACHE_VERSION = '7';
+const CACHE_VERSION = '8';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',
@@ -17,6 +17,7 @@ const PRECACHE = [
     './assets/js/legal-chrome.js',
     './assets/js/legal.js',
     './assets/js/privacy-notice.js',
+    './assets/js/legal-panel.js',
     './assets/js/scripts.js',
     './assets/js/jobs-worker.js'
 ];

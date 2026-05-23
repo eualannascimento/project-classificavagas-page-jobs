@@ -2726,6 +2726,140 @@ body.legal-page {
 }
 
 /* ============================================
+   IN-APP LEGAL PANEL (index)
+   ============================================ */
+body.legal-panel-open {
+    overflow: hidden;
+}
+
+.legal-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    background: oklch(0 0 0 / 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.legal-scrim.hidden,
+.legal-panel.hidden {
+    display: none;
+}
+
+.legal-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 410;
+    display: flex;
+    flex-direction: column;
+    padding: var(--safe-top) 0 var(--safe-bottom);
+    background: color-mix(in oklch, var(--bg) 92%, transparent);
+}
+
+.legal-panel-inner {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: min(920px, 100%);
+    margin: 0 auto;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 60px -24px oklch(0.20 0.02 250 / 0.45);
+    overflow: hidden;
+}
+
+.legal-panel-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px var(--shell-pad);
+    border-bottom: 1px solid var(--rule-2);
+    background: color-mix(in oklch, var(--bg-elevated) 90%, transparent);
+}
+
+.legal-panel-tabs {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.legal-panel-tab {
+    padding: 6px 10px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-2);
+    background: var(--bg);
+}
+
+.legal-panel-tab.active {
+    color: var(--accent-ink);
+    border-color: color-mix(in oklch, var(--accent) 35%, var(--rule));
+    background: color-mix(in oklch, var(--accent-soft) 70%, var(--bg));
+}
+
+.legal-panel-title {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.legal-panel-body {
+    flex: 1;
+    overflow: auto;
+    padding: clamp(16px, 4vw, 32px) var(--shell-pad);
+    -webkit-overflow-scrolling: touch;
+}
+
+.legal-panel-body .legal-card {
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.legal-panel-loading,
+.legal-panel-error {
+    color: var(--ink-2);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+    .legal-panel {
+        padding: 0;
+        background: var(--bg);
+    }
+
+    .legal-panel-inner {
+        width: 100%;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .legal-panel-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .legal-panel-title {
+        order: 3;
+        flex-basis: 100%;
+        white-space: normal;
+    }
+}
+
+/* ============================================
    SHORTCUTS OVERLAY
    ============================================ */
 .shortcuts-overlay {
