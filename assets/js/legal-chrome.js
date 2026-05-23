@@ -1,6 +1,18 @@
 (function () {
     'use strict';
 
+    if ('serviceWorker' in navigator) {
+        const register = () => {
+            const swPath = new URL('service-worker.js', window.location.href).pathname;
+            navigator.serviceWorker.register(swPath).catch(() => {});
+        };
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(register, { timeout: 4000 });
+        } else {
+            window.addEventListener('load', register, { once: true });
+        }
+    }
+
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle && window.cvThemeInit) {
         const map = { light: 'Claro', dark: 'Escuro', black: 'Preto' };
