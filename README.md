@@ -5,6 +5,7 @@ Agregador estático de vagas de emprego no Brasil.
 ## Estrutura
 
 - `index.html` — shell da aplicação
+- `termos.html` / `privacidade.html` — termos de uso e política LGPD
 - `assets/js/scripts.js` — lógica (filtros, busca, UI)
 - `assets/js/jobs-worker.js` — parse do JSON em Web Worker
 - `assets/data/json/open_jobs.json` — catálogo completo (formato fixo, atualizado externamente)
@@ -13,15 +14,25 @@ Agregador estático de vagas de emprego no Brasil.
 
 ## Deploy
 
-Antes de publicar o site, gere o subset recente:
+O workflow em `.github/workflows/deploy.yml`:
+
+1. Valida `open_jobs.json`
+2. Gera `recent_jobs.json` (últimos 14 dias)
+3. Verifica ausência de Google Fonts nos HTML
+4. Publica no **GitHub Pages** (branch `main`), incluindo `recent_jobs.json` no artefato publicado
+
+Para testar localmente antes do push:
 
 ```bash
 python3 scripts/build-recent.py
+python3 scripts/check-no-google-fonts.py
 ```
 
-O arquivo `assets/data/json/recent_jobs.json` não é versionado no git (ver `.gitignore`), mas **deve** existir no servidor junto com `open_jobs.json` para carga progressiva.
+## Privacidade e operação
 
-O workflow em `.github/workflows/deploy.yml` valida o JSON e produz `recent_jobs.json` como artefato de CI.
+- Fontes self-hosted em `assets/fonts/` (sem CDN externo na navegação)
+- Canal único público: `contato@classificavagas.com`
+- Recomendado: repositório privado ou organização sem expor dados pessoais do operador; privacidade WHOIS no domínio
 
 ## Payload
 

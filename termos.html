@@ -1,55 +1,92 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light" data-style="restraint" data-font="instrument" data-density="compact">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="theme-color" content="#f9f9ff">
     <meta name="description" content="Termos de uso do classificavagas.com, agregador independente de vagas públicas.">
     <meta property="og:title" content="Termos de Uso — classificavagas.com">
     <meta property="og:description" content="Regras de uso, aviso de agregador independente e processo de correção ou remoção de vagas.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://classificavagas.com/termos.html">
+    <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.svg">
     <title>Termos de Uso — classificavagas.com</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/images/brand-icon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,300,0,0">
+    <script src="assets/js/theme-init.js"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body class="legal-page">
+    <a href="#legalContent" class="skip-link">Pular para o conteúdo</a>
+
     <main class="legal-shell">
         <header class="legal-header">
             <a class="legal-brand" href="index.html" aria-label="Voltar para classificavagas.com"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></a>
-            <a class="legal-back-link" href="index.html">Voltar às vagas</a>
+            <div class="legal-header-actions">
+                <button type="button" class="icon-btn legal-theme-btn" id="themeToggle" aria-label="Alternar tema">
+                    <span class="material-symbols-rounded theme-icon-light">light_mode</span>
+                    <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
+                    <span class="material-symbols-rounded theme-icon-black">circle</span>
+                </button>
+                <a class="legal-back-link" href="index.html">Voltar às vagas</a>
+            </div>
         </header>
 
-        <article class="legal-card">
+        <article class="legal-card" id="legalContent">
             <h1>Termos de Uso</h1>
-            <p class="legal-updated">Atualizados em 22/05/2026</p>
+            <p class="legal-updated">Atualizados em 23/05/2026</p>
             <p class="legal-lead">Ao acessar o classificavagas.com, você concorda com estes termos. O site organiza links para vagas públicas e direciona a candidatura para as fontes originais.</p>
 
-            <section class="legal-section">
+            <nav class="legal-toc" aria-label="Índice dos termos">
+                <p class="legal-toc-title">Nesta página</p>
+                <ol>
+                    <li><a href="#natureza">Natureza do serviço</a></li>
+                    <li><a href="#agregacao">Agregação de vagas públicas</a></li>
+                    <li><a href="#fonte">Fonte oficial e candidatura</a></li>
+                    <li><a href="#atualidade">Atualidade e precisão</a></li>
+                    <li><a href="#remocao">Correção ou remoção</a></li>
+                    <li><a href="#uso">Uso permitido</a></li>
+                    <li><a href="#terceiros">Conteúdo de terceiros</a></li>
+                    <li><a href="#pi">Propriedade intelectual</a></li>
+                    <li><a href="#anuncios">Gratuidade e anúncios</a></li>
+                    <li><a href="#responsabilidade">Limitação de responsabilidade</a></li>
+                    <li><a href="#lei">Lei aplicável</a></li>
+                    <li><a href="#privacidade">Privacidade</a></li>
+                    <li><a href="#alteracoes">Alterações</a></li>
+                </ol>
+            </nav>
+
+            <section class="legal-section" id="natureza">
                 <h2>1. Natureza do serviço</h2>
                 <p>O classificavagas.com é um agregador independente de vagas. O site não é agência de emprego, consultoria de recrutamento, plataforma de candidatura, representante, parceiro ou afiliado das empresas, marcas, recrutadores ou plataformas de vagas exibidas.</p>
                 <p>As marcas, nomes empresariais, títulos de vagas e links pertencem aos respectivos titulares e são exibidos apenas para identificação informativa da oportunidade.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>2. Fonte oficial e candidatura</h2>
+            <section class="legal-section" id="agregacao">
+                <h2>2. Agregação de vagas públicas</h2>
+                <p>O classificavagas.com organiza e classifica <strong>metadados factuais</strong> de oportunidades de emprego disponíveis publicamente — como empresa, cargo, localidade, modalidade, datas e link para a página original. <strong>Não republicamos a descrição integral</strong> da vaga nem materiais protegidos além do necessário para identificar a oportunidade.</p>
+                <p>Cada listagem funciona como <strong>atalho informativo</strong> para a fonte oficial. A candidatura, o envio de currículo e qualquer tratamento de dados do candidato ocorrem exclusivamente nos sites das empresas ou plataformas responsáveis.</p>
+                <p>As informações são obtidas de páginas <strong>publicamente acessíveis</strong>. O projeto não contorna login, paywall, área restrita ou termos de uso das fontes originais.</p>
+                <p>Nomes e marcas são utilizados de forma <strong>referencial e nominativa</strong>, apenas para permitir que o usuário identifique a vaga e acesse a fonte. Nada neste site deve ser interpretado como endosso, parceria, patrocínio ou vínculo empregatício com as empresas listadas.</p>
+            </section>
+
+            <section class="legal-section" id="fonte">
+                <h2>3. Fonte oficial e candidatura</h2>
                 <p>A fonte oficial de cada vaga é o site da empresa ou plataforma externa indicada no link de candidatura. O usuário deve conferir requisitos, prazo, remuneração, localidade, políticas da empresa e demais condições diretamente na fonte original antes de se candidatar.</p>
                 <p>O classificavagas.com não cobra do candidato, não recebe currículos e não participa da seleção.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>3. Atualidade e precisão das vagas</h2>
+            <section class="legal-section" id="atualidade">
+                <h2>4. Atualidade e precisão das vagas</h2>
                 <p>Apesar dos esforços para manter o catálogo útil, vagas podem estar expiradas, alteradas, pausadas, preenchidas ou indisponíveis no momento do acesso. O site não garante disponibilidade, contratação, retorno da empresa ou exatidão integral dos dados publicados por terceiros.</p>
             </section>
 
             <section class="legal-section" id="remocao">
-                <h2>4. Correção ou remoção de vaga</h2>
+                <h2>5. Correção ou remoção de vaga</h2>
                 <p>Empresas, plataformas ou representantes autorizados podem solicitar correção, atualização ou remoção de uma vaga exibida no classificavagas.com.</p>
                 <p>Envie a solicitação para <a href="mailto:contato@classificavagas.com">contato@classificavagas.com</a> com:</p>
                 <ul>
@@ -58,46 +95,65 @@
                     <li>pedido objetivo: corrigir, atualizar ou remover;</li>
                     <li>breve comprovação de que você pode falar em nome da empresa ou plataforma.</li>
                 </ul>
-                <p class="legal-note">Solicitações legítimas serão analisadas com prioridade operacional. Em caso de dúvida sobre titularidade, poderemos pedir informações adicionais antes da alteração.</p>
+                <p class="legal-note">Solicitações legítimas serão analisadas com prioridade operacional, em prazo razoável e de boa-fé. Em caso de dúvida sobre titularidade, poderemos pedir informações adicionais antes da alteração. A remoção ou correção não implica reconhecimento de ilicitude na divulgação prévia de informação pública.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>5. Uso permitido</h2>
+            <section class="legal-section" id="uso">
+                <h2>6. Uso permitido</h2>
                 <p>Você pode usar o site para buscar, filtrar, salvar preferências locais, compartilhar buscas e acessar links de candidatura. Não é permitido tentar comprometer a segurança, sobrecarregar o serviço, explorar vulnerabilidades, automatizar acessos abusivos ou usar o site para fraude, spam ou engenharia social.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>6. Conteúdo de terceiros</h2>
+            <section class="legal-section" id="terceiros">
+                <h2>7. Conteúdo de terceiros</h2>
                 <p>As informações sobre vagas são derivadas de fontes públicas ou páginas disponibilizadas por terceiros. O classificavagas.com não controla as páginas externas e não se responsabiliza por conteúdo, políticas, cookies, formulários, acessibilidade, disponibilidade ou segurança desses sites.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>7. Propriedade intelectual</h2>
-                <p>A identidade visual, organização, interface e código do classificavagas.com pertencem aos seus respectivos titulares. Nomes, marcas e conteúdos de empresas listadas pertencem aos titulares originais e são usados apenas de forma referencial para identificação das oportunidades.</p>
+            <section class="legal-section" id="pi">
+                <h2>8. Propriedade intelectual</h2>
+                <p>A identidade visual, organização, interface e código do classificavagas.com pertencem aos seus respectivos titulares. Nomes, marcas e conteúdos de empresas listadas pertencem aos titulares originais e são usados apenas de forma referencial para identificação das oportunidades, sem prejuízo dos direitos de marca e autorais de terceiros.</p>
+                <p>É vedada a reprodução sistemática do catálogo, scraping agressivo ou reutilização comercial do site sem autorização expressa do responsável pelo projeto.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>8. Gratuidade e anúncios</h2>
+            <section class="legal-section" id="anuncios">
+                <h2>9. Gratuidade e anúncios</h2>
                 <p>O acesso ao site é gratuito para o usuário final. O projeto pode ser monetizado por anúncios, desde que isso seja indicado de forma clara e respeite a legislação aplicável, inclusive a LGPD e regras das plataformas de publicidade.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>9. Limitação de responsabilidade</h2>
-                <p>Na máxima extensão permitida pela lei, o classificavagas.com não será responsável por decisões de candidatura, processos seletivos, promessas de emprego, ofertas falsas em páginas externas, indisponibilidade de vagas, perdas decorrentes do uso de sites de terceiros ou informações alteradas após a coleta.</p>
+            <section class="legal-section" id="responsabilidade">
+                <h2>10. Limitação de responsabilidade</h2>
+                <p>Na máxima extensão permitida pela lei brasileira, o classificavagas.com não será responsável por decisões de candidatura, processos seletivos, promessas de emprego, ofertas falsas em páginas externas, indisponibilidade de vagas, perdas decorrentes do uso de sites de terceiros ou informações alteradas após a organização no agregador.</p>
+                <p>A divulgação de links e metadados de vagas já publicadas publicamente por terceiros não constitui, por si só, concorrência desleal, violação de segredo ou assunção de obrigações trabalhistas do agregador perante empresas listadas.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>10. Privacidade</h2>
+            <section class="legal-section" id="lei">
+                <h2>11. Lei aplicável e comunicações</h2>
+                <p>Estes termos são regidos pelas leis da República Federativa do Brasil. Comunicações formais relacionadas ao site devem ser enviadas para <a href="mailto:contato@classificavagas.com">contato@classificavagas.com</a>. Não divulgamos endereço residencial ou dados pessoais do operador na interface pública do site.</p>
+            </section>
+
+            <section class="legal-section" id="privacidade">
+                <h2>12. Privacidade</h2>
                 <p>O tratamento de dados e preferências locais é descrito na <a href="privacidade.html">Política de Privacidade e LGPD</a>.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>11. Alterações dos termos</h2>
+            <section class="legal-section" id="alteracoes">
+                <h2>13. Alterações dos termos</h2>
                 <p>Estes termos podem ser atualizados para refletir mudanças no projeto, nos requisitos legais, no modelo de monetização ou na forma de exibição das vagas. A versão vigente ficará disponível nesta página.</p>
             </section>
         </article>
 
         <p class="legal-footer">Leia também a <a href="privacidade.html">Política de Privacidade e LGPD</a>.</p>
+
+        <footer class="footer-fixed" aria-label="Informações legais">
+            <nav class="footer-legal-links" aria-label="Links legais">
+                <a href="termos.html" aria-current="page">Termos</a>
+                <span aria-hidden="true">·</span>
+                <a href="privacidade.html">Privacidade/LGPD</a>
+                <span aria-hidden="true">·</span>
+                <a href="termos.html#remocao">Remoção de vaga</a>
+            </nav>
+        </footer>
     </main>
+
+    <script src="assets/js/legal-chrome.js"></script>
 </body>
 </html>
