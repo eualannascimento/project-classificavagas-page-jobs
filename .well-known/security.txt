@@ -1,0 +1,4 @@
+Contact: mailto:contato@classificavagas.com
+Preferred-Languages: pt-BR
+Policy: https://classificavagas.com/termos.html
+Canonical: https://classificavagas.com/.well-known/security.txt

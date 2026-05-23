@@ -1,96 +1,200 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light" data-style="restraint" data-font="instrument" data-density="compact">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="theme-color" content="#f9f9ff">
     <meta name="description" content="Política de Privacidade e informações de LGPD do classificavagas.com.">
     <meta property="og:title" content="Política de Privacidade — classificavagas.com">
     <meta property="og:description" content="Como o classificavagas.com trata dados, preferências locais e informações de navegação.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://classificavagas.com/privacidade.html">
+    <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.svg">
     <title>Privacidade e LGPD — classificavagas.com</title>
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/images/brand-icon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,300,0,0">
+    <script src="assets/js/theme-init.js"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body class="legal-page">
+    <a href="#legalContent" class="skip-link">Pular para o conteúdo</a>
+
     <main class="legal-shell">
         <header class="legal-header">
             <a class="legal-brand" href="index.html" aria-label="Voltar para classificavagas.com"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></a>
-            <a class="legal-back-link" href="index.html">Voltar às vagas</a>
+            <div class="legal-header-actions">
+                <button type="button" class="icon-btn legal-theme-btn" id="themeToggle" aria-label="Alternar tema">
+                    <span class="material-symbols-rounded theme-icon-light">light_mode</span>
+                    <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
+                    <span class="material-symbols-rounded theme-icon-black">circle</span>
+                </button>
+                <a class="legal-back-link" href="index.html">Voltar às vagas</a>
+            </div>
         </header>
 
-        <article class="legal-card">
+        <article class="legal-card" id="legalContent">
             <h1>Privacidade e LGPD</h1>
-            <p class="legal-updated">Atualizada em 22/05/2026</p>
+            <p class="legal-updated">Atualizada em 23/05/2026</p>
             <p class="legal-lead">Esta política explica, em linguagem direta, como o classificavagas.com trata dados no funcionamento do site. O projeto é um agregador independente de vagas públicas e não recebe candidaturas, currículos ou contas de usuários.</p>
 
-            <section class="legal-section">
+            <nav class="legal-toc" aria-label="Índice da política">
+                <p class="legal-toc-title">Nesta página</p>
+                <ol>
+                    <li><a href="#responsavel">Quem é o responsável</a></li>
+                    <li><a href="#dados">Quais dados o site trata</a></li>
+                    <li><a href="#tabela">Resumo dos tratamentos</a></li>
+                    <li><a href="#finalidades">Finalidades e bases legais</a></li>
+                    <li><a href="#local">Armazenamento local</a></li>
+                    <li><a href="#urls">Links compartilháveis</a></li>
+                    <li><a href="#terceiros">Terceiros e transferências</a></li>
+                    <li><a href="#anuncios">Anúncios e gratuidade</a></li>
+                    <li><a href="#direitos">Seus direitos</a></li>
+                    <li><a href="#criancas">Crianças e adolescentes</a></li>
+                    <li><a href="#incidentes">Incidentes de segurança</a></li>
+                    <li><a href="#seguranca">Segurança</a></li>
+                    <li><a href="#alteracoes">Alterações desta política</a></li>
+                </ol>
+            </nav>
+
+            <section class="legal-section" id="responsavel">
                 <h2>1. Quem é o responsável</h2>
-                <p>O classificavagas.com é mantido como um projeto independente. Para solicitações relacionadas a privacidade, correção de informações ou remoção de vaga, use o canal operacional <a href="mailto:contato@classificavagas.com">contato@classificavagas.com</a>.</p>
+                <p>O classificavagas.com é mantido como um <strong>projeto independente</strong>. O controlador dos dados pessoais tratados neste site é o responsável pelo projeto, identificado pelo canal operacional <a href="mailto:contato@classificavagas.com">contato@classificavagas.com</a>.</p>
+                <p><strong>Encarregado pelo tratamento de dados (canal LGPD):</strong> o mesmo endereço <a href="mailto:contato@classificavagas.com">contato@classificavagas.com</a>. Solicitações relacionadas à LGPD serão respondidas em até <strong>15 dias úteis</strong>, prorrogáveis mediante justificativa conforme a lei.</p>
             </section>
 
-            <section class="legal-section">
+            <section class="legal-section" id="dados">
                 <h2>2. Quais dados o site trata</h2>
                 <p>Não coletamos cadastro, CPF, telefone, currículo, senha ou candidatura. O site pode tratar:</p>
                 <ul>
                     <li><strong>Preferências locais no navegador:</strong> tema, visualização, ordenação, filtros salvos, buscas recentes, vagas visualizadas e última vaga aberta.</li>
                     <li><strong>Dados técnicos de navegação:</strong> endereço IP, navegador, data/hora e páginas acessadas podem ser processados pela infraestrutura de hospedagem e segurança do site.</li>
-                    <li><strong>Dados de vagas públicas:</strong> empresa, título da vaga, localidade, plataforma, datas e link para a fonte original.</li>
+                    <li><strong>Dados de vagas públicas:</strong> empresa, título da vaga, localidade, plataforma, datas e link para a fonte original — sem descrição integral da vaga republicada neste site.</li>
+                    <li><strong>Mensagens por e-mail:</strong> quando você ou uma empresa entra em contato para privacidade, remoção ou correção.</li>
                 </ul>
             </section>
 
-            <section class="legal-section">
-                <h2>3. Finalidades e bases legais</h2>
-                <p>Usamos os dados descritos acima para manter o site funcionando, melhorar a experiência de busca, preservar preferências no seu navegador, proteger a disponibilidade do serviço e organizar informações públicas de vagas.</p>
-                <p>As bases legais podem incluir execução de funcionalidades solicitadas pelo usuário, legítimo interesse na operação e segurança do site, cumprimento de obrigações legais e, quando aplicável, consentimento para tecnologias opcionais.</p>
+            <section class="legal-section" id="tabela">
+                <h2>3. Resumo dos tratamentos</h2>
+                <div class="legal-table-wrap">
+                    <table class="legal-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Finalidade</th>
+                                <th scope="col">Dado</th>
+                                <th scope="col">Onde fica</th>
+                                <th scope="col">Base legal</th>
+                                <th scope="col">Retenção</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Preferências e histórico de uso</td>
+                                <td>Tema, filtros, buscas, vagas visitadas</td>
+                                <td><code>localStorage</code> do seu navegador</td>
+                                <td>Execução de funcionalidade solicitada; legítimo interesse</td>
+                                <td>Até você apagar ou limpar dados do site</td>
+                            </tr>
+                            <tr>
+                                <td>Operação e segurança do site</td>
+                                <td>IP, user-agent, logs de acesso</td>
+                                <td>Provedor de hospedagem (GitHub Pages / CDN)</td>
+                                <td>Legítimo interesse; obrigação legal quando aplicável</td>
+                                <td>Conforme política do provedor</td>
+                            </tr>
+                            <tr>
+                                <td>Atendimento de solicitações</td>
+                                <td>E-mail, conteúdo da mensagem</td>
+                                <td>Caixa de e-mail operacional</td>
+                                <td>Legítimo interesse; cumprimento de obrigação legal</td>
+                                <td>Até 12 meses após conclusão do pedido, salvo obrigação legal maior</td>
+                            </tr>
+                            <tr>
+                                <td>Exibição do catálogo</td>
+                                <td>Metadados públicos de vagas</td>
+                                <td>Arquivos estáticos do site; cache do navegador</td>
+                                <td>Legítimo interesse na organização de informações públicas</td>
+                                <td>Enquanto a vaga constar no catálogo publicado</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
-            <section class="legal-section">
-                <h2>4. Armazenamento local</h2>
+            <section class="legal-section" id="finalidades">
+                <h2>4. Finalidades e bases legais</h2>
+                <p>Usamos os dados descritos acima para manter o site funcionando, melhorar a experiência de busca, preservar preferências no seu navegador, proteger a disponibilidade do serviço e organizar informações públicas de vagas.</p>
+                <p>As bases legais incluem execução de funcionalidades solicitadas pelo usuário, legítimo interesse na operação e segurança do site, cumprimento de obrigações legais e, quando aplicável no futuro, consentimento para tecnologias opcionais (como certos cookies de publicidade).</p>
+            </section>
+
+            <section class="legal-section" id="local">
+                <h2>5. Armazenamento local</h2>
                 <p>As preferências e históricos ficam salvos no seu próprio navegador por meio de <em>localStorage</em>. Esses dados não são enviados para um servidor próprio do classificavagas.com.</p>
                 <p>Você pode apagar esses dados limpando os dados do site no navegador ou usando o botão abaixo.</p>
                 <button type="button" class="legal-action" id="clearLocalData">Limpar dados locais</button>
                 <span class="legal-action-status" id="clearLocalDataStatus" role="status" aria-live="polite"></span>
             </section>
 
-            <section class="legal-section">
-                <h2>5. Terceiros e transferências</h2>
-                <p>O site pode carregar recursos ou ser entregue por fornecedores de infraestrutura, hospedagem, fontes, segurança e, futuramente, publicidade. Isso pode envolver tratamento de dados técnicos fora do Brasil, de acordo com as políticas desses fornecedores.</p>
-                <p>No momento desta atualização, o site usa fontes do Google Fonts e hospedagem estática. Caso anúncios, analytics ou outras tecnologias de rastreamento sejam adicionados, esta política deve ser atualizada antes da divulgação pública dessa mudança.</p>
+            <section class="legal-section" id="urls">
+                <h2>6. Links compartilháveis</h2>
+                <p>Quando você compartilha uma busca (por exemplo, com parâmetros na URL como <code>?q=</code> ou filtros), quem receber o link pode ver os termos e filtros incluídos. Isso não identifica você diretamente, mas pode revelar interesses de busca. Compartilhe apenas com pessoas em quem confia.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>6. Anúncios e gratuidade</h2>
+            <section class="legal-section" id="terceiros">
+                <h2>7. Terceiros e transferências</h2>
+                <p>O site é entregue por fornecedores de hospedagem estática e rede de distribuição de conteúdo (CDN). Isso pode envolver tratamento de dados técnicos, inclusive fora do Brasil, conforme as políticas desses fornecedores.</p>
+                <p>As fontes tipográficas e ícones são <strong>hospedados no próprio domínio</strong> do classificavagas.com, sem carregamento de Google Fonts na navegação normal. Caso anúncios, analytics ou outras tecnologias de rastreamento sejam adicionados, esta política será atualizada <strong>antes</strong> da divulgação pública dessa mudança.</p>
+            </section>
+
+            <section class="legal-section" id="anuncios">
+                <h2>8. Anúncios e gratuidade</h2>
                 <p>O objetivo do projeto é permanecer gratuito para o usuário final. Se houver monetização por anúncios, ela deverá ser identificada com clareza, respeitar a LGPD e oferecer mecanismo de consentimento quando a tecnologia utilizada exigir cookies, identificadores ou personalização.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>7. Seus direitos</h2>
-                <p>Nos termos da LGPD, você pode solicitar confirmação de tratamento, acesso, correção, eliminação, informação sobre compartilhamento e demais direitos aplicáveis. Como o site não mantém cadastro próprio, muitas informações ficam apenas no seu navegador e podem ser apagadas localmente.</p>
+            <section class="legal-section" id="direitos">
+                <h2>9. Seus direitos</h2>
+                <p>Nos termos da LGPD, você pode solicitar confirmação de tratamento, acesso, correção, eliminação, informação sobre compartilhamento, portabilidade quando aplicável e demais direitos previstos em lei. Como o site não mantém cadastro próprio, muitas informações ficam apenas no seu navegador e podem ser apagadas localmente.</p>
                 <p>Para exercer direitos ou relatar problema de privacidade, escreva para <a href="mailto:contato@classificavagas.com">contato@classificavagas.com</a>.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>8. Segurança</h2>
-                <p>Adotamos uma arquitetura estática para reduzir coleta de dados e superfície de ataque. Ainda assim, nenhum sistema é totalmente isento de risco. Recomenda-se conferir a URL da vaga antes de se candidatar e nunca enviar dados sensíveis fora do site oficial da empresa ou plataforma responsável.</p>
+            <section class="legal-section" id="criancas">
+                <h2>10. Crianças e adolescentes</h2>
+                <p>O classificavagas.com não é direcionado a menores de 16 anos. Não coletamos intencionalmente dados de crianças. Se você acredita que dados de menor foram tratados indevidamente, entre em contato pelo canal acima.</p>
             </section>
 
-            <section class="legal-section">
-                <h2>9. Alterações desta política</h2>
+            <section class="legal-section" id="incidentes">
+                <h2>11. Incidentes de segurança</h2>
+                <p>Adotamos medidas técnicas para reduzir riscos. Em caso de incidente de segurança com dados pessoais que possa acarretar risco ou dano relevante, avaliaremos a necessidade de comunicação à Autoridade Nacional de Proteção de Dados (ANPD) e aos titulares afetados, conforme a LGPD.</p>
+            </section>
+
+            <section class="legal-section" id="seguranca">
+                <h2>12. Segurança</h2>
+                <p>Utilizamos arquitetura estática, políticas de segurança no navegador (como restrição de conteúdo) e validação de links externos. Ainda assim, nenhum sistema é totalmente isento de risco. Recomenda-se conferir a URL da vaga antes de se candidatar e nunca enviar dados sensíveis fora do site oficial da empresa ou plataforma responsável.</p>
+            </section>
+
+            <section class="legal-section" id="alteracoes">
+                <h2>13. Alterações desta política</h2>
                 <p>Esta política pode ser atualizada para refletir mudanças no site, em fornecedores, funcionalidades, anúncios ou exigências legais. A data de atualização ficará indicada no topo desta página.</p>
             </section>
         </article>
 
         <p class="legal-footer">Leia também os <a href="termos.html">Termos de Uso</a>.</p>
+
+        <footer class="footer-fixed" aria-label="Informações legais">
+            <nav class="footer-legal-links" aria-label="Links legais">
+                <a href="termos.html">Termos</a>
+                <span aria-hidden="true">·</span>
+                <a href="privacidade.html" aria-current="page">Privacidade/LGPD</a>
+                <span aria-hidden="true">·</span>
+                <a href="termos.html#remocao">Remoção de vaga</a>
+            </nav>
+        </footer>
     </main>
 
+    <script src="assets/js/legal-chrome.js"></script>
     <script src="assets/js/legal.js"></script>
 </body>
 </html>

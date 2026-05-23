@@ -1,6 +1,7 @@
 /* ============================================
    CLASSIFICA&VAGAS — Editorial Redesign
    ============================================ */
+@import url('fonts.css');
 
 :root {
     --bg:           oklch(0.985 0.005 250);
