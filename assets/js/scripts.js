@@ -597,8 +597,25 @@
             return String(str).toLocaleUpperCase('pt-BR');
         },
 
+        isValidLocationPart(value) {
+            if (!value || typeof value !== 'string') return false;
+            const trimmed = value.trim();
+            if (!trimmed) return false;
+            const upper = trimmed.toUpperCase();
+            if (upper === 'N\u00c3O INFORMADO' || upper === 'NAO INFORMADO') return false;
+            if (upper === 'N\u00c3O IDENTIFICADO' || upper === 'NAO IDENTIFICADO') return false;
+            if (/^N[AÃ]O\s+(INFORMAD|IDENTIFICAD)/i.test(trimmed)) return false;
+            return true;
+        },
+
+        isRemoteJob(job) {
+            if (job['remote?'] === '01 - Sim') return true;
+            const contract = this.getContractInfo(job);
+            return contract?.cls === 'remote';
+        },
+
         getSmartLocation(job) {
-            const isValid = (s) => s && s !== 'N\u00c3O INFORMADO' && s !== 'N\u00e3o informado' && s !== 'NAO INFORMADO';
+            const isValid = (s) => this.isValidLocationPart(s);
             const scope = job.location_scope;
             const city = job.location_city;
             const state = job.location_state;
@@ -612,6 +629,18 @@
             if (isValid(city)) return city;
             if (isValid(state)) return state;
             return '';
+        },
+
+        getJobLocationDisplay(job) {
+            const smart = this.getSmartLocation(job);
+            const text = smart && this.isValidLocationPart(smart) ? smart : '';
+            if (this.isRemoteJob(job) && !text) {
+                return { text: 'REMOTO', icon: 'home_work', isRemote: true };
+            }
+            if (text) {
+                return { text, icon: 'location_on', isRemote: false };
+            }
+            return { text: null, icon: 'location_on', isRemote: false };
         },
 
         getContractInfo(job) {
@@ -2914,7 +2943,7 @@
             const jobDatesCard = utils.renderJobDatesHtml(job, 'card');
             const jobDatesList = utils.renderJobDatesHtml(job, 'list');
             const jobDatesCompact = utils.renderJobDatesHtml(job, 'compact');
-            const smartLocation = utils.getSmartLocation(job);
+            const locationDisplay = utils.getJobLocationDisplay(job);
             const contractInfo = utils.getContractInfo(job);
             const title = utils.formatJobTitle(job.title);
 
@@ -2986,7 +3015,7 @@
                             </div>
                         </div>
                         <div class="job-list-meta">
-                            ${smartLocation ? `<span class="job-list-location"><span class="material-symbols-rounded">location_on</span>${utils.escapeHtml(utils.truncate(smartLocation, 18))}</span>` : ''}
+                            ${locationDisplay.text ? `<span class="job-list-location${locationDisplay.isRemote ? ' job-list-location-remote' : ''}"><span class="material-symbols-rounded">${locationDisplay.icon}</span>${utils.escapeHtml(utils.truncate(locationDisplay.text, 18))}</span>` : ''}
                             ${jobDatesList}
                         </div>
                         <span class="job-list-arrow">
@@ -3017,9 +3046,9 @@
                         ${isValidCompanyType ? `<button type="button" class="job-tag job-tag-clickable" data-filter-key="company_type" data-filter-value="${utils.escapeHtml(job.company_type)}">${utils.escapeHtml(utils.truncate(job.company_type, 18))}</button>` : ''}
                     </div>
                     <div class="job-card-footer">
-                        <div class="job-location">
-                            <span class="material-symbols-rounded">location_on</span>
-                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : '<span class="job-location-empty">-</span>'}</span>
+                        <div class="job-location${locationDisplay.isRemote ? ' job-location-remote' : ''}">
+                            <span class="material-symbols-rounded">${locationDisplay.icon}</span>
+                            <span>${locationDisplay.text ? utils.escapeHtml(locationDisplay.text) : '<span class="job-location-empty">-</span>'}</span>
                         </div>
                         ${jobDatesCard}
                     </div>
