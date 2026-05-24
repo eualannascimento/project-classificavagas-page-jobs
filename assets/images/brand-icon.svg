@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="classificavagas">
   <rect width="512" height="512" rx="112" fill="#f9f9ff"/>
-  <text x="168" y="330" font-family="Georgia, 'Times New Roman', serif" font-size="220" fill="#3d5a80">c</text>
-  <text x="308" y="330" font-family="Georgia, 'Times New Roman', serif" font-size="220" fill="#3d5a80">v</text>
+  <g fill="none" stroke="#3d5a80" stroke-width="28" stroke-linecap="round">
+    <path d="M128 176h256M128 256h256M128 336h256"/>
+    <circle cx="208" cy="176" r="36" fill="#f9f9ff" stroke="#3d5a80" stroke-width="24"/>
+    <circle cx="304" cy="256" r="36" fill="#f9f9ff" stroke="#3d5a80" stroke-width="24"/>
+    <circle cx="240" cy="336" r="36" fill="#f9f9ff" stroke="#3d5a80" stroke-width="24"/>
+  </g>
 </svg>

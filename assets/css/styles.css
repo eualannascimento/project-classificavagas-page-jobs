@@ -1326,6 +1326,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 .job-card-icon.remote { background: var(--accent-soft); color: var(--accent-ink); }
+.job-card-icon.hybrid { background: color-mix(in oklch, var(--accent-soft) 55%, var(--bg-sunk)); color: var(--accent-ink); }
 .job-card-icon.onsite { background: var(--bg-sunk); color: var(--ink-2); }
 
 .job-card-header {
@@ -2049,6 +2050,12 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .filter-section.expanded .filter-section-icon { transform: rotate(180deg); }
 .filter-section-body { display: none; padding: 6px 20px 14px; }
 .filter-section.expanded .filter-section-body { display: block; }
+.filter-section-hint {
+    margin: 0 0 10px;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: var(--ink-3);
+}
 
 .filter-search-input {
     width: 100%; height: 36px; padding: 0 12px;

@@ -23,8 +23,6 @@
             { key: 'category', label: 'Categoria', icon: 'work' },
             { key: 'company', label: 'Empresa', icon: 'business' },
             { key: 'location_scope', label: 'Abrangência', icon: 'public' },
-            { key: 'site_type', label: 'Plataforma', icon: 'language' },
-            { key: 'location', label: 'Localização', icon: 'location_on' },
             { key: 'location_country', label: 'País', icon: 'flag' },
             { key: 'location_state', label: 'Estado', icon: 'map' },
             { key: 'location_city', label: 'Cidade', icon: 'location_city' }
@@ -56,8 +54,8 @@
         displayedCount: 0,
         isLoading: false,
         searchQuery: '',
-        quickFilter: 'all',
-        tempQuickFilter: 'all',
+        quickTipo: { modes: [], affirmative: false, today: false },
+        tempQuickTipo: { modes: [], affirmative: false, today: false },
         selectedFilters: {},
         tempFilters: {},
         isPartialData: false,
@@ -312,6 +310,31 @@
             }
         },
 
+        matchesQuickTipo(job, tipo) {
+            const t = tipo || quickTipoUtils.empty();
+            if (!quickTipoUtils.isActive(t)) return true;
+            if (t.modes.length > 0) {
+                const matchesMode = t.modes.some(mode => this.matchesQuickFilter(job, mode));
+                if (!matchesMode) return false;
+            }
+            if (t.affirmative && job['affirmative?'] !== '01 - Sim') return false;
+            if (t.today && !this.isToday(job.inserted_date)) return false;
+            return true;
+        },
+
+        getJobModalityKind(job) {
+            const contractInfo = this.getContractInfo(job);
+            if (contractInfo?.cls === 'hybrid') return 'hybrid';
+            if (contractInfo?.cls === 'remote' || job['remote?'] === '01 - Sim') return 'remote';
+            if (contractInfo?.cls === 'onsite') return 'onsite';
+            return 'onsite';
+        },
+
+        getJobModalityIcon(kind) {
+            const icons = { remote: 'home_work', hybrid: 'sync_alt', onsite: 'apartment' };
+            return icons[kind] || icons.onsite;
+        },
+
         normalizeDateRange(range) {
             const normalized = this.cloneDateRange(range);
             if (normalized.from && normalized.to && normalized.from > normalized.to) {
@@ -330,17 +353,17 @@
             const isInsertedToday = this.isToday(job.inserted_date);
             const todayClass = isInsertedToday ? ' job-date-today' : '';
             const publishedLine = hasPublished
-                ? `<span class="job-date-line">Publicada/Atualizada em: <strong>${pub}</strong></span>`
+                ? `<span class="job-date-line">Atualizada em: <strong>${pub}</strong></span>`
                 : `<span class="job-date-line job-date-missing">${this.DATE_MISSING_PUBLISHED_LINE}</span>`;
             const insertedLine = hasInserted
                 ? `<span class="job-date-line">Agregada em: <strong>${ins}</strong></span>`
                 : `<span class="job-date-line job-date-missing">Obtida no Classifica Vagas: ${this.escapeHtml(this.DATE_MISSING_INSERTED)}</span>`;
-            const publishedCompact = hasPublished ? `Pub./Atual.: ${pub}` : 'Pub./Atual.: não obtida';
+            const publishedCompact = hasPublished ? `Atual.: ${pub}` : 'Atual.: não obtida';
             const insertedCompact = hasInserted ? `Agr.: ${ins}` : `Obt.: ${this.DATE_MISSING_INSERTED}`;
 
             if (variant === 'compact') {
                 const titleParts = [
-                    hasPublished ? `Publicada/Atualizada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE,
+                    hasPublished ? `Atualizada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE,
                     hasInserted ? `Agregada em: ${ins}` : this.DATE_MISSING_INSERTED
                 ];
                 return `<span class="job-dates job-dates-compact${todayClass}" title="${titleParts.join(' · ')}">
@@ -1038,12 +1061,94 @@
     };
 
     const QUICK_FILTER_LABELS = {
-        all: 'Todas',
         remote: 'Remoto',
         hybrid: 'Híbrido',
         onsite: 'Presencial',
         affirmative: 'Afirmativa',
         today: 'Adicionadas hoje'
+    };
+
+    const QUICK_MODES = ['remote', 'hybrid', 'onsite'];
+
+    const quickTipoUtils = {
+        empty() {
+            return { modes: [], affirmative: false, today: false };
+        },
+        clone(tipo) {
+            return {
+                modes: [...(tipo?.modes || [])],
+                affirmative: Boolean(tipo?.affirmative),
+                today: Boolean(tipo?.today)
+            };
+        },
+        isActive(tipo) {
+            return (tipo?.modes?.length || 0) > 0 || Boolean(tipo?.affirmative) || Boolean(tipo?.today);
+        },
+        fromLegacy(value) {
+            if (!value || value === 'all') return this.empty();
+            if (typeof value === 'object' && Array.isArray(value.modes)) return this.clone(value);
+            const raw = String(value);
+            if (raw.includes(',')) return this.parse(raw);
+            if (QUICK_MODES.includes(raw)) return { modes: [raw], affirmative: false, today: false };
+            if (raw === 'affirmative') return { modes: [], affirmative: true, today: false };
+            if (raw === 'today') return { modes: [], affirmative: false, today: true };
+            return this.empty();
+        },
+        parse(raw) {
+            if (!raw || raw === 'all') return this.empty();
+            const parts = String(raw).split(',').map(p => p.trim()).filter(Boolean);
+            return {
+                modes: parts.filter(p => QUICK_MODES.includes(p)),
+                affirmative: parts.includes('affirmative'),
+                today: parts.includes('today')
+            };
+        },
+        serialize(tipo) {
+            const parts = [...(tipo?.modes || [])];
+            if (tipo?.affirmative) parts.push('affirmative');
+            if (tipo?.today) parts.push('today');
+            return parts.join(',');
+        },
+        count(tipo) {
+            return (tipo?.modes?.length || 0) + (tipo?.affirmative ? 1 : 0) + (tipo?.today ? 1 : 0);
+        },
+        isChipSelected(tipo, key) {
+            if (key === 'all') return !this.isActive(tipo);
+            if (QUICK_MODES.includes(key)) return (tipo?.modes || []).includes(key);
+            if (key === 'affirmative') return Boolean(tipo?.affirmative);
+            if (key === 'today') return Boolean(tipo?.today);
+            return false;
+        },
+        toggleChip(tipo, key) {
+            const next = this.clone(tipo);
+            if (key === 'all') return this.empty();
+            if (QUICK_MODES.includes(key)) {
+                if (next.modes.includes(key)) {
+                    next.modes = next.modes.filter(m => m !== key);
+                } else {
+                    next.modes.push(key);
+                }
+                return next;
+            }
+            if (key === 'affirmative') {
+                next.affirmative = !next.affirmative;
+                return next;
+            }
+            if (key === 'today') {
+                next.today = !next.today;
+                return next;
+            }
+            return next;
+        },
+        labels(tipo) {
+            const out = [];
+            (tipo?.modes || []).forEach(m => {
+                if (QUICK_FILTER_LABELS[m]) out.push(QUICK_FILTER_LABELS[m]);
+            });
+            if (tipo?.affirmative) out.push(QUICK_FILTER_LABELS.affirmative);
+            if (tipo?.today) out.push(QUICK_FILTER_LABELS.today);
+            return out;
+        }
     };
 
     const sortManager = {
@@ -1231,8 +1336,9 @@
             if (state.searchQuery) {
                 url.searchParams.set('q', state.searchQuery);
             }
-            if (state.quickFilter !== 'all') {
-                url.searchParams.set('qf', state.quickFilter);
+            const qf = quickTipoUtils.serialize(state.quickTipo);
+            if (qf) {
+                url.searchParams.set('qf', qf);
             }
             const insertedPeriod = utils.rangeToPeriodKey(state.insertedDateRange);
             if (insertedPeriod) {
@@ -1275,7 +1381,7 @@
                 }
             }
             if (params.has('qf')) {
-                state.quickFilter = params.get('qf');
+                state.quickTipo = quickTipoUtils.parse(params.get('qf'));
             }
             if (params.has('idf') || params.has('idt')) {
                 state.insertedDateRange = {
@@ -1906,7 +2012,7 @@
         filterJobs(jobs, {
             searchQuery = state.searchQuery,
             showOnlyVisited = state.showOnlyVisited,
-            quickFilter = state.quickFilter,
+            quickTipo = state.quickTipo,
             insertedDateRange = state.insertedDateRange,
             publishedDateRange = state.publishedDateRange,
             selectedFilters = state.selectedFilters
@@ -1924,8 +2030,8 @@
                 result = result.filter(j => utils.isVisited(j));
             }
 
-            if (quickFilter !== 'all') {
-                result = result.filter(job => utils.matchesQuickFilter(job, quickFilter));
+            if (quickTipoUtils.isActive(quickTipo)) {
+                result = result.filter(job => utils.matchesQuickTipo(job, quickTipo));
             }
 
             if (utils.hasDateRange(insertedDateRange)) {
@@ -1969,7 +2075,7 @@
             filters = state.selectedFilters,
             insertedDateRange = state.insertedDateRange,
             publishedDateRange = state.publishedDateRange,
-            quickFilter = state.quickFilter,
+            quickTipo = state.quickTipo,
             searchQuery = state.searchQuery
         ) {
             // Reset counts
@@ -1990,7 +2096,7 @@
                 let baseJobs = this.filterJobs(state.allJobs, {
                     searchQuery,
                     showOnlyVisited: state.showOnlyVisited,
-                    quickFilter,
+                    quickTipo,
                     insertedDateRange,
                     publishedDateRange,
                     selectedFilters: otherFilters
@@ -2046,7 +2152,7 @@
             const total = state.allJobs.length;
             const filtered = state.filteredJobs.length;
             const todayCount = state.allJobs.filter(j => utils.isToday(j.inserted_date)).length;
-            const hasActiveFilters = state.searchQuery || state.quickFilter !== 'all' ||
+            const hasActiveFilters = state.searchQuery || quickTipoUtils.isActive(state.quickTipo) ||
                 Object.values(state.selectedFilters).some(v => v && v.length > 0) ||
                 utils.hasDateRange(state.insertedDateRange) || utils.hasDateRange(state.publishedDateRange);
 
@@ -2062,7 +2168,7 @@
             Object.values(state.selectedFilters).forEach(arr => { if (arr) count += arr.length; });
             if (utils.hasDateRange(state.insertedDateRange)) count += 1;
             if (utils.hasDateRange(state.publishedDateRange)) count += 1;
-            if (state.quickFilter && state.quickFilter !== 'all') count += 1;
+            count += quickTipoUtils.count(state.quickTipo);
             if (state.showOnlyVisited) count += 1;
             elements.filterBadge.textContent = count;
             elements.filterBadge.classList.toggle('hidden', count === 0);
@@ -2078,7 +2184,7 @@
 
         hasShareableState(filterState = state) {
             return Boolean(filterState.searchQuery ||
-                filterState.quickFilter !== 'all' ||
+                quickTipoUtils.isActive(filterState.quickTipo) ||
                 filterState.showOnlyVisited ||
                 utils.hasDateRange(filterState.insertedDateRange) ||
                 utils.hasDateRange(filterState.publishedDateRange) ||
@@ -2116,14 +2222,15 @@
                     });
                 }
             }
-            if (filterState.quickFilter !== 'all') {
+            quickTipoUtils.labels(filterState.quickTipo).forEach((label, index) => {
                 groups.push({
-                    key: '_quick',
+                    key: `_quick_${index}`,
                     label: 'Tipo',
-                    values: [QUICK_FILTER_LABELS[filterState.quickFilter] || filterState.quickFilter],
-                    chipType: 'quick'
+                    values: [label],
+                    chipType: 'quick',
+                    quickLabel: label
                 });
-            }
+            });
             if (filterState.showOnlyVisited) {
                 groups.push({ key: '_visited', label: 'Visitadas', values: ['Só visualizadas'], chipType: 'visited' });
             }
@@ -2220,7 +2327,19 @@
                         elements.searchInput.value = state.searchQuery;
                         elements.searchClear.classList.toggle('hidden', !state.searchQuery);
                     } else if (chipType === 'quick') {
-                        state.quickFilter = 'all';
+                        const label = chip.querySelector('.chip-text')?.textContent?.trim();
+                        const tipo = quickTipoUtils.clone(state.quickTipo);
+                        const modeKey = Object.keys(QUICK_FILTER_LABELS).find(
+                            k => QUICK_FILTER_LABELS[k] === label && QUICK_MODES.includes(k)
+                        );
+                        if (modeKey) {
+                            tipo.modes = tipo.modes.filter(m => m !== modeKey);
+                        } else if (label === QUICK_FILTER_LABELS.affirmative) {
+                            tipo.affirmative = false;
+                        } else if (label === QUICK_FILTER_LABELS.today) {
+                            tipo.today = false;
+                        }
+                        state.quickTipo = tipo;
                         if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
                     } else if (chipType === 'visited') {
                         state.showOnlyVisited = false;
@@ -2277,7 +2396,7 @@
         clearAll() {
             state.selectedFilters = {};
             state.searchQuery = '';
-            state.quickFilter = 'all';
+            state.quickTipo = quickTipoUtils.empty();
             state.insertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.publishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.sortBy = preferencesManager.getDefaultSort();
@@ -2295,7 +2414,7 @@
         },
 
         setQuickFilter(filter) {
-            state.quickFilter = filter;
+            state.quickTipo = quickTipoUtils.fromLegacy(filter);
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             this.apply();
         },
@@ -2615,7 +2734,7 @@
         captureState() {
             return {
                 searchQuery: state.searchQuery || '',
-                quickFilter: state.quickFilter || 'all',
+                quickTipo: quickTipoUtils.clone(state.quickTipo),
                 insertedDateRange: utils.cloneDateRange(state.insertedDateRange),
                 publishedDateRange: utils.cloneDateRange(state.publishedDateRange),
                 selectedFilters: JSON.parse(JSON.stringify(state.selectedFilters || {})),
@@ -2627,7 +2746,9 @@
         sanitizeState(savedState = {}) {
             return {
                 searchQuery: savedState.searchQuery || '',
-                quickFilter: savedState.quickFilter || 'all',
+                quickTipo: savedState.quickTipo
+                    ? quickTipoUtils.clone(savedState.quickTipo)
+                    : quickTipoUtils.fromLegacy(savedState.quickFilter),
                 insertedDateRange: utils.normalizeDateRange(
                     savedState.insertedDateRange ||
                     (savedState.datePeriod && savedState.datePeriod !== 'all'
@@ -2822,7 +2943,7 @@
             const savedState = this.sanitizeState(item.state);
 
             state.searchQuery = savedState.searchQuery;
-            state.quickFilter = savedState.quickFilter;
+            state.quickTipo = quickTipoUtils.clone(savedState.quickTipo);
             state.insertedDateRange = savedState.insertedDateRange;
             state.publishedDateRange = savedState.publishedDateRange;
             state.selectedFilters = savedState.selectedFilters;
@@ -2934,7 +3055,8 @@
         },
 
         createCard(job, index = 0) {
-            const isRemote = job['remote?'] === '01 - Sim';
+            const modalityKind = utils.getJobModalityKind(job);
+            const modalityIcon = utils.getJobModalityIcon(modalityKind);
             const isAffirmative = job['affirmative?'] === '01 - Sim';
             const isNew = utils.isToday(job.inserted_date) || utils.isNewSinceLastVisit(job.inserted_date);
             const jobKey = utils.getJobKey(job);
@@ -3029,8 +3151,8 @@
                 card.innerHTML = `
                     ${stretchLink}
                     <div class="job-card-header">
-                        <div class="job-card-icon ${isRemote ? 'remote' : 'onsite'}">
-                            <span class="material-symbols-rounded">${isRemote ? 'home_work' : 'apartment'}</span>
+                        <div class="job-card-icon ${modalityKind}">
+                            <span class="material-symbols-rounded">${modalityIcon}</span>
                         </div>
                         <div class="job-card-title">
                             <h3><a class="job-card-title-link" href="${utils.escapeHtml(jobUrl)}" target="_blank" rel="noopener noreferrer">${utils.escapeHtml(title)}</a></h3>
@@ -3178,7 +3300,7 @@
             state.tempFilters = JSON.parse(JSON.stringify(state.selectedFilters));
             state.tempInsertedDateRange = utils.cloneDateRange(state.insertedDateRange);
             state.tempPublishedDateRange = utils.cloneDateRange(state.publishedDateRange);
-            state.tempQuickFilter = state.quickFilter;
+            state.tempQuickTipo = quickTipoUtils.clone(state.quickTipo);
             this._openFiltersTrigger = document.activeElement;
 
             // Build filter sections
@@ -3191,7 +3313,7 @@
                 state.tempFilters,
                 state.tempInsertedDateRange,
                 state.tempPublishedDateRange,
-                state.tempQuickFilter,
+                state.tempQuickTipo,
                 state.searchQuery
             );
             this.updateOptionCounts();
@@ -3244,14 +3366,15 @@
                         <div class="filter-section-header-left">
                             <span class="material-symbols-rounded">tune</span>
                             <span class="filter-section-title">Tipo</span>
-                            ${state.tempQuickFilter !== 'all' ? `<span class="filter-section-count">1</span>` : ''}
+                            ${quickTipoUtils.isActive(state.tempQuickTipo) ? `<span class="filter-section-count">${quickTipoUtils.count(state.tempQuickTipo)}</span>` : ''}
                         </div>
                         <span class="material-symbols-rounded filter-section-icon">expand_more</span>
                     </div>
                     <div class="filter-section-body">
+                        <p class="filter-section-hint">Modalidades podem ser combinadas (ex.: Remoto + Híbrido).</p>
                         <div class="filter-options-list" id="sheetQuickFilters">
                             ${quickOpts.map(o => `
-                                <button class="filter-option-chip ${state.tempQuickFilter === o.key ? 'selected' : ''}" data-quick="${o.key}">
+                                <button class="filter-option-chip ${quickTipoUtils.isChipSelected(state.tempQuickTipo, o.key) ? 'selected' : ''}" data-quick="${o.key}">
                                     <span class="material-symbols-rounded check-icon">check</span>
                                     <span>${o.label}</span>
                                 </button>
@@ -3307,11 +3430,10 @@
                 'inserted'
             );
 
-            // Order: Tipo | Ramo Nível Categoria | Data | Empresa Abrangência Plataforma Localização País Estado Cidade
-            // FILTER_CATEGORIES is already ordered; split at index 3 (Empresa) to insert date section
+            // Order: Tipo | Ramo Nível Categoria | Data | Empresa Abrangência País Estado Cidade
             const cats = CONFIG.FILTER_CATEGORIES;
-            const beforeDate = cats.slice(0, 3); // Ramo Nível Categoria
-            const afterDate  = cats.slice(3);    // Empresa Abrangência Plataforma Localização País Estado Cidade
+            const beforeDate = cats.slice(0, 3);
+            const afterDate  = cats.slice(3);
 
             const buildCats = (list) => list.map(({ key, label, icon }) => {
                 const options = state.filterOptions[key] || [];
@@ -3352,7 +3474,7 @@
             elements.filterSheetContent.querySelectorAll('.filter-section').forEach(section => {
                 const key = section.dataset.key;
                 let expand = false;
-                if (key === '_quick' && state.tempQuickFilter !== 'all') expand = true;
+                if (key === '_quick' && quickTipoUtils.isActive(state.tempQuickTipo)) expand = true;
                 if (key === '_date_inserted' && utils.hasDateRange(state.tempInsertedDateRange)) expand = true;
                 if (key === '_date_published' && utils.hasDateRange(state.tempPublishedDateRange)) expand = true;
                 if (key && key !== '_quick' && key !== '_date_inserted' && key !== '_date_published' && (state.tempFilters[key] || []).length > 0) {
@@ -3392,20 +3514,21 @@
                 });
             });
 
-            // Quick filter options (Tipo)
+            // Quick filter options (Tipo) — multi-select para modalidades
             elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const q = chip.dataset.quick;
-                    state.tempQuickFilter = q;
+                    state.tempQuickTipo = quickTipoUtils.toggleChip(state.tempQuickTipo, q);
                     elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(c => {
-                        c.classList.toggle('selected', c.dataset.quick === q);
+                        c.classList.toggle('selected', quickTipoUtils.isChipSelected(state.tempQuickTipo, c.dataset.quick));
                     });
                     const section = chip.closest('.filter-section');
                     const badge = section?.querySelector('.filter-section-count');
-                    if (q !== 'all') {
-                        if (badge) badge.textContent = '1';
+                    const tipoCount = quickTipoUtils.count(state.tempQuickTipo);
+                    if (tipoCount > 0) {
+                        if (badge) badge.textContent = String(tipoCount);
                         else section?.querySelector('.filter-section-header-left')
-                            ?.insertAdjacentHTML('beforeend', '<span class="filter-section-count">1</span>');
+                            ?.insertAdjacentHTML('beforeend', `<span class="filter-section-count">${tipoCount}</span>`);
                     } else if (badge) {
                         badge.remove();
                     }
@@ -3517,7 +3640,7 @@
                 state.tempFilters,
                 state.tempInsertedDateRange,
                 state.tempPublishedDateRange,
-                state.tempQuickFilter,
+                state.tempQuickTipo,
                 state.searchQuery
             );
 
@@ -3546,7 +3669,7 @@
 
             if (utils.hasDateRange(state.tempInsertedDateRange)) count++;
             if (utils.hasDateRange(state.tempPublishedDateRange)) count++;
-            if (state.tempQuickFilter !== 'all') count++;
+            count += quickTipoUtils.count(state.tempQuickTipo);
 
             elements.sheetFilterCount.textContent = count > 0
                 ? `${count} filtro${count > 1 ? 's' : ''} ativo${count > 1 ? 's' : ''}`
@@ -3560,7 +3683,7 @@
                 selectedFilters: state.tempFilters,
                 insertedDateRange: state.tempInsertedDateRange,
                 publishedDateRange: state.tempPublishedDateRange,
-                quickFilter: state.tempQuickFilter
+                quickTipo: state.tempQuickTipo
             });
             const label = elements.sheetApplyLabel;
             if (!label) return;
@@ -3594,14 +3717,14 @@
             state.tempFilters = {};
             state.tempInsertedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
             state.tempPublishedDateRange = utils.cloneDateRange(utils.EMPTY_DATE_RANGE);
-            state.tempQuickFilter = 'all';
+            state.tempQuickTipo = quickTipoUtils.empty();
 
             elements.filterSheetContent.querySelectorAll('.filter-option-chip.selected').forEach(chip => {
                 chip.classList.remove('selected');
             });
 
             elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(c => {
-                c.classList.toggle('selected', c.dataset.quick === 'all');
+                c.classList.toggle('selected', quickTipoUtils.isChipSelected(state.tempQuickTipo, c.dataset.quick));
             });
 
             elements.filterSheetContent.querySelectorAll('.date-range-input').forEach(input => {
@@ -3623,7 +3746,7 @@
             state.selectedFilters = state.tempFilters;
             state.insertedDateRange = utils.normalizeDateRange(state.tempInsertedDateRange);
             state.publishedDateRange = utils.normalizeDateRange(state.tempPublishedDateRange);
-            state.quickFilter = state.tempQuickFilter;
+            state.quickTipo = quickTipoUtils.clone(state.tempQuickTipo);
             preferencesManager.markVisited();
             if (typeof quickFilters !== 'undefined') quickFilters.syncUI();
             filterManager.apply();
@@ -3966,7 +4089,7 @@
             document.querySelectorAll('.filter-chip-quick, #sheetQuickFilters [data-quick]').forEach(chip => {
                 const q = chip.dataset.quick;
                 if (!q) return;
-                const selected = q === state.quickFilter;
+                const selected = quickTipoUtils.isChipSelected(state.quickTipo, q);
                 chip.classList.toggle('selected', selected);
                 if (chip.hasAttribute('aria-pressed')) {
                     chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
