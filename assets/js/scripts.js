@@ -788,7 +788,7 @@
                 const idx = THEMES.indexOf(theme);
                 const next = THEMES[(idx + 1) % THEMES.length];
                 const map = { 'light': 'Claro', 'dark': 'Escuro', 'black': 'Preto' };
-                btn.title = `Tema: ${map[theme]} — clique para ${map[next]}`;
+                btn.title = `Tema: ${map[theme]} - clique para ${map[next]}`;
             }
 
             if (this._initialized && !silent) {
@@ -2848,7 +2848,7 @@
                 const btn = document.getElementById('emptyStateClear');
                 if (state.showOnlyVisited && state.allJobs.filter(j => utils.isVisited(j)).length === 0) {
                     if (h3) h3.textContent = 'Nenhuma vaga visitada ainda';
-                    if (p) p.textContent = 'Clique em qualquer vaga para abri-la — ela aparecerá aqui.';
+                    if (p) p.textContent = 'Clique em qualquer vaga para abri-la - ela aparecerá aqui.';
                     if (btn) btn.textContent = 'Mostrar todas';
                 } else {
                     if (h3) h3.textContent = 'Nenhuma vaga encontrada';
@@ -3019,7 +3019,7 @@
                     <div class="job-card-footer">
                         <div class="job-location">
                             <span class="material-symbols-rounded">location_on</span>
-                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : '<span class="job-location-empty">—</span>'}</span>
+                            <span>${smartLocation ? utils.escapeHtml(smartLocation) : '<span class="job-location-empty">-</span>'}</span>
                         </div>
                         ${jobDatesCard}
                     </div>
@@ -4308,7 +4308,7 @@
             utils.markSessionStart();
             preferencesManager.applyDefaults();
             themeManager.init();
-            // styleManager / fontManager — optional prefs via data-* on <html>
+            // styleManager / fontManager - optional prefs via data-* on <html>
             densityManager.init();
             visitedFilter.init();
             viewModeManager.init();

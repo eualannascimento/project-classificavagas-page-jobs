@@ -1,5 +1,5 @@
 /* ============================================
-   CLASSIFICA&VAGAS — Editorial Redesign
+   CLASSIFICA&VAGAS - Editorial Redesign
    ============================================ */
 
 :root {
@@ -75,7 +75,7 @@
     --rule-2:       oklch(0.13 0.004 280);
 }
 
-/* Restraint style — sans-serif, less decoration */
+/* Restraint style - sans-serif, less decoration */
 [data-style="restraint"] {
     --font-serif: var(--font-sans);
 }
@@ -464,7 +464,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     }
 }
 
-/* Icon button — new & legacy */
+/* Icon button - new & legacy */
 .icon-btn,
 .icon-button {
     width: 34px; height: 34px;
@@ -1237,7 +1237,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 
 /* ============================================
-   JOBS GRID — CARDS VIEW
+   JOBS GRID - CARDS VIEW
    ============================================ */
 .jobs-grid {
     display: grid;
@@ -1251,7 +1251,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 @media (min-width: 1200px) { .jobs-grid { grid-template-columns: repeat(4, 1fr); } }
 
 /* ============================================
-   JOB CARD — CARDS VIEW
+   JOB CARD - CARDS VIEW
    ============================================ */
 .job-card {
     display: flex; flex-direction: column;
@@ -2549,7 +2549,7 @@ body.legal-page {
 /* ============================================
    RESPONSIVE
    ============================================ */
-/* Mobile job count bar — sticky, hidden on desktop */
+/* Mobile job count bar - sticky, hidden on desktop */
 .mobile-jobcount-row {
     display: none;
 }
@@ -3218,7 +3218,7 @@ body.chrome-scrolled .app-chrome {
 }
 
 /* ============================================
-   SPRINT VISUAL 1 — iPhone / mobile
+   SPRINT VISUAL 1 - iPhone / mobile
    ============================================ */
 @media (max-width: 720px) {
     :root {
@@ -3406,7 +3406,7 @@ body.chrome-scrolled .app-chrome {
 /* FAB menu available on all breakpoints */
 
 /* ============================================
-   SPRINT VISUAL 3 — iPhone polish
+   SPRINT VISUAL 3 - iPhone polish
    ============================================ */
 @media (max-width: 720px) {
     .filter-search-input {

@@ -20,7 +20,7 @@
             const theme = document.documentElement.getAttribute('data-theme') || 'light';
             const idx = window.cvThemeInit.THEMES.indexOf(theme);
             const next = window.cvThemeInit.THEMES[(idx + 1) % window.cvThemeInit.THEMES.length];
-            themeToggle.title = `Tema: ${map[theme]} — clique para ${map[next]}`;
+            themeToggle.title = `Tema: ${map[theme]} - clique para ${map[next]}`;
         };
         syncTitle();
         themeToggle.addEventListener('click', () => {
