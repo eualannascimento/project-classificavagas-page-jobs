@@ -111,15 +111,6 @@
 
         <div class="filter-chips-container">
             <div class="filter-chips-scroll">
-                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas" title="Vagas que você já abriu">
-                    <span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 18">visibility</span>
-                    <span class="visited-count" id="visitedCount"></span>
-                </button>
-
-                <button class="filter-chip filter-chip-view" id="viewToggle" aria-label="Alternar visualização">
-                    <span class="material-symbols-rounded">view_list</span>
-                </button>
-
                 <button class="filter-chip filter-chip-main" id="openFilters" aria-haspopup="dialog" aria-controls="filterSheet">
                     <span class="material-symbols-rounded">filter_list</span>
                     <span>Filtros</span>
@@ -142,6 +133,15 @@
                         <button class="sort-option" data-sort="title_desc" role="menuitem">Título Z–A</button>
                     </div>
                 </div>
+
+                <button class="filter-chip filter-chip-view" id="viewToggle" aria-label="Alternar visualização">
+                    <span class="material-symbols-rounded">view_list</span>
+                </button>
+
+                <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas" title="Vagas que você já abriu">
+                    <span class="material-symbols-rounded" style="font-size:18px;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 18">visibility</span>
+                    <span class="visited-count" id="visitedCount"></span>
+                </button>
 
                 <div class="saved-filters-menu-container" id="savedFiltersMenuContainer">
                     <button type="button" class="filter-chip filter-chip-save hidden" id="saveFilterBtn"
@@ -303,15 +303,13 @@
         </div>
 
         <div class="legal-scrim hidden" id="legalScrim" aria-hidden="true"></div>
-        <div class="legal-panel hidden" id="legalPanel" role="dialog" aria-modal="true" aria-labelledby="legalPanelTitle" aria-hidden="true">
+        <div class="legal-panel hidden" id="legalPanel" role="dialog" aria-modal="true" aria-label="Documentos legais" aria-hidden="true">
             <div class="legal-panel-inner">
                 <header class="legal-panel-toolbar">
                     <div class="legal-panel-tabs" role="tablist" aria-label="Documentos legais">
                         <button type="button" class="legal-panel-tab" id="legalTabTermos" role="tab" aria-selected="false">Termos</button>
                         <button type="button" class="legal-panel-tab" id="legalTabPrivacidade" role="tab" aria-selected="false">Privacidade/LGPD</button>
                     </div>
-                    <h2 class="legal-panel-title" id="legalPanelTitle">Termos de Uso</h2>
-                    <a class="legal-back-link legal-panel-fullpage" id="legalPanelFullPage" href="termos.html">Página completa</a>
                     <button type="button" class="icon-btn" id="closeLegalPanel" aria-label="Fechar">
                         <span class="material-symbols-rounded">close</span>
                     </button>

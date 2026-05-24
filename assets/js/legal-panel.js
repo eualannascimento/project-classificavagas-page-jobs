@@ -11,11 +11,9 @@
 
     const scrim = document.getElementById('legalScrim');
     const body = document.getElementById('legalPanelBody');
-    const titleEl = document.getElementById('legalPanelTitle');
     const closeBtn = document.getElementById('closeLegalPanel');
     const tabTermos = document.getElementById('legalTabTermos');
     const tabPriv = document.getElementById('legalTabPrivacidade');
-    const fullPageLink = document.getElementById('legalPanelFullPage');
 
     const cache = Object.create(null);
     let currentPage = null;
@@ -75,11 +73,6 @@
         historyEntryActive = false;
     }
 
-    function updateFullPageLink(page, hash) {
-        if (!fullPageLink || !PAGES[page]) return;
-        fullPageLink.href = PAGES[page].url + (hash || '');
-    }
-
     function setTabsActive(page) {
         if (tabTermos) {
             const on = page === 'termos';
@@ -91,13 +84,6 @@
             tabPriv.classList.toggle('active', on);
             tabPriv.setAttribute('aria-selected', on ? 'true' : 'false');
         }
-    }
-
-    function isLegalPanelLink(anchor) {
-        if (!anchor || anchor.id === 'legalPanelFullPage') return false;
-        if (anchor.classList.contains('legal-panel-fullpage')) return false;
-        if (anchor.closest('#legalPanel') && anchor.dataset.legalFullPage === 'true') return false;
-        return true;
     }
 
     function wirePanelLinks(root) {
@@ -119,7 +105,6 @@
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     if (currentPage) {
                         syncHistory(currentPage, href, { push: false });
-                        updateFullPageLink(currentPage, href);
                     }
                 });
             }
@@ -157,7 +142,6 @@
     }
 
     function renderContent(content) {
-        if (titleEl) titleEl.textContent = content.title;
         body.innerHTML = content.html;
         wirePanelLinks(body);
         body.scrollTop = 0;
@@ -176,7 +160,6 @@
 
         currentPage = page;
         setTabsActive(page);
-        updateFullPageLink(page, hash);
 
         panel.classList.remove('hidden');
         if (scrim) scrim.classList.remove('hidden');
@@ -198,7 +181,6 @@
         const needsFetch = !cache[page];
         if (needsFetch) {
             body.innerHTML = '<p class="legal-panel-loading">Carregando…</p>';
-            if (titleEl) titleEl.textContent = PAGES[page].title;
         }
 
         if (focusClose && closeBtn) {
@@ -248,7 +230,7 @@
 
     function onDocumentClick(e) {
         const anchor = e.target.closest('a[href]');
-        if (!anchor || !isLegalPanelLink(anchor)) return;
+        if (!anchor) return;
         const resolved = resolveLegalPage(anchor.getAttribute('href'));
         if (!resolved) return;
         e.preventDefault();

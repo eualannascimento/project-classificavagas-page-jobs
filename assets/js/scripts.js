@@ -322,28 +322,38 @@
 
         renderJobDatesHtml(job, variant = 'card') {
             const publishedParsed = this.parseJobDate(job.published_date);
+            const insertedParsed = this.parseJobDate(job.inserted_date);
             const hasPublished = Boolean(publishedParsed);
+            const hasInserted = Boolean(insertedParsed);
             const pub = hasPublished ? this.escapeHtml(publishedParsed.display) : '';
-            const ins = this.escapeHtml(this.formatJobDateDisplay(job.inserted_date, 'inserted'));
+            const ins = hasInserted ? this.escapeHtml(insertedParsed.display) : '';
             const isInsertedToday = this.isToday(job.inserted_date);
             const todayClass = isInsertedToday ? ' job-date-today' : '';
             const publishedLine = hasPublished
-                ? `<span class="job-date-line">Publicada em: <strong>${pub}</strong></span>`
+                ? `<span class="job-date-line">Publicada/Atualizada em: <strong>${pub}</strong></span>`
                 : `<span class="job-date-line job-date-missing">${this.DATE_MISSING_PUBLISHED_LINE}</span>`;
-            const publishedCompact = hasPublished ? `Pub.: ${pub}` : 'Pub.: não obtida';
+            const insertedLine = hasInserted
+                ? `<span class="job-date-line">Agregada em: <strong>${ins}</strong></span>`
+                : `<span class="job-date-line job-date-missing">Obtida no Classifica Vagas: ${this.escapeHtml(this.DATE_MISSING_INSERTED)}</span>`;
+            const publishedCompact = hasPublished ? `Pub./Atual.: ${pub}` : 'Pub./Atual.: não obtida';
+            const insertedCompact = hasInserted ? `Agr.: ${ins}` : `Obt.: ${this.DATE_MISSING_INSERTED}`;
 
             if (variant === 'compact') {
-                return `<span class="job-dates job-dates-compact${todayClass}" title="${hasPublished ? `Publicada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE} · Obtida no Classifica Vagas: ${ins}">
+                const titleParts = [
+                    hasPublished ? `Publicada/Atualizada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE,
+                    hasInserted ? `Agregada em: ${ins}` : this.DATE_MISSING_INSERTED
+                ];
+                return `<span class="job-dates job-dates-compact${todayClass}" title="${titleParts.join(' · ')}">
                     <span class="job-date-line">${publishedCompact}</span>
                     <span class="job-date-sep">·</span>
-                    <span class="job-date-line">Obt.: ${ins}</span>
+                    <span class="job-date-line">${insertedCompact}</span>
                 </span>`;
             }
 
             const listClass = variant === 'list' ? ' job-dates-list' : '';
             return `<div class="job-dates${listClass}${todayClass}">
                 ${publishedLine}
-                <span class="job-date-line">Obtida no Classifica Vagas: <strong>${ins}</strong></span>
+                ${insertedLine}
             </div>`;
         },
 
