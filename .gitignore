@@ -1,2 +1,2 @@
-# Generated at build/deploy time (see scripts/build-recent.py)
+# Generated at build/deploy time (see scripts/build-catalog.py)
 assets/data/json/recent_jobs.json

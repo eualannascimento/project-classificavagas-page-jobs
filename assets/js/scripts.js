@@ -15,6 +15,7 @@
         SCROLL_THRESHOLD: 300,
         INFINITE_SCROLL_THRESHOLD: 600,
         DATA_URL: 'assets/data/json/open_jobs.json',
+        META_URL: 'assets/data/json/open_jobs.meta.json',
         RECENT_DATA_URL: 'assets/data/json/recent_jobs.json',
         RECENT_MAX_AGE_DAYS: 14,
         FILTER_CATEGORIES: [
@@ -586,12 +587,17 @@
             return segments.length ? segments.join(' ou ') : '';
         },
 
-        getSearchText(job) {
+        buildSearchText(job) {
             return this.normalize([
                 job.title, job.company, job.company_type,
                 job.level, job.category, job.sub_category,
                 job.location, job.location_city, job.location_state
             ].filter(Boolean).join(' '));
+        },
+
+        getSearchText(job) {
+            if (job._searchText) return job._searchText;
+            return this.buildSearchText(job);
         },
 
         jobMatchesSearch(job, parsedQuery) {
@@ -1576,6 +1582,76 @@
         if (msg && msgEl) msgEl.textContent = msg;
     }
 
+    const jobsCatalogCache = {
+        DB_NAME: 'classificavagas-catalog',
+        STORE: 'catalog',
+        KEY: 'jobs',
+
+        async openDb() {
+            if (!('indexedDB' in window)) {
+                throw new Error('IndexedDB unavailable');
+            }
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.DB_NAME, 1);
+                request.onerror = () => reject(request.error);
+                request.onupgradeneeded = () => {
+                    request.result.createObjectStore(this.STORE);
+                };
+                request.onsuccess = () => resolve(request.result);
+            });
+        },
+
+        async get(version) {
+            try {
+                const db = await this.openDb();
+                return await new Promise((resolve, reject) => {
+                    const tx = db.transaction(this.STORE, 'readonly');
+                    const req = tx.objectStore(this.STORE).get(this.KEY);
+                    req.onsuccess = () => {
+                        db.close();
+                        const row = req.result;
+                        if (row && row.version === version && Array.isArray(row.jobs) && row.jobs.length) {
+                            resolve(row);
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    req.onerror = () => {
+                        db.close();
+                        reject(req.error);
+                    };
+                });
+            } catch (_) {
+                return null;
+            }
+        },
+
+        async put(version, jobs, lastModified) {
+            try {
+                const db = await this.openDb();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(this.STORE, 'readwrite');
+                    tx.objectStore(this.STORE).put({
+                        version,
+                        jobs,
+                        lastModified: lastModified || null,
+                        savedAt: Date.now()
+                    }, this.KEY);
+                    tx.oncomplete = () => {
+                        db.close();
+                        resolve();
+                    };
+                    tx.onerror = () => {
+                        db.close();
+                        reject(tx.error);
+                    };
+                });
+            } catch (_) {
+                /* cache is best-effort */
+            }
+        }
+    };
+
     const jobsWorkerBridge = {
         _worker: null,
         _seq: 0,
@@ -1688,19 +1764,48 @@
             });
         },
 
-        ingestJobs(data, lastModified) {
+        async fetchCatalogMeta() {
+            const res = await fetch(CONFIG.META_URL, { cache: 'no-cache' });
+            if (!res.ok) throw new Error('Failed to load catalog meta');
+            return res.json();
+        },
+
+        ensureJobsPrepared(data) {
+            for (let i = 0; i < data.length; i++) {
+                const job = data[i];
+                if (!job.id) job.id = i + 1;
+                if (!job._searchText) job._searchText = utils.buildSearchText(job);
+            }
+            return data;
+        },
+
+        ingestJobs(data, lastModified, meta = null) {
             if (!Array.isArray(data)) {
                 throw new Error('Invalid jobs data');
             }
-            state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
-            state.allJobs.forEach(job => {
-                const key = utils.getJobKey(job);
-                if (utils.isVisited(key)) {
-                    state.visitedJobs.add(key);
-                }
-            });
-            this.buildFilterOptions();
+            this.ensureJobsPrepared(data);
+            state.allJobs = data;
+            state.visitedJobs.clear();
+            for (let i = 0; i < data.length; i++) {
+                const key = utils.getJobKey(data[i]);
+                if (utils.isVisited(key)) state.visitedJobs.add(key);
+            }
+            if (meta?.filterOptions && meta?.filterCounts) {
+                state.filterOptions = meta.filterOptions;
+                state.filterCounts = meta.filterCounts;
+            } else {
+                this.buildFilterOptions();
+            }
             this.updateLastModifiedFromHeader(lastModified);
+            const version = meta?.version;
+            if (version) {
+                const persist = () => jobsCatalogCache.put(version, state.allJobs, lastModified);
+                if (typeof requestIdleCallback === 'function') {
+                    requestIdleCallback(() => persist(), { timeout: 4000 });
+                } else {
+                    setTimeout(persist, 0);
+                }
+            }
         },
 
         updatePartialBanner() {
@@ -1743,7 +1848,7 @@
         async _loadInternal({ soft = false } = {}) {
             if (soft && state.allJobs.length > 0) {
                 try {
-                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: false });
+                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: true });
                     if (recentResult.data?.length) {
                         this.ingestJobs(recentResult.data, recentResult.lastModified);
                         state.isPartialData = true;
@@ -1754,7 +1859,7 @@
                 } catch (_) { /* optional */ }
                 try {
                     const fullResult = await this.fetchJson(CONFIG.DATA_URL);
-                    this.ingestJobs(fullResult.data, fullResult.lastModified);
+                    this.ingestJobs(fullResult.data, fullResult.lastModified, catalogMeta);
                     state.isPartialData = false;
                     this.updatePartialBanner();
                     filterManager.apply();
@@ -1786,12 +1891,36 @@
             await _setProgress(5, 'Conectando...');
 
             let showedApp = false;
+            let catalogMeta = null;
 
             try {
                 try {
-                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: false });
+                    catalogMeta = await this.fetchCatalogMeta();
+                } catch (_) {
+                    catalogMeta = null;
+                }
+
+                const cached = catalogMeta
+                    ? await jobsCatalogCache.get(catalogMeta.version)
+                    : null;
+                if (cached) {
+                    await _setProgress(70, `Carregando ${cached.jobs.length.toLocaleString('pt-BR')} vagas...`);
+                    this.ingestJobs(cached.jobs, cached.lastModified, catalogMeta);
+                    filterManager.apply();
+                    if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
+                    clearTimeout(this._slowNetworkTimer);
+                    this._slowNetworkTimer = null;
+                    await _setProgress(100, 'Pronto!');
+                    this.showApp();
+                    skeletonLoader.hide();
+                    this.refreshCatalogIfStale(catalogMeta);
+                    return;
+                }
+
+                try {
+                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: true });
                     if (recentResult.data?.length) {
-                        this.ingestJobs(recentResult.data, recentResult.lastModified);
+                        this.ingestJobs(recentResult.data, recentResult.lastModified, catalogMeta);
                         state.isPartialData = true;
                         await _setProgress(65, `Exibindo ${recentResult.data.length.toLocaleString('pt-BR')} vagas recentes...`);
                         filterManager.apply();
@@ -1820,7 +1949,7 @@
                 const wasPartial = state.isPartialData;
                 await _setProgress(showedApp ? 90 : 80, `Processando ${fullResult.data.length.toLocaleString('pt-BR')} vagas...`);
 
-                this.ingestJobs(fullResult.data, fullResult.lastModified);
+                this.ingestJobs(fullResult.data, fullResult.lastModified, catalogMeta);
                 state.isPartialData = false;
                 this.updatePartialBanner();
 
@@ -1850,15 +1979,20 @@
 
         buildFilterOptions() {
             CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
-                const values = [...new Set(state.allJobs.map(j => j[key]).filter(Boolean))];
+                state.filterCounts[key] = {};
+                state.filterOptions[key] = [];
+            });
+            state.allJobs.forEach((job) => {
+                CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
+                    const value = job[key];
+                    if (!value) return;
+                    state.filterCounts[key][value] = (state.filterCounts[key][value] || 0) + 1;
+                });
+            });
+            CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
+                const values = Object.keys(state.filterCounts[key]);
                 values.sort((a, b) => a.localeCompare(b, 'pt-BR'));
                 state.filterOptions[key] = values;
-
-                // Count jobs per filter option
-                state.filterCounts[key] = {};
-                values.forEach(value => {
-                    state.filterCounts[key][value] = state.allJobs.filter(j => j[key] === value).length;
-                });
             });
         },
 
@@ -2058,7 +2192,7 @@
         },
 
         apply() {
-            let jobs = this.filterJobs([...state.allJobs]);
+            let jobs = this.filterJobs(state.allJobs);
             jobs = this.sortJobs(jobs);
 
             state.filteredJobs = jobs;
@@ -2069,48 +2203,65 @@
             cardRenderer.render(true);
         },
 
-        // Calculate counts for other filters based on current selection
         recalculateFilterCounts(
-            currentJobs,
+            _currentJobs,
             filters = state.selectedFilters,
             insertedDateRange = state.insertedDateRange,
             publishedDateRange = state.publishedDateRange,
             quickTipo = state.quickTipo,
             searchQuery = state.searchQuery
         ) {
-            // Reset counts
+            const hasCategoryFilters = Object.values(filters).some(v => v && v.length > 0);
+            const hasOtherFilters = Boolean(
+                searchQuery ||
+                state.showOnlyVisited ||
+                quickTipoUtils.isActive(quickTipo) ||
+                utils.hasDateRange(insertedDateRange) ||
+                utils.hasDateRange(publishedDateRange)
+            );
+
+            if (!hasCategoryFilters && !hasOtherFilters) {
+                state.dynamicFilterCounts = state.filterCounts;
+                return;
+            }
+
             state.dynamicFilterCounts = {};
-
-            // We need to calculate what the counts WOULD be if we applied
-            // all CURRENT filters EXCEPT the category we are counting.
-            // This is computationally expensive, so we optimize by only doing it for
-            // categories that are NOT currently completely filtered out.
-
             CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
-                // Get all filters EXCEPT the current category
-                const otherFilters = { ...filters };
-                delete otherFilters[key];
-
-                // Base set of jobs to count from:
-                // Start with all jobs and apply all current filters except the category being counted.
-                let baseJobs = this.filterJobs(state.allJobs, {
-                    searchQuery,
-                    showOnlyVisited: state.showOnlyVisited,
-                    quickTipo,
-                    insertedDateRange,
-                    publishedDateRange,
-                    selectedFilters: otherFilters
-                });
-
-                // Now count the occurrences of each value in this category
                 state.dynamicFilterCounts[key] = {};
-                baseJobs.forEach(job => {
-                    const value = job[key];
-                    if (value) {
-                        state.dynamicFilterCounts[key][value] = (state.dynamicFilterCounts[key][value] || 0) + 1;
-                    }
-                });
             });
+
+            const parsedQuery = searchQuery ? utils.parseSearchQuery(searchQuery) : { type: 'empty' };
+            const insertedRange = utils.hasDateRange(insertedDateRange)
+                ? utils.normalizeDateRange(insertedDateRange)
+                : null;
+            const publishedRange = utils.hasDateRange(publishedDateRange)
+                ? utils.normalizeDateRange(publishedDateRange)
+                : null;
+            const quickActive = quickTipoUtils.isActive(quickTipo);
+
+            const matchesCategoryExcept = (job, exceptKey) => {
+                for (const [catKey, values] of Object.entries(filters)) {
+                    if (catKey === exceptKey || !values?.length) continue;
+                    if (!values.includes(job[catKey])) return false;
+                }
+                return true;
+            };
+
+            for (const job of state.allJobs) {
+                if (parsedQuery.type !== 'empty' && !utils.jobMatchesSearch(job, parsedQuery)) continue;
+                if (state.showOnlyVisited && !utils.isVisited(job)) continue;
+                if (quickActive && !utils.matchesQuickTipo(job, quickTipo)) continue;
+                if (insertedRange && !utils.isDateInRange(job.inserted_date, insertedRange)) continue;
+                if (publishedRange && !utils.isDateInRange(job.published_date, publishedRange)) continue;
+
+                for (const { key } of CONFIG.FILTER_CATEGORIES) {
+                    if (!matchesCategoryExcept(job, key)) continue;
+                    const value = job[key];
+                    if (!value) continue;
+                    const bucket = state.dynamicFilterCounts[key];
+                    bucket[value] = (bucket[value] || 0) + 1;
+                }
+            }
         },
 
         sortJobs(jobs) {

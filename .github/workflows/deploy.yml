@@ -37,17 +37,23 @@ jobs:
           print(f'OK: {len(data)} jobs')
           "
 
-      - name: Build recent_jobs.json
-        run: python3 scripts/build-recent.py
+      - name: Build catalog artifacts
+        run: python3 scripts/build-catalog.py
 
-      - name: Verify recent_jobs.json artifact
+      - name: Verify catalog artifacts
         run: |
+          test -f assets/data/json/open_jobs.meta.json
+          test -f assets/data/json/open_jobs.json.gz
           test -f assets/data/json/recent_jobs.json
+          test -f assets/data/json/recent_jobs.json.gz
           python3 -c "
           import json
           from pathlib import Path
-          r = json.loads(Path('assets/data/json/recent_jobs.json').read_text(encoding='utf-8'))
-          print(f'recent_jobs: {len(r)} jobs')
+          meta = json.loads(Path('assets/data/json/open_jobs.meta.json').read_text(encoding='utf-8'))
+          recent = json.loads(Path('assets/data/json/recent_jobs.json').read_text(encoding='utf-8'))
+          assert meta.get('count', 0) > 0
+          print(f'meta version={meta.get(\"version\")} count={meta.get(\"count\")}')
+          print(f'recent_jobs: {len(recent)} jobs')
           "
 
       - name: Check no Google Fonts in HTML

@@ -19,7 +19,8 @@ const PRECACHE = [
     './assets/js/privacy-notice.js',
     './assets/js/legal-panel.js',
     './assets/js/scripts.js',
-    './assets/js/jobs-worker.js'
+    './assets/js/jobs-worker.js',
+    './assets/data/json/open_jobs.meta.json'
 ];
 
 self.addEventListener('install', (event) => {

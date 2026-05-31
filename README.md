@@ -24,7 +24,7 @@ O workflow em `.github/workflows/deploy.yml`:
 Para testar localmente antes do push:
 
 ```bash
-python3 scripts/build-recent.py
+python3 scripts/build-catalog.py
 python3 scripts/check-no-google-fonts.py
 ```
 
