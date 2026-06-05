@@ -97,7 +97,8 @@ const EuGeroPreview = (function () {
     return !enabledSet || enabledSet.has(id);
   }
 
-  function buildContent(state, enabledSections) {
+  function buildContent(state, enabledSections, options) {
+    const modernLayout = options?.modernLayout === true;
     const enabled = enabledSections || getActiveSections(state.enabledSections);
     const enabledSet = new Set(enabled.map(s => s.id));
     const p = state.personal || {};
@@ -117,10 +118,10 @@ const EuGeroPreview = (function () {
     if (isSectionEnabled(enabledSet, 'education')) {
       content += renderEducation(state.education, true);
     }
-    if (isSectionEnabled(enabledSet, 'skills')) {
+    if (isSectionEnabled(enabledSet, 'skills') && !modernLayout) {
       content += renderSkills(state, true);
     }
-    if (isSectionEnabled(enabledSet, 'languages')) {
+    if (isSectionEnabled(enabledSet, 'languages') && !modernLayout) {
       content += renderLanguages(state.languages, true);
     }
 
@@ -164,7 +165,7 @@ const EuGeroPreview = (function () {
   }
 
   function renderClassic(state, enabledSections) {
-    const { personal, content } = buildContent(state, enabledSections);
+    const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
     const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
 
     return `
@@ -180,7 +181,7 @@ const EuGeroPreview = (function () {
   }
 
   function renderModern(state, enabledSections) {
-    const { personal, content } = buildContent(state, enabledSections);
+    const { personal, content } = buildContent(state, enabledSections, { modernLayout: true });
     const skills = getSkillsFromState(state);
     const enabled = enabledSections || getActiveSections(state.enabledSections);
     const enabledSet = new Set(enabled.map(s => s.id));
@@ -207,10 +208,12 @@ const EuGeroPreview = (function () {
               ${skills.length ? skills.map(s => `<p>${escapeHtml(s.name || s)}</p>`).join('') : '<p class="cv-muted">Suas habilidades</p>'}
             </div>
           ` : ''}
-          ${enabledSet.has('languages') && state.languages?.length ? `
+          ${enabledSet.has('languages') ? `
             <div class="cv-sidebar-section">
               <h3>Idiomas</h3>
-              ${state.languages.map(l => `<p>${escapeHtml(l.language)} — ${escapeHtml(l.level)}</p>`).join('')}
+              ${state.languages?.length
+                ? state.languages.map(l => `<p>${escapeHtml(l.language)} — ${escapeHtml(l.level)}</p>`).join('')
+                : '<p class="cv-muted">Seus idiomas</p>'}
             </div>
           ` : ''}
         </aside>

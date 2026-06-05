@@ -260,6 +260,22 @@ const EuGeroConfig = (function () {
     return item;
   }
 
+  const SHORT_LABELS = {
+    personal: 'Dados',
+    summary: 'Resumo',
+    experiences: 'Experiência',
+    education: 'Formação',
+    skills: 'Skills',
+    languages: 'Idiomas',
+    certifications: 'Certificados',
+    projects: 'Projetos',
+    volunteering: 'Voluntariado',
+    publications: 'Publicações',
+    awards: 'Prêmios',
+    organizations: 'Organizações',
+    courses: 'Cursos'
+  };
+
   return {
     ACTION_VERBS,
     SECTIONS,
@@ -276,6 +292,7 @@ const EuGeroConfig = (function () {
     getSkillsFromState,
     normalizeEnabledSections,
     getActiveSections,
-    isSectionMandatory
+    isSectionMandatory,
+    SHORT_LABELS
   };
 })();
