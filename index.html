@@ -27,48 +27,59 @@
       </div>
     </header>
 
-    <!-- Tela de seleção de template -->
-    <main id="screen-template" class="screen screen-template">
-      <section class="template-intro">
-        <h2>Escolha o visual do seu currículo</h2>
-        <p>Você pode trocar o template a qualquer momento sem perder seus dados.</p>
-      </section>
-      <div class="template-grid">
-        <button type="button" class="template-card" data-template="classic" aria-label="Selecionar template Clássico">
-          <div class="template-thumb template-thumb-classic">
-            <div class="thumb-header"></div>
-            <div class="thumb-line"></div>
-            <div class="thumb-line short"></div>
-            <div class="thumb-section"></div>
-            <div class="thumb-line"></div>
-          </div>
-          <h3>Clássico</h3>
-          <p>Monocromático, limpo e profissional</p>
-        </button>
-        <button type="button" class="template-card" data-template="modern" aria-label="Selecionar template Moderno">
-          <div class="template-thumb template-thumb-modern">
-            <div class="thumb-sidebar"></div>
-            <div class="thumb-main">
-              <div class="thumb-line"></div>
-              <div class="thumb-section"></div>
+    <!-- Início: template + seções + preview -->
+    <main id="screen-start" class="screen screen-start">
+      <div class="split-layout">
+        <div class="split-form">
+          <section class="start-block">
+            <h2>1. Escolha o visual</h2>
+            <p class="start-desc">Você pode trocar depois sem perder dados.</p>
+            <div class="template-grid template-grid-compact">
+              <button type="button" class="template-card" data-template="classic" aria-label="Template Clássico">
+                <div class="template-thumb template-thumb-classic"><div class="thumb-header"></div><div class="thumb-line"></div></div>
+                <span>Clássico</span>
+              </button>
+              <button type="button" class="template-card" data-template="modern" aria-label="Template Moderno">
+                <div class="template-thumb template-thumb-modern"><div class="thumb-sidebar"></div><div class="thumb-main"><div class="thumb-line"></div></div></div>
+                <span>Moderno</span>
+              </button>
             </div>
+          </section>
+
+          <section class="start-block">
+            <h2>2. O que incluir no currículo?</h2>
+            <p class="start-desc">Seções obrigatórias sempre entram. Marque as opcionais que deseja preencher.</p>
+            <div id="section-checklist" class="section-checklist"></div>
+          </section>
+
+          <div class="start-actions">
+            <button type="button" class="btn btn-primary btn-lg" id="btn-start-wizard">Começar a preencher →</button>
+            <button type="button" class="btn btn-ghost" id="btn-import-start">Carregar rascunho salvo</button>
           </div>
-          <h3>Moderno</h3>
-          <p>Barra lateral colorida com destaque visual</p>
-        </button>
-      </div>
-      <div class="template-footer">
-        <button type="button" class="btn btn-ghost" id="btn-import-start">Carregar rascunho salvo</button>
+        </div>
+
+        <aside class="preview-panel preview-panel-sticky">
+          <div class="preview-header">
+            <h2>Prévia do currículo</h2>
+            <span class="preview-template-badge">Template: <span data-current-template>Clássico</span></span>
+          </div>
+          <div class="preview-paper-wrap">
+            <div data-preview class="preview-content template-classic"></div>
+          </div>
+        </aside>
       </div>
     </main>
 
     <!-- Wizard + Preview -->
     <main id="screen-wizard" class="screen screen-wizard" hidden>
-      <div class="wizard-layout">
+      <div class="split-layout">
         <div class="wizard-panel">
           <div class="wizard-toolbar">
             <p id="wizard-progress" class="wizard-progress"></p>
-            <button type="button" class="btn btn-ghost btn-mobile-preview" id="btn-toggle-preview">Ver prévia</button>
+            <div class="wizard-toolbar-actions">
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-back-start">← Configuração</button>
+              <button type="button" class="btn btn-ghost btn-mobile-preview" id="btn-toggle-preview">Ver prévia</button>
+            </div>
           </div>
           <form id="wizard-form" onsubmit="return false;">
             <div id="wizard-steps"></div>
@@ -77,17 +88,14 @@
               <button type="button" class="btn btn-primary" id="btn-next">Próximo</button>
             </div>
           </form>
-          <div class="privacy-note">
-            <strong>Privacidade:</strong> seus dados são salvos apenas no seu navegador. Use prompts de IA externa sem compartilhar dados — desmarque a opção no modal.
-          </div>
         </div>
-        <aside id="preview-panel" class="preview-panel">
+        <aside class="preview-panel preview-panel-sticky">
           <div class="preview-header">
             <h2>Prévia ao vivo</h2>
-            <span class="preview-template-badge">Template: <span data-current-template>Clássico</span></span>
+            <span class="preview-template-badge"><span data-current-template>Clássico</span></span>
           </div>
-          <div id="preview-content" class="preview-content template-classic">
-            <p class="cv-placeholder">Selecione um template e preencha o formulário.</p>
+          <div class="preview-paper-wrap">
+            <div data-preview class="preview-content template-classic"></div>
           </div>
         </aside>
       </div>
@@ -95,7 +103,7 @@
 
     <!-- Revisão final -->
     <main id="screen-review" class="screen screen-review" hidden>
-      <div class="review-layout">
+      <div class="split-layout">
         <div class="review-panel">
           <div id="review-content"></div>
           <div class="review-actions">
@@ -107,9 +115,11 @@
             <button type="button" class="btn btn-primary" id="btn-guide">Guia LinkedIn →</button>
           </div>
         </div>
-        <aside class="preview-panel preview-panel-review">
+        <aside class="preview-panel preview-panel-sticky">
           <div class="preview-header"><h2>Prévia</h2></div>
-          <div id="preview-content-review" class="preview-content"></div>
+          <div class="preview-paper-wrap">
+            <div data-preview class="preview-content"></div>
+          </div>
         </aside>
       </div>
     </main>
@@ -134,7 +144,9 @@
           <h2>Prévia do currículo</h2>
           <button type="button" class="btn btn-ghost" id="btn-close-preview" aria-label="Fechar prévia">✕</button>
         </div>
-        <div class="preview-content template-classic"></div>
+        <div class="preview-paper-wrap">
+          <div data-preview class="preview-content"></div>
+        </div>
       </div>
     </div>
 
@@ -164,27 +176,21 @@
         </div>
         <div class="modal-template-grid">
           <button type="button" class="modal-template-option" data-template="classic">
-            <strong>Clássico</strong>
-            <span>Monocromático e limpo</span>
+            <strong>Clássico</strong><span>Monocromático e limpo</span>
           </button>
           <button type="button" class="modal-template-option" data-template="modern">
-            <strong>Moderno</strong>
-            <span>Barra lateral colorida</span>
+            <strong>Moderno</strong><span>Barra lateral colorida</span>
           </button>
         </div>
       </div>
     </div>
 
     <input type="file" id="file-import" accept=".json" hidden>
-
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
 
-  <!-- CDN Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-
-  <!-- App modules -->
   <script src="js/config.js"></script>
   <script src="js/scoring.js"></script>
   <script src="js/storage.js"></script>
@@ -193,22 +199,5 @@
   <script src="js/export.js"></script>
   <script src="js/linkedin-guide.js"></script>
   <script src="js/app.js"></script>
-
-  <script>
-    document.getElementById('btn-import-start')?.addEventListener('click', () => {
-      document.getElementById('file-import').click();
-    });
-    document.addEventListener('DOMContentLoaded', () => {
-      const observer = new MutationObserver(() => {
-        const reviewPreview = document.getElementById('preview-content-review');
-        if (reviewPreview && window.EuGeroApp) {
-          EuGeroPreview.updatePreview(reviewPreview, EuGeroApp.getState(), EuGeroApp.getTemplate());
-        }
-        const wizardHidden = document.getElementById('screen-wizard')?.hidden;
-        document.getElementById('header-actions-wizard').hidden = wizardHidden;
-      });
-      observer.observe(document.getElementById('app'), { attributes: true, subtree: true, attributeFilter: ['hidden'] });
-    });
-  </script>
 </body>
 </html>

@@ -69,8 +69,9 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
       )}`);
     }
 
-    if (state.skills?.length) {
-      parts.push(`## Habilidades\n${state.skills.map(s => s.name || s).filter(Boolean).join(', ')}`);
+    const skills = EuGeroConfig.getSkillsFromState(state);
+    if (skills.length) {
+      parts.push(`## Habilidades\n${skills.map(s => s.name || s).filter(Boolean).join(', ')}`);
     }
 
     if (state.languages?.length) {
@@ -131,9 +132,7 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
       case 'summary':
         return state.summary || '(não preenchido)';
       case 'skills':
-        return state.skills?.length
-          ? state.skills.map(s => s.name || s).filter(Boolean).join(', ')
-          : '(não preenchido)';
+        return EuGeroConfig.skillsToText(state) || '(não preenchido)';
       default:
         if (Array.isArray(state[sectionId])) {
           const section = EuGeroConfig.SECTIONS.find(s => s.id === sectionId);

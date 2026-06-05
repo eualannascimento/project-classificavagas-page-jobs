@@ -51,9 +51,9 @@ const EuGeroExport = (function () {
       });
     }
 
-    if (state.skills?.length) {
+    if (EuGeroConfig.getSkillsFromState(state).length) {
       lines.push(divider, 'HABILIDADES', divider);
-      lines.push(state.skills.map(s => s.name || s).filter(Boolean).join(', '));
+      lines.push(EuGeroConfig.getSkillsFromState(state).map(s => s.name || s).filter(Boolean).join(', '));
       lines.push('');
     }
 
@@ -232,9 +232,10 @@ const EuGeroExport = (function () {
       });
     }
 
-    if (state.skills?.length) {
+    const skills = EuGeroConfig.getSkillsFromState(state);
+    if (skills.length) {
       addSection('Habilidades');
-      addText(state.skills.map(s => s.name || s).filter(Boolean).join(', '), 10);
+      addText(skills.map(s => s.name || s).filter(Boolean).join(', '), 10);
     }
 
     if (state.languages?.length) {
@@ -350,9 +351,10 @@ const EuGeroExport = (function () {
         addSection('Formação Acadêmica', items);
       }
 
-      if (state.skills?.length) {
+      const skills = EuGeroConfig.getSkillsFromState(state);
+      if (skills.length) {
         addSection('Habilidades', [
-          new Paragraph({ text: state.skills.map(s => s.name || s).filter(Boolean).join(', ') })
+          new Paragraph({ text: skills.map(s => s.name || s).filter(Boolean).join(', ') })
         ]);
       }
 

@@ -2,6 +2,8 @@
  * Preview ao vivo do currículo nos templates Clássico e Moderno.
  */
 const EuGeroPreview = (function () {
+  const { getSkillsFromState, getActiveSections, SECTION_LABELS } = EuGeroConfig;
+
   function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -19,193 +21,214 @@ const EuGeroPreview = (function () {
     return `<section class="cv-section"><h2>${escapeHtml(title)}</h2>${content}</section>`;
   }
 
-  function renderExperiences(items) {
-    if (!items?.length) return '';
-    const html = items.map(e => `
-      <article class="cv-item">
-        <div class="cv-item-header">
-          <strong>${escapeHtml(e.title)}</strong>
+  function renderSkeletonSection(title) {
+    return `<section class="cv-section cv-section-skeleton"><h2>${escapeHtml(title)}</h2><div class="cv-skeleton-lines"><span></span><span></span></div></section>`;
+  }
+
+  function hasExperienceData(items) {
+    return items?.some(e => e.company || e.title || e.description);
+  }
+
+  function hasEducationData(items) {
+    return items?.some(e => e.institution || e.degree);
+  }
+
+  function hasListData(items, keys) {
+    return items?.some(item => keys.some(k => item[k]?.trim?.()));
+  }
+
+  function renderExperiences(items, showSkeleton) {
+    if (hasExperienceData(items)) {
+      const html = items.filter(e => e.company || e.title).map(e => `
+        <article class="cv-item">
+          <div class="cv-item-header">
+            <strong>${escapeHtml(e.title || 'Cargo')}</strong>
+            <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate))}</span>
+          </div>
+          <div class="cv-item-sub">${escapeHtml(e.company || '')}</div>
+          ${e.description ? `<p class="cv-desc">${escapeHtml(e.description).replace(/\n/g, '<br>')}</p>` : ''}
+        </article>
+      `).join('');
+      return renderSection('Experiência Profissional', html);
+    }
+    return showSkeleton ? renderSkeletonSection('Experiência Profissional') : '';
+  }
+
+  function renderEducation(items, showSkeleton) {
+    if (hasEducationData(items)) {
+      const html = items.filter(e => e.institution || e.degree).map(e => `
+        <article class="cv-item">
+          <strong>${escapeHtml(e.degree || 'Curso')}</strong>
+          <div class="cv-item-sub">${escapeHtml(e.institution || '')}</div>
           <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate))}</span>
-        </div>
-        <div class="cv-item-sub">${escapeHtml(e.company)}</div>
-        ${e.description ? `<p class="cv-desc">${escapeHtml(e.description).replace(/\n/g, '<br>')}</p>` : ''}
-      </article>
-    `).join('');
-    return renderSection('Experiência Profissional', html);
+        </article>
+      `).join('');
+      return renderSection('Formação Acadêmica', html);
+    }
+    return showSkeleton ? renderSkeletonSection('Formação Acadêmica') : '';
   }
 
-  function renderEducation(items) {
-    if (!items?.length) return '';
-    const html = items.map(e => `
-      <article class="cv-item">
-        <strong>${escapeHtml(e.degree)}</strong>
-        <div class="cv-item-sub">${escapeHtml(e.institution)}</div>
-        <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate))}</span>
-      </article>
-    `).join('');
-    return renderSection('Formação Acadêmica', html);
+  function renderSkills(state, showSkeleton) {
+    const skills = getSkillsFromState(state);
+    if (skills.length) {
+      const html = `<div class="cv-skills">${skills.map(s => `<span class="cv-skill-tag">${escapeHtml(s.name || s)}</span>`).join('')}</div>`;
+      return renderSection('Habilidades', html);
+    }
+    return showSkeleton ? renderSkeletonSection('Habilidades') : '';
   }
 
-  function renderSkills(items) {
-    if (!items?.length) return '';
-    const names = items.map(s => s.name || s).filter(Boolean);
-    if (!names.length) return '';
-    const html = `<div class="cv-skills">${names.map(s => `<span class="cv-skill-tag">${escapeHtml(s)}</span>`).join('')}</div>`;
-    return renderSection('Habilidades', html);
+  function renderLanguages(items, showSkeleton) {
+    if (hasListData(items, ['language'])) {
+      const html = items.filter(l => l.language).map(l => `<div class="cv-item"><strong>${escapeHtml(l.language)}</strong> — ${escapeHtml(l.level || '')}</div>`).join('');
+      return renderSection('Idiomas', html);
+    }
+    return showSkeleton ? renderSkeletonSection('Idiomas') : '';
   }
 
-  function renderLanguages(items) {
-    if (!items?.length) return '';
-    const html = items.map(l => `<div class="cv-item"><strong>${escapeHtml(l.language)}</strong> — ${escapeHtml(l.level)}</div>`).join('');
-    return renderSection('Idiomas', html);
+  function renderGenericList(title, items, keys, formatter, showSkeleton) {
+    if (hasListData(items, keys)) {
+      const html = items.filter(item => keys.some(k => item[k]?.trim?.())).map(formatter).join('');
+      return renderSection(title, html);
+    }
+    return showSkeleton ? renderSkeletonSection(title) : '';
   }
 
-  function renderGenericList(title, items, formatter) {
-    if (!items?.length) return '';
-    const html = items.map(formatter).join('');
-    return renderSection(title, html);
+  function isSectionEnabled(enabledSet, id) {
+    return !enabledSet || enabledSet.has(id);
   }
 
-  function buildContent(state) {
+  function buildContent(state, enabledSections) {
+    const enabled = enabledSections || getActiveSections(state.enabledSections);
+    const enabledSet = new Set(enabled.map(s => s.id));
     const p = state.personal || {};
     let content = '';
 
-    if (state.summary) {
-      content += renderSection('Resumo', `<p class="cv-summary">${escapeHtml(state.summary).replace(/\n/g, '<br>')}</p>`);
+    if (isSectionEnabled(enabledSet, 'summary')) {
+      if (state.summary?.trim()) {
+        content += renderSection('Resumo', `<p class="cv-summary">${escapeHtml(state.summary).replace(/\n/g, '<br>')}</p>`);
+      } else {
+        content += renderSkeletonSection('Resumo');
+      }
     }
 
-    content += renderExperiences(state.experiences);
-    content += renderEducation(state.education);
-    content += renderSkills(state.skills);
-    content += renderLanguages(state.languages);
+    if (isSectionEnabled(enabledSet, 'experiences')) {
+      content += renderExperiences(state.experiences, true);
+    }
+    if (isSectionEnabled(enabledSet, 'education')) {
+      content += renderEducation(state.education, true);
+    }
+    if (isSectionEnabled(enabledSet, 'skills')) {
+      content += renderSkills(state, true);
+    }
+    if (isSectionEnabled(enabledSet, 'languages')) {
+      content += renderLanguages(state.languages, true);
+    }
 
-    content += renderGenericList('Certificados e Licenças', state.certifications, c => `
-      <article class="cv-item">
-        <strong>${escapeHtml(c.name)}</strong>
-        <div class="cv-item-sub">${escapeHtml(c.issuer)}${c.date ? ` · ${escapeHtml(c.date)}` : ''}</div>
-      </article>
-    `);
-
-    content += renderGenericList('Projetos', state.projects, p => `
-      <article class="cv-item">
-        <strong>${escapeHtml(p.name)}</strong>
-        ${p.description ? `<p class="cv-desc">${escapeHtml(p.description).replace(/\n/g, '<br>')}</p>` : ''}
-      </article>
-    `);
-
-    content += renderGenericList('Voluntariado', state.volunteering, v => `
-      <article class="cv-item">
-        <strong>${escapeHtml(v.role)}</strong> — ${escapeHtml(v.organization)}
-        <span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate))}</span>
-        ${v.description ? `<p class="cv-desc">${escapeHtml(v.description).replace(/\n/g, '<br>')}</p>` : ''}
-      </article>
-    `);
-
-    content += renderGenericList('Publicações', state.publications, pub => `
-      <article class="cv-item">
-        <strong>${escapeHtml(pub.title)}</strong>
-        <div class="cv-item-sub">${escapeHtml(pub.publisher)}${pub.date ? ` · ${escapeHtml(pub.date)}` : ''}</div>
-      </article>
-    `);
-
-    content += renderGenericList('Prêmios e Honrarias', state.awards, a => `
-      <article class="cv-item">
-        <strong>${escapeHtml(a.title)}</strong> — ${escapeHtml(a.issuer)}
-        ${a.description ? `<p class="cv-desc">${escapeHtml(a.description)}</p>` : ''}
-      </article>
-    `);
-
-    content += renderGenericList('Organizações', state.organizations, o => `
-      <article class="cv-item">
-        <strong>${escapeHtml(o.name)}</strong> — ${escapeHtml(o.role)}
-        <span class="cv-period">${escapeHtml(formatPeriod(o.startDate, o.endDate))}</span>
-      </article>
-    `);
-
-    content += renderGenericList('Cursos', state.courses, c => `
-      <article class="cv-item">
-        <strong>${escapeHtml(c.name)}</strong>
-        <div class="cv-item-sub">${escapeHtml(c.institution)}${c.date ? ` · ${escapeHtml(c.date)}` : ''}</div>
-      </article>
-    `);
+    if (isSectionEnabled(enabledSet, 'certifications')) {
+      content += renderGenericList('Certificados e Licenças', state.certifications, ['name'], c => `
+        <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer || '')}${c.date ? ` · ${escapeHtml(c.date)}` : ''}</div></article>
+      `, true);
+    }
+    if (isSectionEnabled(enabledSet, 'projects')) {
+      content += renderGenericList('Projetos', state.projects, ['name'], p => `
+        <article class="cv-item"><strong>${escapeHtml(p.name)}</strong>${p.description ? `<p class="cv-desc">${escapeHtml(p.description).replace(/\n/g, '<br>')}</p>` : ''}</article>
+      `, true);
+    }
+    if (isSectionEnabled(enabledSet, 'volunteering')) {
+      content += renderGenericList('Voluntariado', state.volunteering, ['organization'], v => `
+        <article class="cv-item"><strong>${escapeHtml(v.role || 'Função')}</strong> — ${escapeHtml(v.organization)}<span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate))}</span></article>
+      `, true);
+    }
+    if (isSectionEnabled(enabledSet, 'publications')) {
+      content += renderGenericList('Publicações', state.publications, ['title'], pub => `
+        <article class="cv-item"><strong>${escapeHtml(pub.title)}</strong><div class="cv-item-sub">${escapeHtml(pub.publisher || '')}</div></article>
+      `, true);
+    }
+    if (isSectionEnabled(enabledSet, 'awards')) {
+      content += renderGenericList('Prêmios e Honrarias', state.awards, ['title'], a => `
+        <article class="cv-item"><strong>${escapeHtml(a.title)}</strong> — ${escapeHtml(a.issuer || '')}</article>
+      `, true);
+    }
+    if (isSectionEnabled(enabledSet, 'organizations')) {
+      content += renderGenericList('Organizações', state.organizations, ['name'], o => `
+        <article class="cv-item"><strong>${escapeHtml(o.name)}</strong> — ${escapeHtml(o.role || '')}</article>
+      `, true);
+    }
+    if (isSectionEnabled(enabledSet, 'courses')) {
+      content += renderGenericList('Cursos', state.courses, ['name'], c => `
+        <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.institution || '')}</div></article>
+      `, true);
+    }
 
     return { personal: p, content };
   }
 
-  function renderClassic(state) {
-    const { personal, content } = buildContent(state);
-    const contacts = [
-      personal.email,
-      personal.phone,
-      personal.location,
-      personal.linkedinUrl
-    ].filter(Boolean);
+  function renderClassic(state, enabledSections) {
+    const { personal, content } = buildContent(state, enabledSections);
+    const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
 
     return `
       <div class="cv cv-classic">
         <header class="cv-header-classic">
           <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
-          <p class="cv-headline">${escapeHtml(personal.headline) || 'Seu cargo desejado'}</p>
-          ${contacts.length ? `<p class="cv-contacts">${contacts.map(c => escapeHtml(c)).join(' · ')}</p>` : ''}
+          <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
+          <p class="cv-contacts">${contacts.length ? contacts.map(c => escapeHtml(c)).join(' · ') : 'e-mail · telefone · cidade'}</p>
         </header>
-        <div class="cv-body">${content || '<p class="cv-placeholder">Preencha o formulário para ver seu currículo aqui.</p>'}</div>
+        <div class="cv-body">${content}</div>
       </div>
     `;
   }
 
-  function renderModern(state) {
-    const { personal, content } = buildContent(state);
+  function renderModern(state, enabledSections) {
+    const { personal, content } = buildContent(state, enabledSections);
+    const skills = getSkillsFromState(state);
+    const enabled = enabledSections || getActiveSections(state.enabledSections);
+    const enabledSet = new Set(enabled.map(s => s.id));
+
+    const contactLines = [
+      personal.email || 'seu@email.com',
+      personal.phone || '(00) 00000-0000',
+      personal.location || 'Cidade, UF'
+    ];
 
     return `
       <div class="cv cv-modern">
         <aside class="cv-sidebar">
           <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
-          <p class="cv-headline">${escapeHtml(personal.headline) || 'Seu cargo desejado'}</p>
+          <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
           <div class="cv-sidebar-section">
             <h3>Contato</h3>
-            ${personal.email ? `<p>${escapeHtml(personal.email)}</p>` : ''}
-            ${personal.phone ? `<p>${escapeHtml(personal.phone)}</p>` : ''}
-            ${personal.location ? `<p>${escapeHtml(personal.location)}</p>` : ''}
+            ${contactLines.map(c => `<p>${escapeHtml(c)}</p>`).join('')}
             ${personal.linkedinUrl ? `<p class="cv-link">${escapeHtml(personal.linkedinUrl)}</p>` : ''}
           </div>
-          ${state.skills?.length ? `
+          ${enabledSet.has('skills') ? `
             <div class="cv-sidebar-section">
               <h3>Habilidades</h3>
-              ${state.skills.map(s => `<p>${escapeHtml(s.name || s)}</p>`).filter(Boolean).join('')}
+              ${skills.length ? skills.map(s => `<p>${escapeHtml(s.name || s)}</p>`).join('') : '<p class="cv-muted">Suas habilidades</p>'}
             </div>
           ` : ''}
-          ${state.languages?.length ? `
+          ${enabledSet.has('languages') && state.languages?.length ? `
             <div class="cv-sidebar-section">
               <h3>Idiomas</h3>
               ${state.languages.map(l => `<p>${escapeHtml(l.language)} — ${escapeHtml(l.level)}</p>`).join('')}
             </div>
           ` : ''}
         </aside>
-        <main class="cv-main">
-          ${state.summary ? `<section class="cv-section"><h2>Resumo</h2><p class="cv-summary">${escapeHtml(state.summary).replace(/\n/g, '<br>')}</p></section>` : ''}
-          ${renderExperiences(state.experiences)}
-          ${renderEducation(state.education)}
-          ${renderGenericList('Certificados', state.certifications, c => `<article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer)}</div></article>`)}
-          ${renderGenericList('Projetos', state.projects, p => `<article class="cv-item"><strong>${escapeHtml(p.name)}</strong><p class="cv-desc">${escapeHtml(p.description || '')}</p></article>`)}
-          ${renderGenericList('Voluntariado', state.volunteering, v => `<article class="cv-item"><strong>${escapeHtml(v.role)}</strong> — ${escapeHtml(v.organization)}</article>`)}
-          ${renderGenericList('Publicações', state.publications, pub => `<article class="cv-item"><strong>${escapeHtml(pub.title)}</strong></article>`)}
-          ${renderGenericList('Prêmios', state.awards, a => `<article class="cv-item"><strong>${escapeHtml(a.title)}</strong></article>`)}
-          ${renderGenericList('Organizações', state.organizations, o => `<article class="cv-item"><strong>${escapeHtml(o.name)}</strong></article>`)}
-          ${renderGenericList('Cursos', state.courses, c => `<article class="cv-item"><strong>${escapeHtml(c.name)}</strong></article>`)}
-          ${!content && !state.summary ? '<p class="cv-placeholder">Preencha o formulário para ver seu currículo aqui.</p>' : ''}
-        </main>
+        <main class="cv-main">${content}</main>
       </div>
     `;
   }
 
-  function render(state, template) {
-    return template === 'modern' ? renderModern(state) : renderClassic(state);
+  function render(state, template, enabledSections) {
+    return template === 'modern'
+      ? renderModern(state, enabledSections)
+      : renderClassic(state, enabledSections);
   }
 
-  function updatePreview(container, state, template) {
+  function updatePreview(container, state, template, enabledSections) {
     if (!container) return;
-    container.innerHTML = render(state, template);
-    container.className = `preview-content template-${template}`;
+    container.innerHTML = render(state, template, enabledSections);
+    container.className = `preview-content preview-paper template-${template}`;
   }
 
   return {

@@ -61,7 +61,7 @@ const EuGeroLinkedInGuide = (function () {
       }
     });
 
-    (state.skills || []).forEach(s => {
+    EuGeroConfig.getSkillsFromState(state).forEach(s => {
       const name = s.name || s;
       if (!isEmpty(name)) {
         entries.push({
