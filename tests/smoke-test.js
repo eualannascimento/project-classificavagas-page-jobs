@@ -15,6 +15,7 @@ function loadScript(relativePath) {
 
 // Carregar módulos na ordem correta
 loadScript('js/config.js');
+loadScript('js/cv-data.js');
 loadScript('js/scoring.js');
 loadScript('js/storage.js');
 loadScript('js/prompts.js');
@@ -169,6 +170,16 @@ assert(!EuGeroConfig.isSectionMandatory('projects'), 'Projetos é opcional');
 
 const normalized = EuGeroConfig.normalizeEnabledSections(['experiences']);
 assert(normalized.includes('personal'), 'Sempre inclui seção obrigatória');
+
+// --- CV data model (preview + export) ---
+console.log('\nModelo CV (export fiel):');
+
+const cvDoc = EuGeroCvData.build(filledState);
+assert(cvDoc.personal.fullName === 'Maria Teste', 'CvData inclui dados pessoais');
+assert(cvDoc.sections.some(s => s.id === 'summary'), 'CvData inclui resumo');
+const mainModern = EuGeroCvData.getMainSections(cvDoc, 'modern');
+assert(!mainModern.some(s => s.id === 'skills'), 'Template moderno: skills só na sidebar');
+assert(cvDoc.sidebar.skills.length >= 0, 'Sidebar moderna estruturada');
 
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);

@@ -6,7 +6,7 @@
 
   const {
     SECTIONS, TEMPLATES, ACTION_VERBS, createEmptyState, createEmptyListItem,
-    getActiveSections, normalizeEnabledSections, isSectionMandatory, skillsToText
+    getActiveSections, normalizeEnabledSections, isSectionMandatory, skillsToText, SHORT_LABELS
   } = EuGeroConfig;
 
   let state = EuGeroStorage.load();
@@ -27,7 +27,7 @@
     els.screenReview = document.getElementById('screen-review');
     els.screenGuide = document.getElementById('screen-guide');
     els.wizardSteps = document.getElementById('wizard-steps');
-    els.wizardProgress = document.getElementById('wizard-progress');
+    els.wizardTimeline = document.getElementById('wizard-timeline');
     els.sectionChecklist = document.getElementById('section-checklist');
     els.reviewContent = document.getElementById('review-content');
     els.guideContent = document.getElementById('guide-content');
@@ -160,6 +160,14 @@
     updateAllPreviews();
   }
 
+  function goToStep(stepIndex) {
+    const sections = activeSections();
+    if (stepIndex < 0 || stepIndex >= sections.length) return;
+    state.currentStep = stepIndex;
+    saveState();
+    renderWizardStep();
+  }
+
   function prevStep() {
     if (state.currentStep > 0) {
       state.currentStep--;
@@ -254,6 +262,34 @@
     });
   }
 
+  function renderWizardTimeline() {
+    if (!els.wizardTimeline) return;
+    const sections = activeSections();
+    els.wizardTimeline.innerHTML = sections.map((section, i) => {
+      const label = SHORT_LABELS[section.id] || section.title;
+      const cls = [
+        'timeline-step',
+        i === state.currentStep ? 'active' : '',
+        i < state.currentStep ? 'done' : ''
+      ].filter(Boolean).join(' ');
+      return `
+        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}">
+          <span class="timeline-num">${i + 1}</span>
+          <span class="timeline-label">${escapeHtml(label)}</span>
+        </button>
+      `;
+    }).join('');
+
+    els.wizardTimeline.querySelectorAll('.timeline-step').forEach(btn => {
+      btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.step, 10)));
+    });
+
+    const activeBtn = els.wizardTimeline.querySelector('.timeline-step.active');
+    if (activeBtn) {
+      activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }
+
   function renderWizardStep() {
     const sections = activeSections();
     const section = sections[state.currentStep];
@@ -291,6 +327,8 @@
     document.getElementById('btn-prev').disabled = state.currentStep === 0;
     document.getElementById('btn-next').textContent =
       state.currentStep === sections.length - 1 ? 'Ir para revisão' : 'Próximo';
+
+    renderWizardTimeline();
   }
 
   function renderField(section, field) {
@@ -512,7 +550,7 @@
     });
 
     document.getElementById('btn-export-pdf')?.addEventListener('click', () => EuGeroExport.exportPdf(state, state.template));
-    document.getElementById('btn-export-docx')?.addEventListener('click', () => EuGeroExport.exportDocx(state));
+    document.getElementById('btn-export-docx')?.addEventListener('click', () => EuGeroExport.exportDocx(state, state.template));
     document.getElementById('btn-export-txt')?.addEventListener('click', () => EuGeroExport.exportTxt(state));
   }
 

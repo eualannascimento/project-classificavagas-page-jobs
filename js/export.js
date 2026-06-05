@@ -1,7 +1,10 @@
 /**
- * Exportação PDF, Word, TXT.
+ * Exportação PDF e Word fiéis aos templates Clássico e Moderno.
  */
 const EuGeroExport = (function () {
+  const MODERN_BLUE = [41, 98, 255];
+  const CLASSIC_DARK = [30, 41, 59];
+
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -19,101 +22,33 @@ const EuGeroExport = (function () {
   }
 
   function buildPlainText(state) {
-    const p = state.personal || {};
+    const doc = EuGeroCvData.build(state);
+    const p = doc.personal;
     const lines = [];
     const divider = '---';
 
-    lines.push(p.fullName || '');
-    lines.push(p.headline || '');
-    lines.push([p.email, p.phone, p.location, p.linkedinUrl].filter(Boolean).join(' | '));
-    lines.push('');
+    lines.push(p.fullName, p.headline, doc.sidebar.contact.join(' | '), '');
 
-    if (state.summary) {
-      lines.push(divider, 'RESUMO', divider, state.summary, '');
-    }
-
-    if (state.experiences?.length) {
-      lines.push(divider, 'EXPERIÊNCIA PROFISSIONAL', divider);
-      state.experiences.forEach(e => {
-        lines.push(`${e.title} | ${e.company}`);
-        lines.push(`${e.startDate || ''} - ${e.endDate || 'Atual'}`);
-        if (e.description) lines.push(e.description);
+    doc.sections.forEach(section => {
+      lines.push(divider, section.title.toUpperCase(), divider);
+      section.blocks.forEach(block => {
+        if (block.type === 'text') lines.push(block.text);
+        else if (block.type === 'tags') lines.push(block.items.join(', '));
+        else if (block.type === 'line') lines.push(block.text);
+        else if (block.type === 'entry') {
+          lines.push(`${block.title}${block.subtitle ? ` | ${block.subtitle}` : ''}`);
+          if (block.period) lines.push(block.period);
+          if (block.description) lines.push(block.description);
+        }
         lines.push('');
       });
-    }
-
-    if (state.education?.length) {
-      lines.push(divider, 'FORMAÇÃO ACADÊMICA', divider);
-      state.education.forEach(e => {
-        lines.push(`${e.degree} | ${e.institution}`);
-        lines.push(`${e.startDate || ''} - ${e.endDate || ''}`);
-        lines.push('');
-      });
-    }
-
-    if (EuGeroConfig.getSkillsFromState(state).length) {
-      lines.push(divider, 'HABILIDADES', divider);
-      lines.push(EuGeroConfig.getSkillsFromState(state).map(s => s.name || s).filter(Boolean).join(', '));
-      lines.push('');
-    }
-
-    if (state.languages?.length) {
-      lines.push(divider, 'IDIOMAS', divider);
-      state.languages.forEach(l => lines.push(`${l.language}: ${l.level}`));
-      lines.push('');
-    }
-
-    if (state.certifications?.length) {
-      lines.push(divider, 'CERTIFICADOS', divider);
-      state.certifications.forEach(c => lines.push(`${c.name} — ${c.issuer} (${c.date || ''})`));
-      lines.push('');
-    }
-
-    if (state.projects?.length) {
-      lines.push(divider, 'PROJETOS', divider);
-      state.projects.forEach(p => {
-        lines.push(p.name);
-        if (p.description) lines.push(p.description);
-        lines.push('');
-      });
-    }
-
-    if (state.volunteering?.length) {
-      lines.push(divider, 'VOLUNTARIADO', divider);
-      state.volunteering.forEach(v => lines.push(`${v.role} — ${v.organization}: ${v.description || ''}`));
-      lines.push('');
-    }
-
-    if (state.publications?.length) {
-      lines.push(divider, 'PUBLICAÇÕES', divider);
-      state.publications.forEach(pub => lines.push(`"${pub.title}" — ${pub.publisher}`));
-      lines.push('');
-    }
-
-    if (state.awards?.length) {
-      lines.push(divider, 'PRÊMIOS', divider);
-      state.awards.forEach(a => lines.push(`${a.title} — ${a.issuer}`));
-      lines.push('');
-    }
-
-    if (state.organizations?.length) {
-      lines.push(divider, 'ORGANIZAÇÕES', divider);
-      state.organizations.forEach(o => lines.push(`${o.name} — ${o.role}`));
-      lines.push('');
-    }
-
-    if (state.courses?.length) {
-      lines.push(divider, 'CURSOS', divider);
-      state.courses.forEach(c => lines.push(`${c.name} — ${c.institution} (${c.date || ''})`));
-    }
+    });
 
     return lines.join('\n');
   }
 
   function exportTxt(state) {
-    const text = buildPlainText(state);
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    downloadBlob(blob, getFileName(state, 'txt'));
+    downloadBlob(new Blob([buildPlainText(state)], { type: 'text/plain;charset=utf-8' }), getFileName(state, 'txt'));
   }
 
   async function generateQrDataUrl(url) {
@@ -121,299 +56,470 @@ const EuGeroExport = (function () {
     try {
       return await QRCode.toDataURL(url, { width: 80, margin: 1 });
     } catch (e) {
-      console.warn('Erro ao gerar QR Code:', e);
       return null;
     }
   }
 
   async function exportPdf(state, template) {
-    if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
-      alert('Biblioteca jsPDF não carregada. Verifique sua conexão.');
+    if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+      alert('Biblioteca jsPDF não carregada.');
       return;
     }
 
     const { jsPDF } = window.jspdf || jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const p = state.personal || {};
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 15;
-    let y = margin;
-    const lineHeight = 6;
-    const contentWidth = pageWidth - margin * 2;
+    const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
+    const doc = EuGeroCvData.build(state, enabledSections);
+    const tpl = template === 'modern' ? 'modern' : 'classic';
 
-    function checkPageBreak(needed) {
-      if (y + needed > doc.internal.pageSize.getHeight() - 20) {
-        doc.addPage();
-        y = margin;
-      }
-    }
-
-    function addText(text, size, style, color) {
-      if (!text) return;
-      doc.setFontSize(size);
-      doc.setFont('helvetica', style || 'normal');
-      if (color) doc.setTextColor(...color);
-      else doc.setTextColor(0, 0, 0);
-
-      const lines = doc.splitTextToSize(text, contentWidth);
-      checkPageBreak(lines.length * lineHeight);
-      doc.text(lines, margin, y);
-      y += lines.length * lineHeight + 2;
-    }
-
-    function addSection(title) {
-      checkPageBreak(12);
-      y += 4;
-      if (template === 'modern') {
-        doc.setFillColor(41, 98, 255);
-        doc.rect(margin, y - 4, contentWidth, 8, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text(title, margin + 2, y + 1);
-        doc.setTextColor(0, 0, 0);
-      } else {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text(title, margin, y);
-      }
-      y += lineHeight + 2;
-    }
-
-    // Header
-    if (template === 'modern') {
-      doc.setFillColor(41, 98, 255);
-      doc.rect(0, 0, pageWidth, 35, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.text(p.fullName || 'Seu Nome', margin, 15);
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(p.headline || '', margin, 23);
-      const contact = [p.email, p.phone, p.location].filter(Boolean).join(' · ');
-      doc.setFontSize(9);
-      doc.text(contact, margin, 30);
-      doc.setTextColor(0, 0, 0);
-      y = 42;
+    if (tpl === 'modern') {
+      await exportPdfModern(jsPDF, doc, state);
     } else {
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text(p.fullName || 'Seu Nome', margin, y);
-      y += 8;
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(p.headline || '', margin, y);
-      y += 6;
-      const contact = [p.email, p.phone, p.location, p.linkedinUrl].filter(Boolean).join(' · ');
-      doc.setFontSize(9);
-      addText(contact, 9);
+      await exportPdfClassic(jsPDF, doc, state);
     }
-
-    if (state.summary) {
-      addSection('Resumo');
-      addText(state.summary, 10);
-    }
-
-    if (state.experiences?.length) {
-      addSection('Experiência Profissional');
-      state.experiences.forEach(e => {
-        addText(`${e.title} — ${e.company}`, 11, 'bold');
-        addText(`${e.startDate || ''} - ${e.endDate || 'Atual'}`, 9);
-        addText(e.description, 10);
-      });
-    }
-
-    if (state.education?.length) {
-      addSection('Formação Acadêmica');
-      state.education.forEach(e => {
-        addText(`${e.degree} — ${e.institution}`, 11, 'bold');
-        addText(`${e.startDate || ''} - ${e.endDate || ''}`, 9);
-      });
-    }
-
-    const skills = EuGeroConfig.getSkillsFromState(state);
-    if (skills.length) {
-      addSection('Habilidades');
-      addText(skills.map(s => s.name || s).filter(Boolean).join(', '), 10);
-    }
-
-    if (state.languages?.length) {
-      addSection('Idiomas');
-      state.languages.forEach(l => addText(`${l.language}: ${l.level}`, 10));
-    }
-
-    if (state.certifications?.length) {
-      addSection('Certificados');
-      state.certifications.forEach(c => addText(`${c.name} — ${c.issuer}`, 10));
-    }
-
-    if (state.projects?.length) {
-      addSection('Projetos');
-      state.projects.forEach(proj => {
-        addText(proj.name, 11, 'bold');
-        addText(proj.description, 10);
-      });
-    }
-
-    if (state.volunteering?.length) {
-      addSection('Voluntariado');
-      state.volunteering.forEach(v => addText(`${v.role} — ${v.organization}`, 10));
-    }
-
-    if (state.publications?.length) {
-      addSection('Publicações');
-      state.publications.forEach(pub => addText(`"${pub.title}" — ${pub.publisher}`, 10));
-    }
-
-    if (state.awards?.length) {
-      addSection('Prêmios');
-      state.awards.forEach(a => addText(`${a.title} — ${a.issuer}`, 10));
-    }
-
-    if (state.organizations?.length) {
-      addSection('Organizações');
-      state.organizations.forEach(o => addText(`${o.name} — ${o.role}`, 10));
-    }
-
-    if (state.courses?.length) {
-      addSection('Cursos');
-      state.courses.forEach(c => addText(`${c.name} — ${c.institution}`, 10));
-    }
-
-    // QR Code footer
-    const linkedinUrl = p.linkedinUrl?.trim();
-    if (linkedinUrl) {
-      const qrDataUrl = await generateQrDataUrl(linkedinUrl);
-      const pageHeight = doc.internal.pageSize.getHeight();
-      if (qrDataUrl) {
-        doc.setFontSize(8);
-        doc.setTextColor(100, 100, 100);
-        doc.text('LinkedIn:', margin, pageHeight - 15);
-        doc.addImage(qrDataUrl, 'PNG', margin, pageHeight - 14, 12, 12);
-        doc.text(linkedinUrl, margin + 15, pageHeight - 8);
-      }
-    }
-
-    doc.save(getFileName(state, 'pdf'));
   }
 
-  async function exportDocx(state) {
+  async function exportPdfClassic(jsPDF, cvDoc, state) {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const margin = 18;
+    const contentW = W - margin * 2;
+    let y = 22;
+
+    const drawFooter = async () => {
+      const url = cvDoc.personal.linkedinUrl?.trim();
+      if (!url) return;
+      const qr = await generateQrDataUrl(url);
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 100, 100);
+      if (qr) {
+        pdf.addImage(qr, 'PNG', margin, H - 18, 10, 10);
+        pdf.text(url, margin + 12, H - 10);
+      } else {
+        pdf.text(url, margin, H - 10);
+      }
+    };
+
+    const newPageIfNeeded = (need) => {
+      if (y + need > H - 22) {
+        pdf.addPage();
+        y = 22;
+      }
+    };
+
+    const p = cvDoc.personal;
+    pdf.setTextColor(...CLASSIC_DARK);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    pdf.text(p.fullName || 'Seu Nome', W / 2, y, { align: 'center' });
+    y += 7;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(71, 85, 105);
+    pdf.text(p.headline || '', W / 2, y, { align: 'center' });
+    y += 5;
+    const contact = cvDoc.sidebar.contact.join('  ·  ');
+    pdf.setFontSize(8);
+    pdf.text(contact || '', W / 2, y, { align: 'center' });
+    y += 4;
+    pdf.setDrawColor(...CLASSIC_DARK);
+    pdf.setLineWidth(0.4);
+    pdf.line(margin, y, W - margin, y);
+    y += 8;
+
+    cvDoc.sections.forEach(section => {
+      newPageIfNeeded(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...CLASSIC_DARK);
+      pdf.text(section.title.toUpperCase(), margin, y);
+      y += 1;
+      pdf.setDrawColor(203, 213, 225);
+      pdf.setLineWidth(0.2);
+      pdf.line(margin, y, W - margin, y);
+      y += 5;
+
+      section.blocks.forEach(block => {
+        if (block.type === 'text') {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          pdf.setTextColor(51, 65, 85);
+          const lines = pdf.splitTextToSize(block.text, contentW);
+          newPageIfNeeded(lines.length * 4 + 2);
+          pdf.text(lines, margin, y);
+          y += lines.length * 4 + 3;
+        } else if (block.type === 'tags') {
+          pdf.setFontSize(8);
+          pdf.setTextColor(51, 65, 85);
+          const text = block.items.join('   ·   ');
+          const lines = pdf.splitTextToSize(text, contentW);
+          newPageIfNeeded(lines.length * 4);
+          pdf.text(lines, margin, y);
+          y += lines.length * 4 + 3;
+        } else if (block.type === 'line') {
+          newPageIfNeeded(5);
+          pdf.setFontSize(9);
+          pdf.text(block.text, margin, y);
+          y += 5;
+        } else if (block.type === 'entry') {
+          newPageIfNeeded(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(9);
+          pdf.setTextColor(...CLASSIC_DARK);
+          const titleLine = block.subtitle ? `${block.title}  —  ${block.subtitle}` : block.title;
+          pdf.text(titleLine, margin, y);
+          y += 4;
+          if (block.period) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(148, 163, 184);
+            pdf.text(block.period, margin, y);
+            y += 4;
+          }
+          if (block.description) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8.5);
+            pdf.setTextColor(51, 65, 85);
+            const lines = pdf.splitTextToSize(block.description, contentW);
+            newPageIfNeeded(lines.length * 3.5);
+            pdf.text(lines, margin, y);
+            y += lines.length * 3.5 + 1;
+          }
+          y += 2;
+        }
+      });
+      y += 2;
+    });
+
+    await drawFooter();
+    pdf.save(getFileName(state, 'pdf'));
+  }
+
+  async function exportPdfModern(jsPDF, cvDoc, state) {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const sidebarW = 68;
+    const mainX = sidebarW + 8;
+    const mainW = W - mainX - 12;
+    let mainY = 18;
+
+    const drawSidebar = () => {
+      pdf.setFillColor(...MODERN_BLUE);
+      pdf.rect(0, 0, sidebarW, H, 'F');
+
+      let sy = 16;
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(14);
+      const nameLines = pdf.splitTextToSize(cvDoc.personal.fullName || 'Seu Nome', sidebarW - 12);
+      pdf.text(nameLines, 8, sy);
+      sy += nameLines.length * 5 + 2;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      const headLines = pdf.splitTextToSize(cvDoc.personal.headline || '', sidebarW - 12);
+      pdf.text(headLines, 8, sy);
+      sy += headLines.length * 3.5 + 6;
+
+      const sidebarBlock = (title, lines) => {
+        if (!lines.length) return;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7);
+        pdf.text(title.toUpperCase(), 8, sy);
+        sy += 1;
+        pdf.setDrawColor(255, 255, 255);
+        pdf.setLineWidth(0.15);
+        pdf.line(8, sy, sidebarW - 8, sy);
+        sy += 4;
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7.5);
+        lines.forEach(line => {
+          const wrapped = pdf.splitTextToSize(line, sidebarW - 14);
+          pdf.text(wrapped, 8, sy);
+          sy += wrapped.length * 3.2 + 1;
+        });
+        sy += 4;
+      };
+
+      sidebarBlock('Contato', cvDoc.sidebar.contact.length ? cvDoc.sidebar.contact : ['']);
+      sidebarBlock('Habilidades', cvDoc.sidebar.skills);
+      sidebarBlock('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} — ${l.level}`));
+    };
+
+    const mainSections = EuGeroCvData.getMainSections(cvDoc, 'modern');
+
+    const newMainPage = () => {
+      pdf.addPage();
+      drawSidebar();
+      mainY = 18;
+    };
+
+    const mainNewPageIfNeeded = (need) => {
+      if (mainY + need > H - 18) newMainPage();
+    };
+
+    drawSidebar();
+
+    mainSections.forEach(section => {
+      mainNewPageIfNeeded(12);
+      pdf.setTextColor(...MODERN_BLUE);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.text(section.title.toUpperCase(), mainX, mainY);
+      mainY += 1;
+      pdf.setDrawColor(...MODERN_BLUE);
+      pdf.setLineWidth(0.25);
+      pdf.line(mainX, mainY, mainX + mainW, mainY);
+      mainY += 5;
+
+      section.blocks.forEach(block => {
+        if (block.type === 'text') {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8.5);
+          pdf.setTextColor(51, 65, 85);
+          const lines = pdf.splitTextToSize(block.text, mainW);
+          mainNewPageIfNeeded(lines.length * 3.5);
+          pdf.text(lines, mainX, mainY);
+          mainY += lines.length * 3.5 + 3;
+        } else if (block.type === 'line') {
+          mainNewPageIfNeeded(5);
+          pdf.setFontSize(8.5);
+          pdf.setTextColor(51, 65, 85);
+          pdf.text(block.text, mainX, mainY);
+          mainY += 5;
+        } else if (block.type === 'entry') {
+          mainNewPageIfNeeded(10);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(8.5);
+          pdf.setTextColor(30, 41, 59);
+          pdf.text(block.title, mainX, mainY);
+          if (block.period) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(7.5);
+            pdf.setTextColor(148, 163, 184);
+            pdf.text(block.period, mainX + mainW, mainY, { align: 'right' });
+          }
+          mainY += 4;
+          if (block.subtitle) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(100, 116, 139);
+            pdf.text(block.subtitle, mainX, mainY);
+            mainY += 4;
+          }
+          if (block.description) {
+            pdf.setFontSize(8);
+            pdf.setTextColor(51, 65, 85);
+            const lines = pdf.splitTextToSize(block.description, mainW);
+            mainNewPageIfNeeded(lines.length * 3.5);
+            pdf.text(lines, mainX, mainY);
+            mainY += lines.length * 3.5 + 1;
+          }
+          mainY += 2;
+        }
+      });
+      mainY += 2;
+    });
+
+    const url = cvDoc.personal.linkedinUrl?.trim();
+    if (url) {
+      const qr = await generateQrDataUrl(url);
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(7);
+      if (qr) {
+        pdf.addImage(qr, 'PNG', mainX, H - 16, 9, 9);
+        pdf.text(url, mainX + 11, H - 10);
+      }
+    }
+
+    pdf.save(getFileName(state, 'pdf'));
+  }
+
+  async function exportDocx(state, template) {
     try {
       const docx = await import('https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm');
-      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
-      const p = state.personal || {};
-      const children = [];
+      const tpl = template === 'modern' ? 'modern' : 'classic';
+      const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
+      const cvDoc = EuGeroCvData.build(state, enabledSections);
 
-      children.push(new Paragraph({
-        children: [new TextRun({ text: p.fullName || 'Currículo', bold: true, size: 32 })],
-        heading: HeadingLevel.TITLE
-      }));
-
-      if (p.headline) {
-        children.push(new Paragraph({ children: [new TextRun({ text: p.headline, size: 24 })] }));
+      if (tpl === 'modern') {
+        await exportDocxModern(docx, cvDoc, state);
+      } else {
+        await exportDocxClassic(docx, cvDoc, state);
       }
-
-      const contact = [p.email, p.phone, p.location, p.linkedinUrl].filter(Boolean).join(' | ');
-      if (contact) {
-        children.push(new Paragraph({ children: [new TextRun({ text: contact, size: 20 })] }));
-      }
-
-      children.push(new Paragraph({ text: '' }));
-
-      function addSection(title, items) {
-        children.push(new Paragraph({
-          text: title,
-          heading: HeadingLevel.HEADING_1
-        }));
-        items.forEach(item => children.push(item));
-      }
-
-      if (state.summary) {
-        addSection('Resumo', [new Paragraph({ text: state.summary })]);
-      }
-
-      if (state.experiences?.length) {
-        const items = [];
-        state.experiences.forEach(e => {
-          items.push(new Paragraph({ children: [new TextRun({ text: `${e.title} — ${e.company}`, bold: true })] }));
-          items.push(new Paragraph({ text: `${e.startDate || ''} - ${e.endDate || 'Atual'}` }));
-          if (e.description) items.push(new Paragraph({ text: e.description }));
-          items.push(new Paragraph({ text: '' }));
-        });
-        addSection('Experiência Profissional', items);
-      }
-
-      if (state.education?.length) {
-        const items = state.education.map(e =>
-          new Paragraph({ children: [new TextRun({ text: `${e.degree} — ${e.institution}`, bold: true })] })
-        );
-        addSection('Formação Acadêmica', items);
-      }
-
-      const skills = EuGeroConfig.getSkillsFromState(state);
-      if (skills.length) {
-        addSection('Habilidades', [
-          new Paragraph({ text: skills.map(s => s.name || s).filter(Boolean).join(', ') })
-        ]);
-      }
-
-      if (state.languages?.length) {
-        addSection('Idiomas', state.languages.map(l =>
-          new Paragraph({ text: `${l.language}: ${l.level}` })
-        ));
-      }
-
-      if (state.certifications?.length) {
-        addSection('Certificados', state.certifications.map(c =>
-          new Paragraph({ text: `${c.name} — ${c.issuer}` })
-        ));
-      }
-
-      if (state.projects?.length) {
-        addSection('Projetos', state.projects.flatMap(proj => [
-          new Paragraph({ children: [new TextRun({ text: proj.name, bold: true })] }),
-          new Paragraph({ text: proj.description || '' })
-        ]));
-      }
-
-      if (state.volunteering?.length) {
-        addSection('Voluntariado', state.volunteering.map(v =>
-          new Paragraph({ text: `${v.role} — ${v.organization}` })
-        ));
-      }
-
-      if (state.publications?.length) {
-        addSection('Publicações', state.publications.map(pub =>
-          new Paragraph({ text: `"${pub.title}" — ${pub.publisher}` })
-        ));
-      }
-
-      if (state.awards?.length) {
-        addSection('Prêmios', state.awards.map(a =>
-          new Paragraph({ text: `${a.title} — ${a.issuer}` })
-        ));
-      }
-
-      if (state.organizations?.length) {
-        addSection('Organizações', state.organizations.map(o =>
-          new Paragraph({ text: `${o.name} — ${o.role}` })
-        ));
-      }
-
-      if (state.courses?.length) {
-        addSection('Cursos', state.courses.map(c =>
-          new Paragraph({ text: `${c.name} — ${c.institution}` })
-        ));
-      }
-
-      const document = new Document({ sections: [{ children }] });
-      const blob = await Packer.toBlob(document);
-      downloadBlob(blob, getFileName(state, 'docx'));
     } catch (e) {
       console.error('Erro ao exportar Word:', e);
-      alert('Não foi possível gerar o arquivo Word. Verifique sua conexão e tente novamente.');
+      alert('Não foi possível gerar o arquivo Word.');
     }
+  }
+
+  function entryParagraphs(Paragraph, TextRun, block) {
+    const out = [];
+    out.push(new Paragraph({
+      children: [new TextRun({ text: block.title, bold: true, size: 20 })],
+      spacing: { after: 40 }
+    }));
+    if (block.subtitle) {
+      out.push(new Paragraph({
+        children: [new TextRun({ text: block.subtitle, size: 18, color: '64748B' })],
+        spacing: { after: 40 }
+      }));
+    }
+    if (block.period) {
+      out.push(new Paragraph({
+        children: [new TextRun({ text: block.period, size: 16, color: '94A3B8', italics: true })],
+        spacing: { after: 60 }
+      }));
+    }
+    if (block.description) {
+      out.push(new Paragraph({
+        children: [new TextRun({ text: block.description, size: 18 })],
+        spacing: { after: 120 }
+      }));
+    }
+    return out;
+  }
+
+  async function exportDocxClassic(docx, cvDoc, state) {
+    const { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } = docx;
+    const p = cvDoc.personal;
+    const children = [];
+
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: p.fullName || 'Currículo', bold: true, size: 36, color: '1E293B' })],
+      spacing: { after: 80 }
+    }));
+    if (p.headline) {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: p.headline, size: 22, color: '475569' })],
+        spacing: { after: 60 }
+      }));
+    }
+    if (cvDoc.sidebar.contact.length) {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: cvDoc.sidebar.contact.join('  ·  '), size: 18, color: '64748B' })],
+        spacing: { after: 80 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '1E293B' } }
+      }));
+    }
+
+    cvDoc.sections.forEach(section => {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: '1E293B' })],
+        spacing: { before: 200, after: 60 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CBD5E1' } }
+      }));
+      section.blocks.forEach(block => {
+        if (block.type === 'text') {
+          children.push(new Paragraph({ children: [new TextRun({ text: block.text, size: 18 })], spacing: { after: 120 } }));
+        } else if (block.type === 'tags') {
+          children.push(new Paragraph({ children: [new TextRun({ text: block.items.join('  ·  '), size: 18 })], spacing: { after: 120 } }));
+        } else if (block.type === 'line') {
+          children.push(new Paragraph({ children: [new TextRun({ text: block.text, size: 18 })], spacing: { after: 80 } }));
+        } else if (block.type === 'entry') {
+          children.push(...entryParagraphs(Paragraph, TextRun, block));
+        }
+      });
+    });
+
+    const document = new Document({ sections: [{ children }] });
+    downloadBlob(await Packer.toBlob(document), getFileName(state, 'docx'));
+  }
+
+  async function exportDocxModern(docx, cvDoc, state) {
+    const {
+      Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+      WidthType, ShadingType, VerticalAlign, BorderStyle, AlignmentType
+    } = docx;
+
+    const sidebarChildren = [];
+    const p = cvDoc.personal;
+
+    sidebarChildren.push(new Paragraph({
+      children: [new TextRun({ text: p.fullName || 'Nome', bold: true, size: 28, color: 'FFFFFF' })],
+      spacing: { after: 80 }
+    }));
+    if (p.headline) {
+      sidebarChildren.push(new Paragraph({
+        children: [new TextRun({ text: p.headline, size: 18, color: 'FFFFFF' })],
+        spacing: { after: 160 }
+      }));
+    }
+
+    const sidebarSection = (title, lines) => {
+      if (!lines.length) return;
+      sidebarChildren.push(new Paragraph({
+        children: [new TextRun({ text: title.toUpperCase(), bold: true, size: 16, color: 'FFFFFF' })],
+        spacing: { before: 120, after: 40 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'FFFFFF' } }
+      }));
+      lines.forEach(line => {
+        sidebarChildren.push(new Paragraph({
+          children: [new TextRun({ text: line, size: 16, color: 'FFFFFF' })],
+          spacing: { after: 40 }
+        }));
+      });
+    };
+
+    sidebarSection('Contato', cvDoc.sidebar.contact);
+    sidebarSection('Habilidades', cvDoc.sidebar.skills);
+    sidebarSection('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} — ${l.level}`));
+
+    const mainChildren = [];
+    EuGeroCvData.getMainSections(cvDoc, 'modern').forEach(section => {
+      mainChildren.push(new Paragraph({
+        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: '2962FF' })],
+        spacing: { before: 160, after: 60 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '2962FF' } }
+      }));
+      section.blocks.forEach(block => {
+        if (block.type === 'text') {
+          mainChildren.push(new Paragraph({ children: [new TextRun({ text: block.text, size: 18 })], spacing: { after: 120 } }));
+        } else if (block.type === 'line') {
+          mainChildren.push(new Paragraph({ children: [new TextRun({ text: block.text, size: 18 })], spacing: { after: 80 } }));
+        } else if (block.type === 'entry') {
+          mainChildren.push(...entryParagraphs(Paragraph, TextRun, block));
+        }
+      });
+    });
+
+    const table = new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: {
+        top: { style: BorderStyle.NONE },
+        bottom: { style: BorderStyle.NONE },
+        left: { style: BorderStyle.NONE },
+        right: { style: BorderStyle.NONE },
+        insideHorizontal: { style: BorderStyle.NONE },
+        insideVertical: { style: BorderStyle.NONE }
+      },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 28, type: WidthType.PERCENTAGE },
+              shading: { type: ShadingType.CLEAR, fill: '2962FF' },
+              verticalAlign: VerticalAlign.TOP,
+              margins: { top: 200, bottom: 200, left: 200, right: 120 },
+              children: sidebarChildren
+            }),
+            new TableCell({
+              width: { size: 72, type: WidthType.PERCENTAGE },
+              verticalAlign: VerticalAlign.TOP,
+              margins: { top: 200, bottom: 200, left: 200, right: 200 },
+              children: mainChildren.length ? mainChildren : [new Paragraph({ text: '' })]
+            })
+          ]
+        })
+      ]
+    });
+
+    const document = new Document({ sections: [{ children: [table] }] });
+    downloadBlob(await Packer.toBlob(document), getFileName(state, 'docx'));
   }
 
   return {
