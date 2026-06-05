@@ -185,10 +185,12 @@ const EuGeroCvData = (function () {
     return doc;
   }
 
-  /** Seções para moderno: habilidades/idiomas vão na sidebar, não no corpo */
-  function getMainSections(doc, template) {
-    if (template !== 'modern') return doc.sections;
-    return doc.sections.filter(s => s.id !== 'skills' && s.id !== 'languages');
+  /** Seções para layout sidebar: habilidades/idiomas vão na sidebar */
+  function getMainSections(doc, templateId) {
+    if (EuGeroConfig.isSidebarTemplate(templateId)) {
+      return doc.sections.filter(s => s.id !== 'skills' && s.id !== 'languages');
+    }
+    return doc.sections;
   }
 
   return { build, getMainSections, formatPeriod };

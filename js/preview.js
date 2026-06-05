@@ -164,28 +164,11 @@ const EuGeroPreview = (function () {
     return { personal: p, content };
   }
 
-  function renderClassic(state, enabledSections) {
-    const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
-    const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
-
-    return `
-      <div class="cv cv-classic">
-        <header class="cv-header-classic">
-          <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
-          <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
-          <p class="cv-contacts">${contacts.length ? contacts.map(c => escapeHtml(c)).join(' · ') : 'e-mail · telefone · cidade'}</p>
-        </header>
-        <div class="cv-body">${content}</div>
-      </div>
-    `;
-  }
-
-  function renderModern(state, enabledSections) {
+  function renderSidebarLayout(state, enabledSections, templateId) {
     const { personal, content } = buildContent(state, enabledSections, { modernLayout: true });
     const skills = getSkillsFromState(state);
     const enabled = enabledSections || getActiveSections(state.enabledSections);
     const enabledSet = new Set(enabled.map(s => s.id));
-
     const contactLines = [
       personal.email || 'seu@email.com',
       personal.phone || '(00) 00000-0000',
@@ -193,7 +176,7 @@ const EuGeroPreview = (function () {
     ];
 
     return `
-      <div class="cv cv-modern">
+      <div class="cv cv-sidebar-layout template-${templateId}">
         <aside class="cv-sidebar">
           <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
           <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
@@ -222,16 +205,69 @@ const EuGeroPreview = (function () {
     `;
   }
 
-  function render(state, template, enabledSections) {
-    return template === 'modern'
-      ? renderModern(state, enabledSections)
-      : renderClassic(state, enabledSections);
+  function renderCenteredLayout(state, enabledSections, templateId) {
+    const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
+    const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
+    const extraClass = templateId === 'elegant' ? ' cv-elegant' : '';
+
+    return `
+      <div class="cv cv-classic cv-centered${extraClass} template-${templateId}">
+        <header class="cv-header-classic">
+          <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
+          <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
+          <p class="cv-contacts">${contacts.length ? contacts.map(c => escapeHtml(c)).join(' · ') : 'e-mail · telefone · cidade'}</p>
+        </header>
+        <div class="cv-body">${content}</div>
+      </div>
+    `;
   }
 
-  function updatePreview(container, state, template, enabledSections) {
+  function renderBannerLayout(state, enabledSections) {
+    const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
+    const contacts = [personal.email, personal.phone, personal.location].filter(Boolean);
+
+    return `
+      <div class="cv cv-executive template-executive">
+        <header class="cv-banner">
+          <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
+          <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
+          <p class="cv-contacts">${contacts.map(c => escapeHtml(c)).join(' · ')}</p>
+        </header>
+        <div class="cv-body">${content}</div>
+      </div>
+    `;
+  }
+
+  function renderLeftLayout(state, enabledSections) {
+    const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
+    const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
+
+    return `
+      <div class="cv cv-minimal template-minimal">
+        <header class="cv-header-left">
+          <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
+          <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
+          <p class="cv-contacts">${contacts.length ? contacts.map(c => escapeHtml(c)).join(' · ') : 'contato@email.com · cidade'}</p>
+        </header>
+        <div class="cv-body">${content}</div>
+      </div>
+    `;
+  }
+
+  function render(state, templateId, enabledSections) {
+    const meta = EuGeroConfig.getTemplateMeta(templateId);
+    switch (meta.layout) {
+      case 'sidebar': return renderSidebarLayout(state, enabledSections, templateId);
+      case 'banner': return renderBannerLayout(state, enabledSections);
+      case 'left': return renderLeftLayout(state, enabledSections);
+      default: return renderCenteredLayout(state, enabledSections, templateId);
+    }
+  }
+
+  function updatePreview(container, state, templateId, enabledSections) {
     if (!container) return;
-    container.innerHTML = render(state, template, enabledSections);
-    container.className = `preview-content preview-paper template-${template}`;
+    container.innerHTML = render(state, templateId, enabledSections);
+    container.className = `preview-content preview-paper template-${templateId}`;
   }
 
   return {

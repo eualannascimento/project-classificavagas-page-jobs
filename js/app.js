@@ -6,7 +6,8 @@
 
   const {
     SECTIONS, TEMPLATES, ACTION_VERBS, createEmptyState, createEmptyListItem,
-    getActiveSections, normalizeEnabledSections, isSectionMandatory, skillsToText, SHORT_LABELS
+    getActiveSections, normalizeEnabledSections, isSectionMandatory, skillsToText, SHORT_LABELS,
+    TEMPLATE_IDS, getTemplateMeta
   } = EuGeroConfig;
 
   let state = EuGeroStorage.load();
@@ -27,6 +28,7 @@
     els.screenReview = document.getElementById('screen-review');
     els.screenGuide = document.getElementById('screen-guide');
     els.wizardSteps = document.getElementById('wizard-steps');
+    els.wizardProgress = document.getElementById('wizard-progress');
     els.wizardTimeline = document.getElementById('wizard-timeline');
     els.sectionChecklist = document.getElementById('section-checklist');
     els.reviewContent = document.getElementById('review-content');
@@ -45,9 +47,7 @@
   }
 
   function bindGlobalEvents() {
-    document.querySelectorAll('.template-card').forEach(card => {
-      card.addEventListener('click', () => pickTemplate(card.dataset.template));
-    });
+    renderTemplatePickers();
 
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
     document.getElementById('btn-change-template-wizard')?.addEventListener('click', () => openModal(els.modalTemplate));
@@ -75,11 +75,12 @@
       btn.addEventListener('click', () => closeModal(btn.closest('.modal')));
     });
 
-    document.querySelectorAll('.modal-template-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        switchTemplate(btn.dataset.template);
+    document.getElementById('modal-template')?.addEventListener('click', e => {
+      const opt = e.target.closest('.modal-template-option');
+      if (opt) {
+        switchTemplate(opt.dataset.template);
         closeModal(els.modalTemplate);
-      });
+      }
     });
 
     document.getElementById('btn-toggle-preview')?.addEventListener('click', togglePreviewOverlay);
@@ -102,6 +103,33 @@
     state.enabledSections = normalizeEnabledSections(state.enabledSections);
     state.skills = EuGeroConfig.parseSkillsText(state.skillsText);
     EuGeroStorage.save(state);
+  }
+
+  function renderTemplatePickers() {
+    const cardHtml = (t) => `
+      <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
+        <div class="template-thumb ${t.thumbClass}"></div>
+        <span class="template-card-name">${escapeHtml(t.name)}</span>
+        <small class="template-card-desc">${escapeHtml(t.description)}</small>
+      </button>
+    `;
+
+    const startGrid = document.getElementById('template-grid-start');
+    if (startGrid) {
+      startGrid.innerHTML = TEMPLATE_IDS.map(id => cardHtml(TEMPLATES[id])).join('');
+    }
+
+    const modalGrid = document.getElementById('modal-template-grid');
+    if (modalGrid) {
+      modalGrid.innerHTML = TEMPLATE_IDS.map(id => {
+        const t = TEMPLATES[id];
+        return `<button type="button" class="modal-template-option" data-template="${t.id}"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.description)}</span></button>`;
+      }).join('');
+    }
+
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.addEventListener('click', () => pickTemplate(card.dataset.template));
+    });
   }
 
   function pickTemplate(templateId) {
@@ -295,10 +323,16 @@
     const section = sections[state.currentStep];
     if (!section) {
       state.currentStep = 0;
+      saveState();
+      if (sections.length === 0) return;
       return renderWizardStep();
     }
 
-    els.wizardProgress.textContent = `Etapa ${state.currentStep + 1} de ${sections.length}: ${section.title}`;
+    if (!els.wizardSteps) return;
+
+    if (els.wizardProgress) {
+      els.wizardProgress.textContent = `Etapa ${state.currentStep + 1} de ${sections.length}: ${section.title}`;
+    }
 
     els.wizardSteps.innerHTML = '';
     const stepEl = document.createElement('div');

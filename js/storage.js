@@ -40,9 +40,7 @@ const EuGeroStorage = (function () {
       merged[key] = Array.isArray(data[key]) ? data[key] : defaults[key];
     });
 
-    if (!['classic', 'modern'].includes(merged.template)) {
-      merged.template = 'classic';
-    }
+    merged.template = EuGeroConfig.TEMPLATE_IDS.includes(merged.template) ? merged.template : 'classic';
 
     merged.enabledSections = EuGeroConfig.normalizeEnabledSections(merged.enabledSections);
 

@@ -34,16 +34,7 @@
           <section class="start-block">
             <h2>1. Escolha o visual</h2>
             <p class="start-desc">Você pode trocar depois sem perder dados.</p>
-            <div class="template-grid template-grid-compact">
-              <button type="button" class="template-card" data-template="classic" aria-label="Template Clássico">
-                <div class="template-thumb template-thumb-classic"><div class="thumb-header"></div><div class="thumb-line"></div></div>
-                <span>Clássico</span>
-              </button>
-              <button type="button" class="template-card" data-template="modern" aria-label="Template Moderno">
-                <div class="template-thumb template-thumb-modern"><div class="thumb-sidebar"></div><div class="thumb-main"><div class="thumb-line"></div></div></div>
-                <span>Moderno</span>
-              </button>
-            </div>
+            <div id="template-grid-start" class="template-grid template-grid-compact"></div>
           </section>
 
           <section class="start-block">
@@ -175,14 +166,7 @@
           <h2 id="modal-template-title">Trocar template</h2>
           <button type="button" class="modal-close" aria-label="Fechar">✕</button>
         </div>
-        <div class="modal-template-grid">
-          <button type="button" class="modal-template-option" data-template="classic">
-            <strong>Clássico</strong><span>Monocromático e limpo</span>
-          </button>
-          <button type="button" class="modal-template-option" data-template="modern">
-            <strong>Moderno</strong><span>Barra lateral colorida</span>
-          </button>
-        </div>
+        <div id="modal-template-grid" class="modal-template-grid"></div>
       </div>
     </div>
 
