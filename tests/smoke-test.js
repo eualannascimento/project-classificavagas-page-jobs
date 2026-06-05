@@ -152,6 +152,24 @@ assert(entries.some(e => e.title.includes('Sobre') || e.content.includes('Profis
 const emptyEntries = EuGeroLinkedInGuide.buildEntries(emptyState);
 assert(emptyEntries.length === 0, 'Guia omite seções vazias');
 
+// --- Skills semicolon parsing ---
+console.log('\nHabilidades (ponto e vírgula):');
+
+const parsed = EuGeroConfig.parseSkillsText('JavaScript; React; Node.js');
+assert(parsed.length === 3, 'Parse de habilidades separadas por ;');
+assert(parsed[0].name === 'JavaScript', 'Primeira habilidade parseada corretamente');
+
+// --- Enabled sections ---
+console.log('\nSeções habilitadas:');
+
+const enabled = EuGeroConfig.getActiveSections(['personal', 'experiences']);
+assert(enabled.length === 2, 'Filtra seções habilitadas');
+assert(EuGeroConfig.isSectionMandatory('personal'), 'Dados pessoais é obrigatório');
+assert(!EuGeroConfig.isSectionMandatory('projects'), 'Projetos é opcional');
+
+const normalized = EuGeroConfig.normalizeEnabledSections(['experiences']);
+assert(normalized.includes('personal'), 'Sempre inclui seção obrigatória');
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 

@@ -12,10 +12,32 @@ const EuGeroConfig = (function () {
     'colabori', 'participei', 'contribuí', 'capacitei', 'estruturei', 'reestruturei'
   ];
 
+  const REQUIRED_SECTION_IDS = ['personal'];
+  const DEFAULT_ENABLED_SECTION_IDS = [
+    'personal', 'summary', 'experiences', 'education', 'skills'
+  ];
+
+  const SECTION_LABELS = {
+    personal: 'Dados Pessoais',
+    summary: 'Resumo / Sobre',
+    experiences: 'Experiências',
+    education: 'Formação',
+    skills: 'Habilidades',
+    languages: 'Idiomas',
+    certifications: 'Certificados',
+    projects: 'Projetos',
+    volunteering: 'Voluntariado',
+    publications: 'Publicações',
+    awards: 'Prêmios',
+    organizations: 'Organizações',
+    courses: 'Cursos'
+  };
+
   const SECTIONS = [
     {
       id: 'personal',
       title: 'Dados Pessoais',
+      description: 'Nome, contato e cargo desejado — base do currículo.',
       linkedinHint: 'Perfil → foto de capa → seção de introdução no topo do perfil',
       fields: [
         { key: 'fullName', label: 'Nome completo', type: 'text', required: true, minLength: 3, tip: 'Use seu nome como aparece em documentos oficiais. Evite apelidos.' },
@@ -29,6 +51,7 @@ const EuGeroConfig = (function () {
     {
       id: 'summary',
       title: 'Resumo / Sobre',
+      description: 'Texto de apresentação profissional.',
       linkedinHint: 'Perfil → seção "Sobre" → editar',
       fields: [
         { key: 'summary', label: 'Resumo profissional', type: 'textarea', required: true, minLength: 100, actionVerbs: true, tip: 'Conte sua história em 3-4 parágrafos: quem você é, o que faz, principais conquistas e objetivo. Use verbos de ação e números quando possível.' }
@@ -37,6 +60,7 @@ const EuGeroConfig = (function () {
     {
       id: 'experiences',
       title: 'Experiências Profissionais',
+      description: 'Histórico de trabalho e conquistas.',
       linkedinHint: 'Perfil → seção "Experiência" → adicionar experiência',
       list: true,
       itemFields: [
@@ -50,6 +74,7 @@ const EuGeroConfig = (function () {
     {
       id: 'education',
       title: 'Formação Acadêmica',
+      description: 'Graduação, pós e cursos formais.',
       linkedinHint: 'Perfil → seção "Formação acadêmica" → adicionar formação',
       list: true,
       itemFields: [
@@ -62,11 +87,10 @@ const EuGeroConfig = (function () {
     {
       id: 'skills',
       title: 'Habilidades',
+      description: 'Competências técnicas e comportamentais.',
       linkedinHint: 'Perfil → seção "Competências" → adicionar competência',
-      list: true,
-      simpleList: true,
-      itemFields: [
-        { key: 'name', label: 'Habilidade', type: 'text', required: true, minLength: 2, tip: 'Liste habilidades relevantes para a vaga desejada. Priorize as mais importantes.' }
+      fields: [
+        { key: 'skillsText', label: 'Habilidades', type: 'textarea', required: false, minLength: 2, fullWidth: true, tip: 'Separe cada habilidade por ponto e vírgula (;). Ex: JavaScript; React; Liderança; Comunicação', placeholder: 'JavaScript; React; Node.js; Git; Comunicação' }
       ]
     },
     {
@@ -177,8 +201,10 @@ const EuGeroConfig = (function () {
       version: APP_VERSION,
       template: 'classic',
       currentStep: 0,
+      enabledSections: [...DEFAULT_ENABLED_SECTION_IDS],
       personal: { fullName: '', headline: '', email: '', phone: '', location: '', linkedinUrl: '' },
       summary: '',
+      skillsText: '',
       experiences: [],
       education: [],
       skills: [],
@@ -193,6 +219,39 @@ const EuGeroConfig = (function () {
     };
   }
 
+  function parseSkillsText(text) {
+    if (!text || typeof text !== 'string') return [];
+    return text.split(/[;,]/).map(s => s.trim()).filter(Boolean).map(name => ({ name }));
+  }
+
+  function skillsToText(state) {
+    if (state.skillsText) return state.skillsText;
+    if (state.skills?.length) {
+      return state.skills.map(s => s.name || s).filter(Boolean).join('; ');
+    }
+    return '';
+  }
+
+  function getSkillsFromState(state) {
+    if (state.skillsText) return parseSkillsText(state.skillsText);
+    if (state.skills?.length) return state.skills;
+    return [];
+  }
+
+  function normalizeEnabledSections(enabledSections) {
+    const set = new Set([...REQUIRED_SECTION_IDS, ...(enabledSections || DEFAULT_ENABLED_SECTION_IDS)]);
+    return SECTIONS.map(s => s.id).filter(id => set.has(id));
+  }
+
+  function getActiveSections(enabledSections) {
+    const enabled = normalizeEnabledSections(enabledSections);
+    return SECTIONS.filter(s => enabled.includes(s.id));
+  }
+
+  function isSectionMandatory(sectionId) {
+    return REQUIRED_SECTION_IDS.includes(sectionId);
+  }
+
   function createEmptyListItem(sectionId) {
     const section = SECTIONS.find(s => s.id === sectionId);
     if (!section || !section.itemFields) return {};
@@ -204,10 +263,19 @@ const EuGeroConfig = (function () {
   return {
     ACTION_VERBS,
     SECTIONS,
+    SECTION_LABELS,
     TEMPLATES,
     STORAGE_KEY,
     APP_VERSION,
+    REQUIRED_SECTION_IDS,
+    DEFAULT_ENABLED_SECTION_IDS,
     createEmptyState,
-    createEmptyListItem
+    createEmptyListItem,
+    parseSkillsText,
+    skillsToText,
+    getSkillsFromState,
+    normalizeEnabledSections,
+    getActiveSections,
+    isSectionMandatory
   };
 })();

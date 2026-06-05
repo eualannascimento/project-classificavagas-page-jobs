@@ -44,6 +44,14 @@ const EuGeroStorage = (function () {
       merged.template = 'classic';
     }
 
+    merged.enabledSections = EuGeroConfig.normalizeEnabledSections(merged.enabledSections);
+
+    if (data.skillsText) {
+      merged.skillsText = data.skillsText;
+    } else if (merged.skills?.length && !merged.skillsText) {
+      merged.skillsText = merged.skills.map(s => s.name || s).filter(Boolean).join('; ');
+    }
+
     return merged;
   }
 

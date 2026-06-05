@@ -118,6 +118,8 @@ const EuGeroScoring = (function () {
             value = (state.personal || {})[field.key] || '';
           } else if (section.id === 'summary') {
             value = state.summary || '';
+          } else if (section.id === 'skills') {
+            value = state.skillsText || (typeof EuGeroConfig !== 'undefined' ? EuGeroConfig.skillsToText(state) : '');
           } else {
             value = state[section.id] || '';
           }
