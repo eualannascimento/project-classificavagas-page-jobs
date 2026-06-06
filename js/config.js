@@ -189,9 +189,47 @@ const EuGeroConfig = (function () {
   ];
 
   const TEMPLATES = {
-    classic: { id: 'classic', name: 'Clássico', description: 'Monocromático, limpo e profissional' },
-    modern: { id: 'modern', name: 'Moderno', description: 'Barra lateral colorida com destaque visual' }
+    classic: {
+      id: 'classic', name: 'Clássico', description: 'Monocromático, limpo e profissional',
+      layout: 'centered', thumbClass: 'template-thumb-classic',
+      accentRgb: [30, 41, 59], textMuted: '#64748b'
+    },
+    modern: {
+      id: 'modern', name: 'Moderno', description: 'Barra lateral azul',
+      layout: 'sidebar', thumbClass: 'template-thumb-modern',
+      sidebarRgb: [41, 98, 255], accentHex: '2962FF'
+    },
+    elegant: {
+      id: 'elegant', name: 'Elegante', description: 'Tipografia serifada, acento dourado',
+      layout: 'centered', thumbClass: 'template-thumb-elegant', serif: true,
+      accentRgb: [146, 64, 14], accentHex: '92400E'
+    },
+    executive: {
+      id: 'executive', name: 'Executivo', description: 'Faixa superior escura',
+      layout: 'banner', thumbClass: 'template-thumb-executive',
+      bannerRgb: [15, 23, 42], accentHex: '0F172A'
+    },
+    minimal: {
+      id: 'minimal', name: 'Minimalista', description: 'Alinhado à esquerda, ultra limpo',
+      layout: 'left', thumbClass: 'template-thumb-minimal',
+      accentRgb: [100, 116, 139], accentHex: '64748B'
+    },
+    creative: {
+      id: 'creative', name: 'Criativo', description: 'Barra lateral roxa',
+      layout: 'sidebar', thumbClass: 'template-thumb-creative',
+      sidebarRgb: [124, 58, 237], accentHex: '7C3AED'
+    }
   };
+
+  const TEMPLATE_IDS = Object.keys(TEMPLATES);
+
+  function getTemplateMeta(templateId) {
+    return TEMPLATES[templateId] || TEMPLATES.classic;
+  }
+
+  function isSidebarTemplate(templateId) {
+    return getTemplateMeta(templateId).layout === 'sidebar';
+  }
 
   const STORAGE_KEY = 'eugero-curriculo-state';
   const APP_VERSION = '1.0.0';
@@ -281,6 +319,9 @@ const EuGeroConfig = (function () {
     SECTIONS,
     SECTION_LABELS,
     TEMPLATES,
+    TEMPLATE_IDS,
+    getTemplateMeta,
+    isSidebarTemplate,
     STORAGE_KEY,
     APP_VERSION,
     REQUIRED_SECTION_IDS,

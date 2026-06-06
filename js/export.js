@@ -60,31 +60,41 @@ const EuGeroExport = (function () {
     }
   }
 
-  async function exportPdf(state, template) {
+  async function exportPdf(state, templateId) {
     if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
       alert('Biblioteca jsPDF não carregada.');
       return;
     }
 
     const { jsPDF } = window.jspdf || jspdf;
+    const meta = EuGeroConfig.getTemplateMeta(templateId);
     const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
-    const doc = EuGeroCvData.build(state, enabledSections);
-    const tpl = template === 'modern' ? 'modern' : 'classic';
+    const cvDoc = EuGeroCvData.build(state, enabledSections);
 
-    if (tpl === 'modern') {
-      await exportPdfModern(jsPDF, doc, state);
-    } else {
-      await exportPdfClassic(jsPDF, doc, state);
+    switch (meta.layout) {
+      case 'sidebar':
+        await exportPdfSidebar(jsPDF, cvDoc, state, meta, templateId);
+        break;
+      case 'banner':
+        await exportPdfBanner(jsPDF, cvDoc, state, meta);
+        break;
+      case 'left':
+        await exportPdfLeft(jsPDF, cvDoc, state, meta);
+        break;
+      default:
+        await exportPdfClassic(jsPDF, cvDoc, state, meta);
     }
   }
 
-  async function exportPdfClassic(jsPDF, cvDoc, state) {
+  async function exportPdfClassic(jsPDF, cvDoc, state, meta) {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
     const margin = 18;
     const contentW = W - margin * 2;
     let y = 22;
+    const accent = meta?.accentRgb || CLASSIC_DARK;
+    const isElegant = meta?.serif === true;
 
     const drawFooter = async () => {
       const url = cvDoc.personal.linkedinUrl?.trim();
@@ -108,9 +118,9 @@ const EuGeroExport = (function () {
     };
 
     const p = cvDoc.personal;
-    pdf.setTextColor(...CLASSIC_DARK);
+    pdf.setTextColor(...accent);
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(18);
+    pdf.setFontSize(isElegant ? 19 : 18);
     pdf.text(p.fullName || 'Seu Nome', W / 2, y, { align: 'center' });
     y += 7;
     pdf.setFont('helvetica', 'normal');
@@ -121,17 +131,22 @@ const EuGeroExport = (function () {
     const contact = cvDoc.sidebar.contact.join('  ·  ');
     pdf.setFontSize(8);
     pdf.text(contact || '', W / 2, y, { align: 'center' });
-    y += 4;
-    pdf.setDrawColor(...CLASSIC_DARK);
-    pdf.setLineWidth(0.4);
+    y += isElegant ? 5 : 4;
+    pdf.setDrawColor(...accent);
+    pdf.setLineWidth(isElegant ? 0.6 : 0.4);
     pdf.line(margin, y, W - margin, y);
-    y += 8;
+    if (isElegant) {
+      y += 1.5;
+      pdf.setLineWidth(0.2);
+      pdf.line(margin + 20, y, W - margin - 20, y);
+    }
+    y += 6;
 
     cvDoc.sections.forEach(section => {
       newPageIfNeeded(14);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
-      pdf.setTextColor(...CLASSIC_DARK);
+      pdf.setTextColor(...accent);
       pdf.text(section.title.toUpperCase(), margin, y);
       y += 1;
       pdf.setDrawColor(203, 213, 225);
@@ -165,7 +180,7 @@ const EuGeroExport = (function () {
           newPageIfNeeded(12);
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(9);
-          pdf.setTextColor(...CLASSIC_DARK);
+          pdf.setTextColor(...accent);
           const titleLine = block.subtitle ? `${block.title}  —  ${block.subtitle}` : block.title;
           pdf.text(titleLine, margin, y);
           y += 4;
@@ -195,7 +210,7 @@ const EuGeroExport = (function () {
     pdf.save(getFileName(state, 'pdf'));
   }
 
-  async function exportPdfModern(jsPDF, cvDoc, state) {
+  async function exportPdfSidebar(jsPDF, cvDoc, state, meta, templateId) {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
@@ -203,9 +218,12 @@ const EuGeroExport = (function () {
     const mainX = sidebarW + 8;
     const mainW = W - mainX - 12;
     let mainY = 18;
+    const sidebarColor = meta.sidebarRgb || MODERN_BLUE;
+    const accentHex = meta.accentHex || '2962FF';
+    const accentRgb = sidebarColor;
 
     const drawSidebar = () => {
-      pdf.setFillColor(...MODERN_BLUE);
+      pdf.setFillColor(...sidebarColor);
       pdf.rect(0, 0, sidebarW, H, 'F');
 
       let sy = 16;
@@ -247,7 +265,7 @@ const EuGeroExport = (function () {
       sidebarBlock('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} — ${l.level}`));
     };
 
-    const mainSections = EuGeroCvData.getMainSections(cvDoc, 'modern');
+    const mainSections = EuGeroCvData.getMainSections(cvDoc, templateId);
 
     const newMainPage = () => {
       pdf.addPage();
@@ -263,12 +281,12 @@ const EuGeroExport = (function () {
 
     mainSections.forEach(section => {
       mainNewPageIfNeeded(12);
-      pdf.setTextColor(...MODERN_BLUE);
+      pdf.setTextColor(...accentRgb);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.text(section.title.toUpperCase(), mainX, mainY);
       mainY += 1;
-      pdf.setDrawColor(...MODERN_BLUE);
+      pdf.setDrawColor(...accentRgb);
       pdf.setLineWidth(0.25);
       pdf.line(mainX, mainY, mainX + mainW, mainY);
       mainY += 5;
@@ -336,17 +354,154 @@ const EuGeroExport = (function () {
     pdf.save(getFileName(state, 'pdf'));
   }
 
-  async function exportDocx(state, template) {
+  async function exportPdfBanner(jsPDF, cvDoc, state, meta) {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentW = W - margin * 2;
+    const bannerColor = meta.bannerRgb || [15, 23, 42];
+    let y = 38;
+
+    pdf.setFillColor(...bannerColor);
+    pdf.rect(0, 0, W, 32, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(20);
+    pdf.text(cvDoc.personal.fullName || 'Seu Nome', margin, 14);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(cvDoc.personal.headline || '', margin, 21);
+    pdf.setFontSize(8);
+    pdf.text(cvDoc.sidebar.contact.join('  ·  '), margin, 27);
+
+    const renderSections = (startY) => {
+      let cy = startY;
+      const newPageIfNeeded = (need) => {
+        if (cy + need > H - 18) { pdf.addPage(); cy = 20; }
+      };
+      cvDoc.sections.forEach(section => {
+        newPageIfNeeded(14);
+        pdf.setTextColor(...bannerColor);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.text(section.title.toUpperCase(), margin, cy);
+        cy += 5;
+        section.blocks.forEach(block => {
+          pdf.setTextColor(51, 65, 85);
+          pdf.setFontSize(8.5);
+          if (block.type === 'text') {
+            const lines = pdf.splitTextToSize(block.text, contentW);
+            newPageIfNeeded(lines.length * 3.5);
+            pdf.text(lines, margin, cy);
+            cy += lines.length * 3.5 + 3;
+          } else if (block.type === 'tags') {
+            pdf.text(block.items.join(' · '), margin, cy);
+            cy += 5;
+          } else if (block.type === 'entry') {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(block.title, margin, cy);
+            cy += 4;
+            pdf.setFont('helvetica', 'normal');
+            if (block.subtitle) { pdf.text(block.subtitle, margin, cy); cy += 4; }
+            if (block.description) {
+              const lines = pdf.splitTextToSize(block.description, contentW);
+              pdf.text(lines, margin, cy);
+              cy += lines.length * 3.5;
+            }
+            cy += 3;
+          }
+        });
+        cy += 3;
+      });
+      return cy;
+    };
+
+    renderSections(y);
+    pdf.save(getFileName(state, 'pdf'));
+  }
+
+  async function exportPdfLeft(jsPDF, cvDoc, state, meta) {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentW = W - margin * 2;
+    let y = 22;
+
+    pdf.setTextColor(30, 41, 59);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(16);
+    pdf.text(cvDoc.personal.fullName || 'Seu Nome', margin, y);
+    y += 6;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 116, 139);
+    pdf.text(cvDoc.personal.headline || '', margin, y);
+    y += 4;
+    pdf.setFontSize(8);
+    pdf.text(cvDoc.sidebar.contact.join('  ·  '), margin, y);
+    y += 8;
+
+    const newPageIfNeeded = (need) => {
+      if (y + need > H - 18) { pdf.addPage(); y = 20; }
+    };
+
+    cvDoc.sections.forEach(section => {
+      newPageIfNeeded(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(148, 163, 184);
+      pdf.text(section.title.toUpperCase(), margin, y);
+      y += 5;
+      section.blocks.forEach(block => {
+        pdf.setTextColor(51, 65, 85);
+        pdf.setFontSize(8.5);
+        if (block.type === 'text') {
+          const lines = pdf.splitTextToSize(block.text, contentW);
+          newPageIfNeeded(lines.length * 3.5);
+          pdf.text(lines, margin, y);
+          y += lines.length * 3.5 + 3;
+        } else if (block.type === 'entry') {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(30, 41, 59);
+          pdf.text(block.title, margin, y);
+          y += 4;
+          pdf.setFont('helvetica', 'normal');
+          if (block.subtitle) { pdf.text(block.subtitle, margin, y); y += 4; }
+          if (block.description) {
+            const lines = pdf.splitTextToSize(block.description, contentW);
+            pdf.text(lines, margin, y);
+            y += lines.length * 3.5;
+          }
+          y += 3;
+        }
+      });
+      y += 4;
+    });
+
+    pdf.save(getFileName(state, 'pdf'));
+  }
+
+  async function exportDocx(state, templateId) {
     try {
       const docx = await import('https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm');
-      const tpl = template === 'modern' ? 'modern' : 'classic';
+      const meta = EuGeroConfig.getTemplateMeta(templateId);
       const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
       const cvDoc = EuGeroCvData.build(state, enabledSections);
 
-      if (tpl === 'modern') {
-        await exportDocxModern(docx, cvDoc, state);
-      } else {
-        await exportDocxClassic(docx, cvDoc, state);
+      switch (meta.layout) {
+        case 'sidebar':
+          await exportDocxSidebar(docx, cvDoc, state, meta, templateId);
+          break;
+        case 'banner':
+          await exportDocxBanner(docx, cvDoc, state, meta);
+          break;
+        case 'left':
+          await exportDocxLeft(docx, cvDoc, state, meta);
+          break;
+        default:
+          await exportDocxClassic(docx, cvDoc, state, meta);
       }
     } catch (e) {
       console.error('Erro ao exportar Word:', e);
@@ -381,14 +536,15 @@ const EuGeroExport = (function () {
     return out;
   }
 
-  async function exportDocxClassic(docx, cvDoc, state) {
+  async function exportDocxClassic(docx, cvDoc, state, meta) {
     const { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } = docx;
     const p = cvDoc.personal;
+    const accent = meta?.accentHex || '1E293B';
     const children = [];
 
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
-      children: [new TextRun({ text: p.fullName || 'Currículo', bold: true, size: 36, color: '1E293B' })],
+      children: [new TextRun({ text: p.fullName || 'Currículo', bold: true, size: 36, color: accent })],
       spacing: { after: 80 }
     }));
     if (p.headline) {
@@ -403,13 +559,13 @@ const EuGeroExport = (function () {
         alignment: AlignmentType.CENTER,
         children: [new TextRun({ text: cvDoc.sidebar.contact.join('  ·  '), size: 18, color: '64748B' })],
         spacing: { after: 80 },
-        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '1E293B' } }
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: accent } }
       }));
     }
 
     cvDoc.sections.forEach(section => {
       children.push(new Paragraph({
-        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: '1E293B' })],
+        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: accent })],
         spacing: { before: 200, after: 60 },
         border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CBD5E1' } }
       }));
@@ -430,11 +586,12 @@ const EuGeroExport = (function () {
     downloadBlob(await Packer.toBlob(document), getFileName(state, 'docx'));
   }
 
-  async function exportDocxModern(docx, cvDoc, state) {
+  async function exportDocxSidebar(docx, cvDoc, state, meta, templateId) {
     const {
       Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-      WidthType, ShadingType, VerticalAlign, BorderStyle, AlignmentType
+      WidthType, ShadingType, VerticalAlign, BorderStyle
     } = docx;
+    const fill = meta.accentHex || '2962FF';
 
     const sidebarChildren = [];
     const p = cvDoc.personal;
@@ -470,11 +627,11 @@ const EuGeroExport = (function () {
     sidebarSection('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} — ${l.level}`));
 
     const mainChildren = [];
-    EuGeroCvData.getMainSections(cvDoc, 'modern').forEach(section => {
+    EuGeroCvData.getMainSections(cvDoc, templateId).forEach(section => {
       mainChildren.push(new Paragraph({
-        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: '2962FF' })],
+        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: fill })],
         spacing: { before: 160, after: 60 },
-        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: '2962FF' } }
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: fill } }
       }));
       section.blocks.forEach(block => {
         if (block.type === 'text') {
@@ -502,7 +659,7 @@ const EuGeroExport = (function () {
           children: [
             new TableCell({
               width: { size: 28, type: WidthType.PERCENTAGE },
-              shading: { type: ShadingType.CLEAR, fill: '2962FF' },
+              shading: { type: ShadingType.CLEAR, fill },
               verticalAlign: VerticalAlign.TOP,
               margins: { top: 200, bottom: 200, left: 200, right: 120 },
               children: sidebarChildren
@@ -520,6 +677,44 @@ const EuGeroExport = (function () {
 
     const document = new Document({ sections: [{ children: [table] }] });
     downloadBlob(await Packer.toBlob(document), getFileName(state, 'docx'));
+  }
+
+  async function exportDocxBanner(docx, cvDoc, state, meta) {
+    const { Document, Packer, Paragraph, TextRun, BorderStyle } = docx;
+    const accent = meta.accentHex || '0F172A';
+    const children = [];
+    children.push(new Paragraph({
+      children: [new TextRun({ text: cvDoc.personal.fullName || 'Currículo', bold: true, size: 36, color: 'FFFFFF' })],
+      shading: { fill: accent },
+      spacing: { after: 40 }
+    }));
+    children.push(new Paragraph({
+      children: [new TextRun({ text: cvDoc.personal.headline || '', size: 22, color: 'FFFFFF' })],
+      shading: { fill: accent },
+      spacing: { after: 40 }
+    }));
+    children.push(new Paragraph({
+      children: [new TextRun({ text: cvDoc.sidebar.contact.join(' · '), size: 18, color: 'FFFFFF' })],
+      shading: { fill: accent },
+      spacing: { after: 200 }
+    }));
+    cvDoc.sections.forEach(section => {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: section.title.toUpperCase(), bold: true, size: 20, color: accent })],
+        spacing: { before: 160, after: 60 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: accent } }
+      }));
+      section.blocks.forEach(block => {
+        if (block.type === 'text') children.push(new Paragraph({ text: block.text, spacing: { after: 120 } }));
+        else if (block.type === 'entry') children.push(...entryParagraphs(Paragraph, TextRun, block));
+      });
+    });
+    const document = new Document({ sections: [{ children }] });
+    downloadBlob(await Packer.toBlob(document), getFileName(state, 'docx'));
+  }
+
+  async function exportDocxLeft(docx, cvDoc, state) {
+    await exportDocxClassic(docx, cvDoc, state, { accentHex: '64748B', layout: 'left' });
   }
 
   return {
