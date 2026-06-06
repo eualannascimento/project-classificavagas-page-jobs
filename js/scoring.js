@@ -142,21 +142,126 @@ const EuGeroScoring = (function () {
     return results;
   }
 
-  function aggregateScore(results) {
+  /** Limite aproximado de caracteres para currículo de uma página A4. */
+  const PAGE_CHAR_SOFT_LIMIT = 3200;
+  const PAGE_CHAR_HARD_LIMIT = 4200;
+  const PAGE_MAX_EXPERIENCES = 4;
+  const PAGE_MAX_LIST_ITEMS = 12;
+
+  function listItemHasContent(item, fields) {
+    return fields.some(f => !isEmpty(item[f.key]));
+  }
+
+  function countFilledListItems(state, section) {
+    const items = state[section.id] || [];
+    return items.filter(item => listItemHasContent(item, section.itemFields || [])).length;
+  }
+
+  function estimateContentVolume(state, sections) {
+    let totalChars = 0;
+    let listItems = 0;
+    let experienceCount = 0;
+
+    sections.forEach(section => {
+      if (section.list) {
+        const count = countFilledListItems(state, section);
+        listItems += count;
+        if (section.id === 'experiences') experienceCount = count;
+        (state[section.id] || []).forEach(item => {
+          (section.itemFields || []).forEach(field => {
+            const val = item[field.key];
+            if (!isEmpty(val)) totalChars += String(val).trim().length;
+          });
+        });
+      } else if (section.fields) {
+        section.fields.forEach(field => {
+          let value = '';
+          if (section.id === 'personal') value = (state.personal || {})[field.key] || '';
+          else if (section.id === 'summary') value = state.summary || '';
+          else if (section.id === 'skills') {
+            value = state.skillsText || (typeof EuGeroConfig !== 'undefined' ? EuGeroConfig.skillsToText(state) : '');
+          } else value = state[field.key] || '';
+          if (!isEmpty(value)) totalChars += String(value).trim().length;
+        });
+      }
+    });
+
+    return { totalChars, listItems, experienceCount, sectionCount: sections.length };
+  }
+
+  /**
+   * Avalia se o conteúdo cabe em uma página — currículos devem ser concisos.
+   * @returns {{ level: 'ok'|'warning'|'overflow', fitScore: number, issues: string[], metrics: object }}
+   */
+  function scorePageFit(state, sections) {
+    const metrics = estimateContentVolume(state, sections);
+    const issues = [];
+    let level = 'ok';
+
+    if (metrics.totalChars >= PAGE_CHAR_HARD_LIMIT) {
+      level = 'overflow';
+      issues.push(`Texto muito extenso (${metrics.totalChars} caracteres) — risco alto de ultrapassar 1 página`);
+    } else if (metrics.totalChars >= PAGE_CHAR_SOFT_LIMIT) {
+      level = level === 'overflow' ? level : 'warning';
+      issues.push(`Conteúdo denso (${metrics.totalChars} caracteres) — pode não caber em 1 página`);
+    }
+
+    if (metrics.experienceCount > PAGE_MAX_EXPERIENCES) {
+      level = 'overflow';
+      issues.push(`Muitas experiências (${metrics.experienceCount}) — ideal até ${PAGE_MAX_EXPERIENCES} para 1 página`);
+    } else if (metrics.experienceCount === PAGE_MAX_EXPERIENCES) {
+      if (level === 'ok') level = 'warning';
+      issues.push(`Limite de experiências para 1 página (${PAGE_MAX_EXPERIENCES})`);
+    }
+
+    if (metrics.listItems > PAGE_MAX_LIST_ITEMS) {
+      level = 'overflow';
+      issues.push(`Muitos itens em listas (${metrics.listItems}) — resuma ou remova seções opcionais`);
+    } else if (metrics.listItems > PAGE_MAX_LIST_ITEMS - 3 && level === 'ok') {
+      level = 'warning';
+      issues.push('Volume alto de itens — considere enxugar seções');
+    }
+
+    const optionalSections = sections.filter(s => !['personal', 'summary', 'experiences', 'education', 'skills'].includes(s.id));
+    if (optionalSections.length >= 4 && metrics.totalChars > PAGE_CHAR_SOFT_LIMIT * 0.7) {
+      level = level === 'ok' ? 'warning' : level;
+      issues.push('Várias seções opcionais + conteúdo extenso dificultam caber em 1 página');
+    }
+
+    const charRatio = Math.min(1, metrics.totalChars / PAGE_CHAR_HARD_LIMIT);
+    const listRatio = Math.min(1, metrics.listItems / PAGE_MAX_LIST_ITEMS);
+    const fitScore = Math.max(0, Math.round(100 - (charRatio * 55 + listRatio * 45)));
+
+    return { level, fitScore, issues, metrics };
+  }
+
+  function aggregateScore(results, pageFit) {
     if (results.length === 0) {
-      return { overall: 0, label: 'Fraco', weakFields: [], total: 0, scored: 0 };
+      const base = { overall: 0, label: 'Fraco', weakFields: [], total: 0, scored: 0 };
+      if (pageFit) return { ...base, pageFit };
+      return base;
     }
 
     const total = results.length;
     const sum = results.reduce((acc, r) => acc + SCORE_VALUES[r.score], 0);
-    const overall = Math.round((sum / (total * 2)) * 100);
+    let overall = Math.round((sum / (total * 2)) * 100);
     const weakFields = results.filter(r => r.score === 'fraco');
+
+    if (pageFit) {
+      if (pageFit.level === 'overflow') {
+        overall = Math.min(overall, Math.min(pageFit.fitScore, 45));
+      } else if (pageFit.level === 'warning') {
+        overall = Math.min(overall, Math.round((overall + pageFit.fitScore) / 2));
+      }
+    }
 
     let label = 'Bom';
     if (overall >= 75) label = 'Ótimo';
     else if (overall < 50) label = 'Fraco';
 
-    return { overall, label, weakFields, total, scored: total };
+    const out = { overall, label, weakFields, total, scored: total };
+    if (pageFit) out.pageFit = pageFit;
+    return out;
   }
 
   function getLabelText(score) {
@@ -166,11 +271,15 @@ const EuGeroScoring = (function () {
   return {
     LABELS,
     SCORE_VALUES,
+    PAGE_CHAR_SOFT_LIMIT,
+    PAGE_CHAR_HARD_LIMIT,
     isEmpty,
     hasActionVerb,
     scoreField,
     scoreListItem,
     scoreState,
+    estimateContentVolume,
+    scorePageFit,
     aggregateScore,
     getLabelText
   };

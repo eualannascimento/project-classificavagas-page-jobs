@@ -15,7 +15,9 @@
     <header class="app-header">
       <div class="header-row">
         <div class="header-brand">
-          <h1 class="logo">Eu Gero Meu Currículo</h1>
+          <button type="button" class="logo-btn" id="btn-go-home" aria-label="Ir para início">
+            <h1 class="logo">Eu Gero Meu Currículo</h1>
+          </button>
           <p class="tagline">Gratuito · Sem cadastro · 100% local</p>
         </div>
         <div class="header-actions" id="header-actions-wizard" hidden>
@@ -27,8 +29,30 @@
       </div>
     </header>
 
+    <!-- Homepage -->
+    <main id="screen-home" class="screen screen-home">
+      <section class="home-hero">
+        <p class="home-eyebrow">Currículo de uma página · LinkedIn alinhado</p>
+        <h2 class="home-title">Crie um currículo profissional em minutos</h2>
+        <p class="home-lead">
+          O <strong>Eu Gero Meu Currículo</strong> guia você passo a passo para montar um CV conciso de
+          <strong>uma página só</strong>, comparar visuais e exportar em PDF ou Word — tudo no navegador, sem cadastro.
+        </p>
+        <ul class="home-features">
+          <li>Formulário guiado com dicas e nota por campo</li>
+          <li>Prévia ao vivo em vários templates</li>
+          <li>Alerta quando o conteúdo excede o ideal de 1 página</li>
+          <li>Guia para replicar no LinkedIn + prompts para IA</li>
+        </ul>
+        <div class="home-cta">
+          <button type="button" class="btn btn-primary btn-xl" id="btn-enter-app">Criar meu currículo</button>
+          <button type="button" class="btn btn-ghost" id="btn-import-home">Carregar rascunho salvo</button>
+        </div>
+      </section>
+    </main>
+
     <!-- Início: template + seções + preview -->
-    <main id="screen-start" class="screen screen-start">
+    <main id="screen-start" class="screen screen-start" hidden>
       <div class="split-layout">
         <div class="split-form">
           <section class="start-block">
@@ -95,24 +119,21 @@
 
     <!-- Revisão final -->
     <main id="screen-review" class="screen screen-review" hidden>
-      <div class="split-layout">
-        <div class="review-panel">
-          <div id="review-content"></div>
-          <div class="review-actions">
-            <button type="button" class="btn btn-secondary" id="btn-back-wizard">Voltar ao wizard</button>
-            <button type="button" class="btn btn-ghost" id="btn-export-json-review">Salvar rascunho (.json)</button>
-            <button type="button" class="btn btn-ghost" id="btn-import-json-review">Carregar rascunho</button>
-            <button type="button" class="btn btn-outline" id="btn-prompt-general-review">Prompt IA geral</button>
-            <button type="button" class="btn btn-outline" id="btn-prompt-translation">Traduzir para inglês (IA)</button>
-            <button type="button" class="btn btn-primary" id="btn-guide">Guia LinkedIn →</button>
-          </div>
+      <div id="review-content" class="review-panel"></div>
+      <section class="review-templates-section">
+        <div class="review-templates-header">
+          <h3>Compare seus dados em todos os templates</h3>
+          <p>Clique para escolher o visual final antes de exportar.</p>
         </div>
-        <aside class="preview-panel preview-panel-sticky">
-          <div class="preview-header"><h2>Prévia</h2></div>
-          <div class="preview-paper-wrap">
-            <div data-preview class="preview-content"></div>
-          </div>
-        </aside>
+        <div id="review-template-gallery" class="review-template-gallery"></div>
+      </section>
+      <div class="review-actions-bar">
+        <button type="button" class="btn btn-secondary" id="btn-back-wizard">Voltar ao wizard</button>
+        <button type="button" class="btn btn-ghost" id="btn-export-json-review">Salvar rascunho (.json)</button>
+        <button type="button" class="btn btn-ghost" id="btn-import-json-review">Carregar rascunho</button>
+        <button type="button" class="btn btn-outline" id="btn-prompt-general-review">Prompt IA geral</button>
+        <button type="button" class="btn btn-outline" id="btn-prompt-translation">Traduzir para inglês (IA)</button>
+        <button type="button" class="btn btn-primary" id="btn-guide">Guia LinkedIn →</button>
       </div>
     </main>
 
