@@ -1,2 +1,11 @@
 # Generated at build/deploy time (see scripts/build-recent.py)
 assets/data/json/recent_jobs.json
+
+# Local dev / CI artifacts
+server.log
+_site/
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

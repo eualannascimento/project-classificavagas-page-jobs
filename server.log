@@ -1,4 +1,0 @@
-127.0.0.1 - - [02/Feb/2026 01:48:52] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [02/Feb/2026 01:48:52] "GET /assets/css/styles.css HTTP/1.1" 200 -
-127.0.0.1 - - [02/Feb/2026 01:48:52] "GET /assets/js/scripts.js HTTP/1.1" 200 -
-127.0.0.1 - - [02/Feb/2026 01:48:52] "GET /assets/data/json/open_jobs.json HTTP/1.1" 200 -

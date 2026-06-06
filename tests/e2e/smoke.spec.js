@@ -1,0 +1,20 @@
+import { test, expect } from '@playwright/test';
+
+test('homepage loads jobs and search filters results', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
+    await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
+
+    const initialCountText = await page.locator('#jobCount').textContent();
+    expect(initialCountText || '').toMatch(/\d/);
+
+    await page.locator('#searchInput').fill('engenheiro');
+    await page.waitForTimeout(500);
+
+    await expect(page.locator('#searchInput')).toHaveValue('engenheiro');
+
+    const hasCards = await page.locator('.job-card').count();
+    const emptyVisible = await page.locator('#emptyState:not(.hidden)').isVisible();
+    expect(hasCards > 0 || emptyVisible).toBeTruthy();
+});

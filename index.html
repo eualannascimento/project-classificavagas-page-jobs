@@ -9,20 +9,39 @@
     <meta name="theme-color" content="#f9f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="classificavagas.com - agregador de vagas de emprego no Brasil. Busque, filtre e encontre oportunidades em um só lugar.">
-    <meta property="og:title" content="classificavagas.com">
-    <meta property="og:description" content="Agregador de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
+    <meta name="description" content="classificavagas.com — agregador de vagas de emprego no Brasil. Busque por cargo, empresa, cidade ou categoria, filtre e compartilhe sua busca.">
+    <link rel="canonical" href="https://classificavagas.com/">
+    <meta property="og:title" content="classificavagas.com — Vagas de Emprego no Brasil">
+    <meta property="og:description" content="Agregador independente de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://classificavagas.com">
-    <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.svg">
+    <meta property="og:url" content="https://classificavagas.com/">
+    <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="classificavagas.com - agregador de vagas no Brasil">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="classificavagas.com">
-    <meta name="twitter:description" content="Agregador de vagas de emprego no Brasil.">
-    <meta name="twitter:image" content="https://classificavagas.com/assets/images/og-image.svg">
-    <title>classificavagas.com</title>
+    <meta name="twitter:title" content="classificavagas.com — Vagas de Emprego no Brasil">
+    <meta name="twitter:description" content="Agregador independente de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
+    <meta name="twitter:image" content="https://classificavagas.com/assets/images/og-image.png">
+    <title>classificavagas.com — Vagas de Emprego no Brasil</title>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "classificavagas.com",
+        "url": "https://classificavagas.com/",
+        "description": "Agregador independente de vagas de emprego no Brasil.",
+        "inLanguage": "pt-BR",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://classificavagas.com/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/images/brand-icon.svg" type="image/svg+xml">
@@ -41,11 +60,11 @@
     <div id="splash" class="splash">
         <div class="splash-content">
             <div class="splash-brand"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></div>
-            <div class="splash-loader-wrap">
+            <div class="splash-loader-wrap" role="status" aria-live="polite" aria-atomic="true">
                 <div class="splash-loader"><div class="splash-progress" id="splashProgress"></div></div>
                 <span class="splash-pct" id="splashPct">0%</span>
             </div>
-            <p class="splash-msg" id="splashMsg">Iniciando...</p>
+            <p class="splash-msg" id="splashMsg" aria-live="polite">Iniciando...</p>
         </div>
     </div>
 
@@ -55,7 +74,12 @@
         <header class="top-app-bar" id="topAppBar">
             <div class="masthead-inner">
                 <div class="masthead-brand">
-                    <h1 class="brand-mark" id="brandLink" role="button" tabindex="0" aria-label="classificavagas.com - voltar ao início"><span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span></h1>
+                    <h1 class="brand-heading">
+                        <a href="/" class="brand-mark" id="brandLink" aria-label="classificavagas.com — voltar ao início">
+                            <span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span>
+                            <span class="visually-hidden">voltar ao início</span>
+                        </a>
+                    </h1>
                     <div class="brand-meta">
                         <div class="brand-meta-line brand-meta-count">
                             <span class="job-count" id="jobCount">Carregando...</span>
@@ -88,6 +112,16 @@
         <p id="partialDataBanner" class="partial-data-banner hidden" aria-live="polite"></p>
         <aside class="legal-disclaimer" aria-label="Aviso legal">
             Agregador independente de vagas públicas. A candidatura ocorre sempre na fonte original, e as empresas podem solicitar correção ou remoção pelos <a href="termos.html#remocao">termos de uso</a>.
+        </aside>
+
+        <aside id="onboardingBanner" class="onboarding-banner hidden" aria-label="Dicas de uso">
+            <ul class="onboarding-list">
+                <li>Pressione <kbd>/</kbd> para focar a busca</li>
+                <li>Pressione <kbd>f</kbd> para abrir filtros</li>
+                <li>Use &ldquo;Copiar link&rdquo; para compartilhar sua busca</li>
+                <li class="onboarding-ptr-hint">Puxe para baixo no topo da página para atualizar (mobile)</li>
+            </ul>
+            <button type="button" class="onboarding-dismiss" id="onboardingDismiss">Entendi</button>
         </aside>
 
         <div class="search-bar-container">
@@ -161,7 +195,7 @@
                 <button type="button" class="icon-btn copy-link-btn hidden" id="copySearchLink" aria-label="Copiar link desta busca" title="Copiar link">
                     <span class="material-symbols-rounded">link</span>
                 </button>
-                <button class="clear-filters-btn" id="clearAllFilters">
+                <button class="clear-filters-btn" id="clearAllFilters" aria-label="Limpar filtros">
                     <span class="material-symbols-rounded">delete_sweep</span>
                     <span class="clear-filters-text">Limpar</span>
                 </button>
@@ -352,6 +386,9 @@
         <button type="button" class="privacy-notice-btn" id="privacyNoticeDismiss">Entendi</button>
     </aside>
 
+    <script src="assets/js/focus-trap.js"></script>
+    <script src="assets/js/view-mode-manager.js"></script>
+    <script src="assets/js/onboarding-manager.js"></script>
     <script src="assets/js/legal.js"></script>
     <script src="assets/js/link-prefetch.js"></script>
     <script src="assets/js/privacy-notice.js"></script>

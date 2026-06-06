@@ -256,6 +256,12 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     flex: 1; min-width: 0;
 }
 
+.brand-heading {
+    margin: 0;
+    font: inherit;
+    line-height: inherit;
+}
+
 .brand-mark {
     font-family: var(--font-serif);
     font-style: italic; font-weight: 400;
@@ -1299,7 +1305,11 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .job-card:hover::after { opacity: 0.35; }
 .job-card:active { transform: translateY(0); }
 
-.job-card.visited { opacity: 0.78; }
+.job-card.visited {
+    opacity: 0.88;
+    border-inline-start: 3px solid var(--accent);
+    padding-inline-start: calc(var(--card-pad, 16px) - 3px);
+}
 .job-card.visited .job-card-title h3,
 .job-card.visited .job-list-main h3,
 .job-card.visited .job-compact-title { color: var(--ink-2); }
@@ -2034,7 +2044,9 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .filter-section { margin-bottom: 2px; }
 .filter-section-header {
     display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
     padding: 12px 20px; cursor: pointer;
+    text-align: left;
     transition: background 0.2s var(--ease);
 }
 .filter-section-header:hover { background: var(--bg-sunk); }
@@ -3024,6 +3036,46 @@ body.legal-panel-open {
 .skip-link:focus {
     left: 12px;
     top: 12px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.icon-btn:focus-visible,
+.filter-chip:focus-visible,
+.fab:focus-visible,
+.clear-filters-btn:focus-visible,
+.filter-option-chip:focus-visible,
+.filled-button:focus-visible,
+.text-button:focus-visible,
+.filter-section-header:focus-visible,
+.copy-link-btn:focus-visible,
+.sheet-close:focus-visible,
+.sort-sheet-option:focus-visible,
+.fab-menu-item:focus-visible,
+.privacy-notice-btn:focus-visible,
+.onboarding-dismiss:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.brand-mark:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
 }
 
 .onboarding-banner {
