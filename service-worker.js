@@ -1,4 +1,4 @@
-const CACHE_VERSION = '15';
+const CACHE_VERSION = '16';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',
@@ -18,6 +18,14 @@ const PRECACHE = [
     './assets/js/legal.js',
     './assets/js/privacy-notice.js',
     './assets/js/focus-trap.js',
+    './assets/js/job-cache.js',
+    './assets/js/offline-manager.js',
+    './assets/js/aria-labels.js',
+    './assets/js/scroll-restore.js',
+    './assets/js/job-deep-link.js',
+    './assets/js/data-loader.js',
+    './assets/js/empty-state-manager.js',
+    './assets/js/appearance-manager.js',
     './assets/js/view-mode-manager.js',
     './assets/js/onboarding-manager.js',
     './assets/js/legal-panel.js',
