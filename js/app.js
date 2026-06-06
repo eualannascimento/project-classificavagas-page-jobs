@@ -11,7 +11,7 @@
   } = EuGeroConfig;
 
   let state = EuGeroStorage.load();
-  let currentView = 'start'; // start | wizard | review | guide
+  let currentView = 'home'; // home | start | wizard | review | guide
 
   const els = {};
 
@@ -23,6 +23,7 @@
   }
 
   function cacheElements() {
+    els.screenHome = document.getElementById('screen-home');
     els.screenStart = document.getElementById('screen-start');
     els.screenWizard = document.getElementById('screen-wizard');
     els.screenReview = document.getElementById('screen-review');
@@ -32,6 +33,7 @@
     els.wizardTimeline = document.getElementById('wizard-timeline');
     els.sectionChecklist = document.getElementById('section-checklist');
     els.reviewContent = document.getElementById('review-content');
+    els.reviewTemplateGallery = document.getElementById('review-template-gallery');
     els.guideContent = document.getElementById('guide-content');
     els.modalPrompt = document.getElementById('modal-prompt');
     els.promptText = document.getElementById('prompt-text');
@@ -48,6 +50,10 @@
 
   function bindGlobalEvents() {
     renderTemplatePickers();
+
+    document.getElementById('btn-enter-app')?.addEventListener('click', goToStart);
+    document.getElementById('btn-go-home')?.addEventListener('click', goToHome);
+    document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport.click());
 
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
     document.getElementById('btn-change-template-wizard')?.addEventListener('click', () => openModal(els.modalTemplate));
@@ -94,9 +100,14 @@
   }
 
   function restoreView() {
-    if (state.personal?.fullName || state.currentStep > 0) {
-      currentView = 'wizard';
-    }
+    const hasProgress = state.personal?.fullName || state.currentStep > 0;
+    currentView = hasProgress ? 'wizard' : 'home';
+  }
+
+  function goToHome() {
+    currentView = 'home';
+    saveState();
+    render();
   }
 
   function saveState() {
@@ -158,6 +169,9 @@
   function switchTemplate(templateId) {
     state.template = templateId;
     document.querySelectorAll('.template-card').forEach(card => {
+      card.classList.toggle('selected', card.dataset.template === templateId);
+    });
+    document.querySelectorAll('.review-template-card').forEach(card => {
       card.classList.toggle('selected', card.dataset.template === templateId);
     });
     saveState();
@@ -238,6 +252,7 @@
   }
 
   function showView(view) {
+    els.screenHome.hidden = view !== 'home';
     els.screenStart.hidden = view !== 'start';
     els.screenWizard.hidden = view !== 'wizard';
     els.screenReview.hidden = view !== 'review';
@@ -262,7 +277,6 @@
       updateAllPreviews();
     } else if (currentView === 'review') {
       renderReview();
-      updateAllPreviews();
     } else if (currentView === 'guide') {
       EuGeroLinkedInGuide.renderGuide(els.guideContent, state);
     }
@@ -377,7 +391,7 @@
     let inputHtml = '';
 
     if (field.type === 'textarea') {
-      inputHtml = `<textarea id="${id}" name="${field.key}" rows="${field.key === 'skillsText' ? 3 : 4}" placeholder="${escapeAttr(field.placeholder || '')}" ${field.required ? 'required' : ''}>${escapeAttr(value)}</textarea>`;
+      inputHtml = `<textarea id="${id}" name="${field.key}" rows="${field.key === 'skillsText' ? 2 : 3}" placeholder="${escapeAttr(field.placeholder || '')}" ${field.required ? 'required' : ''}>${escapeAttr(value)}</textarea>`;
     } else if (field.type === 'select') {
       inputHtml = `<select id="${id}" name="${field.key}" ${field.required ? 'required' : ''}>
         <option value="">Selecione...</option>
@@ -388,13 +402,12 @@
     }
 
     wrap.innerHTML = `
-      <label for="${id}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+      <div class="field-label-row">
+        <label for="${id}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+        <div class="field-score" aria-live="polite"></div>
+      </div>
       ${inputHtml}
-      <details class="field-tip-details">
-        <summary>Dica</summary>
-        <p>${field.tip}</p>
-      </details>
-      <div class="field-score" aria-live="polite"></div>
+      <p class="field-tip-inline" title="${escapeAttr(field.tip)}">${field.tip}</p>
     `;
 
     const input = wrap.querySelector('input, textarea, select');
@@ -490,10 +503,12 @@
       }
 
       wrap.innerHTML = `
-        <label for="${id}">${field.label}</label>
+        <div class="field-label-row">
+          <label for="${id}">${field.label}</label>
+          <div class="field-score" aria-live="polite"></div>
+        </div>
         ${inputHtml}
-        <details class="field-tip-details"><summary>Dica</summary><p>${field.tip}</p></details>
-        <div class="field-score" aria-live="polite"></div>
+        <p class="field-tip-inline" title="${escapeAttr(field.tip)}">${field.tip}</p>
       `;
 
       const input = wrap.querySelector('input, textarea, select');
@@ -530,23 +545,41 @@
     const score = EuGeroScoring.scoreField(value, field, ACTION_VERBS);
     scoreEl.textContent = EuGeroScoring.getLabelText(score);
     scoreEl.className = `field-score score-${score}`;
+    scoreEl.title = `Nota: ${EuGeroScoring.getLabelText(score)}`;
   }
 
   function renderReview() {
     const sections = activeSections();
     const results = EuGeroScoring.scoreState(state, sections, ACTION_VERBS);
-    const aggregate = EuGeroScoring.aggregateScore(results);
+    const pageFit = EuGeroScoring.scorePageFit(state, sections);
+    const aggregate = EuGeroScoring.aggregateScore(results, pageFit);
+
+    const pageFitClass = pageFit.level === 'overflow' ? 'page-fit-overflow' : pageFit.level === 'warning' ? 'page-fit-warning' : 'page-fit-ok';
+    const pageFitLabel = pageFit.level === 'overflow' ? 'Excede 1 página' : pageFit.level === 'warning' ? 'Atenção ao tamanho' : 'Cabe em 1 página';
 
     let html = `
       <div class="review-summary">
         <h2>Revisão final</h2>
-        <p class="review-overall-label">Qualidade geral: <strong>${aggregate.label}</strong></p>
+        <div class="review-scores-row">
+          <p class="review-overall-label">Qualidade: <strong>${aggregate.label}</strong> · ${aggregate.overall}%</p>
+          <p class="review-page-fit ${pageFitClass}">${pageFitLabel} · ${pageFit.fitScore}%</p>
+        </div>
         <div class="progress-bar" role="progressbar" aria-valuenow="${aggregate.overall}" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-fill" style="width: ${aggregate.overall}%"></div>
         </div>
-        <p class="progress-text">${aggregate.overall}% — ${aggregate.scored} campos avaliados</p>
+        <p class="progress-text">${aggregate.scored} campos avaliados · ~${pageFit.metrics.totalChars} caracteres · ${pageFit.metrics.listItems} itens em listas</p>
       </div>
     `;
+
+    if (pageFit.issues.length > 0) {
+      html += `
+        <div class="review-page-issues ${pageFitClass}">
+          <h3>Currículo de uma página</h3>
+          <p>O objetivo é um CV conciso. Conteúdo demais reduz a nota e pode sobrepor seções na exportação.</p>
+          <ul>${pageFit.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+        </div>
+      `;
+    }
 
     if (aggregate.weakFields.length > 0) {
       html += `
@@ -560,13 +593,13 @@
           </ul>
         </div>
       `;
-    } else {
-      html += '<p class="review-success">Parabéns! Nenhum campo com nota Fraco.</p>';
+    } else if (pageFit.level === 'ok') {
+      html += '<p class="review-success">Parabéns! Nenhum campo com nota Fraco e volume adequado para 1 página.</p>';
     }
 
     html += `
       <div class="export-actions">
-        <h3>Exportar currículo</h3>
+        <h3>Exportar — template: <span data-current-template>${escapeHtml(TEMPLATES[state.template]?.name || 'Clássico')}</span></h3>
         <div class="btn-group">
           <button type="button" class="btn btn-primary" id="btn-export-pdf">Exportar PDF</button>
           <button type="button" class="btn btn-primary" id="btn-export-docx">Exportar Word</button>
@@ -586,6 +619,37 @@
     document.getElementById('btn-export-pdf')?.addEventListener('click', () => EuGeroExport.exportPdf(state, state.template));
     document.getElementById('btn-export-docx')?.addEventListener('click', () => EuGeroExport.exportDocx(state, state.template));
     document.getElementById('btn-export-txt')?.addEventListener('click', () => EuGeroExport.exportTxt(state));
+
+    renderReviewTemplateGallery();
+  }
+
+  function renderReviewTemplateGallery() {
+    if (!els.reviewTemplateGallery) return;
+    const sections = activeSections();
+
+    els.reviewTemplateGallery.innerHTML = TEMPLATE_IDS.map(id => {
+      const t = TEMPLATES[id];
+      const selected = state.template === id;
+      return `
+        <button type="button" class="review-template-card${selected ? ' selected' : ''}" data-template="${t.id}" aria-pressed="${selected}">
+          <span class="review-template-name">${escapeHtml(t.name)}</span>
+          <div class="review-template-preview-wrap">
+            <div class="review-template-preview" data-preview-template="${t.id}"></div>
+          </div>
+        </button>
+      `;
+    }).join('');
+
+    els.reviewTemplateGallery.querySelectorAll('[data-preview-template]').forEach(container => {
+      EuGeroPreview.updatePreview(container, state, container.dataset.previewTemplate, sections);
+    });
+
+    els.reviewTemplateGallery.querySelectorAll('.review-template-card').forEach(card => {
+      card.addEventListener('click', () => {
+        switchTemplate(card.dataset.template);
+        renderReview();
+      });
+    });
   }
 
   function updateAllPreviews() {
@@ -619,7 +683,8 @@
           return;
         }
         state = result.data;
-        currentView = state.personal?.fullName ? 'wizard' : 'start';
+        const hasProgress = state.personal?.fullName || state.currentStep > 0;
+        currentView = hasProgress ? 'wizard' : 'home';
         saveState();
         render();
         showToast('Rascunho carregado com sucesso!');

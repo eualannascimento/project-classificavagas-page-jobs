@@ -181,6 +181,35 @@ const mainModern = EuGeroCvData.getMainSections(cvDoc, 'modern');
 assert(!mainModern.some(s => s.id === 'skills'), 'Template moderno: skills só na sidebar');
 assert(cvDoc.sidebar.skills.length >= 0, 'Sidebar moderna estruturada');
 
+// --- Page fit (one-page CV) ---
+console.log('\nCurrículo de uma página:');
+
+const lightSections = EuGeroConfig.getActiveSections(['personal', 'summary', 'experiences']);
+const pageFitOk = EuGeroScoring.scorePageFit(filledState, lightSections);
+assert(typeof pageFitOk.fitScore === 'number', 'Page fit retorna fitScore numérico');
+assert(Array.isArray(pageFitOk.issues), 'Page fit retorna lista de issues');
+
+const heavyState = {
+  ...filledState,
+  summary: 'A'.repeat(4000),
+  experiences: Array.from({ length: 6 }, (_, i) => ({
+    company: `Empresa ${i}`,
+    title: 'Analista',
+    startDate: '2020',
+    endDate: '2024',
+    description: 'Implementei processos e liderei equipes com resultados mensuráveis em diversos projetos. '.repeat(8)
+  }))
+};
+const pageFitHeavy = EuGeroScoring.scorePageFit(heavyState, EuGeroConfig.SECTIONS);
+assert(pageFitHeavy.level === 'overflow', 'Conteúdo excessivo marca overflow');
+assert(pageFitHeavy.issues.length > 0, 'Overflow gera avisos');
+
+const aggWithFit = EuGeroScoring.aggregateScore(
+  EuGeroScoring.scoreState(filledState, lightSections, EuGeroConfig.ACTION_VERBS),
+  pageFitHeavy
+);
+assert(aggWithFit.overall <= 45, 'Overflow penaliza pontuação geral');
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 
