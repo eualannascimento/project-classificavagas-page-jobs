@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#f9f9ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="classificavagas.com — agregador de vagas de emprego no Brasil. Busque por cargo, empresa, cidade ou categoria, filtre e compartilhe sua busca.">
+    <meta name="description" content="classificavagas.com - agregador de vagas de emprego no Brasil. Busque por cargo, empresa, cidade ou categoria, filtre e compartilhe sua busca.">
     <link rel="canonical" href="https://classificavagas.com/">
-    <meta property="og:title" content="classificavagas.com — Vagas de Emprego no Brasil">
+    <meta property="og:title" content="classificavagas.com - Vagas de Emprego no Brasil">
     <meta property="og:description" content="Agregador independente de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://classificavagas.com/">
@@ -20,10 +20,10 @@
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="classificavagas.com - agregador de vagas no Brasil">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="classificavagas.com — Vagas de Emprego no Brasil">
+    <meta name="twitter:title" content="classificavagas.com - Vagas de Emprego no Brasil">
     <meta name="twitter:description" content="Agregador independente de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
     <meta name="twitter:image" content="https://classificavagas.com/assets/images/og-image.png">
-    <title>classificavagas.com — Vagas de Emprego no Brasil</title>
+    <title>classificavagas.com - Vagas de Emprego no Brasil</title>
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -75,7 +75,7 @@
             <div class="masthead-inner">
                 <div class="masthead-brand">
                     <h1 class="brand-heading">
-                        <a href="/" class="brand-mark" id="brandLink" aria-label="classificavagas.com — voltar ao início">
+                        <a href="/" class="brand-mark" id="brandLink" aria-label="classificavagas.com - voltar ao início">
                             <span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span>
                             <span class="visually-hidden">voltar ao início</span>
                         </a>
@@ -100,10 +100,8 @@
                             <p>Somos um agregador independente: não representamos as empresas, plataformas ou recrutadores listados.</p>
                         </div>
                     </div>
-                    <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">
-                        <span class="material-symbols-rounded theme-icon-light">light_mode</span>
-                        <span class="material-symbols-rounded theme-icon-dark">dark_mode</span>
-                        <span class="material-symbols-rounded theme-icon-black">circle</span>
+                    <button type="button" class="icon-btn" id="appearanceBtn" aria-label="Aparência" aria-haspopup="dialog" aria-controls="appearanceSheet">
+                        <span class="material-symbols-rounded" aria-hidden="true">palette</span>
                     </button>
                 </div>
             </div>
@@ -131,14 +129,27 @@
                     <input
                         type="text"
                         id="searchInput"
-                        placeholder="Buscar vagas, empresas ou cargos…"
-                        title="Atalho: / para focar. Use aspas, ou e e para combinar termos."
+                        placeholder='Ex.: "dados e sql", designer ou ux, engenheiro'
                         autocomplete="off"
+                        aria-describedby="searchHelpText"
                     >
                 </label>
+                <button type="button" class="icon-btn search-help-btn" id="searchHelpBtn" aria-label="Ajuda de busca avançada" aria-expanded="false" aria-controls="searchHelpPopover">
+                    <span class="material-symbols-rounded" aria-hidden="true">help</span>
+                </button>
                 <button type="button" class="icon-btn search-clear hidden" id="searchClear" aria-label="Limpar busca">
                     <span class="material-symbols-rounded">close</span>
                 </button>
+            </div>
+            <p id="searchHelpText" class="search-help-hint">Use aspas para frase exata, <strong>e</strong> para combinar termos, <strong>ou</strong> para alternativas.</p>
+            <div id="searchHelpPopover" class="search-help-popover hidden" role="dialog" aria-labelledby="searchHelpTitle">
+                <h3 id="searchHelpTitle">Busca avançada</h3>
+                <ul>
+                    <li><code>"dados e sql"</code> - frase exata</li>
+                    <li><code>designer ou ux</code> - qualquer termo</li>
+                    <li><code>python e remoto</code> - ambos os termos</li>
+                </ul>
+                <p>Pressione <kbd>/</kbd> para focar a busca. Histórico aparece ao focar o campo vazio.</p>
             </div>
         </div>
 
@@ -156,8 +167,8 @@
                         <span class="sort-label">Publicadas</span>
                     </button>
                     <div class="sort-dropdown hidden" id="sortDropdown" role="menu">
-                        <button class="sort-option" data-sort="date_desc" role="menuitem">Obtidas: mais recentes</button>
-                        <button class="sort-option" data-sort="date_asc" role="menuitem">Obtidas: mais antigas</button>
+                        <button class="sort-option" data-sort="date_desc" role="menuitem">Adicionadas: mais recentes</button>
+                        <button class="sort-option" data-sort="date_asc" role="menuitem">Adicionadas: mais antigas</button>
                         <button class="sort-option" data-sort="published_desc" role="menuitem">Publicadas: mais recentes</button>
                         <button class="sort-option" data-sort="published_asc" role="menuitem">Publicadas: mais antigas</button>
                         <button class="sort-option" data-sort="company_asc" role="menuitem">Empresa A–Z</button>
@@ -206,7 +217,10 @@
         <main class="main-content">
             <div class="jobs-grid" id="jobsGrid"></div>
 
-            <div class="results-counter hidden" id="resultsCounter" aria-live="polite"></div>
+            <div class="results-counter hidden" id="resultsCounter" aria-hidden="true"></div>
+            <div id="resultsAnnouncer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+            <button type="button" class="filled-button load-more-btn hidden" id="loadMoreBtn">Carregar mais vagas</button>
 
             <div class="loading-more hidden" id="loadingMore">
                 <div class="loading-spinner"></div>
@@ -218,7 +232,9 @@
                 <h3>Nenhuma vaga encontrada</h3>
                 <p>Tente ajustar seus filtros ou termos de busca</p>
                 <button type="button" class="filled-button hidden" id="emptyStateRetry">Tentar novamente</button>
-                <button type="button" class="filled-button" id="emptyStateClear">Limpar filtros</button>
+                <button type="button" class="text-button hidden" id="emptyStateClearSearch">Limpar busca</button>
+                <button type="button" class="filled-button hidden" id="emptyStateRemoveLast">Remover último filtro</button>
+                <button type="button" class="filled-button" id="emptyStateClear">Limpar todos os filtros</button>
             </div>
         </main>
 
@@ -242,6 +258,28 @@
             </button>
         </div>
 
+        <div class="bottom-sheet appearance-sheet hidden" id="appearanceSheet" aria-labelledby="appearanceSheetTitle">
+            <div class="bottom-sheet-header sheet-draggable">
+                <div class="bottom-sheet-handle"></div>
+                <div class="bottom-sheet-title">
+                    <h2 id="appearanceSheetTitle">Aparência</h2>
+                </div>
+                <button type="button" class="icon-btn" id="closeAppearanceSheet" aria-label="Fechar aparência">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </div>
+            <div class="bottom-sheet-content appearance-sheet-content">
+                <section class="appearance-section">
+                    <h3>Tema</h3>
+                    <div class="appearance-options" id="appearanceThemeList" role="group" aria-label="Tema"></div>
+                </section>
+                <section class="appearance-section">
+                    <h3>Densidade</h3>
+                    <div class="appearance-options" id="appearanceDensityList" role="group" aria-label="Densidade"></div>
+                </section>
+            </div>
+        </div>
+
         <div class="scrim hidden" id="scrim"></div>
 
         <div class="bottom-sheet sort-sheet hidden" id="sortSheet" aria-labelledby="sortSheetTitle">
@@ -256,8 +294,8 @@
             </div>
             <div class="bottom-sheet-content sort-sheet-content">
                 <div class="sort-sheet-list" id="sortSheetList" role="listbox" aria-label="Ordenação">
-                    <button type="button" class="sort-sheet-option" data-sort="date_desc" role="option">Obtidas: mais recentes</button>
-                    <button type="button" class="sort-sheet-option" data-sort="date_asc" role="option">Obtidas: mais antigas</button>
+                    <button type="button" class="sort-sheet-option" data-sort="date_desc" role="option">Adicionadas: mais recentes</button>
+                    <button type="button" class="sort-sheet-option" data-sort="date_asc" role="option">Adicionadas: mais antigas</button>
                     <button type="button" class="sort-sheet-option" data-sort="published_desc" role="option">Publicadas: mais recentes</button>
                     <button type="button" class="sort-sheet-option" data-sort="published_asc" role="option">Publicadas: mais antigas</button>
                     <button type="button" class="sort-sheet-option" data-sort="company_asc" role="option">Empresa A–Z</button>
@@ -387,6 +425,14 @@
     </aside>
 
     <script src="assets/js/focus-trap.js"></script>
+    <script src="assets/js/job-cache.js"></script>
+    <script src="assets/js/offline-manager.js"></script>
+    <script src="assets/js/aria-labels.js"></script>
+    <script src="assets/js/scroll-restore.js"></script>
+    <script src="assets/js/job-deep-link.js"></script>
+    <script src="assets/js/data-loader.js"></script>
+    <script src="assets/js/empty-state-manager.js"></script>
+    <script src="assets/js/appearance-manager.js"></script>
     <script src="assets/js/view-mode-manager.js"></script>
     <script src="assets/js/onboarding-manager.js"></script>
     <script src="assets/js/legal.js"></script>

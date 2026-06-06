@@ -35,8 +35,8 @@
             { key: '90d', label: 'Últimos 3 meses', days: 90 }
         ],
         SORT_OPTIONS: [
-            { key: 'date_desc', label: 'Obtidas: mais recentes', icon: 'schedule' },
-            { key: 'date_asc', label: 'Obtidas: mais antigas', icon: 'history' },
+            { key: 'date_desc', label: 'Adicionadas: mais recentes', icon: 'schedule' },
+            { key: 'date_asc', label: 'Adicionadas: mais antigas', icon: 'history' },
             { key: 'published_desc', label: 'Publicadas: mais recentes', icon: 'event' },
             { key: 'published_asc', label: 'Publicadas: mais antigas', icon: 'event' },
             { key: 'company_asc', label: 'Empresa A-Z', icon: 'sort_by_alpha' },
@@ -143,8 +143,8 @@
             };
         },
 
-        DATE_MISSING_PUBLISHED_LINE: 'Data de publicação não foi obtida',
-        DATE_MISSING_INSERTED: 'Não obtida',
+        DATE_MISSING_PUBLISHED_LINE: 'Data de publicação não informada',
+        DATE_MISSING_INSERTED: 'Data não informada',
         EMPTY_DATE_RANGE: Object.freeze({ from: '', to: '' }),
 
         hasDateValue(dateStr) {
@@ -353,18 +353,18 @@
             const isInsertedToday = this.isToday(job.inserted_date);
             const todayClass = isInsertedToday ? ' job-date-today' : '';
             const publishedLine = hasPublished
-                ? `<span class="job-date-line">Atualizada em: <strong>${pub}</strong></span>`
+                ? `<span class="job-date-line">Publicada em: <strong>${pub}</strong></span>`
                 : `<span class="job-date-line job-date-missing">${this.DATE_MISSING_PUBLISHED_LINE}</span>`;
             const insertedLine = hasInserted
-                ? `<span class="job-date-line">Agregada em: <strong>${ins}</strong></span>`
-                : `<span class="job-date-line job-date-missing">Obtida no Classifica Vagas: ${this.escapeHtml(this.DATE_MISSING_INSERTED)}</span>`;
-            const publishedCompact = hasPublished ? `Atual.: ${pub}` : 'Atual.: não obtida';
-            const insertedCompact = hasInserted ? `Agr.: ${ins}` : `Obt.: ${this.DATE_MISSING_INSERTED}`;
+                ? `<span class="job-date-line">Adicionada em: <strong>${ins}</strong></span>`
+                : `<span class="job-date-line job-date-missing">Adicionada em: ${this.escapeHtml(this.DATE_MISSING_INSERTED)}</span>`;
+            const publishedCompact = hasPublished ? `Pub.: ${pub}` : 'Pub.: n/d';
+            const insertedCompact = hasInserted ? `Add.: ${ins}` : 'Add.: n/d';
 
             if (variant === 'compact') {
                 const titleParts = [
-                    hasPublished ? `Atualizada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE,
-                    hasInserted ? `Agregada em: ${ins}` : this.DATE_MISSING_INSERTED
+                    hasPublished ? `Publicada em: ${pub}` : this.DATE_MISSING_PUBLISHED_LINE,
+                    hasInserted ? `Adicionada em: ${ins}` : this.DATE_MISSING_INSERTED
                 ];
                 return `<span class="job-dates job-dates-compact${todayClass}" title="${titleParts.join(' · ')}">
                     <span class="job-date-line">${publishedCompact}</span>
@@ -617,7 +617,7 @@
 
         formatJobTitle(str) {
             if (!str) return '';
-            return String(str).toLocaleUpperCase('pt-BR');
+            return String(str).trim();
         },
 
         isValidLocationPart(value) {
@@ -813,8 +813,7 @@
             }
             this.apply(theme, { silent: true, persist: false });
             this._initialized = true;
-
-            elements.themeToggle.addEventListener('click', () => this.toggle());
+            window.cvAriaLabels?.updateThemeToggle(theme);
         },
 
         apply(theme, { silent = false, persist = true } = {}) {
@@ -834,14 +833,8 @@
                 btn.classList.toggle('active', btn.dataset.value === theme);
             });
 
-            // Tooltip: indicate current + next on cycle
-            const btn = document.getElementById('themeToggle');
-            if (btn) {
-                const idx = THEMES.indexOf(theme);
-                const next = THEMES[(idx + 1) % THEMES.length];
-                const map = { 'light': 'Claro', 'dark': 'Escuro', 'black': 'Preto' };
-                btn.title = `Tema: ${map[theme]} - clique para ${map[next]}`;
-            }
+            window.cvAriaLabels?.updateThemeToggle(theme);
+            window.cvAriaLabels?.updateAppearanceButton();
 
             if (this._initialized && !silent) {
                 this.showThemeToast(theme);
@@ -932,7 +925,7 @@
             this.apply(next);
         },
         init() {
-            const saved = localStorage.getItem('cv_density') || 'compact';
+            const saved = localStorage.getItem('cv_density') || 'regular';
             this.apply(saved);
             const btn = document.getElementById('densityToggle');
             if (btn) btn.addEventListener('click', () => this.toggle());
@@ -983,8 +976,8 @@
     // SORT MANAGER
     // ============================================
     const SORT_LABELS = {
-        'date_desc': 'Obtidas ↓',
-        'date_asc': 'Obtidas ↑',
+        'date_desc': 'Adicionadas ↓',
+        'date_asc': 'Adicionadas ↑',
         'published_desc': 'Publicadas ↓',
         'published_asc': 'Publicadas ↑',
         'company_asc': 'A→Z',
@@ -1244,6 +1237,7 @@
             elements.sortDropdown?.querySelectorAll('.sort-option').forEach(opt => {
                 opt.classList.toggle('active', opt.dataset.sort === state.sortBy);
             });
+            window.cvAriaLabels?.updateSortToggle(state.sortBy, this.isOpen || this.sortSheetOpen);
             elements.sortSheet?.querySelectorAll('.sort-sheet-option').forEach(opt => {
                 const selected = opt.dataset.sort === state.sortBy;
                 opt.classList.toggle('selected', selected);
@@ -1547,307 +1541,6 @@
         }
     };
 
-    const dataLoader = {
-        _slowNetworkTimer: null,
-        _loadPromise: null,
-
-        setSplashMsg(msg) {
-            const el = document.getElementById('splashMsg');
-            if (el) el.textContent = msg;
-        },
-
-        async fetchJson(url, onProgress, { preferGzip = true } = {}) {
-            if (preferGzip && typeof DecompressionStream !== 'undefined') {
-                try {
-                    return await this._fetchGzipJson(url + '.gz', onProgress);
-                } catch (_) {
-                    /* fallback to plain JSON */
-                }
-            }
-            return this._fetchJsonXHR(url, onProgress);
-        },
-
-        _fetchGzipJson(url, onProgress) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', url);
-                xhr.responseType = 'arraybuffer';
-                xhr.onprogress = (e) => {
-                    if (onProgress) onProgress(e);
-                };
-                xhr.onload = async () => {
-                    if (xhr.status < 200 || xhr.status >= 300) {
-                        reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
-                        return;
-                    }
-                    try {
-                        const stream = new Blob([xhr.response]).stream().pipeThrough(new DecompressionStream('gzip'));
-                        const text = await new Response(stream).text();
-                        const data = await jobsWorkerBridge.parseJsonText(text);
-                        resolve({
-                            data,
-                            lastModified: xhr.getResponseHeader('last-modified')
-                        });
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-                xhr.onerror = () => reject(new Error('Network error'));
-                xhr.send();
-            });
-        },
-
-        _fetchJsonXHR(url, onProgress) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', url);
-                xhr.responseType = 'text';
-                xhr.onprogress = (e) => {
-                    if (onProgress) onProgress(e);
-                };
-                xhr.onload = async () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const data = await jobsWorkerBridge.parseJsonText(xhr.responseText);
-                            resolve({
-                                data,
-                                lastModified: xhr.getResponseHeader('last-modified')
-                            });
-                        } catch (err) {
-                            reject(err);
-                        }
-                    } else {
-                        reject(new Error(xhr.statusText || `HTTP ${xhr.status}`));
-                    }
-                };
-                xhr.onerror = () => reject(new Error('Network error'));
-                xhr.send();
-            });
-        },
-
-        ingestJobs(data, lastModified) {
-            if (!Array.isArray(data)) {
-                throw new Error('Invalid jobs data');
-            }
-            state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
-            state.allJobs.forEach(job => {
-                const key = utils.getJobKey(job);
-                if (utils.isVisited(key)) {
-                    state.visitedJobs.add(key);
-                }
-            });
-            this.buildFilterOptions();
-            this.updateLastModifiedFromHeader(lastModified);
-        },
-
-        updatePartialBanner() {
-            const banner = document.getElementById('partialDataBanner');
-            if (!banner) return;
-            if (state.isPartialData) {
-                banner.classList.remove('hidden');
-                banner.textContent = `Exibindo vagas recentes (${state.allJobs.length.toLocaleString('pt-BR')}). Catálogo completo carregando…`;
-            } else {
-                banner.classList.add('hidden');
-            }
-        },
-
-        showLoadError(err) {
-            console.error('Error loading jobs:', err);
-            skeletonLoader.hide();
-            this.showApp();
-            if (elements.emptyState) {
-                elements.jobsGrid.innerHTML = '';
-                elements.emptyState.classList.remove('hidden');
-                const h3 = elements.emptyState.querySelector('h3');
-                const p = elements.emptyState.querySelector('p');
-                const retryBtn = document.getElementById('emptyStateRetry');
-                const clearBtn = document.getElementById('emptyStateClear');
-                if (h3) h3.textContent = 'Erro ao carregar';
-                if (p) p.textContent = 'Não foi possível carregar as vagas. Verifique sua conexão e tente novamente.';
-                if (retryBtn) retryBtn.classList.remove('hidden');
-                if (clearBtn) clearBtn.classList.add('hidden');
-            }
-        },
-
-        load(options = {}) {
-            if (this._loadPromise) return this._loadPromise;
-            this._loadPromise = this._loadInternal(options).finally(() => {
-                this._loadPromise = null;
-            });
-            return this._loadPromise;
-        },
-
-        async _loadInternal({ soft = false } = {}) {
-            if (soft && state.allJobs.length > 0) {
-                try {
-                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: false });
-                    if (recentResult.data?.length) {
-                        this.ingestJobs(recentResult.data, recentResult.lastModified);
-                        state.isPartialData = true;
-                        this.updatePartialBanner();
-                        filterManager.apply();
-                        if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
-                    }
-                } catch (_) { /* optional */ }
-                try {
-                    const fullResult = await this.fetchJson(CONFIG.DATA_URL);
-                    this.ingestJobs(fullResult.data, fullResult.lastModified);
-                    state.isPartialData = false;
-                    this.updatePartialBanner();
-                    filterManager.apply();
-                    if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
-                    utils.showToast('Vagas atualizadas', 'theme-toast', 2500);
-                } catch (_) {
-                    utils.showToast('Não foi possível atualizar o catálogo', 'theme-toast', 3000);
-                }
-                return;
-            }
-
-            skeletonLoader.show();
-            let _lastSplashAt = Date.now();
-            const _setProgress = (pct, msg) => {
-                setSplashProgress(pct, msg);
-                return new Promise(r => {
-                    const minDelay = 250;
-                    const elapsedSinceLast = Date.now() - _lastSplashAt;
-                    const wait = Math.max(0, minDelay - elapsedSinceLast);
-                    setTimeout(() => { _lastSplashAt = Date.now(); r(); }, wait);
-                });
-            };
-
-            if (this._slowNetworkTimer) clearTimeout(this._slowNetworkTimer);
-            this._slowNetworkTimer = setTimeout(() => {
-                this.setSplashMsg('Em redes lentas, o download completo pode levar alguns minutos.');
-            }, 8000);
-
-            await _setProgress(5, 'Conectando...');
-
-            let showedApp = false;
-
-            try {
-                try {
-                    const recentResult = await this.fetchJson(CONFIG.RECENT_DATA_URL, null, { preferGzip: false });
-                    if (recentResult.data?.length) {
-                        this.ingestJobs(recentResult.data, recentResult.lastModified);
-                        state.isPartialData = true;
-                        await _setProgress(65, `Exibindo ${recentResult.data.length.toLocaleString('pt-BR')} vagas recentes...`);
-                        filterManager.apply();
-                        if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
-                        this.updatePartialBanner();
-                        this.showApp();
-                        showedApp = true;
-                        skeletonLoader.hide();
-                    }
-                } catch (_) {
-                    /* recent_jobs.json optional */
-                }
-
-                const fullResult = await this.fetchJson(CONFIG.DATA_URL, (e) => {
-                    if (e.lengthComputable) {
-                        const pct = showedApp ? 70 + (e.loaded / e.total) * 25 : 10 + (e.loaded / e.total) * 60;
-                        setSplashProgress(pct, `Baixando catálogo... ${Math.round(e.loaded / 1024).toLocaleString('pt-BR')} KB`);
-                    } else if (!showedApp) {
-                        setSplashProgress(40, 'Baixando vagas...');
-                    }
-                });
-
-                clearTimeout(this._slowNetworkTimer);
-                this._slowNetworkTimer = null;
-
-                const wasPartial = state.isPartialData;
-                await _setProgress(showedApp ? 90 : 80, `Processando ${fullResult.data.length.toLocaleString('pt-BR')} vagas...`);
-
-                this.ingestJobs(fullResult.data, fullResult.lastModified);
-                state.isPartialData = false;
-                this.updatePartialBanner();
-
-                filterManager.apply();
-                if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
-
-                if (wasPartial) {
-                    utils.showToast('Catálogo completo atualizado', 'theme-toast', 2500);
-                } else {
-                    await _setProgress(95, 'Renderizando...');
-                    setSplashProgress(100, 'Pronto!');
-                    this.showApp();
-                }
-
-                skeletonLoader.hide();
-
-            } catch (err) {
-                clearTimeout(this._slowNetworkTimer);
-                this._slowNetworkTimer = null;
-                if (!showedApp) {
-                    this.showLoadError(err);
-                } else {
-                    utils.showToast('Não foi possível atualizar o catálogo completo', 'theme-toast', 3000);
-                }
-            }
-        },
-
-        buildFilterOptions() {
-            CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
-                const values = [...new Set(state.allJobs.map(j => j[key]).filter(Boolean))];
-                values.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                state.filterOptions[key] = values;
-
-                // Count jobs per filter option
-                state.filterCounts[key] = {};
-                values.forEach(value => {
-                    state.filterCounts[key][value] = state.allJobs.filter(j => j[key] === value).length;
-                });
-            });
-        },
-
-        updateLastModifiedFromHeader(lastMod) {
-            if (lastMod) {
-                const date = new Date(lastMod);
-                elements.lastUpdate.textContent = new Intl.DateTimeFormat('pt-BR', {
-                    timeZone: 'America/Sao_Paulo',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }).format(date);
-            }
-        },
-
-        updateLastModified(response) {
-            const lastMod = response.headers.get('last-modified');
-            if (lastMod) {
-                const date = new Date(lastMod);
-                elements.lastUpdate.textContent = new Intl.DateTimeFormat('pt-BR', {
-                    timeZone: 'America/Sao_Paulo',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }).format(date);
-            }
-        },
-
-        showApp() {
-            // Ensure splash and app elements exist
-            const splash = elements.splash || document.getElementById('splash');
-            const app = elements.app || document.getElementById('app');
-
-            if (splash) {
-                splash.classList.add('fade-out');
-            }
-
-            if (app) {
-                app.classList.add('visible');
-            }
-
-            setTimeout(() => {
-                if (splash) {
-                    splash.style.display = 'none';
-                }
-            }, 400);
-        }
-    };
 
     // ============================================
     // FILTER MANAGER
@@ -2175,7 +1868,7 @@
             if (utils.hasDateRange(filterState.publishedDateRange)) {
                 groups.push({
                     key: '_date_published',
-                    label: 'Publicação',
+                    label: 'Publicada em',
                     values: [utils.formatDateRangeLabel(filterState.publishedDateRange)],
                     chipType: 'date_published'
                 });
@@ -2183,7 +1876,7 @@
             if (utils.hasDateRange(filterState.insertedDateRange)) {
                 groups.push({
                     key: '_date_inserted',
-                    label: 'Obtida',
+                    label: 'Adicionada em',
                     values: [utils.formatDateRangeLabel(filterState.insertedDateRange)],
                     chipType: 'date_inserted'
                 });
@@ -2948,10 +2641,11 @@
                 } else {
                     if (h3) h3.textContent = 'Nenhuma vaga encontrada';
                     if (p) p.textContent = 'Tente ajustar seus filtros ou termos de busca';
-                    if (btn) btn.textContent = 'Limpar filtros';
                 }
+                emptyStateManager.render();
                 const counter = document.getElementById('resultsCounter');
                 if (counter) counter.classList.add('hidden');
+                document.getElementById('loadMoreBtn')?.classList.add('hidden');
                 return;
             }
 
@@ -2967,16 +2661,30 @@
             // Always hide spinner after rendering a batch; it'll reappear on next scroll trigger
             elements.loadingMore.classList.add('hidden');
 
-            // Update results counter
+            const shown = Math.min(state.displayedCount, state.filteredJobs.length);
+            const total = state.filteredJobs.length;
             const counter = document.getElementById('resultsCounter');
             if (counter) {
-                if (state.filteredJobs.length === 0) {
-                    counter.classList.add('hidden');
-                } else {
+                if (total === 0) counter.classList.add('hidden');
+                else {
                     counter.classList.remove('hidden');
-                    const shown = Math.min(state.displayedCount, state.filteredJobs.length);
-                    counter.textContent = `${shown.toLocaleString('pt-BR')} de ${state.filteredJobs.length.toLocaleString('pt-BR')}`;
+                    counter.textContent = `${shown.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')}`;
                 }
+            }
+            const announcer = document.getElementById('resultsAnnouncer');
+            if (announcer && total > 0) {
+                announcer.textContent = `${shown.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} vagas`;
+            }
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            if (loadMoreBtn) {
+                const hasMore = state.displayedCount < total;
+                loadMoreBtn.classList.toggle('hidden', !hasMore);
+            }
+            if (window.cvJobDeepLink && total > 0) {
+                window.cvJobDeepLink.injectJobPostingLd(
+                    state.filteredJobs.slice(0, state.displayedCount),
+                    utils.escapeHtml.bind(utils)
+                );
             }
 
             let allLoaded = document.getElementById('allLoaded');
@@ -3023,6 +2731,7 @@
             const card = document.createElement('article');
             card.className = `job-card${isVisited ? ' visited' : ''}`;
             card.dataset.url = jobUrl;
+            card.dataset.jobKey = jobKey;
 
             if (typeof animationManager !== 'undefined') {
                 animationManager.observe(card);
@@ -3151,6 +2860,7 @@
                     if (typeof visitedFilter !== 'undefined') visitedFilter.updateCount();
                 }
                 localStorage.setItem('cv_last_clicked', jobKey);
+                window.cvJobDeepLink?.setHash(jobKey);
                 if (typeof fabMenuManager !== 'undefined') fabMenuManager.updateLastJobVisibility();
             };
 
@@ -3393,7 +3103,7 @@
             );
             const insertedDateSection = buildDateRangeSection(
                 '_date_inserted',
-                'Obtida no Classifica Vagas',
+                'Adicionada em',
                 'calendar_today',
                 state.tempInsertedDateRange,
                 'inserted'
@@ -3819,7 +3529,7 @@
                         <div class="search-history-item" data-query="${utils.escapeHtml(query)}">
                             <span class="material-symbols-rounded">history</span>
                             <span class="search-history-text">${utils.escapeHtml(query)}</span>
-                            <button class="search-history-remove" aria-label="Remover">
+                            <button class="search-history-remove" aria-label="${window.cvAriaLabels?.bindSearchHistoryRemove(query) || 'Remover'}">
                                 <span class="material-symbols-rounded">close</span>
                             </button>
                         </div>
@@ -4182,7 +3892,7 @@
                     bottomSheet.open();
                 }
                 if (e.key === 't' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-                    themeManager.toggle();
+                    document.getElementById('appearanceBtn')?.click();
                 }
             });
 
@@ -4439,13 +4149,69 @@
         }
     };
 
+    const emptyStateManager = window.cvEmptyStateManager.create({
+        state,
+        utils,
+        filterManager,
+        elements
+    });
+
+    const dataLoader = window.cvDataLoader.create({
+        state,
+        elements,
+        CONFIG,
+        utils,
+        skeletonLoader,
+        jobsWorkerBridge,
+        setSplashProgress,
+        getFilterManager: () => filterManager,
+        getVisitedFilter: () => visitedFilter,
+        onReady: () => {
+            window.cvScrollRestore?.restoreAfterRender();
+            window.cvJobDeepLink?.tryRestoreFromHash();
+        }
+    });
+
+    const appearanceManager = window.cvAppearanceManager.create({
+        themeManager,
+        densityManager
+    });
+
+    const searchHelpManager = {
+        init() {
+            const btn = document.getElementById('searchHelpBtn');
+            const pop = document.getElementById('searchHelpPopover');
+            if (!btn || !pop) return;
+            const close = () => {
+                pop.classList.add('hidden');
+                window.cvAriaLabels?.updateSearchHelp(false);
+            };
+            const open = () => {
+                pop.classList.remove('hidden');
+                window.cvAriaLabels?.updateSearchHelp(true);
+            };
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (pop.classList.contains('hidden')) open();
+                else close();
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#searchHelpBtn') && !e.target.closest('#searchHelpPopover')) close();
+            });
+        }
+    };
+
     function init() {
         try {
             utils.markSessionStart();
             preferencesManager.applyDefaults();
             themeManager.init();
-            // styleManager / fontManager - optional prefs via data-* on <html>
             densityManager.init();
+            appearanceManager.init();
+            window.cvScrollRestore?.init();
+            window.cvOfflineManager?.init((online) => {
+                if (!online) utils.showToast('Você está offline', 'theme-toast', 3000);
+            });
             visitedFilter.init();
             viewModeManager.init();
             sortManager.init();
@@ -4453,6 +4219,7 @@
             filterManager.initGroupedFilterDropdown();
             aboutInfoManager.init();
             searchHistoryManager.init();
+            searchHelpManager.init();
             searchManager.init();
             animationManager.init();
             scrollManager.init();
@@ -4476,10 +4243,13 @@
                 });
             }
 
+            document.getElementById('loadMoreBtn')?.addEventListener('click', () => cardRenderer.loadMore());
+
             dataLoader.load().then(() => {
                 preferencesManager.markVisited();
                 sortManager.updateLabel();
                 fabMenuManager.updateLastJobVisibility();
+                window.cvAriaLabels?.updateAppearanceButton();
             });
 
             // Fallback: avoid empty app if load is still in progress

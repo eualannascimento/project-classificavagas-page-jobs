@@ -32,20 +32,20 @@
     }
 
     function applyFont(font) {
-        if (!FONTS.includes(font)) font = 'instrument';
+        if (!FONTS.includes(font)) font = 'inter';
         document.documentElement.setAttribute('data-font', font);
     }
 
     function applyDensity(density) {
-        if (!DENSITIES.includes(density)) density = 'compact';
+        if (!DENSITIES.includes(density)) density = 'regular';
         document.documentElement.setAttribute('data-density', density);
     }
 
     const savedTheme = readStorage('cv_theme');
     applyTheme(savedTheme && THEMES.includes(savedTheme) ? savedTheme : 'light');
     applyStyle(readStorage('cv_style') || 'restraint');
-    applyFont(readStorage('cv_font') || 'instrument');
-    applyDensity(readStorage('cv_density') || 'compact');
+    applyFont(readStorage('cv_font') || 'inter');
+    applyDensity(readStorage('cv_density') || 'regular');
 
     window.cvThemeInit = {
         THEMES,
