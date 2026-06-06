@@ -863,73 +863,6 @@
     };
 
     // ============================================
-    // VIEW MODE MANAGER
-    // ============================================
-    const VIEW_MODES = ['cards', 'list', 'compact'];
-    const VIEW_MODE_ICONS = { 'cards': 'grid_view', 'list': 'view_list', 'compact': 'density_small' };
-
-    const viewModeManager = {
-        init() {
-            const saved = localStorage.getItem('cv_view');
-            state.viewMode = saved && VIEW_MODES.includes(saved) ? saved : 'cards';
-            this.apply(state.viewMode, true);
-
-            if (elements.viewToggle) {
-                elements.viewToggle.addEventListener('click', () => this.toggle());
-            }
-        },
-
-        apply(mode, rerender = false) {
-            state.viewMode = mode;
-            localStorage.setItem('cv_view', mode);
-
-            if (elements.jobsGrid) {
-                elements.jobsGrid.classList.remove('list-view', 'compact-view');
-                if (mode === 'list') {
-                    elements.jobsGrid.classList.add('list-view');
-                } else if (mode === 'compact') {
-                    elements.jobsGrid.classList.add('compact-view');
-                }
-            }
-
-            // Update icon visibility
-            document.body.classList.remove('view-cards', 'view-list', 'view-compact');
-            document.body.classList.add(`view-${mode}`);
-
-            // Update toggle button icon
-            this.updateIcon();
-
-            // Re-render if requested (e.g. from tweaks panel)
-            if (rerender && state.allJobs.length > 0) {
-                elements.jobsGrid.innerHTML = '';
-                state.displayedCount = 0;
-                cardRenderer.render(true);
-            }
-        },
-
-        updateIcon() {
-            if (!elements.viewToggle) return;
-            const currentIdx = VIEW_MODES.indexOf(state.viewMode);
-            const nextIdx = (currentIdx + 1) % VIEW_MODES.length;
-            const nextMode = VIEW_MODES[nextIdx];
-            const nextIcon = VIEW_MODE_ICONS[nextMode];
-
-            // Update all icons in the toggle button
-            elements.viewToggle.innerHTML = `<span class="material-symbols-rounded">${nextIcon}</span>`;
-            elements.viewToggle.setAttribute('aria-label', `Alternar para ${nextMode === 'cards' ? 'cards' : nextMode === 'list' ? 'lista' : 'compacto'}`);
-        },
-
-        toggle() {
-            const currentIdx = VIEW_MODES.indexOf(state.viewMode);
-            const nextIdx = (currentIdx + 1) % VIEW_MODES.length;
-            const newMode = VIEW_MODES[nextIdx];
-            this.apply(newMode);
-            // Re-render cards for new view
-            cardRenderer.render(true);
-        }
-    };
-
-    // ============================================
     // STYLE MANAGER (editorial / restraint)
     // ============================================
     const styleManager = {
@@ -1238,12 +1171,16 @@
                 elements.scrim.classList.add('visible');
                 elements.sortSheet.classList.add('visible');
                 elements.closeSortSheet?.focus();
+                window.cvFocusTrap?.activate(elements.sortSheet);
             });
             this.sortSheetOpen = true;
             elements.sortToggle?.setAttribute('aria-expanded', 'true');
         },
 
         closeSortSheet() {
+            if (window.cvFocusTrap?.isActive(elements.sortSheet)) {
+                window.cvFocusTrap.deactivate();
+            }
             elements.scrim.classList.remove('visible');
             elements.sortSheet.classList.remove('visible');
             setTimeout(() => {
@@ -2662,6 +2599,7 @@
                 elements.scrim?.classList.add('visible');
                 elements.savedFiltersMenuSheet.classList.add('visible');
                 elements.closeSavedFiltersMenuSheet?.focus();
+                window.cvFocusTrap?.activate(elements.savedFiltersMenuSheet);
             });
 
             this.bindMenuEvents(elements.savedFiltersMenuSheet);
@@ -2671,6 +2609,9 @@
 
         closeMenuSheet() {
             if (!elements.savedFiltersMenuSheet) return;
+            if (window.cvFocusTrap?.isActive(elements.savedFiltersMenuSheet)) {
+                window.cvFocusTrap.deactivate();
+            }
             elements.scrim?.classList.remove('visible');
             elements.savedFiltersMenuSheet.classList.remove('visible');
 
@@ -2877,11 +2818,15 @@
                 elements.saveFilterSheet.classList.add('visible');
                 elements.saveFilterName?.focus();
                 elements.saveFilterName?.select();
+                window.cvFocusTrap?.activate(elements.saveFilterSheet);
             });
         },
 
         close() {
             if (!this.isOpen || !elements.saveFilterSheet) return;
+            if (window.cvFocusTrap?.isActive(elements.saveFilterSheet)) {
+                window.cvFocusTrap.deactivate();
+            }
             elements.scrim.classList.remove('visible');
             elements.saveFilterSheet.classList.remove('visible');
             this.isOpen = false;
@@ -3252,6 +3197,15 @@
     };
 
     // ============================================
+    // VIEW MODE MANAGER (extracted module)
+    // ============================================
+    const viewModeManager = window.cvViewModeManager.create({
+        state,
+        elements,
+        cardRenderer
+    });
+
+    // ============================================
     // BOTTOM SHEET (Filter Modal)
     // ============================================
     const bottomSheet = {
@@ -3331,10 +3285,14 @@
                 elements.scrim.classList.add('visible');
                 elements.filterSheet.classList.add('visible');
                 elements.closeSheet?.focus();
+                window.cvFocusTrap?.activate(elements.filterSheet);
             });
         },
 
         close() {
+            if (window.cvFocusTrap?.isActive(elements.filterSheet)) {
+                window.cvFocusTrap.deactivate();
+            }
             elements.scrim.classList.remove('visible');
             elements.filterSheet.classList.remove('visible');
 
@@ -3350,6 +3308,18 @@
             }, 400);
         },
 
+        sectionBodyId(key) {
+            return `filter-section-body-${String(key).replace(/_/g, '-')}`;
+        },
+
+        buildSectionHeader(key, leftHtml, expanded = false) {
+            const bodyId = this.sectionBodyId(key);
+            return `<button type="button" class="filter-section-header" aria-expanded="${expanded ? 'true' : 'false'}" aria-controls="${bodyId}">
+                ${leftHtml}
+                <span class="material-symbols-rounded filter-section-icon" aria-hidden="true">expand_more</span>
+            </button>`;
+        },
+
         buildSections() {
             // Tipo (quick filter) section
             const quickOpts = [
@@ -3360,22 +3330,22 @@
                 { key: 'affirmative', label: 'Afirmativa' },
                 { key: 'today', label: 'Adicionadas hoje' }
             ];
+            const quickSelected = (key) => quickTipoUtils.isChipSelected(state.tempQuickTipo, key);
             const quickSection = `
                 <div class="filter-section" data-key="_quick">
-                    <div class="filter-section-header">
-                        <div class="filter-section-header-left">
-                            <span class="material-symbols-rounded">tune</span>
+                    ${this.buildSectionHeader('_quick', `
+                        <span class="filter-section-header-left">
+                            <span class="material-symbols-rounded" aria-hidden="true">tune</span>
                             <span class="filter-section-title">Tipo</span>
                             ${quickTipoUtils.isActive(state.tempQuickTipo) ? `<span class="filter-section-count">${quickTipoUtils.count(state.tempQuickTipo)}</span>` : ''}
-                        </div>
-                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
-                    </div>
-                    <div class="filter-section-body">
+                        </span>
+                    `)}
+                    <div class="filter-section-body" id="${this.sectionBodyId('_quick')}">
                         <p class="filter-section-hint">Modalidades podem ser combinadas (ex.: Remoto + Híbrido).</p>
                         <div class="filter-options-list" id="sheetQuickFilters">
                             ${quickOpts.map(o => `
-                                <button class="filter-option-chip ${quickTipoUtils.isChipSelected(state.tempQuickTipo, o.key) ? 'selected' : ''}" data-quick="${o.key}">
-                                    <span class="material-symbols-rounded check-icon">check</span>
+                                <button type="button" class="filter-option-chip ${quickSelected(o.key) ? 'selected' : ''}" data-quick="${o.key}" aria-pressed="${quickSelected(o.key) ? 'true' : 'false'}">
+                                    <span class="material-symbols-rounded check-icon" aria-hidden="true">check</span>
                                     <span>${o.label}</span>
                                 </button>
                             `).join('')}
@@ -3388,15 +3358,14 @@
                 const active = utils.hasDateRange(tempRange);
                 return `
                 <div class="filter-section" data-key="${key}">
-                    <div class="filter-section-header">
-                        <div class="filter-section-header-left">
-                            <span class="material-symbols-rounded">${icon}</span>
+                    ${this.buildSectionHeader(key, `
+                        <span class="filter-section-header-left">
+                            <span class="material-symbols-rounded" aria-hidden="true">${icon}</span>
                             <span class="filter-section-title">${title}</span>
                             ${active ? '<span class="filter-section-count">1</span>' : ''}
-                        </div>
-                        <span class="material-symbols-rounded filter-section-icon">expand_more</span>
-                    </div>
-                    <div class="filter-section-body">
+                        </span>
+                    `, active)}
+                    <div class="filter-section-body" id="${this.sectionBodyId(key)}">
                         <div class="date-range-filter" data-date-range="${rangeKind}">
                             <div class="date-range-row">
                                 <label class="date-range-label">
@@ -3440,15 +3409,14 @@
                 const selectedCount = (state.tempFilters[key] || []).length;
                 return `
                     <div class="filter-section" data-key="${key}">
-                        <div class="filter-section-header">
-                            <div class="filter-section-header-left">
-                                <span class="material-symbols-rounded">${icon}</span>
+                        ${this.buildSectionHeader(key, `
+                            <span class="filter-section-header-left">
+                                <span class="material-symbols-rounded" aria-hidden="true">${icon}</span>
                                 <span class="filter-section-title">${label}</span>
                                 ${selectedCount > 0 ? `<span class="filter-section-count">${selectedCount}</span>` : ''}
-                            </div>
-                            <span class="material-symbols-rounded filter-section-icon">expand_more</span>
-                        </div>
-                        <div class="filter-section-body">
+                            </span>
+                        `, selectedCount > 0)}
+                        <div class="filter-section-body" id="${this.sectionBodyId(key)}">
                             <input type="text" class="filter-search-input" placeholder="Filtrar ${label.toLowerCase()}…" data-key="${key}" aria-label="Filtrar opções de ${label}">
                             <div class="filter-options-list" data-key="${key}">
                                 ${this.renderOptions(key, options)}
@@ -3480,7 +3448,11 @@
                 if (key && key !== '_quick' && key !== '_date_inserted' && key !== '_date_published' && (state.tempFilters[key] || []).length > 0) {
                     expand = true;
                 }
-                if (expand) section.classList.add('expanded');
+                if (expand) {
+                    section.classList.add('expanded');
+                    const header = section.querySelector('.filter-section-header');
+                    if (header) header.setAttribute('aria-expanded', 'true');
+                }
             });
         },
 
@@ -3495,9 +3467,10 @@
                     return '';
                 }
                 const countStr = count.toLocaleString('pt-BR');
+                const isSelected = selected.includes(opt);
                 return `
-                    <button class="filter-option-chip ${selected.includes(opt) ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}">
-                        <span class="material-symbols-rounded check-icon">check</span>
+                    <button type="button" class="filter-option-chip ${isSelected ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}" aria-pressed="${isSelected ? 'true' : 'false'}">
+                        <span class="material-symbols-rounded check-icon" aria-hidden="true">check</span>
                         <span>${utils.escapeHtml(utils.truncate(opt, 18))}</span>
                         <span class="filter-option-count">(${countStr})</span>
                     </button>
@@ -3510,7 +3483,8 @@
             elements.filterSheetContent.querySelectorAll('.filter-section-header').forEach(header => {
                 header.addEventListener('click', () => {
                     const section = header.closest('.filter-section');
-                    section.classList.toggle('expanded');
+                    const expanded = section.classList.toggle('expanded');
+                    header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
                 });
             });
 
@@ -3520,7 +3494,9 @@
                     const q = chip.dataset.quick;
                     state.tempQuickTipo = quickTipoUtils.toggleChip(state.tempQuickTipo, q);
                     elements.filterSheetContent.querySelectorAll('#sheetQuickFilters [data-quick]').forEach(c => {
-                        c.classList.toggle('selected', quickTipoUtils.isChipSelected(state.tempQuickTipo, c.dataset.quick));
+                        const selected = quickTipoUtils.isChipSelected(state.tempQuickTipo, c.dataset.quick);
+                        c.classList.toggle('selected', selected);
+                        c.setAttribute('aria-pressed', selected ? 'true' : 'false');
                     });
                     const section = chip.closest('.filter-section');
                     const badge = section?.querySelector('.filter-section-count');
@@ -3621,9 +3597,11 @@
                     if (idx > -1) {
                         state.tempFilters[key].splice(idx, 1);
                         chip.classList.remove('selected');
+                        chip.setAttribute('aria-pressed', 'false');
                     } else {
                         state.tempFilters[key].push(value);
                         chip.classList.add('selected');
+                        chip.setAttribute('aria-pressed', 'true');
                     }
 
                     this.updateCount();
@@ -4162,6 +4140,9 @@
             if (!overlay) return;
 
             const close = () => {
+                if (window.cvFocusTrap?.isActive(overlay)) {
+                    window.cvFocusTrap.deactivate();
+                }
                 overlay.classList.add('hidden');
                 if (app) app.removeAttribute('aria-hidden');
                 const trigger = this._trigger;
@@ -4172,8 +4153,11 @@
             const open = () => {
                 this._trigger = document.activeElement;
                 overlay.classList.remove('hidden');
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
                 if (app) app.setAttribute('aria-hidden', 'true');
                 closeBtn?.focus();
+                window.cvFocusTrap?.activate(overlay);
             };
 
             closeBtn?.addEventListener('click', close);
@@ -4476,24 +4460,19 @@
             bottomSheet.init();
             clearHandlers.init();
             shortcutsOverlay.init();
+            window.cvOnboardingManager?.init();
             mobileLayout.init();
             fabMenuManager.init();
             swManager.init();
             ptr.init();
 
-            // Brand logo click → reset to initial state
+            // Brand logo click → reset to initial state (without full page reload)
             const brandLink = document.getElementById('brandLink');
             if (brandLink) {
-                brandLink.addEventListener('click', () => {
+                brandLink.addEventListener('click', (e) => {
+                    e.preventDefault();
                     filterManager.clearAll();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-                brandLink.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        filterManager.clearAll();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
                 });
             }
 

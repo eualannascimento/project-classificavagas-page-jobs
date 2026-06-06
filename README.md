@@ -16,16 +16,22 @@ Agregador estático de vagas de emprego no Brasil.
 
 O workflow em `.github/workflows/deploy.yml`:
 
-1. Valida `open_jobs.json`
-2. Gera `recent_jobs.json` (últimos 14 dias)
-3. Verifica ausência de Google Fonts nos HTML
-4. Publica no **GitHub Pages** (branch `main`), incluindo `recent_jobs.json` no artefato publicado
+1. Valida `open_jobs.json` e campos críticos de cada vaga
+2. Gera `recent_jobs.json` (últimos 14 dias) e `open_jobs.json.gz`
+3. Atualiza `lastmod` no `sitemap.xml`
+4. Verifica ausência de Google Fonts nos HTML
+5. Executa ESLint e smoke test Playwright
+6. Publica artefato limpo (`_site/`, sem `_backup/` nem `server.log`) no **GitHub Pages**
 
 Para testar localmente antes do push:
 
 ```bash
 python3 scripts/build-recent.py
+python3 scripts/validate-jobs-schema.py
+python3 scripts/build-gzip.py
 python3 scripts/check-no-google-fonts.py
+python3 scripts/prepare-deploy.py
+npm ci && npm run lint && npm run test:e2e
 ```
 
 ## Privacidade e operação

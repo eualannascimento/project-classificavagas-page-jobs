@@ -186,6 +186,7 @@
         if (focusClose && closeBtn) {
             closeBtn.focus();
         }
+        window.cvFocusTrap?.activate(panel);
 
         try {
             const content = await fetchPage(page);
@@ -206,6 +207,9 @@
 
     function close({ fromHistory = false } = {}) {
         const wasOpen = !panel.classList.contains('hidden');
+        if (window.cvFocusTrap?.isActive(panel)) {
+            window.cvFocusTrap.deactivate();
+        }
         panel.classList.add('hidden');
         if (scrim) scrim.classList.add('hidden');
         document.body.classList.remove('legal-panel-open');

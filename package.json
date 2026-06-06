@@ -1,0 +1,16 @@
+{
+  "name": "classificavagas",
+  "private": true,
+  "type": "module",
+  "description": "Static job aggregator site",
+  "scripts": {
+    "lint": "eslint assets/js/*.js",
+    "test:e2e": "playwright test",
+    "validate": "python3 scripts/build-recent.py && python3 scripts/validate-jobs-schema.py && python3 scripts/check-no-google-fonts.py"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@playwright/test": "^1.52.0",
+    "eslint": "^9.27.0"
+  }
+}
