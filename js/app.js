@@ -38,6 +38,7 @@
     els.modalPrompt = document.getElementById('modal-prompt');
     els.promptText = document.getElementById('prompt-text');
     els.modalTemplate = document.getElementById('modal-template');
+    els.modalMobileMenu = document.getElementById('modal-mobile-menu');
     els.fileImport = document.getElementById('file-import');
     els.toast = document.getElementById('toast');
     els.previewOverlay = document.getElementById('preview-overlay');
@@ -89,8 +90,30 @@
       }
     });
 
-    document.getElementById('btn-toggle-preview')?.addEventListener('click', togglePreviewOverlay);
+    document.getElementById('btn-toggle-preview')?.addEventListener('click', openPreviewOverlay);
+    document.getElementById('btn-toggle-preview-start')?.addEventListener('click', openPreviewOverlay);
+    document.getElementById('btn-toggle-preview-review')?.addEventListener('click', openPreviewOverlay);
     document.getElementById('btn-close-preview')?.addEventListener('click', closePreviewOverlay);
+
+    document.getElementById('btn-wizard-menu')?.addEventListener('click', () => openModal(els.modalMobileMenu));
+    document.getElementById('btn-mobile-change-template')?.addEventListener('click', () => {
+      closeModal(els.modalMobileMenu);
+      openModal(els.modalTemplate);
+    });
+    document.getElementById('btn-mobile-export-json')?.addEventListener('click', () => {
+      closeModal(els.modalMobileMenu);
+      exportJson();
+    });
+    document.getElementById('btn-mobile-import-json')?.addEventListener('click', () => {
+      closeModal(els.modalMobileMenu);
+      els.fileImport.click();
+    });
+    document.getElementById('btn-mobile-prompt')?.addEventListener('click', () => {
+      closeModal(els.modalMobileMenu);
+      showPrompt('general');
+    });
+
+    window.addEventListener('resize', debounce(scaleReviewPreviews, 150));
 
     document.querySelectorAll('.modal').forEach(modal => {
       modal.addEventListener('click', e => {
@@ -650,6 +673,24 @@
         renderReview();
       });
     });
+
+    requestAnimationFrame(scaleReviewPreviews);
+  }
+
+  const REVIEW_PREVIEW_BASE_WIDTH = 340;
+
+  function scaleReviewPreviews() {
+    document.querySelectorAll('.review-template-preview-wrap').forEach(wrap => {
+      const preview = wrap.querySelector('.review-template-preview');
+      if (!preview) return;
+      const width = wrap.clientWidth;
+      if (width <= 0) return;
+      const scale = width / REVIEW_PREVIEW_BASE_WIDTH;
+      preview.style.width = `${REVIEW_PREVIEW_BASE_WIDTH}px`;
+      preview.style.transform = `scale(${scale})`;
+      preview.style.transformOrigin = 'top left';
+      wrap.style.height = `${(297 / 210) * width}px`;
+    });
   }
 
   function updateAllPreviews() {
@@ -710,15 +751,44 @@
     navigator.clipboard.writeText(els.promptText.value).then(() => showToast('Prompt copiado!'));
   }
 
-  function openModal(modal) { if (modal) modal.hidden = false; }
-  function closeModal(modal) { if (modal) modal.hidden = true; }
-
-  function togglePreviewOverlay() {
-    els.previewOverlay.hidden = !els.previewOverlay.hidden;
-    if (!els.previewOverlay.hidden) updateAllPreviews();
+  function syncBodyScrollLock() {
+    const anyOpen = !!document.querySelector('.modal:not([hidden])')
+      || (els.previewOverlay && !els.previewOverlay.hidden);
+    document.body.classList.toggle('modal-open', anyOpen);
   }
 
-  function closePreviewOverlay() { els.previewOverlay.hidden = true; }
+  function openModal(modal) {
+    if (modal) {
+      modal.hidden = false;
+      syncBodyScrollLock();
+    }
+  }
+
+  function closeModal(modal) {
+    if (modal) modal.hidden = true;
+    syncBodyScrollLock();
+  }
+
+  function openPreviewOverlay() {
+    if (!els.previewOverlay) return;
+    els.previewOverlay.hidden = false;
+    syncBodyScrollLock();
+    updateAllPreviews();
+  }
+
+  function closePreviewOverlay() {
+    if (!els.previewOverlay) return;
+    els.previewOverlay.hidden = true;
+    syncBodyScrollLock();
+  }
+
+  function debounce(fn, ms) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
 
   function showToast(message, isError) {
     if (!els.toast) return;

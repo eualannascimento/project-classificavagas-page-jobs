@@ -69,6 +69,7 @@
 
           <div class="start-actions">
             <button type="button" class="btn btn-primary btn-lg" id="btn-start-wizard">Começar a preencher →</button>
+            <button type="button" class="btn btn-outline btn-mobile-preview" id="btn-toggle-preview-start">Ver prévia</button>
             <button type="button" class="btn btn-ghost" id="btn-import-start">Carregar rascunho salvo</button>
           </div>
         </div>
@@ -94,6 +95,7 @@
             <div class="wizard-toolbar-actions">
               <button type="button" class="btn btn-ghost btn-sm" id="btn-back-start">← Configuração</button>
               <button type="button" class="btn btn-ghost btn-mobile-preview" id="btn-toggle-preview">Ver prévia</button>
+              <button type="button" class="btn btn-ghost btn-sm btn-mobile-menu" id="btn-wizard-menu" aria-label="Mais opções">⋯</button>
             </div>
           </div>
           <nav id="wizard-timeline" class="wizard-timeline" aria-label="Etapas do currículo"></nav>
@@ -124,6 +126,7 @@
         <div class="review-templates-header">
           <h3>Compare seus dados em todos os templates</h3>
           <p>Clique para escolher o visual final antes de exportar.</p>
+          <button type="button" class="btn btn-outline btn-sm btn-mobile-preview" id="btn-toggle-preview-review">Ver prévia ampliada</button>
         </div>
         <div id="review-template-gallery" class="review-template-gallery"></div>
       </section>
@@ -188,6 +191,22 @@
           <button type="button" class="modal-close" aria-label="Fechar">✕</button>
         </div>
         <div id="modal-template-grid" class="modal-template-grid"></div>
+      </div>
+    </div>
+
+    <!-- Modal: Menu mobile (wizard) -->
+    <div id="modal-mobile-menu" class="modal modal-sheet" hidden role="dialog" aria-labelledby="modal-mobile-menu-title">
+      <div class="modal-content modal-sheet-content">
+        <div class="modal-header">
+          <h2 id="modal-mobile-menu-title">Opções</h2>
+          <button type="button" class="modal-close" aria-label="Fechar">✕</button>
+        </div>
+        <div class="mobile-menu-actions">
+          <button type="button" class="btn btn-ghost mobile-menu-btn" id="btn-mobile-change-template">Trocar template</button>
+          <button type="button" class="btn btn-ghost mobile-menu-btn" id="btn-mobile-export-json">Salvar rascunho</button>
+          <button type="button" class="btn btn-ghost mobile-menu-btn" id="btn-mobile-import-json">Carregar rascunho</button>
+          <button type="button" class="btn btn-outline mobile-menu-btn" id="btn-mobile-prompt">Prompt IA geral</button>
+        </div>
       </div>
     </div>
 
