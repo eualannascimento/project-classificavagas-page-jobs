@@ -66,8 +66,8 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'company', label: 'Empresa', type: 'text', required: true, minLength: 2, tip: 'Nome oficial da empresa.' },
         { key: 'title', label: 'Cargo', type: 'text', required: true, minLength: 3, tip: 'Título exato ou equivalente ao cargo exercido.' },
-        { key: 'startDate', label: 'Início', type: 'text', required: true, minLength: 4, tip: 'Ex: Jan 2020 ou 01/2020' },
-        { key: 'endDate', label: 'Fim', type: 'text', required: false, minLength: 0, tip: 'Deixe em branco ou escreva "Atual" se ainda trabalha aqui.' },
+        { key: 'startDate', label: 'Início', type: 'monthYear', required: true, minLength: 4, tip: 'Selecione mês e ano de início.' },
+        { key: 'endDate', label: 'Fim', type: 'monthYear', required: false, minLength: 0, tip: 'Marque "Até hoje" se ainda trabalha aqui.' },
         { key: 'description', label: 'Descrição das atividades', type: 'textarea', required: true, minLength: 50, actionVerbs: true, tip: 'Use bullet points mentais: verbos de ação + resultado mensurável. Ex: "Implementei sistema que reduziu tempo de processamento em 40%".' }
       ]
     },
@@ -80,8 +80,8 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 3, tip: 'Nome completo da universidade ou escola.' },
         { key: 'degree', label: 'Curso / Grau', type: 'text', required: true, minLength: 3, tip: 'Ex: Bacharelado em Ciência da Computação' },
-        { key: 'startDate', label: 'Início', type: 'text', required: false, minLength: 4, tip: 'Ano ou mês/ano de início.' },
-        { key: 'endDate', label: 'Conclusão', type: 'text', required: false, minLength: 4, tip: 'Ano de conclusão ou previsão.' }
+        { key: 'startDate', label: 'Início', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de início.' },
+        { key: 'endDate', label: 'Conclusão', type: 'monthYear', required: false, minLength: 4, tip: 'Marque "Até hoje" se ainda cursa.' }
       ]
     },
     {
@@ -90,7 +90,7 @@ const EuGeroConfig = (function () {
       description: 'Competências técnicas e comportamentais.',
       linkedinHint: 'Perfil → seção "Competências" → adicionar competência',
       fields: [
-        { key: 'skillsText', label: 'Habilidades', type: 'textarea', required: false, minLength: 2, fullWidth: true, tip: 'Separe cada habilidade por ponto e vírgula (;). Ex: JavaScript; React; Liderança; Comunicação', placeholder: 'JavaScript; React; Node.js; Git; Comunicação' }
+        { key: 'skillsText', label: 'Habilidades', type: 'skillsTags', required: false, minLength: 2, fullWidth: true, idealMax: 180, tip: 'Digite e pressione Enter ou ; para adicionar. Ex: JavaScript, React, Liderança', placeholder: 'Digite uma habilidade...' }
       ]
     },
     {
@@ -111,7 +111,7 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'name', label: 'Nome do certificado', type: 'text', required: true, minLength: 3, tip: 'Nome oficial como aparece no certificado.' },
         { key: 'issuer', label: 'Emissor', type: 'text', required: true, minLength: 2, tip: 'Ex: AWS, Google, Coursera, Microsoft' },
-        { key: 'date', label: 'Data de emissão', type: 'text', required: false, minLength: 4, tip: 'Mês/ano ou ano de emissão.' },
+        { key: 'date', label: 'Data de emissão', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de emissão.' },
         { key: 'url', label: 'URL (opcional)', type: 'url', required: false, minLength: 0, tip: 'Link para verificação do certificado, se disponível.' }
       ]
     },
@@ -134,8 +134,8 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'organization', label: 'Organização', type: 'text', required: true, minLength: 3, tip: 'Nome da ONG, instituição ou causa.' },
         { key: 'role', label: 'Cargo / Função', type: 'text', required: true, minLength: 3, tip: 'Sua função no voluntariado.' },
-        { key: 'startDate', label: 'Início', type: 'text', required: false, minLength: 4, tip: 'Período de início.' },
-        { key: 'endDate', label: 'Fim', type: 'text', required: false, minLength: 0, tip: 'Deixe em branco se ainda atua.' },
+        { key: 'startDate', label: 'Início', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de início.' },
+        { key: 'endDate', label: 'Fim', type: 'monthYear', required: false, minLength: 0, tip: 'Marque "Até hoje" se ainda atua.' },
         { key: 'description', label: 'Descrição', type: 'textarea', required: false, minLength: 20, actionVerbs: true, tip: 'Descreva suas contribuições e impacto gerado.' }
       ]
     },
@@ -147,7 +147,7 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'title', label: 'Título', type: 'text', required: true, minLength: 5, tip: 'Título completo da publicação.' },
         { key: 'publisher', label: 'Publicação / Veículo', type: 'text', required: true, minLength: 2, tip: 'Revista, blog, conferência ou editora.' },
-        { key: 'date', label: 'Data', type: 'text', required: false, minLength: 4, tip: 'Data de publicação.' },
+        { key: 'date', label: 'Data', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de publicação.' },
         { key: 'url', label: 'URL (opcional)', type: 'url', required: false, minLength: 0, tip: 'Link para a publicação online.' }
       ]
     },
@@ -159,7 +159,7 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'title', label: 'Título do prêmio', type: 'text', required: true, minLength: 3, tip: 'Nome oficial do prêmio ou honraria.' },
         { key: 'issuer', label: 'Emissor', type: 'text', required: true, minLength: 2, tip: 'Organização que concedeu o prêmio.' },
-        { key: 'date', label: 'Data', type: 'text', required: false, minLength: 4, tip: 'Quando recebeu o prêmio.' },
+        { key: 'date', label: 'Data', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano do prêmio.' },
         { key: 'description', label: 'Descrição', type: 'textarea', required: false, minLength: 10, tip: 'Contexto e motivo do reconhecimento.' }
       ]
     },
@@ -171,8 +171,8 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'name', label: 'Nome da organização', type: 'text', required: true, minLength: 3, tip: 'Associação, sindicato, grupo profissional etc.' },
         { key: 'role', label: 'Cargo / Função', type: 'text', required: true, minLength: 3, tip: 'Seu papel na organização.' },
-        { key: 'startDate', label: 'Início', type: 'text', required: false, minLength: 4, tip: 'Período de participação.' },
-        { key: 'endDate', label: 'Fim', type: 'text', required: false, minLength: 0, tip: 'Deixe em branco se ainda participa.' }
+        { key: 'startDate', label: 'Início', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de início.' },
+        { key: 'endDate', label: 'Fim', type: 'monthYear', required: false, minLength: 0, tip: 'Marque "Até hoje" se ainda participa.' }
       ]
     },
     {
@@ -183,7 +183,7 @@ const EuGeroConfig = (function () {
       itemFields: [
         { key: 'name', label: 'Nome do curso', type: 'text', required: true, minLength: 3, tip: 'Nome do curso ou treinamento.' },
         { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 2, tip: 'Plataforma ou instituição que ofereceu o curso.' },
-        { key: 'date', label: 'Data de conclusão', type: 'text', required: false, minLength: 4, tip: 'Quando concluiu o curso.' }
+        { key: 'date', label: 'Data de conclusão', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de conclusão.' }
       ]
     }
   ];
@@ -192,32 +192,34 @@ const EuGeroConfig = (function () {
     classic: {
       id: 'classic', name: 'Clássico', description: 'Monocromático, limpo e profissional',
       layout: 'centered', thumbClass: 'template-thumb-classic',
-      accentRgb: [30, 41, 59], textMuted: '#64748b'
+      accentRgb: [30, 41, 59], textMuted: '#64748b', atsFriendly: true
     },
     modern: {
       id: 'modern', name: 'Moderno', description: 'Barra lateral azul',
       layout: 'sidebar', thumbClass: 'template-thumb-modern',
-      sidebarRgb: [41, 98, 255], accentHex: '2962FF'
+      sidebarRgb: [41, 98, 255], accentHex: '2962FF', atsFriendly: false,
+      atsNote: 'Barra lateral: alguns ATS leem melhor layouts de coluna única.'
     },
     elegant: {
       id: 'elegant', name: 'Elegante', description: 'Tipografia serifada, acento dourado',
       layout: 'centered', thumbClass: 'template-thumb-elegant', serif: true,
-      accentRgb: [146, 64, 14], accentHex: '92400E'
+      accentRgb: [146, 64, 14], accentHex: '92400E', atsFriendly: true
     },
     executive: {
       id: 'executive', name: 'Executivo', description: 'Faixa superior escura',
       layout: 'banner', thumbClass: 'template-thumb-executive',
-      bannerRgb: [15, 23, 42], accentHex: '0F172A'
+      bannerRgb: [15, 23, 42], accentHex: '0F172A', atsFriendly: true
     },
     minimal: {
       id: 'minimal', name: 'Minimalista', description: 'Alinhado à esquerda, ultra limpo',
       layout: 'left', thumbClass: 'template-thumb-minimal',
-      accentRgb: [100, 116, 139], accentHex: '64748B'
+      accentRgb: [100, 116, 139], accentHex: '64748B', atsFriendly: true
     },
     creative: {
       id: 'creative', name: 'Criativo', description: 'Barra lateral roxa',
       layout: 'sidebar', thumbClass: 'template-thumb-creative',
-      sidebarRgb: [124, 58, 237], accentHex: '7C3AED'
+      sidebarRgb: [124, 58, 237], accentHex: '7C3AED', atsFriendly: false,
+      atsNote: 'Barra lateral: prefira Clássico ou Minimalista para ATS rigorosos.'
     }
   };
 
@@ -293,7 +295,7 @@ const EuGeroConfig = (function () {
   function createEmptyListItem(sectionId) {
     const section = SECTIONS.find(s => s.id === sectionId);
     if (!section || !section.itemFields) return {};
-    const item = {};
+    const item = { endCurrent: false };
     section.itemFields.forEach(f => { item[f.key] = ''; });
     return item;
   }

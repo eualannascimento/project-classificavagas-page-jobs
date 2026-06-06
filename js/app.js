@@ -1,25 +1,46 @@
 /**
- * Eu Gero Meu Currículo — aplicação principal.
+ * Eu Gero Meu Curriculo - aplicacao principal.
  */
 (function () {
   'use strict';
 
   const {
-    SECTIONS, TEMPLATES, ACTION_VERBS, createEmptyState, createEmptyListItem,
+    SECTIONS, TEMPLATES, ACTION_VERBS, createEmptyListItem,
     getActiveSections, normalizeEnabledSections, isSectionMandatory, skillsToText, SHORT_LABELS,
     TEMPLATE_IDS, getTemplateMeta
   } = EuGeroConfig;
 
   let state = EuGeroStorage.load();
-  let currentView = 'home'; // home | start | wizard | review | guide
+  let currentView = 'home';
+  let suppressHash = false;
+  let saveTimer = null;
+  let toastTimer = null;
 
   const els = {};
+  const REVIEW_PREVIEW_BASE_WIDTH = 340;
+  const LIBS_WARN_KEY = 'eugero-libs-warned';
 
   function init() {
     cacheElements();
+    ensureToastStructure();
     bindGlobalEvents();
-    restoreView();
+
+    const initialRoute = EuGeroRouter.getInitialRoute();
+    if (initialRoute) {
+      applyRouteState(initialRoute);
+    } else {
+      const hasProgress = state.personal?.fullName || state.currentStep > 0;
+      currentView = hasProgress ? 'wizard' : 'home';
+    }
+
+    EuGeroRouter.subscribe((route) => {
+      if (suppressHash) return;
+      applyRouteState(route);
+      render();
+    });
+
     render();
+    probeLibrariesOnce();
   }
 
   function cacheElements() {
@@ -43,10 +64,110 @@
     els.toast = document.getElementById('toast');
     els.previewOverlay = document.getElementById('preview-overlay');
     els.headerActions = document.getElementById('header-actions-wizard');
+    els.includeDataCheckbox = document.getElementById('include-data-checkbox');
+    els.privacyPromptWarning = document.getElementById('privacy-prompt-warning');
+    els.savedIndicator = document.getElementById('saved-indicator');
+    els.previewMobileDock = document.getElementById('preview-mobile-dock');
+    els.toastMessage = document.getElementById('toast-message');
+    els.toastAction = document.getElementById('toast-action');
+  }
+
+  function ensureToastStructure() {
+    if (!els.toast) return;
+    if (!els.toastMessage) {
+      els.toastMessage = document.createElement('span');
+      els.toastMessage.id = 'toast-message';
+      els.toast.appendChild(els.toastMessage);
+    }
+    if (!els.toastAction) {
+      els.toastAction = document.createElement('button');
+      els.toastAction.type = 'button';
+      els.toastAction.id = 'toast-action';
+      els.toastAction.className = 'toast-action btn btn-ghost btn-sm';
+      els.toastAction.hidden = true;
+      els.toast.appendChild(els.toastAction);
+    }
   }
 
   function activeSections() {
     return getActiveSections(state.enabledSections);
+  }
+
+  function resolveWizardSectionId(sectionId) {
+    const sections = activeSections();
+    if (sectionId) {
+      const idx = sections.findIndex((s) => s.id === sectionId);
+      if (idx >= 0) {
+        state.currentStep = idx;
+        return sectionId;
+      }
+    }
+    return sections[state.currentStep]?.id || sections[0]?.id || null;
+  }
+
+  function applyRouteState(route) {
+    currentView = route.view || 'home';
+    if (currentView === 'wizard') {
+      resolveWizardSectionId(route.sectionId);
+    }
+  }
+
+  function navigateTo(view, sectionId, { replace = false } = {}) {
+    currentView = view;
+    let hashSectionId = null;
+    if (view === 'wizard') {
+      hashSectionId = resolveWizardSectionId(sectionId);
+    }
+    render();
+    suppressHash = true;
+    EuGeroRouter.setHash(view, hashSectionId, { replace });
+    suppressHash = false;
+    saveState();
+  }
+
+  function goToHome() {
+    navigateTo('home');
+  }
+
+  function goToStart() {
+    navigateTo('start');
+  }
+
+  function startWizard() {
+    state.currentStep = 0;
+    const sectionId = activeSections()[0]?.id || null;
+    navigateTo('wizard', sectionId);
+  }
+
+  function goToWizard(step) {
+    const sections = activeSections();
+    if (typeof step === 'number') {
+      state.currentStep = Math.min(Math.max(0, step), Math.max(0, sections.length - 1));
+    }
+    navigateTo('wizard', sections[state.currentStep]?.id || null);
+  }
+
+  function goToReview() {
+    navigateTo('review');
+  }
+
+  function goToGuide() {
+    navigateTo('guide');
+  }
+
+  async function probeLibrariesOnce() {
+    if (typeof EuGeroLibs === 'undefined') return;
+    try {
+      const caps = await EuGeroLibs.probeAll();
+      if (sessionStorage.getItem(LIBS_WARN_KEY)) return;
+      const msgs = EuGeroLibs.missingMessages(caps);
+      if (msgs.length) {
+        showToast(msgs.join(' '), { duration: 7000 });
+        sessionStorage.setItem(LIBS_WARN_KEY, '1');
+      }
+    } catch (e) {
+      /* ignore probe errors */
+    }
   }
 
   function bindGlobalEvents() {
@@ -54,10 +175,11 @@
 
     document.getElementById('btn-enter-app')?.addEventListener('click', goToStart);
     document.getElementById('btn-go-home')?.addEventListener('click', goToHome);
-    document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport.click());
+    document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport?.click());
 
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
-    document.getElementById('btn-change-template-wizard')?.addEventListener('click', () => openModal(els.modalTemplate));
+    document.getElementById('btn-fill-sample')?.addEventListener('click', fillSampleData);
+    document.getElementById('btn-change-template-wizard')?.addEventListener('click', (e) => openModal(els.modalTemplate, e.currentTarget));
     document.getElementById('btn-prev')?.addEventListener('click', prevStep);
     document.getElementById('btn-next')?.addEventListener('click', nextStep);
     document.getElementById('btn-back-wizard')?.addEventListener('click', () => goToWizard());
@@ -67,22 +189,26 @@
 
     document.getElementById('btn-export-json')?.addEventListener('click', exportJson);
     document.getElementById('btn-export-json-review')?.addEventListener('click', exportJson);
-    document.getElementById('btn-import-json')?.addEventListener('click', () => els.fileImport.click());
-    document.getElementById('btn-import-json-review')?.addEventListener('click', () => els.fileImport.click());
-    document.getElementById('btn-import-start')?.addEventListener('click', () => els.fileImport.click());
+    document.getElementById('btn-import-json')?.addEventListener('click', () => els.fileImport?.click());
+    document.getElementById('btn-import-json-review')?.addEventListener('click', () => els.fileImport?.click());
+    document.getElementById('btn-import-start')?.addEventListener('click', () => els.fileImport?.click());
     els.fileImport?.addEventListener('change', handleImport);
 
-    document.getElementById('btn-prompt-general')?.addEventListener('click', () => showPrompt('general'));
-    document.getElementById('btn-prompt-general-review')?.addEventListener('click', () => showPrompt('general'));
-    document.getElementById('btn-prompt-translation')?.addEventListener('click', () => showPrompt('translation'));
-    document.getElementById('btn-prompt-translation-guide')?.addEventListener('click', () => showPrompt('translation'));
+    document.getElementById('btn-prompt-general')?.addEventListener('click', (e) => showPrompt('general', null, e.currentTarget));
+    document.getElementById('btn-prompt-general-review')?.addEventListener('click', (e) => showPrompt('general', null, e.currentTarget));
+    document.getElementById('btn-prompt-translation')?.addEventListener('click', (e) => showPrompt('translation', null, e.currentTarget));
+    document.getElementById('btn-prompt-translation-guide')?.addEventListener('click', (e) => showPrompt('translation', null, e.currentTarget));
     document.getElementById('btn-copy-prompt')?.addEventListener('click', copyPrompt);
+    els.includeDataCheckbox?.addEventListener('change', () => {
+      refreshPromptText();
+      updatePrivacyWarning();
+    });
 
-    document.querySelectorAll('.modal-close').forEach(btn => {
+    document.querySelectorAll('.modal-close').forEach((btn) => {
       btn.addEventListener('click', () => closeModal(btn.closest('.modal')));
     });
 
-    document.getElementById('modal-template')?.addEventListener('click', e => {
+    document.getElementById('modal-template')?.addEventListener('click', (e) => {
       const opt = e.target.closest('.modal-template-option');
       if (opt) {
         switchTemplate(opt.dataset.template);
@@ -90,15 +216,16 @@
       }
     });
 
-    document.getElementById('btn-toggle-preview')?.addEventListener('click', openPreviewOverlay);
-    document.getElementById('btn-toggle-preview-start')?.addEventListener('click', openPreviewOverlay);
-    document.getElementById('btn-toggle-preview-review')?.addEventListener('click', openPreviewOverlay);
-    document.getElementById('btn-close-preview')?.addEventListener('click', closePreviewOverlay);
+    document.getElementById('btn-toggle-preview')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
+    document.getElementById('btn-toggle-preview-start')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
+    document.getElementById('btn-toggle-preview-review')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
+    document.getElementById('btn-expand-mobile-preview')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
+    document.getElementById('btn-close-preview')?.addEventListener('click', () => closePreviewOverlay());
 
-    document.getElementById('btn-wizard-menu')?.addEventListener('click', () => openModal(els.modalMobileMenu));
-    document.getElementById('btn-mobile-change-template')?.addEventListener('click', () => {
+    document.getElementById('btn-wizard-menu')?.addEventListener('click', (e) => openModal(els.modalMobileMenu, e.currentTarget));
+    document.getElementById('btn-mobile-change-template')?.addEventListener('click', (e) => {
       closeModal(els.modalMobileMenu);
-      openModal(els.modalTemplate);
+      openModal(els.modalTemplate, e.currentTarget);
     });
     document.getElementById('btn-mobile-export-json')?.addEventListener('click', () => {
       closeModal(els.modalMobileMenu);
@@ -106,106 +233,122 @@
     });
     document.getElementById('btn-mobile-import-json')?.addEventListener('click', () => {
       closeModal(els.modalMobileMenu);
-      els.fileImport.click();
+      els.fileImport?.click();
     });
-    document.getElementById('btn-mobile-prompt')?.addEventListener('click', () => {
+    document.getElementById('btn-mobile-prompt')?.addEventListener('click', (e) => {
       closeModal(els.modalMobileMenu);
-      showPrompt('general');
+      showPrompt('general', null, e.currentTarget);
     });
 
     window.addEventListener('resize', debounce(scaleReviewPreviews, 150));
 
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.addEventListener('click', e => {
+    document.querySelectorAll('.modal').forEach((modal) => {
+      modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal(modal);
       });
     });
   }
 
-  function restoreView() {
-    const hasProgress = state.personal?.fullName || state.currentStep > 0;
-    currentView = hasProgress ? 'wizard' : 'home';
-  }
-
-  function goToHome() {
-    currentView = 'home';
-    saveState();
-    render();
-  }
-
   function saveState() {
     state.enabledSections = normalizeEnabledSections(state.enabledSections);
     state.skills = EuGeroConfig.parseSkillsText(state.skillsText);
-    EuGeroStorage.save(state);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      EuGeroStorage.save(state);
+      flashSavedIndicator();
+    }, 400);
+  }
+
+  function flashSavedIndicator() {
+    const el = els.savedIndicator || document.getElementById('saved-indicator');
+    if (!el) return;
+    el.textContent = 'Salvo';
+    el.hidden = false;
+    el.classList.add('visible');
+    clearTimeout(flashSavedIndicator._timer);
+    flashSavedIndicator._timer = setTimeout(() => {
+      el.classList.remove('visible');
+      el.hidden = true;
+    }, 2000);
+  }
+
+  function fillSampleData() {
+    const sample = EuGeroSampleData.build();
+    state = EuGeroStorage.mergeWithDefaults({ ...state, ...sample });
+    saveState();
+    render();
+    showToast('Exemplo carregado. Ajuste com seus dados reais.');
   }
 
   function renderTemplatePickers() {
-    const cardHtml = (t) => `
-      <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
-        <div class="template-thumb ${t.thumbClass}"></div>
-        <span class="template-card-name">${escapeHtml(t.name)}</span>
-        <small class="template-card-desc">${escapeHtml(t.description)}</small>
-      </button>
-    `;
+    const cardHtml = (t) => {
+      const atsBadge = t.atsFriendly
+        ? '<span class="badge badge-ats">ATS</span>'
+        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'Layout pode afetar leitura ATS')}">Atenção ATS</span>`;
+      return `
+        <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
+          <div class="template-thumb ${t.thumbClass}"></div>
+          <div class="template-preview" data-template-preview="${t.id}" aria-hidden="true"></div>
+          <span class="template-card-name">${escapeHtml(t.name)} ${atsBadge}</span>
+          <small class="template-card-desc">${escapeHtml(t.description)}</small>
+        </button>
+      `;
+    };
 
     const startGrid = document.getElementById('template-grid-start');
     if (startGrid) {
-      startGrid.innerHTML = TEMPLATE_IDS.map(id => cardHtml(TEMPLATES[id])).join('');
+      startGrid.innerHTML = TEMPLATE_IDS.map((id) => cardHtml(TEMPLATES[id])).join('');
     }
 
     const modalGrid = document.getElementById('modal-template-grid');
     if (modalGrid) {
-      modalGrid.innerHTML = TEMPLATE_IDS.map(id => {
+      modalGrid.innerHTML = TEMPLATE_IDS.map((id) => {
         const t = TEMPLATES[id];
-        return `<button type="button" class="modal-template-option" data-template="${t.id}"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.description)}</span></button>`;
+        const atsNote = t.atsFriendly ? 'Compativel com ATS' : (t.atsNote || 'Atenção ATS');
+        return `<button type="button" class="modal-template-option" data-template="${t.id}"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.description)} - ${escapeHtml(atsNote)}</span></button>`;
       }).join('');
     }
 
-    document.querySelectorAll('.template-card').forEach(card => {
+    document.querySelectorAll('.template-card').forEach((card) => {
       card.addEventListener('click', () => pickTemplate(card.dataset.template));
+    });
+
+    updateTemplatePreviewMinis();
+  }
+
+  function updateTemplatePreviewMinis() {
+    document.querySelectorAll('[data-template-preview]').forEach((container) => {
+      EuGeroPreview.updatePreview(container, state, container.dataset.templatePreview, activeSections());
     });
   }
 
   function pickTemplate(templateId) {
     state.template = templateId;
-    document.querySelectorAll('.template-card').forEach(card => {
+    document.querySelectorAll('.template-card').forEach((card) => {
       card.classList.toggle('selected', card.dataset.template === templateId);
     });
     updateTemplateIndicators();
-    updateAllPreviews();
+    debouncedUpdatePreviews();
     saveState();
-  }
-
-  function startWizard() {
-    state.currentStep = 0;
-    currentView = 'wizard';
-    saveState();
-    render();
-  }
-
-  function goToStart() {
-    currentView = 'start';
-    saveState();
-    render();
   }
 
   function switchTemplate(templateId) {
     state.template = templateId;
-    document.querySelectorAll('.template-card').forEach(card => {
+    document.querySelectorAll('.template-card').forEach((card) => {
       card.classList.toggle('selected', card.dataset.template === templateId);
     });
-    document.querySelectorAll('.review-template-card').forEach(card => {
+    document.querySelectorAll('.review-template-card').forEach((card) => {
       card.classList.toggle('selected', card.dataset.template === templateId);
     });
     saveState();
     updateTemplateIndicators();
-    updateAllPreviews();
+    debouncedUpdatePreviews();
     showToast(`Template alterado para ${TEMPLATES[templateId].name}`);
   }
 
   function updateTemplateIndicators() {
-    document.querySelectorAll('[data-current-template]').forEach(el => {
-      el.textContent = TEMPLATES[state.template]?.name || 'Clássico';
+    document.querySelectorAll('[data-current-template]').forEach((el) => {
+      el.textContent = TEMPLATES[state.template]?.name || 'Classico';
     });
   }
 
@@ -215,63 +358,37 @@
     if (checked && !enabled.includes(sectionId)) {
       enabled.push(sectionId);
     } else if (!checked) {
-      enabled = enabled.filter(id => id !== sectionId);
+      enabled = enabled.filter((id) => id !== sectionId);
     }
     state.enabledSections = normalizeEnabledSections(enabled);
     const maxStep = activeSections().length - 1;
     if (state.currentStep > maxStep) state.currentStep = Math.max(0, maxStep);
     saveState();
     renderSectionChecklist();
-    updateAllPreviews();
+    debouncedUpdatePreviews();
   }
 
   function goToStep(stepIndex) {
     const sections = activeSections();
     if (stepIndex < 0 || stepIndex >= sections.length) return;
     state.currentStep = stepIndex;
-    saveState();
-    renderWizardStep();
+    navigateTo('wizard', sections[stepIndex].id);
   }
 
   function prevStep() {
     if (state.currentStep > 0) {
-      state.currentStep--;
-      saveState();
-      renderWizardStep();
+      goToStep(state.currentStep - 1);
     }
   }
 
   function nextStep() {
+    validateCurrentStep();
     const sections = activeSections();
     if (state.currentStep < sections.length - 1) {
-      state.currentStep++;
-      saveState();
-      renderWizardStep();
+      goToStep(state.currentStep + 1);
     } else {
       goToReview();
     }
-  }
-
-  function goToWizard(step) {
-    currentView = 'wizard';
-    if (typeof step === 'number') {
-      const sections = activeSections();
-      state.currentStep = Math.min(step, sections.length - 1);
-    }
-    saveState();
-    render();
-  }
-
-  function goToReview() {
-    currentView = 'review';
-    saveState();
-    render();
-  }
-
-  function goToGuide() {
-    currentView = 'guide';
-    saveState();
-    render();
   }
 
   function showView(view) {
@@ -288,16 +405,17 @@
   function render() {
     showView(currentView);
     updateTemplateIndicators();
-    document.querySelectorAll('.template-card').forEach(card => {
+    document.querySelectorAll('.template-card').forEach((card) => {
       card.classList.toggle('selected', card.dataset.template === state.template);
     });
 
     if (currentView === 'start') {
       renderSectionChecklist();
-      updateAllPreviews();
+      updateTemplatePreviewMinis();
+      debouncedUpdatePreviews();
     } else if (currentView === 'wizard') {
       renderWizardStep();
-      updateAllPreviews();
+      debouncedUpdatePreviews();
     } else if (currentView === 'review') {
       renderReview();
     } else if (currentView === 'guide') {
@@ -307,7 +425,7 @@
 
   function renderSectionChecklist() {
     if (!els.sectionChecklist) return;
-    els.sectionChecklist.innerHTML = SECTIONS.map(section => {
+    els.sectionChecklist.innerHTML = SECTIONS.map((section) => {
       const mandatory = isSectionMandatory(section.id);
       const checked = state.enabledSections.includes(section.id);
       return `
@@ -315,14 +433,14 @@
           <input type="checkbox" data-section-id="${section.id}" ${checked ? 'checked' : ''} ${mandatory ? 'disabled checked' : ''}>
           <span class="section-check-label">
             <strong>${section.title}</strong>
-            ${mandatory ? '<span class="badge badge-required">Obrigatório</span>' : ''}
+            ${mandatory ? '<span class="badge badge-required">Obrigatorio</span>' : ''}
             <small>${section.description || ''}</small>
           </span>
         </label>
       `;
     }).join('');
 
-    els.sectionChecklist.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    els.sectionChecklist.querySelectorAll('input[type="checkbox"]').forEach((input) => {
       input.addEventListener('change', () => toggleSection(input.dataset.sectionId, input.checked));
     });
   }
@@ -337,15 +455,16 @@
         i === state.currentStep ? 'active' : '',
         i < state.currentStep ? 'done' : ''
       ].filter(Boolean).join(' ');
+      const ariaCurrent = i === state.currentStep ? ' aria-current="step"' : '';
       return `
-        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}">
+        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent}>
           <span class="timeline-num">${i + 1}</span>
           <span class="timeline-label">${escapeHtml(label)}</span>
         </button>
       `;
     }).join('');
 
-    els.wizardTimeline.querySelectorAll('.timeline-step').forEach(btn => {
+    els.wizardTimeline.querySelectorAll('.timeline-step').forEach((btn) => {
       btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.step, 10)));
     });
 
@@ -374,13 +493,14 @@
     els.wizardSteps.innerHTML = '';
     const stepEl = document.createElement('div');
     stepEl.className = 'wizard-step';
+    stepEl.dataset.sectionId = section.id;
 
     if (section.list) {
       stepEl.appendChild(renderListSection(section));
     } else if (section.fields) {
       const grid = document.createElement('div');
       grid.className = section.id === 'personal' ? 'field-grid field-grid-personal' : 'field-grid';
-      section.fields.forEach(field => {
+      section.fields.forEach((field) => {
         grid.appendChild(renderField(section, field));
       });
       stepEl.appendChild(grid);
@@ -389,70 +509,381 @@
     const aiBtn = document.createElement('button');
     aiBtn.type = 'button';
     aiBtn.className = 'btn btn-outline btn-ai-section';
-    aiBtn.textContent = 'Pedir ajuda à IA';
-    aiBtn.addEventListener('click', () => showPrompt('section', section.id));
+    aiBtn.textContent = 'Pedir ajuda a IA';
+    aiBtn.addEventListener('click', (e) => showPrompt('section', section.id, e.currentTarget));
     stepEl.appendChild(aiBtn);
 
     els.wizardSteps.appendChild(stepEl);
 
-    document.getElementById('btn-prev').disabled = state.currentStep === 0;
-    document.getElementById('btn-next').textContent =
-      state.currentStep === sections.length - 1 ? 'Ir para revisão' : 'Próximo';
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    if (prevBtn) prevBtn.disabled = state.currentStep === 0;
+    if (nextBtn) {
+      nextBtn.textContent = state.currentStep === sections.length - 1 ? 'Ir para revisao' : 'Proximo';
+    }
 
     renderWizardTimeline();
   }
 
-  function renderField(section, field) {
+  function fieldErrorId(section, field, index) {
+    if (index != null) return `error-${section.id}-${index}-${field.key}`;
+    return `error-${section.id}-${field.key}`;
+  }
+
+  function renderFieldTip(field) {
+    if (!field.tip) return '';
+    return `
+      <details class="field-tip-expand">
+        <summary>Dica</summary>
+        <p>${escapeHtml(field.tip)}</p>
+      </details>
+    `;
+  }
+
+  function getFieldIdealMax(field) {
+    if (field.idealMax) return field.idealMax;
+    if (field.actionVerbs) {
+      if (field.key === 'summary') return 550;
+      return 260;
+    }
+    if (field.key === 'skillsText') return 180;
+    return 120;
+  }
+
+  function renderCharCounter(wrap, field, getValue) {
+    const idealMax = getFieldIdealMax(field);
+    const counter = document.createElement('span');
+    counter.className = 'char-counter';
+    counter.setAttribute('aria-live', 'polite');
+    const update = () => {
+      const len = (getValue() || '').length;
+      counter.textContent = `${len}/${idealMax}`;
+      counter.classList.toggle('char-counter-over', len > idealMax);
+    };
+    update();
+    wrap.appendChild(counter);
+    return update;
+  }
+
+  function clearFieldValidation(scope) {
+    scope.querySelectorAll('.field-invalid').forEach((el) => {
+      el.classList.remove('field-invalid');
+      el.removeAttribute('aria-describedby');
+    });
+    scope.querySelectorAll('.field-error').forEach((el) => el.remove());
+  }
+
+  function setFieldInvalid(input, errorId, message) {
+    input.classList.add('field-invalid');
+    input.setAttribute('aria-describedby', errorId);
+    const err = document.createElement('span');
+    err.id = errorId;
+    err.className = 'field-error';
+    err.setAttribute('role', 'alert');
+    err.textContent = message;
+    input.closest('.field-group')?.appendChild(err);
+  }
+
+  function validateCurrentStep() {
+    const sections = activeSections();
+    const section = sections[state.currentStep];
+    if (!section) return true;
+
+    const scope = els.wizardSteps;
+    if (!scope) return true;
+
+    clearFieldValidation(scope);
+    const result = EuGeroValidation.validateSection(state, section);
+
+    result.issues.forEach((issue) => {
+      let input;
+      if (issue.itemIndex != null) {
+        const card = scope.querySelector(`.list-item-card[data-index="${issue.itemIndex}"]`);
+        const fieldWrap = card?.querySelector(`[data-field="${issue.fieldKey}"]`);
+        input = fieldWrap?.querySelector('input, textarea, select')
+          || scope.querySelector(`#field-${issue.sectionId}-${issue.itemIndex}-${issue.fieldKey}`);
+      } else {
+        input = scope.querySelector(`#field-${issue.sectionId}-${issue.fieldKey}`)
+          || scope.querySelector(`[data-field="${issue.fieldKey}"] input, [data-field="${issue.fieldKey}"] textarea, [data-field="${issue.fieldKey}"] select`);
+      }
+      if (input) {
+        const errorId = fieldErrorId(section, { key: issue.fieldKey }, issue.itemIndex);
+        setFieldInvalid(input, errorId, issue.message);
+      }
+    });
+
+    if (!result.valid) {
+      showToast('Revise os campos destacados antes de continuar.', { duration: 4000 });
+      const firstInvalid = scope.querySelector('.field-invalid');
+      firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstInvalid?.focus?.();
+      return false;
+    }
+    return true;
+  }
+
+  function renderField(section, field, options = {}) {
     const wrap = document.createElement('div');
     wrap.className = 'field-group' + (field.fullWidth ? ' field-full' : '');
     wrap.dataset.section = section.id;
     wrap.dataset.field = field.key;
 
-    let value = getFieldValue(section, field);
+    const value = getFieldValue(section, field, options.item);
+    const id = options.id || `field-${section.id}${options.index != null ? `-${options.index}` : ''}-${field.key}`;
 
-    const id = `field-${section.id}-${field.key}`;
-    let inputHtml = '';
-
-    if (field.type === 'textarea') {
-      inputHtml = `<textarea id="${id}" name="${field.key}" rows="${field.key === 'skillsText' ? 2 : 3}" placeholder="${escapeAttr(field.placeholder || '')}" ${field.required ? 'required' : ''}>${escapeAttr(value)}</textarea>`;
-    } else if (field.type === 'select') {
-      inputHtml = `<select id="${id}" name="${field.key}" ${field.required ? 'required' : ''}>
-        <option value="">Selecione...</option>
-        ${(field.options || []).map(o => `<option value="${escapeAttr(o)}" ${value === o ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')}
-      </select>`;
-    } else {
-      inputHtml = `<input type="${field.type || 'text'}" id="${id}" name="${field.key}" value="${escapeAttr(value)}" ${field.required ? 'required' : ''}>`;
+    if (field.type === 'skillsTags') {
+      renderSkillsTagsField(wrap, section, field, value, id);
+      return wrap;
     }
+
+    if (field.type === 'monthYear') {
+      renderMonthYearField(wrap, section, field, value, {
+        id,
+        index: options.index,
+        item: options.item
+      });
+      return wrap;
+    }
+
+    const labelRow = document.createElement('div');
+    labelRow.className = 'field-label-row';
+    labelRow.innerHTML = `
+      <label for="${id}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+      <div class="field-score" aria-live="polite"></div>
+    `;
+    wrap.appendChild(labelRow);
+
+    let input;
+    if (field.type === 'textarea') {
+      input = document.createElement('textarea');
+      input.id = id;
+      input.name = field.key;
+      input.rows = field.key === 'skillsText' ? 2 : 3;
+      if (field.placeholder) input.placeholder = field.placeholder;
+      if (field.required) input.required = true;
+      input.value = value;
+      wrap.appendChild(input);
+      const updateCounter = renderCharCounter(wrap, field, () => input.value);
+      input.addEventListener('input', () => {
+        setFieldValue(section, field, input.value, options.item, options.index);
+        updateFieldScore(wrap, field, input.value);
+        updateCounter();
+        clearFieldValidation(wrap);
+        debouncedUpdatePreviews();
+        saveState();
+      });
+    } else if (field.type === 'select') {
+      input = document.createElement('select');
+      input.id = id;
+      input.name = field.key;
+      if (field.required) input.required = true;
+      input.innerHTML = `<option value="">Selecione...</option>${(field.options || []).map((o) =>
+        `<option value="${escapeAttr(o)}" ${value === o ? 'selected' : ''}>${escapeHtml(o)}</option>`
+      ).join('')}`;
+      wrap.appendChild(input);
+      input.addEventListener('change', () => {
+        setFieldValue(section, field, input.value, options.item, options.index);
+        updateFieldScore(wrap, field, input.value);
+        clearFieldValidation(wrap);
+        debouncedUpdatePreviews();
+        saveState();
+      });
+    } else {
+      input = document.createElement('input');
+      input.type = field.type || 'text';
+      input.id = id;
+      input.name = field.key;
+      input.value = value;
+      if (field.required) input.required = true;
+      wrap.appendChild(input);
+      input.addEventListener('input', () => {
+        setFieldValue(section, field, input.value, options.item, options.index);
+        updateFieldScore(wrap, field, input.value);
+        clearFieldValidation(wrap);
+        debouncedUpdatePreviews();
+        saveState();
+      });
+    }
+
+    wrap.insertAdjacentHTML('beforeend', renderFieldTip(field));
+    updateFieldScore(wrap, field, value);
+    return wrap;
+  }
+
+  function renderMonthYearField(wrap, section, field, value, { id, index, item }) {
+    const parsed = EuGeroDates.parseStoredDate(value);
+    const monthId = `${id}-month`;
+    const yearId = `${id}-year`;
+    const showEndCurrent = item && EuGeroDates.hasEndCurrentFlag(section.id, field.key);
+    const isEndDisabled = () => showEndCurrent && item.endCurrent && field.key === 'endDate';
+
+    wrap.innerHTML = `
+      <div class="field-label-row">
+        <label for="${monthId}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+        <div class="field-score" aria-live="polite"></div>
+      </div>
+      <div class="month-year-row ${isEndDisabled() ? 'is-disabled' : ''}">
+        <select id="${monthId}" class="month-year-month" aria-label="${escapeAttr(field.label)} mes" ${isEndDisabled() ? 'disabled' : ''}>
+          ${EuGeroDates.monthOptions(parsed.month)}
+        </select>
+        <select id="${yearId}" class="month-year-year" aria-label="${escapeAttr(field.label)} ano" ${isEndDisabled() ? 'disabled' : ''}>
+          ${EuGeroDates.yearOptions(parsed.year)}
+        </select>
+      </div>
+      ${showEndCurrent ? `
+        <label class="checkbox-label end-current-label">
+          <input type="checkbox" class="end-current-checkbox" ${item.endCurrent ? 'checked' : ''}>
+          Ate hoje
+        </label>
+      ` : ''}
+      ${renderFieldTip(field)}
+    `;
+
+    const monthSel = wrap.querySelector('.month-year-month');
+    const yearSel = wrap.querySelector('.month-year-year');
+    const endCheckbox = wrap.querySelector('.end-current-checkbox');
+    const row = wrap.querySelector('.month-year-row');
+
+    function syncDate() {
+      if (isEndDisabled()) return;
+      const serialized = EuGeroDates.serializeDate(monthSel.value, yearSel.value);
+      if (item && index != null) {
+        state[section.id][index][field.key] = serialized;
+        updateFieldScore(wrap, field, serialized);
+      } else {
+        setFieldValue(section, field, serialized);
+        updateFieldScore(wrap, field, serialized);
+      }
+      clearFieldValidation(wrap);
+      debouncedUpdatePreviews();
+      saveState();
+    }
+
+    monthSel?.addEventListener('change', syncDate);
+    yearSel?.addEventListener('change', syncDate);
+
+    if (endCheckbox && item) {
+      endCheckbox.addEventListener('change', () => {
+        item.endCurrent = endCheckbox.checked;
+        if (field.key === 'endDate') {
+          const disable = item.endCurrent;
+          monthSel.disabled = disable;
+          yearSel.disabled = disable;
+          row?.classList.toggle('is-disabled', disable);
+          if (disable) {
+            item.endDate = '';
+          }
+        } else if (item.endCurrent) {
+          item.endDate = '';
+          const endField = section.itemFields?.find((f) => f.key === 'endDate');
+          const endWrap = wrap.closest('.list-item-card')?.querySelector('[data-field="endDate"]');
+          if (endWrap) {
+            const endMonth = endWrap.querySelector('.month-year-month');
+            const endYear = endWrap.querySelector('.month-year-year');
+            if (endMonth) endMonth.disabled = true;
+            if (endYear) endYear.disabled = true;
+            endWrap.querySelector('.month-year-row')?.classList.add('is-disabled');
+          }
+        }
+        debouncedUpdatePreviews();
+        saveState();
+      });
+    }
+
+    updateFieldScore(wrap, field, value);
+  }
+
+  function renderSkillsTagsField(wrap, section, field, value, id) {
+    const tags = EuGeroConfig.parseSkillsText(value || state.skillsText);
 
     wrap.innerHTML = `
       <div class="field-label-row">
         <label for="${id}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
         <div class="field-score" aria-live="polite"></div>
       </div>
-      ${inputHtml}
-      <p class="field-tip-inline" title="${escapeAttr(field.tip)}">${field.tip}</p>
+      <div class="skills-tags-field">
+        <div class="skills-tags-chips" role="list"></div>
+        <input type="text" id="${id}" class="skills-tags-input" placeholder="${escapeAttr(field.placeholder || 'Digite uma habilidade...')}" autocomplete="off">
+      </div>
+      ${renderFieldTip(field)}
     `;
 
-    const input = wrap.querySelector('input, textarea, select');
-    input.addEventListener('input', () => {
-      setFieldValue(section, field, input.value);
-      updateFieldScore(wrap, field, input.value);
-      updateAllPreviews();
+    const chipsEl = wrap.querySelector('.skills-tags-chips');
+    const input = wrap.querySelector('.skills-tags-input');
+
+    function syncTags(newTags) {
+      const text = newTags.map((t) => t.name || t).filter(Boolean).join('; ');
+      state.skillsText = text;
+      state.skills = newTags;
+      updateFieldScore(wrap, field, text);
+      clearFieldValidation(wrap);
+      debouncedUpdatePreviews();
       saveState();
+    }
+
+    function renderChips() {
+      chipsEl.innerHTML = tags.map((tag, i) => `
+        <span class="skills-tag-chip" role="listitem">
+          ${escapeHtml(tag.name || tag)}
+          <button type="button" class="skills-tag-remove" aria-label="Remover ${escapeAttr(tag.name || tag)}" data-index="${i}">x</button>
+        </span>
+      `).join('');
+      chipsEl.querySelectorAll('.skills-tag-remove').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index, 10);
+          tags.splice(idx, 1);
+          renderChips();
+          syncTags(tags);
+        });
+      });
+    }
+
+    function addTag(raw) {
+      const name = raw.trim().replace(/[;,]+$/, '');
+      if (!name) return;
+      if (tags.some((t) => (t.name || t).toLowerCase() === name.toLowerCase())) return;
+      tags.push({ name });
+      renderChips();
+      syncTags(tags);
+    }
+
+    renderChips();
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ';') {
+        e.preventDefault();
+        addTag(input.value);
+        input.value = '';
+      } else if (e.key === 'Backspace' && !input.value && tags.length) {
+        tags.pop();
+        renderChips();
+        syncTags(tags);
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      if (input.value.trim()) {
+        addTag(input.value);
+        input.value = '';
+      }
     });
 
     updateFieldScore(wrap, field, value);
-    return wrap;
   }
 
-  function getFieldValue(section, field) {
+  function getFieldValue(section, field, item) {
+    if (item) return item[field.key] || '';
     if (section.id === 'personal') return state.personal[field.key] || '';
     if (section.id === 'summary') return state.summary || '';
     if (section.id === 'skills') return skillsToText(state);
     return state[field.key] || '';
   }
 
-  function setFieldValue(section, field, value) {
+  function setFieldValue(section, field, value, item, index) {
+    if (item != null && index != null) {
+      state[section.id][index][field.key] = value;
+      return;
+    }
     if (section.id === 'personal') {
       state.personal[field.key] = value;
     } else if (section.id === 'summary') {
@@ -474,6 +905,7 @@
 
     const listEl = document.createElement('div');
     listEl.className = 'list-items';
+    listEl.id = `list-items-${section.id}`;
 
     if (items.length === 0) items.push(createEmptyListItem(section.id));
 
@@ -487,12 +919,7 @@
     addBtn.type = 'button';
     addBtn.className = 'btn btn-secondary btn-add-item';
     addBtn.textContent = '+ Adicionar item';
-    addBtn.addEventListener('click', () => {
-      state[section.id].push(createEmptyListItem(section.id));
-      saveState();
-      renderWizardStep();
-      updateAllPreviews();
-    });
+    addBtn.addEventListener('click', () => appendListItem(section.id));
     container.appendChild(addBtn);
 
     return container;
@@ -501,65 +928,182 @@
   function createListItemEl(section, item, index) {
     const card = document.createElement('div');
     card.className = 'list-item-card';
-    card.dataset.index = index;
+    card.dataset.index = String(index);
+
+    const header = document.createElement('div');
+    header.className = 'list-item-header';
+    header.innerHTML = `<span class="list-item-num">Item ${index + 1}</span>`;
+    card.appendChild(header);
 
     const grid = document.createElement('div');
     grid.className = 'field-grid field-grid-item';
 
-    section.itemFields.forEach(field => {
-      const wrap = document.createElement('div');
-      const isWide = field.type === 'textarea';
-      wrap.className = 'field-group' + (isWide ? ' field-full' : '');
-      const id = `field-${section.id}-${index}-${field.key}`;
-      const value = item[field.key] || '';
-
-      let inputHtml = '';
-      if (field.type === 'textarea') {
-        inputHtml = `<textarea id="${id}" rows="2">${escapeAttr(value)}</textarea>`;
-      } else if (field.type === 'select') {
-        inputHtml = `<select id="${id}">
-          <option value="">Selecione...</option>
-          ${(field.options || []).map(o => `<option value="${escapeAttr(o)}" ${value === o ? 'selected' : ''}>${o}</option>`).join('')}
-        </select>`;
+    section.itemFields.forEach((field) => {
+      if (field.type === 'monthYear') {
+        const wrap = document.createElement('div');
+        wrap.className = 'field-group';
+        wrap.dataset.section = section.id;
+        wrap.dataset.field = field.key;
+        const id = `field-${section.id}-${index}-${field.key}`;
+        renderMonthYearField(wrap, section, field, item[field.key] || '', { id, index, item });
+        grid.appendChild(wrap);
       } else {
-        inputHtml = `<input type="${field.type || 'text'}" id="${id}" value="${escapeAttr(value)}">`;
+        grid.appendChild(renderField(section, field, { item, index, id: `field-${section.id}-${index}-${field.key}` }));
       }
-
-      wrap.innerHTML = `
-        <div class="field-label-row">
-          <label for="${id}">${field.label}</label>
-          <div class="field-score" aria-live="polite"></div>
-        </div>
-        ${inputHtml}
-        <p class="field-tip-inline" title="${escapeAttr(field.tip)}">${field.tip}</p>
-      `;
-
-      const input = wrap.querySelector('input, textarea, select');
-      input.addEventListener('input', () => {
-        state[section.id][index][field.key] = input.value;
-        updateFieldScore(wrap, field, input.value);
-        updateAllPreviews();
-        saveState();
-      });
-      updateFieldScore(wrap, field, value);
-      grid.appendChild(wrap);
     });
 
     card.appendChild(grid);
 
+    const actions = document.createElement('div');
+    actions.className = 'list-item-actions';
+
+    const upBtn = document.createElement('button');
+    upBtn.type = 'button';
+    upBtn.className = 'btn btn-ghost btn-icon btn-reorder-up';
+    upBtn.setAttribute('aria-label', 'Mover para cima');
+    upBtn.textContent = '\u2191';
+    upBtn.disabled = index === 0;
+    upBtn.addEventListener('click', () => {
+      const idx = parseInt(card.dataset.index, 10);
+      reorderListItem(section.id, idx, -1);
+    });
+
+    const downBtn = document.createElement('button');
+    downBtn.type = 'button';
+    downBtn.className = 'btn btn-ghost btn-icon btn-reorder-down';
+    downBtn.setAttribute('aria-label', 'Mover para baixo');
+    downBtn.textContent = '\u2193';
+    downBtn.addEventListener('click', () => {
+      const idx = parseInt(card.dataset.index, 10);
+      reorderListItem(section.id, idx, 1);
+    });
+
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'btn btn-danger btn-remove-item';
+    removeBtn.setAttribute('aria-label', 'Remover item');
     removeBtn.textContent = 'Remover';
     removeBtn.addEventListener('click', () => {
-      state[section.id].splice(index, 1);
-      saveState();
-      renderWizardStep();
-      updateAllPreviews();
+      const idx = parseInt(card.dataset.index, 10);
+      removeListItem(section.id, idx);
     });
-    card.appendChild(removeBtn);
+
+    actions.appendChild(upBtn);
+    actions.appendChild(downBtn);
+    actions.appendChild(removeBtn);
+    card.appendChild(actions);
 
     return card;
+  }
+
+  function reindexListCards(sectionId) {
+    const container = document.getElementById(`list-items-${sectionId}`);
+    if (!container) return;
+    const cards = container.querySelectorAll('.list-item-card');
+    cards.forEach((card, i) => {
+      card.dataset.index = String(i);
+      const num = card.querySelector('.list-item-num');
+      if (num) num.textContent = `Item ${i + 1}`;
+      const up = card.querySelector('.btn-reorder-up');
+      const down = card.querySelector('.btn-reorder-down');
+      if (up) up.disabled = i === 0;
+      if (down) down.disabled = i === cards.length - 1;
+    });
+  }
+
+  function appendListItem(sectionId) {
+    const section = SECTIONS.find((s) => s.id === sectionId);
+    if (!section) return;
+    if (!Array.isArray(state[sectionId])) state[sectionId] = [];
+    const newItem = createEmptyListItem(sectionId);
+    state[sectionId].push(newItem);
+    const index = state[sectionId].length - 1;
+
+    const container = document.getElementById(`list-items-${sectionId}`);
+    if (container) {
+      const card = createListItemEl(section, newItem, index);
+      container.appendChild(card);
+      reindexListCards(sectionId);
+      const firstField = card.querySelector('input:not([type="checkbox"]), textarea, select');
+      firstField?.focus();
+    } else {
+      renderWizardStep();
+    }
+
+    saveState();
+    debouncedUpdatePreviews();
+  }
+
+  function removeListItem(sectionId, index) {
+    const items = state[sectionId];
+    if (!items || index < 0 || index >= items.length) return;
+    if (!confirm('Remover este item?')) return;
+
+    const removed = { ...items[index] };
+    const removedIndex = index;
+    items.splice(index, 1);
+
+    const container = document.getElementById(`list-items-${sectionId}`);
+    const card = container?.querySelector(`.list-item-card[data-index="${index}"]`);
+    card?.remove();
+    reindexListCards(sectionId);
+
+    if (items.length === 0) {
+      appendListItem(sectionId);
+    }
+
+    saveState();
+    debouncedUpdatePreviews();
+
+    showToast('Item removido.', {
+      actionLabel: 'Desfazer',
+      duration: 5000,
+      onAction: () => {
+        const section = SECTIONS.find((s) => s.id === sectionId);
+        if (!section) return;
+        state[sectionId].splice(removedIndex, 0, removed);
+        const listContainer = document.getElementById(`list-items-${sectionId}`);
+        if (listContainer) {
+          const newCard = createListItemEl(section, removed, removedIndex);
+          const siblings = listContainer.querySelectorAll('.list-item-card');
+          if (removedIndex >= siblings.length) {
+            listContainer.appendChild(newCard);
+          } else {
+            listContainer.insertBefore(newCard, siblings[removedIndex]);
+          }
+          reindexListCards(sectionId);
+        } else {
+          renderWizardStep();
+        }
+        saveState();
+        debouncedUpdatePreviews();
+        showToast('Item restaurado.');
+      }
+    });
+  }
+
+  function reorderListItem(sectionId, index, direction) {
+    const items = state[sectionId];
+    const newIndex = index + direction;
+    if (!items || newIndex < 0 || newIndex >= items.length) return;
+
+    const tmp = items[index];
+    items[index] = items[newIndex];
+    items[newIndex] = tmp;
+
+    const container = document.getElementById(`list-items-${sectionId}`);
+    if (!container) return;
+    const cards = Array.from(container.querySelectorAll('.list-item-card'));
+    const cardA = cards[index];
+    const cardB = cards[newIndex];
+    if (direction < 0) {
+      container.insertBefore(cardA, cardB);
+    } else {
+      container.insertBefore(cardB, cardA);
+    }
+    reindexListCards(sectionId);
+    saveState();
+    debouncedUpdatePreviews();
   }
 
   function updateFieldScore(wrap, field, value) {
@@ -578,28 +1122,34 @@
     const aggregate = EuGeroScoring.aggregateScore(results, pageFit);
 
     const pageFitClass = pageFit.level === 'overflow' ? 'page-fit-overflow' : pageFit.level === 'warning' ? 'page-fit-warning' : 'page-fit-ok';
-    const pageFitLabel = pageFit.level === 'overflow' ? 'Excede 1 página' : pageFit.level === 'warning' ? 'Atenção ao tamanho' : 'Cabe em 1 página';
+    const pageFitLabel = pageFit.level === 'overflow' ? 'Excede 1 pagina' : pageFit.level === 'warning' ? 'Atencao ao tamanho' : 'Cabe em 1 pagina';
+
+    const legendHtml = EuGeroScoring.CRITERIA_LEGEND.map((line) => `<li>${escapeHtml(line)}</li>`).join('');
 
     let html = `
       <div class="review-summary">
-        <h2>Revisão final</h2>
+        <h2>Revisao final</h2>
         <div class="review-scores-row">
-          <p class="review-overall-label">Qualidade: <strong>${aggregate.label}</strong> · ${aggregate.overall}%</p>
-          <p class="review-page-fit ${pageFitClass}">${pageFitLabel} · ${pageFit.fitScore}%</p>
+          <p class="review-overall-label">Qualidade: <strong>${aggregate.label}</strong> - ${aggregate.overall}%</p>
+          <p class="review-page-fit ${pageFitClass}">${pageFitLabel} - ${pageFit.fitScore}%</p>
         </div>
         <div class="progress-bar" role="progressbar" aria-valuenow="${aggregate.overall}" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-fill" style="width: ${aggregate.overall}%"></div>
         </div>
-        <p class="progress-text">${aggregate.scored} campos avaliados · ~${pageFit.metrics.totalChars} caracteres · ${pageFit.metrics.listItems} itens em listas</p>
+        <p class="progress-text">${aggregate.scored} campos avaliados - ~${pageFit.metrics.totalChars} caracteres - ${pageFit.metrics.listItems} itens em listas</p>
+        <details class="review-criteria-legend">
+          <summary>Como funciona a pontuacao?</summary>
+          <ul>${legendHtml}</ul>
+        </details>
       </div>
     `;
 
     if (pageFit.issues.length > 0) {
       html += `
         <div class="review-page-issues ${pageFitClass}">
-          <h3>Currículo de uma página</h3>
-          <p>O objetivo é um CV conciso. Conteúdo demais reduz a nota e pode sobrepor seções na exportação.</p>
-          <ul>${pageFit.issues.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+          <h3>Curriculo de uma pagina</h3>
+          <p>O objetivo e um CV conciso. Conteudo demais reduz a nota e pode sobrepor secoes na exportacao.</p>
+          <ul>${pageFit.issues.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
         </div>
       `;
     }
@@ -609,20 +1159,20 @@
         <div class="review-weak">
           <h3>Campos para revisar (nota Fraco)</h3>
           <ul>
-            ${aggregate.weakFields.map(f => {
-              const stepIndex = sections.findIndex(s => s.id === f.sectionId);
+            ${aggregate.weakFields.map((f) => {
+              const stepIndex = sections.findIndex((s) => s.id === f.sectionId);
               return `<li><button type="button" class="link-btn" data-step="${stepIndex}">${escapeHtml(f.displayName)}</button></li>`;
             }).join('')}
           </ul>
         </div>
       `;
     } else if (pageFit.level === 'ok') {
-      html += '<p class="review-success">Parabéns! Nenhum campo com nota Fraco e volume adequado para 1 página.</p>';
+      html += '<p class="review-success">Parabens! Nenhum campo com nota Fraco e volume adequado para 1 pagina.</p>';
     }
 
     html += `
       <div class="export-actions">
-        <h3>Exportar — template: <span data-current-template>${escapeHtml(TEMPLATES[state.template]?.name || 'Clássico')}</span></h3>
+        <h3>Exportar - template: <span data-current-template>${escapeHtml(TEMPLATES[state.template]?.name || 'Classico')}</span></h3>
         <div class="btn-group">
           <button type="button" class="btn btn-primary" id="btn-export-pdf">Exportar PDF</button>
           <button type="button" class="btn btn-primary" id="btn-export-docx">Exportar Word</button>
@@ -633,29 +1183,55 @@
 
     els.reviewContent.innerHTML = html;
 
-    els.reviewContent.querySelectorAll('.link-btn').forEach(btn => {
+    els.reviewContent.querySelectorAll('.link-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         goToWizard(parseInt(btn.dataset.step, 10));
       });
     });
 
-    document.getElementById('btn-export-pdf')?.addEventListener('click', () => EuGeroExport.exportPdf(state, state.template));
-    document.getElementById('btn-export-docx')?.addEventListener('click', () => EuGeroExport.exportDocx(state, state.template));
-    document.getElementById('btn-export-txt')?.addEventListener('click', () => EuGeroExport.exportTxt(state));
+    document.getElementById('btn-export-pdf')?.addEventListener('click', (e) => handleExport('pdf', e.currentTarget));
+    document.getElementById('btn-export-docx')?.addEventListener('click', (e) => handleExport('docx', e.currentTarget));
+    document.getElementById('btn-export-txt')?.addEventListener('click', (e) => handleExport('txt', e.currentTarget));
 
     renderReviewTemplateGallery();
+  }
+
+  async function handleExport(type, btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    try {
+      let result;
+      if (type === 'pdf') result = await EuGeroExport.exportPdf(state, state.template);
+      else if (type === 'docx') result = await EuGeroExport.exportDocx(state, state.template);
+      else result = EuGeroExport.exportTxt(state);
+
+      if (result?.ok) {
+        showToast('Exportado com sucesso!');
+      } else {
+        showToast(result?.error || 'Falha na exportacao.', { error: true });
+      }
+    } catch (err) {
+      showToast('Falha na exportacao.', { error: true });
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+    }
   }
 
   function renderReviewTemplateGallery() {
     if (!els.reviewTemplateGallery) return;
     const sections = activeSections();
 
-    els.reviewTemplateGallery.innerHTML = TEMPLATE_IDS.map(id => {
+    els.reviewTemplateGallery.innerHTML = TEMPLATE_IDS.map((id) => {
       const t = TEMPLATES[id];
       const selected = state.template === id;
+      const atsBadge = t.atsFriendly
+        ? '<span class="badge badge-ats">ATS</span>'
+        : '<span class="badge badge-ats-warn">Atencao ATS</span>';
       return `
         <button type="button" class="review-template-card${selected ? ' selected' : ''}" data-template="${t.id}" aria-pressed="${selected}">
-          <span class="review-template-name">${escapeHtml(t.name)}</span>
+          <span class="review-template-name">${escapeHtml(t.name)} ${atsBadge}</span>
           <div class="review-template-preview-wrap">
             <div class="review-template-preview" data-preview-template="${t.id}"></div>
           </div>
@@ -663,11 +1239,11 @@
       `;
     }).join('');
 
-    els.reviewTemplateGallery.querySelectorAll('[data-preview-template]').forEach(container => {
+    els.reviewTemplateGallery.querySelectorAll('[data-preview-template]').forEach((container) => {
       EuGeroPreview.updatePreview(container, state, container.dataset.previewTemplate, sections);
     });
 
-    els.reviewTemplateGallery.querySelectorAll('.review-template-card').forEach(card => {
+    els.reviewTemplateGallery.querySelectorAll('.review-template-card').forEach((card) => {
       card.addEventListener('click', () => {
         switchTemplate(card.dataset.template);
         renderReview();
@@ -677,10 +1253,8 @@
     requestAnimationFrame(scaleReviewPreviews);
   }
 
-  const REVIEW_PREVIEW_BASE_WIDTH = 340;
-
   function scaleReviewPreviews() {
-    document.querySelectorAll('.review-template-preview-wrap').forEach(wrap => {
+    document.querySelectorAll('.review-template-preview-wrap').forEach((wrap) => {
       const preview = wrap.querySelector('.review-template-preview');
       if (!preview) return;
       const width = wrap.clientWidth;
@@ -695,9 +1269,19 @@
 
   function updateAllPreviews() {
     const sections = activeSections();
-    document.querySelectorAll('[data-preview]').forEach(container => {
+    document.querySelectorAll('[data-preview]').forEach((container) => {
       EuGeroPreview.updatePreview(container, state, state.template, sections);
     });
+    updateMobilePreviewDock();
+    updateTemplatePreviewMinis();
+  }
+
+  const debouncedUpdatePreviews = debounce(updateAllPreviews, 150);
+
+  function updateMobilePreviewDock() {
+    const thumb = document.querySelector('[data-preview-mobile]');
+    if (!thumb) return;
+    EuGeroPreview.updatePreview(thumb, state, state.template, activeSections());
   }
 
   function exportJson() {
@@ -706,11 +1290,11 @@
   }
 
   function handleImport(e) {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.name.endsWith('.json')) {
-      showToast('Selecione um arquivo .json válido.', true);
+      showToast('Selecione um arquivo .json valido.', { error: true });
       e.target.value = '';
       return;
     }
@@ -720,65 +1304,111 @@
       try {
         const result = EuGeroStorage.deserialize(reader.result);
         if (!result.valid) {
-          showToast(result.error, true);
+          showToast(result.error, { error: true });
           return;
         }
         state = result.data;
         const hasProgress = state.personal?.fullName || state.currentStep > 0;
-        currentView = hasProgress ? 'wizard' : 'home';
-        saveState();
-        render();
+        if (hasProgress) {
+          navigateTo('wizard', activeSections()[state.currentStep]?.id, { replace: true });
+        } else {
+          navigateTo('home', null, { replace: true });
+        }
         showToast('Rascunho carregado com sucesso!');
       } catch (err) {
-        showToast('Arquivo corrompido ou inválido. Tente outro arquivo.', true);
+        showToast('Arquivo corrompido ou invalido. Tente outro arquivo.', { error: true });
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   }
 
-  function showPrompt(type, sectionId) {
-    const includeData = document.getElementById('include-data-checkbox')?.checked ?? true;
+  let promptContext = { type: 'general', sectionId: null };
+
+  function showPrompt(type, sectionId, trigger) {
+    promptContext = { type, sectionId: sectionId || null };
+    refreshPromptText();
+    updatePrivacyWarning();
+    openModal(els.modalPrompt, trigger);
+  }
+
+  function refreshPromptText() {
+    const includeData = els.includeDataCheckbox?.checked ?? true;
     let prompt = '';
-    if (type === 'general') prompt = EuGeroPrompts.buildGeneralPrompt(state, includeData);
-    else if (type === 'section') prompt = EuGeroPrompts.buildSectionPrompt(sectionId, state, includeData);
-    else if (type === 'translation') prompt = EuGeroPrompts.buildTranslationPrompt(state, includeData);
-    els.promptText.value = prompt;
-    openModal(els.modalPrompt);
+    if (promptContext.type === 'general') prompt = EuGeroPrompts.buildGeneralPrompt(state, includeData);
+    else if (promptContext.type === 'section') prompt = EuGeroPrompts.buildSectionPrompt(promptContext.sectionId, state, includeData);
+    else if (promptContext.type === 'translation') prompt = EuGeroPrompts.buildTranslationPrompt(state, includeData);
+    if (els.promptText) els.promptText.value = prompt;
+    updatePrivacyWarning();
   }
 
-  function copyPrompt() {
-    navigator.clipboard.writeText(els.promptText.value).then(() => showToast('Prompt copiado!'));
+  function updatePrivacyWarning() {
+    const warning = els.privacyPromptWarning || document.getElementById('privacy-prompt-warning');
+    if (!warning) return;
+    const includeData = els.includeDataCheckbox?.checked ?? true;
+    const hasData = EuGeroPrompts.containsPersonalData(els.promptText?.value || '');
+    warning.hidden = !(includeData && hasData);
   }
 
-  function syncBodyScrollLock() {
-    const anyOpen = !!document.querySelector('.modal:not([hidden])')
-      || (els.previewOverlay && !els.previewOverlay.hidden);
-    document.body.classList.toggle('modal-open', anyOpen);
+  async function copyPrompt() {
+    const ok = await copyToClipboard(els.promptText?.value || '');
+    if (ok) showToast('Prompt copiado!');
+    else showToast('Nao foi possivel copiar. Selecione o texto manualmente.', { error: true });
   }
 
-  function openModal(modal) {
-    if (modal) {
-      modal.hidden = false;
-      syncBodyScrollLock();
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {
+      /* fallback below */
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
     }
   }
 
-  function closeModal(modal) {
-    if (modal) modal.hidden = true;
+  function syncBodyScrollLock() {
+    const modalOpen = !!document.querySelector('.modal:not([hidden])');
+    const overlayOpen = els.previewOverlay && !els.previewOverlay.hidden;
+    document.body.classList.toggle('modal-open', modalOpen || overlayOpen);
+  }
+
+  function openModal(modal, trigger) {
+    if (!modal) return;
+    EuGeroA11y.openDialog(modal, trigger);
     syncBodyScrollLock();
   }
 
-  function openPreviewOverlay() {
+  function closeModal(modal) {
+    if (!modal) return;
+    EuGeroA11y.closeDialog(modal);
+    syncBodyScrollLock();
+  }
+
+  function openPreviewOverlay(trigger) {
     if (!els.previewOverlay) return;
-    els.previewOverlay.hidden = false;
+    EuGeroA11y.openOverlay(els.previewOverlay, trigger);
     syncBodyScrollLock();
     updateAllPreviews();
   }
 
   function closePreviewOverlay() {
     if (!els.previewOverlay) return;
-    els.previewOverlay.hidden = true;
+    EuGeroA11y.closeOverlay(els.previewOverlay);
     syncBodyScrollLock();
   }
 
@@ -790,11 +1420,41 @@
     };
   }
 
-  function showToast(message, isError) {
+  function showToast(message, options = {}) {
     if (!els.toast) return;
-    els.toast.textContent = message;
-    els.toast.className = 'toast visible' + (isError ? ' toast-error' : '');
-    setTimeout(() => { els.toast.className = 'toast'; }, 3000);
+    ensureToastStructure();
+
+    const { error = false, actionLabel = '', onAction = null, duration = 3000 } = options;
+
+    els.toastMessage.textContent = message;
+    els.toast.className = 'toast visible' + (error ? ' toast-error' : '');
+    els.toast.setAttribute('role', error ? 'alert' : 'status');
+    els.toast.setAttribute('aria-live', error ? 'assertive' : 'polite');
+
+    clearTimeout(toastTimer);
+    els.toastAction.onclick = null;
+
+    if (actionLabel && typeof onAction === 'function') {
+      els.toastAction.textContent = actionLabel;
+      els.toastAction.hidden = false;
+      els.toastAction.onclick = () => {
+        onAction();
+        hideToast();
+      };
+      els.toast.style.pointerEvents = 'auto';
+    } else {
+      els.toastAction.hidden = true;
+      els.toast.style.pointerEvents = 'none';
+    }
+
+    toastTimer = setTimeout(hideToast, duration);
+  }
+
+  function hideToast() {
+    if (!els.toast) return;
+    els.toast.className = 'toast';
+    els.toast.style.pointerEvents = 'none';
+    if (els.toastAction) els.toastAction.hidden = true;
   }
 
   function escapeHtml(text) {
@@ -806,17 +1466,34 @@
 
   function escapeAttr(text) {
     if (!text) return '';
-    return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   window.EuGeroApp = {
     getState: () => JSON.parse(JSON.stringify(state)),
-    setState: (newState) => { state = EuGeroStorage.mergeWithDefaults(newState); },
+    setState: (newState) => {
+      state = EuGeroStorage.mergeWithDefaults(newState);
+      render();
+    },
     switchTemplate: (t) => switchTemplate(t),
     getTemplate: () => state.template,
     getActiveSections: () => activeSections(),
+    getCurrentView: () => currentView,
+    navigateTo,
     render,
-    saveState
+    saveState,
+    showToast,
+    copyToClipboard,
+    validateCurrentStep,
+    appendListItem,
+    removeListItem,
+    reorderListItem,
+    handleExport,
+    debouncedUpdatePreviews
   };
 
   document.addEventListener('DOMContentLoaded', init);
