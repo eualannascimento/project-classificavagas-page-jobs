@@ -33,6 +33,8 @@ export default [
                 DecompressionStream: 'readonly',
                 TextDecoder: 'readonly',
                 Worker: 'readonly',
+                indexedDB: 'readonly',
+                IDBDatabase: 'readonly',
                 history: 'readonly',
                 location: 'readonly',
                 Event: 'readonly',
