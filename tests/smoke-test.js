@@ -15,10 +15,14 @@ function loadScript(relativePath) {
 
 // Carregar módulos na ordem correta
 loadScript('js/config.js');
-loadScript('js/cv-data.js');
+loadScript('js/dates.js');
 loadScript('js/scoring.js');
+loadScript('js/validation.js');
 loadScript('js/storage.js');
 loadScript('js/prompts.js');
+loadScript('js/cv-data.js');
+loadScript('js/router.js');
+loadScript('js/sample-data.js');
 
 let passed = 0;
 let failed = 0;
@@ -59,8 +63,22 @@ assert(
 );
 
 assert(
-  EuGeroScoring.scoreField('Trabalhei na empresa.', { required: true, minLength: 50, actionVerbs: true }, EuGeroConfig.ACTION_VERBS) === 'fraco',
-  'Descrição curta sem verbo de ação = Fraco'
+  EuGeroScoring.hasQuantifiedResult('Reduzi custos em 30%'),
+  'Detecao de resultado numerico'
+);
+
+assert(
+  ['bom', 'otimo'].includes(EuGeroScoring.scoreField(
+    'Implementei automacao que reduziu custos em 30% com equipe enxuta.',
+    { required: true, minLength: 50, actionVerbs: true, key: 'description' },
+    EuGeroConfig.ACTION_VERBS
+  )),
+  'Texto curto com verbo e numero nao e punido como fraco'
+);
+
+assert(
+  EuGeroScoring.scoreField('Trabalhei na empresa.', { required: true, minLength: 50, actionVerbs: true, key: 'description' }, EuGeroConfig.ACTION_VERBS) === 'fraco',
+  'Descricao curta sem verbo de acao = Fraco'
 );
 
 assert(
@@ -209,6 +227,40 @@ const aggWithFit = EuGeroScoring.aggregateScore(
   pageFitHeavy
 );
 assert(aggWithFit.overall <= 45, 'Overflow penaliza pontuação geral');
+
+// --- Validacao ---
+console.log('\nValidacao de campos:');
+
+assert(!EuGeroValidation.validateEmail('invalido').ok, 'E-mail invalido rejeitado');
+assert(EuGeroValidation.validateEmail('a@b.co').ok, 'E-mail valido aceito');
+assert(!EuGeroValidation.validateUrl('ftp://x').ok || EuGeroValidation.validateUrl('https://linkedin.com/in/x').ok, 'URL http(s) valida');
+
+// --- Datas ---
+console.log('\nDatas estruturadas:');
+
+assert(EuGeroDates.serializeDate('03', '2020') === '2020-03', 'Serializa mes/ano');
+assert(EuGeroDates.formatDisplayDate('2020-03', false) === 'Mar 2020', 'Formata exibicao Mar 2020');
+assert(EuGeroDates.formatPeriod('2020-03', '', true) === 'Mar 2020 - Atual', 'Periodo com ate hoje');
+
+// --- Router ---
+console.log('\nRoteamento hash:');
+
+assert(EuGeroRouter.parseHash('#/wizard/experiences').view === 'wizard', 'Hash wizard parseado');
+assert(EuGeroRouter.parseHash('#/wizard/experiences').sectionId === 'experiences', 'Secao no hash');
+assert(EuGeroRouter.buildHash('review', null) === '#/review', 'Build hash review');
+
+// --- Sample data ---
+console.log('\nDados de exemplo:');
+
+const sample = EuGeroSampleData.build();
+assert(sample.personal.fullName.length > 0, 'Sample tem nome');
+assert(sample.experiences.length > 0, 'Sample tem experiencias');
+
+// --- ATS templates ---
+console.log('\nTemplates ATS:');
+
+assert(EuGeroConfig.getTemplateMeta('classic').atsFriendly === true, 'Classico amigavel ATS');
+assert(EuGeroConfig.getTemplateMeta('modern').atsFriendly === false, 'Moderno aviso ATS');
 
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);

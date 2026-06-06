@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Eu Gero Meu Currículo — plataforma gratuita para criar currículo e guia LinkedIn, 100% no navegador.">
+  <meta name="description" content="Eu Gero Meu Curriculo - plataforma gratuita para criar curriculo e guia LinkedIn, 100% no navegador.">
   <title>Eu Gero Meu Currículo</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,15 +11,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <a href="#app-main" class="skip-link">Pular para o conteudo</a>
   <div id="app">
     <header class="app-header">
       <div class="header-row">
         <div class="header-brand">
-          <button type="button" class="logo-btn" id="btn-go-home" aria-label="Ir para início">
-            <h1 class="logo">Eu Gero Meu Currículo</h1>
+          <button type="button" class="logo-btn" id="btn-go-home" aria-label="Ir para inicio">
+            <h1 class="logo">Eu Gero Meu Curriculo</h1>
           </button>
           <p class="tagline">Gratuito · Sem cadastro · 100% local</p>
         </div>
+        <span id="saved-indicator" class="saved-indicator" aria-live="polite" hidden>Salvo</span>
         <div class="header-actions" id="header-actions-wizard" hidden>
           <button type="button" class="btn btn-ghost btn-sm" id="btn-change-template-wizard">Template: <span data-current-template>Clássico</span></button>
           <button type="button" class="btn btn-ghost btn-sm" id="btn-export-json">Salvar JSON</button>
@@ -29,6 +31,7 @@
       </div>
     </header>
 
+    <div id="app-main">
     <!-- Homepage -->
     <main id="screen-home" class="screen screen-home">
       <section class="home-hero">
@@ -68,7 +71,9 @@
           </section>
 
           <div class="start-actions">
-            <button type="button" class="btn btn-primary btn-lg" id="btn-start-wizard">Começar a preencher →</button>
+            <button type="button" class="btn btn-primary btn-lg" id="btn-start-wizard">Comecar a preencher</button>
+            <button type="button" class="btn btn-outline btn-mobile-preview" id="btn-toggle-preview-start">Ver previa</button>
+            <button type="button" class="btn btn-ghost" id="btn-fill-sample">Preencher com exemplo</button>
             <button type="button" class="btn btn-ghost" id="btn-import-start">Carregar rascunho salvo</button>
           </div>
         </div>
@@ -94,6 +99,7 @@
             <div class="wizard-toolbar-actions">
               <button type="button" class="btn btn-ghost btn-sm" id="btn-back-start">← Configuração</button>
               <button type="button" class="btn btn-ghost btn-mobile-preview" id="btn-toggle-preview">Ver prévia</button>
+              <button type="button" class="btn btn-ghost btn-sm btn-mobile-menu" id="btn-wizard-menu" aria-label="Mais opções">⋯</button>
             </div>
           </div>
           <nav id="wizard-timeline" class="wizard-timeline" aria-label="Etapas do currículo"></nav>
@@ -124,6 +130,7 @@
         <div class="review-templates-header">
           <h3>Compare seus dados em todos os templates</h3>
           <p>Clique para escolher o visual final antes de exportar.</p>
+          <button type="button" class="btn btn-outline btn-sm btn-mobile-preview" id="btn-toggle-preview-review">Ver prévia ampliada</button>
         </div>
         <div id="review-template-gallery" class="review-template-gallery"></div>
       </section>
@@ -150,12 +157,21 @@
       </div>
     </main>
 
+    <!-- Preview mobile dock -->
+    <aside id="preview-mobile-dock" class="preview-mobile-dock" aria-label="Previa do curriculo">
+      <button type="button" class="preview-mobile-dock-btn" id="btn-expand-mobile-preview" aria-label="Ampliar previa">
+        <div class="preview-mobile-dock-thumb" data-preview-mobile></div>
+        <span class="preview-mobile-dock-label">Previa · <span data-current-template>Classico</span></span>
+      </button>
+    </aside>
+    </div>
+
     <!-- Preview mobile overlay -->
-    <div id="preview-overlay" class="preview-overlay" hidden>
+    <div id="preview-overlay" class="preview-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="preview-overlay-title">
       <div class="preview-overlay-inner">
         <div class="preview-overlay-header">
-          <h2>Prévia do currículo</h2>
-          <button type="button" class="btn btn-ghost" id="btn-close-preview" aria-label="Fechar prévia">✕</button>
+          <h2 id="preview-overlay-title">Previa do curriculo</h2>
+          <button type="button" class="btn btn-ghost" id="btn-close-preview" aria-label="Fechar previa">Fechar</button>
         </div>
         <div class="preview-paper-wrap">
           <div data-preview class="preview-content"></div>
@@ -164,7 +180,7 @@
     </div>
 
     <!-- Modal: Prompt IA -->
-    <div id="modal-prompt" class="modal" hidden role="dialog" aria-labelledby="modal-prompt-title">
+    <div id="modal-prompt" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-prompt-title">
       <div class="modal-content">
         <div class="modal-header">
           <h2 id="modal-prompt-title">Prompt para IA externa</h2>
@@ -175,13 +191,16 @@
           <input type="checkbox" id="include-data-checkbox" checked>
           Incluir meus dados no prompt
         </label>
+        <p id="privacy-prompt-warning" class="privacy-warning" hidden role="alert">
+          Atencao: o prompt incluira dados pessoais (e-mail, telefone, etc.). Copie apenas em IAs em que voce confia.
+        </p>
         <textarea id="prompt-text" class="prompt-textarea" readonly rows="12"></textarea>
         <button type="button" class="btn btn-primary" id="btn-copy-prompt">Copiar prompt</button>
       </div>
     </div>
 
     <!-- Modal: Trocar template -->
-    <div id="modal-template" class="modal" hidden role="dialog" aria-labelledby="modal-template-title">
+    <div id="modal-template" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-template-title">
       <div class="modal-content">
         <div class="modal-header">
           <h2 id="modal-template-title">Trocar template</h2>
@@ -191,20 +210,47 @@
       </div>
     </div>
 
+    <!-- Modal: Menu mobile (wizard) -->
+    <div id="modal-mobile-menu" class="modal modal-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="modal-mobile-menu-title">
+      <div class="modal-content modal-sheet-content">
+        <div class="modal-header">
+          <h2 id="modal-mobile-menu-title">Opções</h2>
+          <button type="button" class="modal-close" aria-label="Fechar">✕</button>
+        </div>
+        <div class="mobile-menu-actions">
+          <button type="button" class="btn btn-ghost mobile-menu-btn" id="btn-mobile-change-template">Trocar template</button>
+          <button type="button" class="btn btn-ghost mobile-menu-btn" id="btn-mobile-export-json">Salvar rascunho</button>
+          <button type="button" class="btn btn-ghost mobile-menu-btn" id="btn-mobile-import-json">Carregar rascunho</button>
+          <button type="button" class="btn btn-outline mobile-menu-btn" id="btn-mobile-prompt">Prompt IA geral</button>
+        </div>
+      </div>
+    </div>
+
     <input type="file" id="file-import" accept=".json" hidden>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true">
+      <span id="toast-message"></span>
+      <button type="button" id="toast-action" class="toast-action" hidden>Desfazer</button>
+    </div>
   </div>
 
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/dates.js"></script>
   <script src="js/scoring.js"></script>
+  <script src="js/validation.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/prompts.js"></script>
-  <script src="js/preview.js"></script>
+  <script src="js/sample-data.js"></script>
   <script src="js/cv-data.js"></script>
+  <script src="js/preview.js"></script>
+  <script src="js/libs.js"></script>
   <script src="js/export.js"></script>
   <script src="js/linkedin-guide.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/a11y.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

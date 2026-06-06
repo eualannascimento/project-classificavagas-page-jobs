@@ -11,9 +11,17 @@ const EuGeroPreview = (function () {
     return div.innerHTML;
   }
 
-  function formatPeriod(start, end) {
+  function formatPeriod(start, end, isCurrent) {
+    if (typeof EuGeroDates !== 'undefined') {
+      return EuGeroDates.formatPeriod(start, end, isCurrent);
+    }
     if (!start && !end) return '';
-    return `${start || ''}${start && end ? ' — ' : ''}${end || 'Atual'}`;
+    return `${start || ''}${start && end ? ' - ' : ''}${isCurrent ? 'Atual' : (end || '')}`;
+  }
+
+  function fmtDate(value) {
+    if (typeof EuGeroDates !== 'undefined') return EuGeroDates.formatDisplayDate(value, false);
+    return value || '';
   }
 
   function renderSection(title, content) {
@@ -43,7 +51,7 @@ const EuGeroPreview = (function () {
         <article class="cv-item">
           <div class="cv-item-header">
             <strong>${escapeHtml(e.title || 'Cargo')}</strong>
-            <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate))}</span>
+            <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate, e.endCurrent))}</span>
           </div>
           <div class="cv-item-sub">${escapeHtml(e.company || '')}</div>
           ${e.description ? `<p class="cv-desc">${escapeHtml(e.description).replace(/\n/g, '<br>')}</p>` : ''}
@@ -127,7 +135,7 @@ const EuGeroPreview = (function () {
 
     if (isSectionEnabled(enabledSet, 'certifications')) {
       content += renderGenericList('Certificados e Licenças', state.certifications, ['name'], c => `
-        <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer || '')}${c.date ? ` · ${escapeHtml(c.date)}` : ''}</div></article>
+        <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer || '')}${c.date ? ` · ${escapeHtml(fmtDate(c.date))}` : ''}</div></article>
       `, true);
     }
     if (isSectionEnabled(enabledSet, 'projects')) {
@@ -137,7 +145,7 @@ const EuGeroPreview = (function () {
     }
     if (isSectionEnabled(enabledSet, 'volunteering')) {
       content += renderGenericList('Voluntariado', state.volunteering, ['organization'], v => `
-        <article class="cv-item"><strong>${escapeHtml(v.role || 'Função')}</strong> — ${escapeHtml(v.organization)}<span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate))}</span></article>
+        <article class="cv-item"><strong>${escapeHtml(v.role || 'Função')}</strong> — ${escapeHtml(v.organization)}<span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate, v.endCurrent))}</span></article>
       `, true);
     }
     if (isSectionEnabled(enabledSet, 'publications')) {
@@ -266,7 +274,16 @@ const EuGeroPreview = (function () {
 
   function updatePreview(container, state, templateId, enabledSections) {
     if (!container) return;
-    container.innerHTML = render(state, templateId, enabledSections);
+    const sections = enabledSections || getActiveSections(state.enabledSections);
+    const inner = render(state, templateId, sections);
+    const pageFit = typeof EuGeroScoring !== 'undefined'
+      ? EuGeroScoring.scorePageFit(state, sections)
+      : { level: 'ok' };
+    const overflowClass = pageFit.level !== 'ok' ? ' preview-overflow' : '';
+    container.innerHTML = `
+      <div class="preview-a4-body${overflowClass}">${inner}</div>
+      <div class="cv-page-limit" aria-hidden="true"><span>Limite de 1 pagina A4</span></div>
+    `;
     container.className = `preview-content preview-paper template-${templateId}`;
   }
 

@@ -48,7 +48,12 @@ const EuGeroExport = (function () {
   }
 
   function exportTxt(state) {
-    downloadBlob(new Blob([buildPlainText(state)], { type: 'text/plain;charset=utf-8' }), getFileName(state, 'txt'));
+    try {
+      downloadBlob(new Blob([buildPlainText(state)], { type: 'text/plain;charset=utf-8' }), getFileName(state, 'txt'));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: 'Nao foi possivel gerar o TXT.' };
+    }
   }
 
   async function generateQrDataUrl(url) {
@@ -61,28 +66,36 @@ const EuGeroExport = (function () {
   }
 
   async function exportPdf(state, templateId) {
+    if (typeof EuGeroLibs !== 'undefined' && !EuGeroLibs.hasJsPdf()) {
+      return { ok: false, error: 'PDF indisponivel: biblioteca jsPDF nao carregada. Verifique conexao ou pasta vendor/.' };
+    }
     if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
-      alert('Biblioteca jsPDF não carregada.');
-      return;
+      return { ok: false, error: 'PDF indisponivel: biblioteca jsPDF nao carregada.' };
     }
 
-    const { jsPDF } = window.jspdf || jspdf;
-    const meta = EuGeroConfig.getTemplateMeta(templateId);
-    const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
-    const cvDoc = EuGeroCvData.build(state, enabledSections);
+    try {
+      const { jsPDF } = window.jspdf || jspdf;
+      const meta = EuGeroConfig.getTemplateMeta(templateId);
+      const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
+      const cvDoc = EuGeroCvData.build(state, enabledSections);
 
-    switch (meta.layout) {
-      case 'sidebar':
-        await exportPdfSidebar(jsPDF, cvDoc, state, meta, templateId);
-        break;
-      case 'banner':
-        await exportPdfBanner(jsPDF, cvDoc, state, meta);
-        break;
-      case 'left':
-        await exportPdfLeft(jsPDF, cvDoc, state, meta);
-        break;
-      default:
-        await exportPdfClassic(jsPDF, cvDoc, state, meta);
+      switch (meta.layout) {
+        case 'sidebar':
+          await exportPdfSidebar(jsPDF, cvDoc, state, meta, templateId);
+          break;
+        case 'banner':
+          await exportPdfBanner(jsPDF, cvDoc, state, meta);
+          break;
+        case 'left':
+          await exportPdfLeft(jsPDF, cvDoc, state, meta);
+          break;
+        default:
+          await exportPdfClassic(jsPDF, cvDoc, state, meta);
+      }
+      return { ok: true };
+    } catch (e) {
+      console.error('Erro ao exportar PDF:', e);
+      return { ok: false, error: 'Nao foi possivel gerar o PDF.' };
     }
   }
 
@@ -486,6 +499,7 @@ const EuGeroExport = (function () {
   async function exportDocx(state, templateId) {
     try {
       const docx = await import('https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm');
+      if (typeof EuGeroLibs !== 'undefined') EuGeroLibs.markDocxAvailable?.();
       const meta = EuGeroConfig.getTemplateMeta(templateId);
       const enabledSections = EuGeroConfig.getActiveSections(state.enabledSections);
       const cvDoc = EuGeroCvData.build(state, enabledSections);
@@ -503,9 +517,10 @@ const EuGeroExport = (function () {
         default:
           await exportDocxClassic(docx, cvDoc, state, meta);
       }
+      return { ok: true };
     } catch (e) {
       console.error('Erro ao exportar Word:', e);
-      alert('Não foi possível gerar o arquivo Word.');
+      return { ok: false, error: 'Word indisponivel: exige internet na primeira exportacao (CDN docx.js).' };
     }
   }
 

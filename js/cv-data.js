@@ -4,9 +4,17 @@
 const EuGeroCvData = (function () {
   const { getActiveSections, getSkillsFromState } = EuGeroConfig;
 
-  function formatPeriod(start, end) {
+  function formatPeriod(start, end, isCurrent) {
+    if (typeof EuGeroDates !== 'undefined') {
+      return EuGeroDates.formatPeriod(start, end, isCurrent);
+    }
     if (!start && !end) return '';
-    return `${start || ''}${start && end ? ' — ' : ''}${end || 'Atual'}`;
+    return `${start || ''}${start && end ? ' - ' : ''}${isCurrent ? 'Atual' : (end || '')}`;
+  }
+
+  function fmtDate(value) {
+    if (typeof EuGeroDates !== 'undefined') return EuGeroDates.formatDisplayDate(value, false);
+    return value || '';
   }
 
   function hasData(items, keys) {
@@ -58,7 +66,7 @@ const EuGeroCvData = (function () {
           type: 'entry',
           title: e.title || '',
           subtitle: e.company || '',
-          period: formatPeriod(e.startDate, e.endDate),
+          period: formatPeriod(e.startDate, e.endDate, e.endCurrent),
           description: e.description || ''
         })));
       }
@@ -71,7 +79,7 @@ const EuGeroCvData = (function () {
           type: 'entry',
           title: e.degree || '',
           subtitle: e.institution || '',
-          period: formatPeriod(e.startDate, e.endDate),
+          period: formatPeriod(e.startDate, e.endDate, e.endCurrent),
           description: ''
         })));
       }
@@ -97,7 +105,7 @@ const EuGeroCvData = (function () {
         pushSection('certifications', 'Certificados e Licenças', items.map(c => ({
           type: 'entry',
           title: c.name,
-          subtitle: [c.issuer, c.date].filter(Boolean).join(' · '),
+          subtitle: [c.issuer, fmtDate(c.date)].filter(Boolean).join(' · '),
           period: '',
           description: c.url || ''
         })));
@@ -124,7 +132,7 @@ const EuGeroCvData = (function () {
           type: 'entry',
           title: v.role || '',
           subtitle: v.organization || '',
-          period: formatPeriod(v.startDate, v.endDate),
+          period: formatPeriod(v.startDate, v.endDate, v.endCurrent),
           description: v.description || ''
         })));
       }
@@ -163,7 +171,7 @@ const EuGeroCvData = (function () {
           type: 'entry',
           title: o.name,
           subtitle: o.role || '',
-          period: formatPeriod(o.startDate, o.endDate),
+          period: formatPeriod(o.startDate, o.endDate, o.endCurrent),
           description: ''
         })));
       }
