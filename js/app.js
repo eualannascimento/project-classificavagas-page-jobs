@@ -189,6 +189,15 @@
     document.getElementById('btn-back-review')?.addEventListener('click', goToReview);
     document.getElementById('btn-back-start')?.addEventListener('click', goToStart);
 
+    const btnToggleCompact = document.getElementById('toggle-compact-mode');
+    if (btnToggleCompact) {
+      btnToggleCompact.addEventListener('change', (e) => {
+        document.querySelectorAll('.preview-content').forEach(el => {
+          el.classList.toggle('condensed-mode', e.target.checked);
+        });
+      });
+    }
+
     document.getElementById('btn-export-json')?.addEventListener('click', exportJson);
     document.getElementById('btn-export-json-review')?.addEventListener('click', exportJson);
     document.getElementById('btn-import-json')?.addEventListener('click', () => els.fileImport?.click());

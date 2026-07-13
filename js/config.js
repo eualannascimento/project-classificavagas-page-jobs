@@ -220,6 +220,16 @@ const EuGeroConfig = (function () {
       layout: 'sidebar', thumbClass: 'template-thumb-creative',
       sidebarRgb: [124, 58, 237], accentHex: '7C3AED', atsFriendly: false,
       atsNote: 'Barra lateral: prefira Clássico ou Minimalista para ATS rigorosos.'
+    },
+    harvard: {
+      id: 'harvard', name: 'Harvard', description: 'O clássico de alta densidade acadêmica',
+      layout: 'centered', thumbClass: 'template-thumb-elegant', serif: true,
+      accentRgb: [0, 0, 0], accentHex: '000000', atsFriendly: true
+    },
+    compact_modern: {
+      id: 'compact_modern', name: 'Compacto', description: 'Design limpo focado em economizar espaço',
+      layout: 'left', thumbClass: 'template-thumb-minimal',
+      accentRgb: [30, 41, 59], accentHex: '1E293B', atsFriendly: true
     }
   };
 

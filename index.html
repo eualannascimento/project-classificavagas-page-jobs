@@ -35,21 +35,26 @@
     <!-- Homepage -->
     <main id="screen-home" class="screen screen-home">
       <section class="home-hero">
-        <p class="home-eyebrow">Currículo de uma página · LinkedIn alinhado</p>
-        <h2 class="home-title">Crie um currículo profissional em minutos</h2>
-        <p class="home-lead">
-          O <strong>Eu Gero Meu Currículo</strong> guia você passo a passo para montar um CV conciso de
-          <strong>uma página só</strong>, comparar visuais e exportar em PDF ou Word — tudo no navegador, sem cadastro.
-        </p>
-        <ul class="home-features">
-          <li>Formulário guiado com dicas e nota por campo</li>
-          <li>Prévia ao vivo em vários templates</li>
-          <li>Alerta quando o conteúdo excede o ideal de 1 página</li>
-          <li>Guia para replicar no LinkedIn + prompts para IA</li>
-        </ul>
-        <div class="home-cta">
-          <button type="button" class="btn btn-primary btn-xl" id="btn-enter-app">Criar meu currículo</button>
-          <button type="button" class="btn btn-ghost" id="btn-import-home">Carregar rascunho salvo</button>
+        <div class="hero-content">
+          <p class="home-eyebrow">Minimalista · Inteligente · Gratuito</p>
+          <h2 class="home-title">Seu currículo, focado no que importa.</h2>
+          <p class="home-lead">
+            Crie um currículo de <strong>uma página</strong>, impossível de ser ignorado. Ou otimize o seu atual com nossas dicas durante o preenchimento.
+          </p>
+        </div>
+        <div class="home-journeys">
+          <div class="journey-card">
+            <div class="journey-icon">✨</div>
+            <h3>Criar do zero</h3>
+            <p>Guia passo a passo intuitivo. Perfeito para quem não sabe por onde começar.</p>
+            <button type="button" class="btn btn-primary btn-lg w-full" id="btn-enter-app">Iniciar criação</button>
+          </div>
+          <div class="journey-card">
+            <div class="journey-icon">🚀</div>
+            <h3>Otimizar o meu</h3>
+            <p>Já possui um salvo na plataforma? Carregue seus dados e descubra como melhorar.</p>
+            <button type="button" class="btn btn-outline btn-lg w-full" id="btn-import-home">Carregar arquivo (.json)</button>
+          </div>
         </div>
       </section>
     </main>
@@ -59,14 +64,18 @@
       <div class="split-layout">
         <div class="split-form">
           <section class="start-block">
-            <h2>1. Escolha o visual</h2>
-            <p class="start-desc">Você pode trocar depois sem perder dados.</p>
-            <div id="template-grid-start" class="template-grid template-grid-compact"></div>
+            <h2>Bem-vindo(a) ao seu novo currículo!</h2>
+            <p class="start-desc">O segredo de um currículo impossível de ser ignorado está no conteúdo. A estética nós cuidaremos mais adiante.</p>
+            <ul class="onboarding-tips">
+              <li>Mantenha tudo em <strong>1 página</strong>. Recrutadores gastam cerca de 6 segundos analisando cada currículo.</li>
+              <li>Sempre use <strong>verbos de ação</strong> (Ex: "Liderei", "Otimizei", "Desenvolvi").</li>
+              <li>Foque em <strong>resultados</strong> quantitativos ao invés de listar apenas suas responsabilidades.</li>
+            </ul>
           </section>
 
           <section class="start-block">
-            <h2>2. O que incluir no currículo?</h2>
-            <p class="start-desc">Seções obrigatórias sempre entram. Marque as opcionais que deseja preencher.</p>
+            <h2>O que você deseja incluir?</h2>
+            <p class="start-desc">Seções obrigatórias estarão sempre presentes. Marque as opcionais que fazem sentido para sua carreira.</p>
             <div id="section-checklist" class="section-checklist"></div>
           </section>
 
@@ -135,7 +144,12 @@
       <section class="review-templates-section">
         <div class="review-templates-header">
           <h3>Compare seus dados em todos os templates</h3>
-          <p>Clique para escolher o visual final antes de exportar.</p>
+          <p>Seu conteúdo está pronto. Agora, escolha o visual ideal para exportar.</p>
+          <div class="smart-fit-controls">
+            <label class="checkbox-label" title="Diminui a margem e o tamanho da fonte para forçar o encaixe em 1 página.">
+              <input type="checkbox" id="toggle-compact-mode"> Forçar caber em 1 página (Modo Condensado)
+            </label>
+          </div>
           <button type="button" class="btn btn-outline btn-sm btn-mobile-preview" id="btn-toggle-preview-review">Ver prévia ampliada</button>
         </div>
         <div id="review-template-gallery" class="review-template-gallery"></div>
@@ -242,8 +256,6 @@
 
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/dates.js"></script>
   <script src="js/scoring.js"></script>
