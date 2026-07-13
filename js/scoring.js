@@ -241,6 +241,49 @@ const EuGeroScoring = (function () {
     return out;
   }
 
+  function calculateProgress(state) {
+    if (!state) return 0;
+    const activeSecs = typeof EuGeroConfig !== 'undefined'
+      ? EuGeroConfig.getActiveSections(state.enabledSections)
+      : [];
+    
+    let totalRequired = 0;
+    let filledRequired = 0;
+
+    activeSecs.forEach(section => {
+      if (section.list) {
+        const items = state[section.id] || [];
+        items.forEach(item => {
+          (section.itemFields || []).forEach(field => {
+            if (field.required) {
+              totalRequired++;
+              if (item[field.key] !== undefined && String(item[field.key]).trim().length > 0) {
+                filledRequired++;
+              }
+            }
+          });
+        });
+      } else if (section.fields) {
+        section.fields.forEach(field => {
+          if (field.required) {
+            totalRequired++;
+            let value = '';
+            if (section.id === 'personal') value = (state.personal || {})[field.key] || '';
+            else if (section.id === 'summary') value = state.summary || '';
+            else value = state[field.key] || '';
+
+            if (String(value).trim().length > 0) {
+              filledRequired++;
+            }
+          }
+        });
+      }
+    });
+
+    if (totalRequired === 0) return 100;
+    return Math.round((filledRequired / totalRequired) * 100);
+  }
+
   function getLabelText(score) {
     return LABELS[score] || score;
   }
@@ -260,6 +303,8 @@ const EuGeroScoring = (function () {
     estimateContentVolume,
     scorePageFit,
     aggregateScore,
+    calculateProgress,
     getLabelText
   };
 })();
+

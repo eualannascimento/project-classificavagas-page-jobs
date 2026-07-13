@@ -262,9 +262,48 @@ console.log('\nTemplates ATS:');
 assert(EuGeroConfig.getTemplateMeta('classic').atsFriendly === true, 'Classico amigavel ATS');
 assert(EuGeroConfig.getTemplateMeta('modern').atsFriendly === false, 'Moderno aviso ATS');
 
+// --- Progresso de Preenchimento ---
+console.log('\nProgresso de Preenchimento:');
+
+const testStateEmpty = EuGeroConfig.createEmptyState();
+// For personal, we have 4 required fields: fullName, headline, email, location.
+// For summary, we have 1: summary.
+// For experiences, if empty list, no fields are active/required (since items are dynamically added).
+// So total required fields = 5.
+const progressEmpty = EuGeroScoring.calculateProgress(testStateEmpty);
+assert(progressEmpty === 0, 'Estado vazio = 0% de progresso');
+
+const testStatePartial = {
+  ...testStateEmpty,
+  personal: {
+    ...testStateEmpty.personal,
+    fullName: 'Maria Teste',
+    email: 'maria@test.com'
+  }
+};
+// 2 fields out of 5 required fields filled.
+// Math.round((2 / 5) * 100) = 40.
+const progressPartial = EuGeroScoring.calculateProgress(testStatePartial);
+assert(progressPartial === 40, 'Estado parcial (2/5) = 40% de progresso');
+
+const testStateZeroRequired = {
+  ...testStateEmpty,
+  personal: {
+    fullName: 'Maria Teste',
+    headline: 'Desenvolvedora',
+    email: 'maria@test.com',
+    location: 'São Paulo, SP'
+  },
+  enabledSections: ['personal'] // Apenas Dados Pessoais habilitado e totalmente preenchido
+};
+const progressZero = EuGeroScoring.calculateProgress(testStateZeroRequired);
+assert(progressZero === 100, 'Seção obrigatória preenchida = 100% de progresso');
+
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 
 if (failed > 0) {
   process.exit(1);
 }
+
