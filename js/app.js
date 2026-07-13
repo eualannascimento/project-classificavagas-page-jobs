@@ -70,6 +70,8 @@
     els.previewMobileDock = document.getElementById('preview-mobile-dock');
     els.toastMessage = document.getElementById('toast-message');
     els.toastAction = document.getElementById('toast-action');
+    els.progressBar = document.getElementById('wizard-progress-bar');
+    els.progressText = document.getElementById('wizard-progress-text');
   }
 
   function ensureToastStructure() {
@@ -221,6 +223,11 @@
     document.getElementById('btn-toggle-preview-review')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
     document.getElementById('btn-expand-mobile-preview')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
     document.getElementById('btn-close-preview')?.addEventListener('click', () => closePreviewOverlay());
+    els.previewOverlay?.addEventListener('click', (e) => {
+      if (e.target === els.previewOverlay) {
+        closePreviewOverlay();
+      }
+    });
 
     document.getElementById('btn-wizard-menu')?.addEventListener('click', (e) => openModal(els.modalMobileMenu, e.currentTarget));
     document.getElementById('btn-mobile-change-template')?.addEventListener('click', (e) => {
@@ -1267,6 +1274,15 @@
     });
   }
 
+  function updateProgressBar() {
+    const bar = els.progressBar || document.getElementById('wizard-progress-bar');
+    const text = els.progressText || document.getElementById('wizard-progress-text');
+    if (!bar || !text) return;
+    const progress = EuGeroScoring.calculateProgress(state);
+    bar.style.width = `${progress}%`;
+    text.textContent = `${progress}% preenchido`;
+  }
+
   function updateAllPreviews() {
     const sections = activeSections();
     document.querySelectorAll('[data-preview]').forEach((container) => {
@@ -1274,6 +1290,7 @@
     });
     updateMobilePreviewDock();
     updateTemplatePreviewMinis();
+    updateProgressBar();
   }
 
   const debouncedUpdatePreviews = debounce(updateAllPreviews, 150);

@@ -105,8 +105,14 @@
           <nav id="wizard-timeline" class="wizard-timeline" aria-label="Etapas do currículo"></nav>
           <form id="wizard-form" onsubmit="return false;">
             <div id="wizard-steps"></div>
-            <div class="wizard-nav">
+            <div class="wizard-nav wizard-nav-sticky">
               <button type="button" class="btn btn-secondary" id="btn-prev">Anterior</button>
+              <div class="wizard-progress-bar-container">
+                <div class="wizard-progress-bar-track">
+                  <div class="wizard-progress-bar-fill" id="wizard-progress-bar" style="width: 0%;"></div>
+                </div>
+                <span class="wizard-progress-text" id="wizard-progress-text">0% preenchido</span>
+              </div>
               <button type="button" class="btn btn-primary" id="btn-next">Próximo</button>
             </div>
           </form>
@@ -169,9 +175,10 @@
     <!-- Preview mobile overlay -->
     <div id="preview-overlay" class="preview-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="preview-overlay-title">
       <div class="preview-overlay-inner">
-        <div class="preview-overlay-header">
-          <h2 id="preview-overlay-title">Previa do curriculo</h2>
-          <button type="button" class="btn btn-ghost" id="btn-close-preview" aria-label="Fechar previa">Fechar</button>
+        <div class="preview-overlay-header bottom-sheet-header">
+          <div class="bottom-sheet-drag-handle"></div>
+          <h2 id="preview-overlay-title">Prévia do Currículo</h2>
+          <button type="button" class="btn btn-ghost" id="btn-close-preview" aria-label="Fechar previa">✕</button>
         </div>
         <div class="preview-paper-wrap">
           <div data-preview class="preview-content"></div>

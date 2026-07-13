@@ -1,6 +1,6 @@
 # Melhorias de UX: Wizard Navigation & Mobile Bottom Sheet
 
-**Status:** Pronto para Commit  
+**Status:** Concluído  
 **Data:** 2026-07-13
 
 ## 1. Resumo e Objetivo
