@@ -288,14 +288,60 @@
   }
 
   function renderTemplatePickers() {
+    const getThumbMarkup = (layout, id) => {
+      if (layout === 'sidebar') {
+        const bg = id === 'creative' ? '#7c3aed' : '#4f46e5';
+        return `
+          <div class="thumb-sidebar" style="background: ${bg}; width: 30%; height: 100%;"></div>
+          <div class="thumb-main" style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+            <div class="thumb-line" style="height: 4px; background: #cbd5e1; width: 80%; border-radius: 1px;"></div>
+            <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 100%; border-radius: 1px;"></div>
+            <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 90%; border-radius: 1px;"></div>
+            <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 40%; border-radius: 1px;"></div>
+          </div>
+        `;
+      }
+      if (layout === 'banner') {
+        return `
+          <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+            <div class="thumb-banner" style="background: #0f172a; height: 25%; width: 100%;"></div>
+            <div style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+              <div class="thumb-line" style="height: 3px; background: #cbd5e1; width: 60%; border-radius: 1px;"></div>
+              <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 90%; border-radius: 1px;"></div>
+              <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 40%; border-radius: 1px;"></div>
+            </div>
+          </div>
+        `;
+      }
+      if (layout === 'left') {
+        return `
+          <div style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 6px; gap: 4px; align-items: flex-start; text-align: left;">
+            <div class="thumb-line" style="height: 5px; background: #475569; width: 50%; border-radius: 1px; margin-bottom: 2px;"></div>
+            <div class="thumb-line" style="height: 3px; background: #cbd5e1; width: 90%; border-radius: 1px;"></div>
+            <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 80%; border-radius: 1px;"></div>
+            <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 95%; border-radius: 1px;"></div>
+          </div>
+        `;
+      }
+      // Centered (classic, elegant)
+      const accent = id === 'elegant' ? '#92400e' : '#334155';
+      return `
+        <div style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 6px; gap: 4px; align-items: center; text-align: center;">
+          <div class="thumb-line" style="height: 5px; background: ${accent}; width: 60%; border-radius: 1px; margin-bottom: 2px;"></div>
+          <div class="thumb-line" style="height: 3px; background: #cbd5e1; width: 40%; border-radius: 1px;"></div>
+          <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 80%; border-radius: 1px; margin-top: 4px;"></div>
+          <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 90%; border-radius: 1px;"></div>
+        </div>
+      `;
+    };
+
     const cardHtml = (t) => {
       const atsBadge = t.atsFriendly
         ? '<span class="badge badge-ats">ATS</span>'
         : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'Layout pode afetar leitura ATS')}">Atenção ATS</span>`;
       return `
         <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
-          <div class="template-thumb ${t.thumbClass}"></div>
-          <div class="template-preview" data-template-preview="${t.id}" aria-hidden="true"></div>
+          <div class="template-thumb ${t.thumbClass}">${getThumbMarkup(t.layout, t.id)}</div>
           <span class="template-card-name">${escapeHtml(t.name)} ${atsBadge}</span>
           <small class="template-card-desc">${escapeHtml(t.description)}</small>
         </button>
@@ -406,6 +452,9 @@
     els.screenGuide.hidden = view !== 'guide';
     if (els.headerActions) {
       els.headerActions.hidden = view !== 'wizard';
+    }
+    if (els.previewMobileDock) {
+      els.previewMobileDock.hidden = (view !== 'wizard' && view !== 'review');
     }
   }
 
