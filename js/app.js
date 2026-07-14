@@ -602,6 +602,7 @@
   }
 
   function renderFieldTip(field) {
+    if (!field.tip) return '';
     return `
       <span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">${escapeHtml(field.tip)}</span></span>
     `;

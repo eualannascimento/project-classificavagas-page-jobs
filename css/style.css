@@ -61,41 +61,34 @@
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
-  height: 100vh;
-  overflow: hidden;
 }
 
 body {
   margin: 0;
-  font-family: var(--font);
+  font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  font-size: 15px;
 }
 
 #app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 #app-main {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   position: relative;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-title);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
+
+a { color: var(--color-accent); text-underline-offset: 3px; }
+a:hover { color: var(--color-accent-700); }
 
 /* Header — compacto */
 .app-header {
@@ -155,30 +148,30 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  padding: 0.4375rem 0.875rem;
-  font-family: inherit;
-  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-heading);
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), transform var(--transition);
-  min-height: 34px;
-  letter-spacing: -0.01em;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+  min-height: 38px;
+  letter-spacing: 0.01em;
   white-space: nowrap;
+  text-transform: none;
 }
 
 .btn:active { transform: scale(0.98); }
 
 .btn-primary {
-  background: linear-gradient(135deg, #5b54f0, var(--color-primary-dark));
+  background: var(--color-accent);
   color: white;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+  border-color: var(--color-accent);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, #6660f2, var(--color-primary));
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
-  transform: translateY(-1px);
+  background: var(--color-accent-700);
+  border-color: var(--color-accent-700);
 }
 
 .btn-secondary {
@@ -190,15 +183,15 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-outline {
   background: transparent;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
-.btn-outline:hover { background: rgba(79, 70, 229, 0.08); }
+.btn-outline:hover { background: var(--color-accent-100); }
 
 .btn-ghost {
   background: transparent;
-  color: var(--color-text-muted);
-  border: none;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+  border: 1px solid transparent;
 }
 .btn-ghost:hover { background: var(--color-bg); color: var(--color-text); }
 
@@ -563,16 +556,7 @@ textarea.cv-input { min-height: 104px; resize: vertical; line-height: 1.5; }
 
 /* Screens */
 .screen {
-  animation: screen-in 0.2s ease-out;
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0.5rem 0.875rem 0.5rem;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  animation: cvfade 0.35s ease;
 }
 
 .btn-sm {
@@ -1933,17 +1917,7 @@ body.modal-open {
     display: inline-flex;
   }
 
-  .screen {
-    padding: 0.5rem 0.75rem;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-    overflow-y: auto;
-  }
-
-  .screen-home {
-    padding: 1.5rem 0.75rem;
-    align-items: flex-start;
-    overflow-y: auto;
-  }
+  /* screens are already naturally scrolling */
 
   .home-hero {
     padding: 1.25rem 0;
