@@ -481,38 +481,42 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: flex-start;
   gap: 0.625rem;
-  padding: 0.5rem 0.625rem;
-  border-radius: var(--radius);
+  padding: 0.4375rem 0.625rem;
+  border-radius: 6px;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: background var(--transition), border-color var(--transition);
 }
 
-.section-check:hover { background: var(--color-bg); }
+.section-check:hover { background: var(--color-bg); border-color: var(--color-border); }
 
 .section-check-mandatory {
-  background: rgba(41, 98, 255, 0.04);
-  border-color: rgba(41, 98, 255, 0.15);
+  background: rgba(79, 70, 229, 0.04);
+  border-color: rgba(79, 70, 229, 0.12);
   cursor: default;
 }
 
 .section-check input {
-  margin-top: 0.2rem;
-  width: 16px;
-  height: 16px;
+  margin-top: 0.15rem;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
+  accent-color: var(--color-primary);
 }
 
 .section-check-label {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
-  font-size: 0.875rem;
+  gap: 0.0625rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .section-check-label small {
   color: var(--color-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
 }
+
 
 .badge {
   display: inline-block;
@@ -1741,8 +1745,9 @@ body.modal-open {
   }
 
   .app-header {
-    padding: 0.5rem 0.75rem;
-    padding-top: max(0.5rem, env(safe-area-inset-top));
+    padding: 0 0.75rem;
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
   }
 
   .header-row {
@@ -1787,8 +1792,8 @@ body.modal-open {
   }
 
   .home-hero {
-    padding: 1.75rem 1.25rem;
-    border-radius: var(--radius);
+    padding: 1.25rem 0;
+    min-height: unset;
   }
 
   .home-features {
