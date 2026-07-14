@@ -1781,8 +1781,9 @@ body.modal-open {
   }
 
   .screen {
-    padding: 0.625rem 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    overflow-y: auto;
   }
 
   .screen-home {
@@ -1832,6 +1833,13 @@ body.modal-open {
 
   .section-checklist {
     overflow-y: visible;
+    flex: none;
+    min-height: unset;
+  }
+
+  .split-form {
+    height: auto;
+    overflow-y: visible;
   }
 
   .template-grid-compact {
@@ -1854,6 +1862,8 @@ body.modal-open {
   .wizard-panel {
     padding: 0.625rem 0.75rem 0;
     border-radius: 8px;
+    overflow-y: visible;
+    height: auto;
   }
 
   .wizard-toolbar {
