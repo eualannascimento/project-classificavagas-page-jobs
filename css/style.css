@@ -5,31 +5,52 @@
 }
 
 :root {
-  --color-primary: #4f46e5;
-  --color-primary-dark: #3730a3;
-  --color-primary-light: #e0e7ff;
-  --color-bg: #f1f5f9;
+  /* Novas Variaveis do Design (Mapeamento) */
+  --color-accent: #4f46e5;
+  --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #312e81;
+  --color-accent-100: #e0e7ff;
+  
+  --color-bg: #f8fafc; /* Um pouco mais limpo */
   --color-surface: #ffffff;
   --color-text: #0f172a;
   --color-text-muted: #64748b;
+  
+  --color-divider: #e2e8f0;
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
+  
+  --color-neutral-900: #0f172a;
+  --color-neutral-200: #e2e8f0;
+
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Variaveis Legadas (Mantidas temporariamente para compatibilidade) */
+  --color-primary: var(--color-accent);
+  --color-primary-dark: var(--color-accent-700);
+  --color-primary-light: var(--color-accent-100);
+  --font: var(--font-body);
+  --font-title: var(--font-heading);
+
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
   --color-score-fraco: #ef4444;
   --color-score-bom: #f59e0b;
   --color-score-otimo: #10b981;
-  --sidebar-modern: #4f46e5;
+  
+  --sidebar-modern: var(--color-accent);
   --radius: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+  
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  --font: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-title: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  
   --max-width: 1320px;
   --preview-width: 340px;
   --transition: 0.15s ease;
@@ -218,7 +239,139 @@ h1, h2, h3, h4, h5, h6 {
 
 .logo-btn:hover .logo { color: var(--color-primary); }
 
-/* Homepage */
+/* Novo Design: Blueprint Cards */
+.blueprint {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+}
+
+.blueprint .corner {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-accent);
+  z-index: 2;
+}
+
+.blueprint .corner.tl { top: -3px; left: -3px; }
+.blueprint .corner.tr { top: -3px; right: -3px; }
+.blueprint .corner.bl { bottom: -3px; left: -3px; }
+.blueprint .corner.br { bottom: -3px; right: -3px; }
+
+/* Novo Design: Formulários e Inputs (.cv-input, .cv-help, etc.) */
+.cv-input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 11px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  transition: border-color var(--transition);
+}
+.cv-input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.cv-input:focus-visible { border-color: var(--color-accent); outline: 2px solid var(--color-accent); outline-offset: 1px; }
+textarea.cv-input { min-height: 104px; resize: vertical; line-height: 1.5; }
+
+.cv-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent-700);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  position: relative;
+  font-family: var(--font-body);
+}
+.cv-help:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.cv-tip-pop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  transform: translateX(-50%);
+  width: 210px;
+  background: var(--color-neutral-900);
+  color: #fff;
+  padding: 9px 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .15s ease;
+  z-index: 40;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.cv-tip-pop::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-neutral-900);
+}
+.cv-help:hover .cv-tip-pop,
+.cv-help:focus .cv-tip-pop,
+.cv-help:focus-visible .cv-tip-pop {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 560px) {
+  .cv-tip-pop { width: 160px; }
+}
+
+@media (max-width: 560px) {
+  .cv-tip-pop { width: 160px; }
+}
+
+/* Grids e Layouts Utilitários */
+.cv-main {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 24px 40px;
+  animation: cvfade .35s ease;
+}
+
+@keyframes cvfade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.cv-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.cv-form2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .cv-split { grid-template-columns: 1fr; gap: 30px; }
+  .cv-form2 { grid-template-columns: 1fr; }
+  .cv-main { padding-left: 16px; padding-right: 16px; }
+}
+
+/* Homepage (Antiga) */
 .screen-home {
   flex: 1;
   min-height: 0;

@@ -13,177 +13,219 @@
 <body>
   <a href="#app-main" class="skip-link">Pular para o conteudo</a>
   <div id="app">
-    <header class="app-header">
-      <div class="header-row">
-        <div class="header-brand">
-          <button type="button" class="logo-btn" id="btn-go-home" aria-label="Ir para inicio">
-            <h1 class="logo">Eu Gero Meu Curriculo</h1>
-          </button>
-          <p class="tagline">Gratuito · Sem cadastro · 100% local</p>
-        </div>
-        <span id="saved-indicator" class="saved-indicator" aria-live="polite" hidden>Salvo</span>
-        <div class="header-actions" id="header-actions-wizard" hidden>
-          <button type="button" class="btn btn-ghost btn-sm" id="btn-change-template-wizard">Template: <span data-current-template>Clássico</span></button>
-          <button type="button" class="btn btn-ghost btn-sm" id="btn-export-json">Salvar JSON</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="btn-import-json">Carregar</button>
-          <button type="button" class="btn btn-outline btn-sm" id="btn-prompt-general">IA geral</button>
+    <nav class="cv-nav" style="display: flex; align-items: center; gap: 16px; max-width: 1180px; margin: 0 auto; padding: 18px 24px;">
+      <button type="button" id="btn-go-home" style="display: flex; align-items: baseline; gap: 9px; background: none; border: 0; padding: 0; cursor: pointer; color: inherit;">
+        <span style="font-family: var(--font-heading); font-weight: 600; font-size: 21px; letter-spacing: -0.01em;">Eu Gero Meu Currículo</span>
+        <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">por ClassificaVagas</span>
+      </button>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <span id="saved-indicator" hidden style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 0.04em; color: var(--color-accent-700);">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent);"></span>Rascunho salvo
+        </span>
+        <div id="header-actions-wizard" hidden style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-ghost" id="btn-change-template-wizard" style="font-size: 14px;">Template: <span data-current-template>Clássico</span></button>
+          <button type="button" class="btn btn-ghost" id="btn-export-json" style="font-size: 14px;">Salvar JSON</button>
+          <button type="button" class="btn btn-ghost" id="btn-import-json" style="font-size: 14px;">Carregar</button>
         </div>
       </div>
-    </header>
+    </nav>
 
     <div id="app-main">
     <!-- Homepage -->
-    <main id="screen-home" class="screen screen-home">
-      <section class="home-hero">
-        <div class="hero-content">
-          <p class="home-eyebrow">✦ Gratuito · Sem cadastro · 100% no navegador</p>
-          <h2 class="home-title">Crie seu currículo<br><span class="home-title-accent">em minutos.</span></h2>
-          <p class="home-lead">
-            Guia passo a passo, prévia em tempo real e dicas de especialistas.<br>Seu currículo ideal está a um clique de distância.
-          </p>
+    <main id="screen-home" class="screen cv-main">
+      <section style="padding: 40px 0 8px;">
+        <p style="font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 0 0 16px;">Gratuito · Sem cadastro · Feito no seu navegador</p>
+        <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: clamp(40px, 6vw, 74px); line-height: 1.02; letter-spacing: -0.01em; text-transform: uppercase; margin: 0; max-width: 15ch;">Seu currículo pronto, sem complicação.</h1>
+        <p style="font-size: 17px; line-height: 1.55; max-width: 56ch; margin: 22px 0 0; color: color-mix(in srgb, var(--color-text) 82%, transparent);">Um passo de cada vez, com uma dica clara em cada campo. Trabalho informal, voluntário ou o primeiro emprego — tudo conta, e a gente te mostra como escrever.</p>
+      </section>
+
+      <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 40px 0 0;">
+        <div class="blueprint" style="padding: 26px; display: flex; flex-direction: column; gap: 10px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent-700); font-weight: 600;">Começar do zero</span>
+          <h3 style="font-family: var(--font-heading); font-weight: 600; font-size: 24px; text-transform: uppercase; margin: 2px 0 0;">Criar meu currículo</h3>
+          <p style="font-size: 14.5px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0; flex: 1;">Um guia passo a passo, pensado para quem nunca fez um currículo. Sem termos difíceis.</p>
+          <button type="button" class="btn btn-primary" id="btn-enter-app" style="margin-top: 10px; min-height: 44px; font-size: 15px;">Começar agora</button>
         </div>
-        <div class="home-journeys">
-          <div class="journey-card journey-card-primary">
-            <div class="journey-icon">✦</div>
-            <h3>Criar do zero</h3>
-            <p>Nunca criou um currículo? Nosso wizard guia você etapa por etapa. Simples, rápido e eficaz.</p>
-            <ul class="journey-perks">
-              <li>✓ Guia passo a passo</li>
-              <li>✓ Dicas em tempo real</li>
-              <li>✓ Prévia ao vivo</li>
-            </ul>
-            <button type="button" class="btn btn-primary btn-lg w-full" id="btn-enter-app">Começar agora →</button>
+        <div class="blueprint" style="padding: 26px; display: flex; flex-direction: column; gap: 10px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-weight: 600;">Já tenho um rascunho</span>
+          <h3 style="font-family: var(--font-heading); font-weight: 600; font-size: 24px; text-transform: uppercase; margin: 2px 0 0;">Continuar de onde parei</h3>
+          <p style="font-size: 14.5px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0; flex: 1;">Salvou um arquivo antes? Carregue e siga editando. Tudo continua no seu dispositivo.</p>
+          <button type="button" class="btn btn-secondary" id="btn-import-home" style="margin-top: 10px; min-height: 44px; font-size: 15px;">Carregar rascunho (.json)</button>
+        </div>
+      </section>
+
+      <section style="margin: 44px 0 0;">
+        <p style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 0 0 10px;">Como funciona</p>
+        <hr style="height: 1px; border: 0; background: var(--color-divider); margin: 0 0 22px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px;">
+          <div>
+            <div style="font-family: var(--font-heading); font-size: 15px; color: var(--color-accent-700); letter-spacing: 0.08em; font-weight: 600;">01</div>
+            <h4 style="font-family: var(--font-heading); font-weight: 600; font-size: 19px; text-transform: uppercase; margin: 6px 0 4px;">Preencha com dicas</h4>
+            <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 76%, transparent); margin: 0;">Cada campo tem um "?" com orientação e avisa quando o texto está bom.</p>
           </div>
-          <div class="journey-card">
-            <div class="journey-icon">📄</div>
-            <h3>Otimizar o meu</h3>
-            <p>Já tem um currículo salvo? Carregue e receba sugestões detalhadas de melhoria.</p>
-            <ul class="journey-perks">
-              <li>✓ Análise de conteúdo</li>
-              <li>✓ Score de qualidade</li>
-              <li>✓ Sugestões de IA</li>
-            </ul>
-            <button type="button" class="btn btn-outline btn-lg w-full" id="btn-import-home">Carregar arquivo (.json)</button>
+          <div>
+            <div style="font-family: var(--font-heading); font-size: 15px; color: var(--color-accent-700); letter-spacing: 0.08em; font-weight: 600;">02</div>
+            <h4 style="font-family: var(--font-heading); font-weight: 600; font-size: 19px; text-transform: uppercase; margin: 6px 0 4px;">Veja em tempo real</h4>
+            <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 76%, transparent); margin: 0;">O currículo se monta ao lado enquanto você digita. Sem surpresas no final.</p>
+          </div>
+          <div>
+            <div style="font-family: var(--font-heading); font-size: 15px; color: var(--color-accent-700); letter-spacing: 0.08em; font-weight: 600;">03</div>
+            <h4 style="font-family: var(--font-heading); font-weight: 600; font-size: 19px; text-transform: uppercase; margin: 6px 0 4px;">Escolha o visual</h4>
+            <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 76%, transparent); margin: 0;">Compare os modelos com o seu conteúdo, ajuste margens e exporte.</p>
           </div>
         </div>
+      </section>
+
+      <section style="margin: 44px 0 24px; padding: 20px 22px; border: 1px solid var(--color-divider); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent-700);">Privacidade</span>
+        <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0; flex: 1; min-width: 240px;">Nada é enviado a servidores. Seus dados ficam apenas no seu navegador, e você decide quando salvar ou exportar.</p>
       </section>
     </main>
 
     <!-- Início: template + seções + preview -->
-    <main id="screen-start" class="screen screen-start" hidden>
-      <div class="split-layout">
-        <div class="split-form">
-          <section class="start-block">
-            <h2>Bem-vindo(a) ao seu novo currículo!</h2>
-            <p class="start-desc">O segredo de um currículo impossível de ser ignorado está no conteúdo. A estética nós cuidaremos mais adiante.</p>
-            <ul class="onboarding-tips">
-              <li>Mantenha tudo em <strong>1 página</strong>. Recrutadores gastam cerca de 6 segundos analisando cada currículo.</li>
-              <li>Sempre use <strong>verbos de ação</strong> (Ex: "Liderei", "Otimizei", "Desenvolvi").</li>
-              <li>Foque em <strong>resultados</strong> quantitativos ao invés de listar apenas suas responsabilidades.</li>
-            </ul>
-          </section>
-
-          <section class="start-block start-block-grow">
-            <h2>O que você deseja incluir?</h2>
-            <p class="start-desc">Seções obrigatórias estarão sempre presentes. Marque as opcionais que fazem sentido para sua carreira.</p>
-            <div id="section-checklist" class="section-checklist"></div>
-          </section>
-
-          <div class="start-actions">
-            <button type="button" class="btn btn-primary btn-lg" id="btn-start-wizard">Comecar a preencher</button>
-            <button type="button" class="btn btn-outline btn-mobile-preview" id="btn-toggle-preview-start">Ver previa</button>
-            <button type="button" class="btn btn-ghost" id="btn-fill-sample">Preencher com exemplo</button>
-            <button type="button" class="btn btn-ghost" id="btn-import-start">Carregar rascunho salvo</button>
+    <main id="screen-start" class="screen cv-main" hidden>
+      <div class="cv-split">
+        <div>
+          <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Antes de começar</p>
+          <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Vamos montar o seu, do seu jeito</h2>
+          <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 26px; max-width: 52ch;">Escolha um modelo para começar (dá para trocar depois sem perder nada) e marque as seções que fazem sentido para você.</p>
+  
+          <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">Seções do currículo</p>
+          <div id="section-checklist" style="display: flex; flex-direction: column; gap: 2px;">
+            <!-- JS will populate the checklist here using the new label structure -->
+          </div>
+          <p style="font-size: 13px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 62%, transparent); margin: 12px 2px 0;">Sem experiência formal ainda? Tudo bem — desmarque Experiência ou Formação. Você pode voltar quando quiser.</p>
+  
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px;">
+            <button type="button" class="btn btn-primary" id="btn-start-wizard" style="min-height: 46px; font-size: 15px; padding-inline: 22px;">Começar a preencher</button>
+            <button type="button" class="btn btn-ghost" id="btn-fill-sample" style="font-size: 14px;">Ver com exemplo pronto</button>
+            <button type="button" class="btn btn-ghost" id="btn-import-start" style="font-size: 14px;">Carregar rascunho</button>
           </div>
         </div>
-
-        <aside class="preview-panel preview-panel-sticky">
-          <div class="preview-header">
-            <h2>Prévia do currículo</h2>
-            <span class="preview-template-badge">Template: <span data-current-template>Clássico</span></span>
+  
+        <aside class="cv-aside" style="position: sticky; top: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
+            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;">Prévia</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="btn-prev-template-start" aria-label="Modelo anterior" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">‹</button>
+              <span style="font-family: var(--font-heading); font-weight: 600; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; min-width: 90px; text-align: center;"><span data-current-template>Clássico</span></span>
+              <button type="button" id="btn-next-template-start" aria-label="Próximo modelo" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">›</button>
+            </div>
           </div>
-          <div class="preview-paper-wrap">
-            <div data-preview class="preview-content template-classic"></div>
+          <div class="blueprint" style="padding: 0; background: #fff;">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div data-preview class="preview-content template-classic" style="transform: scale(0.65); transform-origin: top left; width: 153.8%; pointer-events: none;"></div>
+          </div>
+          <div style="margin-top: 14px; text-align: center;">
+            <button type="button" class="btn btn-outline btn-mobile-preview" id="btn-toggle-preview-start">Ver prévia ampliada</button>
           </div>
         </aside>
       </div>
     </main>
 
     <!-- Wizard + Preview -->
-    <main id="screen-wizard" class="screen screen-wizard" hidden>
-      <div class="split-layout">
-        <div class="wizard-panel">
-          <div class="wizard-toolbar">
-            <p id="wizard-progress" class="wizard-progress"></p>
-            <div class="wizard-toolbar-actions">
-              <button type="button" class="btn btn-ghost btn-sm" id="btn-back-start">← Configuração</button>
-              <button type="button" class="btn btn-ghost btn-mobile-preview" id="btn-toggle-preview">Ver prévia</button>
-              <button type="button" class="btn btn-ghost btn-sm btn-mobile-menu" id="btn-wizard-menu" aria-label="Mais opções">⋯</button>
-            </div>
+    <main id="screen-wizard" class="screen cv-main" hidden style="padding-bottom: 120px;">
+      <div class="cv-split">
+        <div>
+          <nav id="wizard-timeline" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;"></nav>
+          <hr style="height: 1px; border: 0; background: var(--color-divider); margin: 14px 0 22px;">
+
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+            <h2 id="wizard-step-title" style="font-family: var(--font-heading); font-weight: 600; font-size: 30px; text-transform: uppercase; margin: 0;"></h2>
+            <span id="wizard-step-counter" style="font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); white-space: nowrap;"></span>
           </div>
-          <nav id="wizard-timeline" class="wizard-timeline" aria-label="Etapas do currículo"></nav>
+          <p id="wizard-step-desc" style="font-size: 14.5px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0 0 22px; max-width: 54ch;"></p>
+
           <form id="wizard-form" onsubmit="return false;">
             <div id="wizard-steps"></div>
-            <div class="wizard-nav wizard-nav-sticky">
-              <button type="button" class="btn btn-secondary" id="btn-prev">Anterior</button>
-              <div class="wizard-progress-bar-container">
-                <div class="wizard-progress-bar-track">
-                  <div class="wizard-progress-bar-fill" id="wizard-progress-bar" style="width: 0%;"></div>
-                </div>
-                <span class="wizard-progress-text" id="wizard-progress-text">0% preenchido</span>
-              </div>
-              <button type="button" class="btn btn-primary" id="btn-next">Próximo</button>
-            </div>
           </form>
         </div>
-        <aside class="preview-panel preview-panel-sticky">
-          <div class="preview-header">
-            <h2>Prévia ao vivo</h2>
-            <span class="preview-template-badge"><span data-current-template>Clássico</span></span>
+
+        <aside class="cv-aside" style="position: sticky; top: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
+            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;">Prévia ao vivo</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="btn-prev-template" aria-label="Modelo anterior" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">‹</button>
+              <span style="font-family: var(--font-heading); font-weight: 600; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; min-width: 90px; text-align: center;"><span data-current-template>Clássico</span></span>
+              <button type="button" id="btn-next-template" aria-label="Próximo modelo" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">›</button>
+            </div>
           </div>
-          <div class="preview-paper-wrap">
-            <div data-preview class="preview-content template-classic"></div>
+          <div class="blueprint" style="padding: 0; background: #fff;">
+            <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div data-preview class="preview-content template-classic" style="transform: scale(0.65); transform-origin: top left; width: 153.8%; pointer-events: none;"></div>
+          </div>
+          <div style="margin-top: 14px; text-align: center;">
+            <button type="button" class="btn btn-outline btn-mobile-preview" id="btn-toggle-preview">Ver prévia ampliada</button>
           </div>
         </aside>
+      </div>
+
+      <!-- Sticky Bottom Nav -->
+      <div style="position: fixed; left: 0; right: 0; bottom: 0; background: color-mix(in srgb, var(--color-bg) 88%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--color-divider); z-index: 20;">
+        <div class="cv-main" style="max-width: 1180px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px; animation: none;">
+          <button type="button" class="btn btn-secondary" id="btn-prev" style="min-height: 42px;">Anterior</button>
+          <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
+            <div style="flex: 1; height: 6px; background: var(--color-neutral-200); position: relative; overflow: hidden;">
+              <div id="wizard-progress-bar" style="position: absolute; inset: 0 auto 0 0; width: 0%; background: var(--color-accent); transition: width .3s ease;"></div>
+            </div>
+            <span id="wizard-progress-text" style="font-size: 12px; white-space: nowrap; color: color-mix(in srgb, var(--color-text) 65%, transparent);">0% preenchido</span>
+          </div>
+          <button type="button" class="btn btn-primary" id="btn-next" style="min-height: 42px; padding-inline: 20px;">Próximo</button>
+        </div>
       </div>
     </main>
 
     <!-- Revisão final -->
-    <main id="screen-review" class="screen screen-review" hidden>
-      <div id="review-content" class="review-panel"></div>
-      <section class="review-templates-section">
-        <div class="review-templates-header">
-          <h3>Compare seus dados em todos os templates</h3>
-          <p>Seu conteúdo está pronto. Agora, escolha o visual ideal para exportar.</p>
-          <div class="smart-fit-controls">
-            <label class="checkbox-label" title="Diminui a margem e o tamanho da fonte para forçar o encaixe em 1 página.">
-              <input type="checkbox" id="toggle-compact-mode"> Forçar caber em 1 página (Modo Condensado)
-            </label>
-          </div>
-          <button type="button" class="btn btn-outline btn-sm btn-mobile-preview" id="btn-toggle-preview-review">Ver prévia ampliada</button>
+    <!-- Revisão final -->
+    <main id="screen-review" class="screen cv-main" hidden style="max-width: 1180px; margin: 0 auto; padding: 8px 24px 60px;">
+      <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Revisão</p>
+      <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 24px;">Quase lá — confira e escolha o visual</h2>
+
+      <div class="blueprint" style="padding: 24px; margin-bottom: 30px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div id="review-content" class="review-panel" style="padding: 0; background: transparent; border: none; box-shadow: none;"></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
+        <p style="font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0;">Escolha o modelo</p>
+        <div class="smart-fit-controls" style="margin-bottom: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: color-mix(in srgb, var(--color-text) 80%, transparent); cursor: pointer;" title="Diminui a margem e o tamanho da fonte para forçar o encaixe em 1 página.">
+            <input type="checkbox" id="toggle-compact-mode" style="width: 16px; height: 16px; accent-color: var(--color-accent);"> Forçar caber em 1 página (Modo Condensado)
+          </label>
         </div>
-        <div id="review-template-gallery" class="review-template-gallery"></div>
-      </section>
-      <div class="review-actions-bar">
-        <button type="button" class="btn btn-secondary" id="btn-back-wizard">Voltar ao wizard</button>
-        <button type="button" class="btn btn-ghost" id="btn-export-json-review">Salvar rascunho (.json)</button>
-        <button type="button" class="btn btn-ghost" id="btn-import-json-review">Carregar rascunho</button>
-        <button type="button" class="btn btn-outline" id="btn-prompt-general-review">Prompt IA geral</button>
-        <button type="button" class="btn btn-outline" id="btn-prompt-translation">Traduzir para inglês (IA)</button>
-        <button type="button" class="btn btn-primary" id="btn-guide">Guia LinkedIn →</button>
+      </div>
+
+      <div id="review-template-gallery" class="review-template-gallery" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;"></div>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <button type="button" class="btn btn-outline btn-mobile-preview" id="btn-toggle-preview-review">Ver prévia ampliada</button>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-top: 1px solid var(--color-divider); padding-top: 24px; margin-top: 30px;">
+        <button type="button" class="btn btn-secondary" id="btn-back-wizard" style="min-height: 44px;">Voltar a editar</button>
+        <button type="button" class="btn btn-ghost" id="btn-export-json-review" style="font-size: 14px;">Salvar rascunho (.json)</button>
+        <button type="button" class="btn btn-ghost" id="btn-import-json-review" style="font-size: 14px;">Carregar rascunho</button>
+        <button type="button" class="btn btn-outline" id="btn-prompt-general-review" style="font-size: 14px;">Prompt IA geral</button>
+        <button type="button" class="btn btn-outline" id="btn-prompt-translation" style="font-size: 14px;">Traduzir para inglês (IA)</button>
+        <span style="flex: 1;"></span>
+        <button type="button" class="btn btn-secondary" id="btn-guide" style="min-height: 44px;">Guia do LinkedIn</button>
+        <button type="button" class="btn btn-primary" id="btn-export-pdf" style="min-height: 44px; padding-inline: 22px;">Baixar currículo (PDF)</button>
       </div>
     </main>
 
     <!-- Guia LinkedIn -->
-    <main id="screen-guide" class="screen screen-guide" hidden>
-      <section class="guide-header">
-        <h2>Guia LinkedIn</h2>
-        <p>Textos prontos para colar em cada campo do seu perfil LinkedIn.</p>
-      </section>
-      <div id="guide-content" class="guide-content"></div>
-      <div class="guide-actions">
-        <button type="button" class="btn btn-secondary" id="btn-back-review">← Voltar à revisão</button>
-        <button type="button" class="btn btn-outline" id="btn-prompt-translation-guide">Traduzir para inglês (IA)</button>
+    <main id="screen-guide" class="screen cv-main" hidden style="max-width: 900px; margin: 0 auto; padding: 8px 24px 60px;">
+      <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Depois do currículo</p>
+      <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Leve o mesmo capricho pro LinkedIn</h2>
+      <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">Recrutadores quase sempre olham seu LinkedIn depois do currículo. Aqui vão textos prontos e dicas rápidas para deixar seu perfil no mesmo nível.</p>
+      
+      <div id="guide-content" class="guide-content" style="display: flex; flex-direction: column; gap: 18px;"></div>
+      
+      <div style="margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" id="btn-back-review" style="min-height: 44px;">← Voltar à revisão</button>
+        <button type="button" class="btn btn-outline" id="btn-prompt-translation-guide" style="min-height: 44px;">Traduzir para inglês (IA)</button>
       </div>
     </main>
 

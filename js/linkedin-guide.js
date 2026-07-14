@@ -165,17 +165,23 @@ const EuGeroLinkedInGuide = (function () {
     }
 
     container.innerHTML = entries.map((entry, index) => `
-      <article class="guide-entry" data-index="${index}">
-        <h3 class="guide-entry-title">${escapeHtml(entry.title)}</h3>
-        <p class="guide-entry-hint">${escapeHtml(entry.hint)}</p>
-        <textarea class="guide-entry-content" readonly rows="4" data-index="${index}"></textarea>
-        <button type="button" class="btn btn-secondary btn-copy-guide" data-index="${index}">Copiar</button>
-        <span class="copy-feedback" aria-live="polite"></span>
-      </article>
+      <div class="blueprint guide-entry" style="padding: 20px;" data-index="${index}">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <span style="font-family: var(--font-heading); font-weight: 600; font-size: 17px; text-transform: uppercase;">${escapeHtml(entry.title)}</span>
+          <button type="button" class="btn btn-secondary btn-copy-guide" data-index="${index}" style="font-size: 13px; min-height: 36px;">Copiar</button>
+        </div>
+        <p class="guide-entry-content" style="font-size: 14px; line-height: 1.55; color: var(--color-accent-900); background: var(--color-accent-100); border: 1px solid var(--color-divider); padding: 12px 14px; margin: 0 0 12px; white-space: pre-wrap;" data-index="${index}"></p>
+        <div style="display: flex; gap: 9px; align-items: flex-start;">
+          <span style="font-family: var(--font-heading); font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700); flex: none; margin-top: 3px;">Dica</span>
+          <span style="font-size: 14px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 82%, transparent);">${escapeHtml(entry.hint)}</span>
+        </div>
+        <span class="copy-feedback" aria-live="polite" style="font-size: 12px; color: var(--color-success); display: block; height: 16px;"></span>
+      </div>
     `).join('');
 
-    container.querySelectorAll('.guide-entry-content').forEach(ta => {
-      ta.value = entries[parseInt(ta.dataset.index, 10)].content;
+    container.querySelectorAll('.guide-entry-content').forEach(el => {
+      el.textContent = entries[parseInt(el.dataset.index, 10)].content;
     });
 
     container.querySelectorAll('.btn-copy-guide').forEach(btn => {

@@ -494,12 +494,11 @@
       const mandatory = isSectionMandatory(section.id);
       const checked = state.enabledSections.includes(section.id);
       return `
-        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}">
-          <input type="checkbox" data-section-id="${section.id}" ${checked ? 'checked' : ''} ${mandatory ? 'disabled checked' : ''}>
-          <span class="section-check-label">
-            <strong>${section.title}</strong>
-            ${mandatory ? '<span class="badge badge-required">Obrigatorio</span>' : ''}
-            <small>${section.description || ''}</small>
+        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'not-allowed' : 'pointer'}; background: ${mandatory ? 'var(--color-bg)' : '#fff'}; margin-bottom: 2px;">
+          <input type="checkbox" data-section-id="${section.id}" ${checked ? 'checked' : ''} ${mandatory ? 'disabled checked' : ''} style="width: 17px; height: 17px; accent-color: var(--color-accent);">
+          <span class="section-check-label" style="display:flex; flex:1; align-items:center;">
+            <strong style="font-family: var(--font-heading); font-weight: 600; font-size: 16px;">${section.title}</strong>
+            <span style="margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">${mandatory ? 'Fixo' : (checked ? 'Incluso' : 'Opcional')}</span>
           </span>
         </label>
       `;
@@ -515,16 +514,14 @@
     const sections = activeSections();
     els.wizardTimeline.innerHTML = sections.map((section, i) => {
       const label = SHORT_LABELS[section.id] || section.title;
-      const cls = [
-        'timeline-step',
-        i === state.currentStep ? 'active' : '',
-        i < state.currentStep ? 'done' : ''
-      ].filter(Boolean).join(' ');
-      const ariaCurrent = i === state.currentStep ? ' aria-current="step"' : '';
+      const isActive = i === state.currentStep;
+      const bg = isActive ? 'var(--color-neutral-900)' : 'transparent';
+      const color = isActive ? '#fff' : 'color-mix(in srgb, var(--color-text) 75%, transparent)';
+      const border = isActive ? 'var(--color-neutral-900)' : 'var(--color-divider)';
+      const ariaCurrent = isActive ? ' aria-current="step"' : '';
       return `
-        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent}>
-          <span class="timeline-num">${i + 1}</span>
-          <span class="timeline-label">${escapeHtml(label)}</span>
+        <button type="button" class="timeline-step" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent} style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid ${border}; background: ${bg}; color: ${color}; cursor: pointer; font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.02em; border-radius: 4px;">
+          <span style="font-size: 11px; opacity: .8;">${i + 1}</span>${escapeHtml(label)}
         </button>
       `;
     }).join('');
@@ -551,6 +548,14 @@
 
     if (!els.wizardSteps) return;
 
+    const titleEl = document.getElementById('wizard-step-title');
+    const counterEl = document.getElementById('wizard-step-counter');
+    const descEl = document.getElementById('wizard-step-desc');
+    
+    if (titleEl) titleEl.textContent = section.title;
+    if (counterEl) counterEl.textContent = `${state.currentStep + 1} de ${sections.length}`;
+    if (descEl) descEl.textContent = section.description || '';
+    
     if (els.wizardProgress) {
       els.wizardProgress.textContent = `Etapa ${state.currentStep + 1} de ${sections.length}: ${section.title}`;
     }
@@ -564,7 +569,8 @@
       stepEl.appendChild(renderListSection(section));
     } else if (section.fields) {
       const grid = document.createElement('div');
-      grid.className = section.id === 'personal' ? 'field-grid field-grid-personal' : 'field-grid';
+      grid.className = 'cv-form2';
+      grid.style.marginTop = '16px';
       section.fields.forEach((field) => {
         grid.appendChild(renderField(section, field));
       });
@@ -596,12 +602,8 @@
   }
 
   function renderFieldTip(field) {
-    if (!field.tip) return '';
     return `
-      <details class="field-tip-expand">
-        <summary>Dica</summary>
-        <p>${escapeHtml(field.tip)}</p>
-      </details>
+      <span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">${escapeHtml(field.tip)}</span></span>
     `;
   }
 
@@ -688,8 +690,10 @@
   }
 
   function renderField(section, field, options = {}) {
-    const wrap = document.createElement('div');
+    const wrap = document.createElement('label');
     wrap.className = 'field-group' + (field.fullWidth ? ' field-full' : '');
+    wrap.style.display = 'block';
+    if (field.fullWidth) wrap.style.gridColumn = '1 / -1';
     wrap.dataset.section = section.id;
     wrap.dataset.field = field.key;
 
@@ -713,7 +717,10 @@
     const labelRow = document.createElement('div');
     labelRow.className = 'field-label-row';
     labelRow.innerHTML = `
-      <label for="${id}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
+      <span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">
+        ${field.label}${field.required ? ' <span class="required">*</span>' : ''}
+        ${renderFieldTip(field)}
+      </span>
       <div class="field-score" aria-live="polite"></div>
     `;
     wrap.appendChild(labelRow);
@@ -721,6 +728,7 @@
     let input;
     if (field.type === 'textarea') {
       input = document.createElement('textarea');
+      input.className = 'cv-input';
       input.id = id;
       input.name = field.key;
       input.rows = field.key === 'skillsText' ? 2 : 3;
@@ -739,6 +747,7 @@
       });
     } else if (field.type === 'select') {
       input = document.createElement('select');
+      input.className = 'cv-input';
       input.id = id;
       input.name = field.key;
       if (field.required) input.required = true;
@@ -755,6 +764,7 @@
       });
     } else {
       input = document.createElement('input');
+      input.className = 'cv-input';
       input.type = field.type || 'text';
       input.id = id;
       input.name = field.key;
