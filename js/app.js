@@ -12,6 +12,7 @@
 
   let state = EuGeroStorage.load();
   let currentView = 'home';
+  let reviewGalleryIndex = 0;
   let suppressHash = false;
   let saveTimer = null;
   let toastTimer = null;
@@ -63,7 +64,7 @@
     els.fileImport = document.getElementById('file-import');
     els.toast = document.getElementById('toast');
     els.previewOverlay = document.getElementById('preview-overlay');
-    els.headerActions = document.getElementById('header-actions-wizard');
+    els.headerHome = document.getElementById('btn-header-home');
     els.includeDataCheckbox = document.getElementById('include-data-checkbox');
     els.privacyPromptWarning = document.getElementById('privacy-prompt-warning');
     els.savedIndicator = document.getElementById('saved-indicator');
@@ -150,7 +151,19 @@
   }
 
   function goToReview() {
+    const idx = TEMPLATE_IDS.indexOf(state.template);
+    reviewGalleryIndex = idx >= 0 ? idx : 0;
     navigateTo('review');
+  }
+
+  function galleryStep(dir) {
+    reviewGalleryIndex += dir;
+    renderReviewGallery();
+  }
+
+  function useGalleryTemplate() {
+    switchTemplate(TEMPLATE_IDS[((reviewGalleryIndex % TEMPLATE_IDS.length) + TEMPLATE_IDS.length) % TEMPLATE_IDS.length]);
+    renderReviewGallery();
   }
 
   function goToGuide() {
@@ -177,10 +190,12 @@
 
     document.getElementById('btn-enter-app')?.addEventListener('click', goToStart);
     document.getElementById('btn-go-home')?.addEventListener('click', goToHome);
+    document.getElementById('btn-header-home')?.addEventListener('click', goToHome);
     document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport?.click());
 
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
     document.getElementById('btn-fill-sample')?.addEventListener('click', fillSampleData);
+    document.getElementById('btn-clear-all')?.addEventListener('click', clearAll);
     document.getElementById('btn-change-template-wizard')?.addEventListener('click', (e) => openModal(els.modalTemplate, e.currentTarget));
     document.getElementById('btn-prev-template-start')?.addEventListener('click', () => cycleTemplate(-1));
     document.getElementById('btn-next-template-start')?.addEventListener('click', () => cycleTemplate(1));
@@ -189,6 +204,10 @@
     document.getElementById('btn-prev')?.addEventListener('click', prevStep);
     document.getElementById('btn-next')?.addEventListener('click', nextStep);
     document.getElementById('btn-back-wizard')?.addEventListener('click', () => goToWizard());
+    document.getElementById('btn-gal-prev')?.addEventListener('click', () => galleryStep(-1));
+    document.getElementById('btn-gal-next')?.addEventListener('click', () => galleryStep(1));
+    document.getElementById('btn-use-gallery')?.addEventListener('click', useGalleryTemplate);
+    document.getElementById('btn-export-pdf')?.addEventListener('click', (e) => handleExport('pdf', e.currentTarget));
     document.getElementById('btn-guide')?.addEventListener('click', goToGuide);
     document.getElementById('btn-back-review')?.addEventListener('click', goToReview);
     document.getElementById('btn-back-start')?.addEventListener('click', goToStart);
@@ -298,6 +317,60 @@
     saveState();
     render();
     showToast('Exemplo carregado. Ajuste com seus dados reais.');
+  }
+
+  function clearAll() {
+    const fresh = EuGeroConfig.createEmptyState();
+    fresh.template = state.template;
+    fresh.margin = state.margin;
+    fresh.density = state.density;
+    fresh.enabledSections = [...state.enabledSections];
+    state = EuGeroStorage.mergeWithDefaults(fresh);
+    saveState();
+    render();
+    showToast('Campos limpos. Comece do zero quando quiser.');
+  }
+
+  const PAGE_MARGINS = [
+    { v: 'estreita', l: 'Estreita' },
+    { v: 'padrao', l: 'Padrão' },
+    { v: 'confortavel', l: 'Confortável' }
+  ];
+  const PAGE_DENSITIES = [
+    { v: 'normal', l: 'Normal' },
+    { v: 'condensado', l: 'Condensado' }
+  ];
+
+  function setPageOption(key, value) {
+    state[key] = value;
+    saveState();
+    renderPageControls();
+    debouncedUpdatePreviews();
+  }
+
+  function renderPageControls() {
+    const containers = document.querySelectorAll('[data-page-controls]');
+    if (!containers.length) return;
+    const seg = (name, title, cur, opts) => `
+      <div>
+        <div class="cv-pc-label">${title}</div>
+        <div class="seg">
+          ${opts.map((o) => `<label class="seg-opt"><input type="radio" name="pc-${name}" value="${o.v}" ${cur === o.v ? 'checked' : ''}>${o.l}</label>`).join('')}
+        </div>
+      </div>`;
+    const html = `<div class="cv-page-controls">
+      ${seg('margin', 'Margens', state.margin || 'padrao', PAGE_MARGINS)}
+      ${seg('density', 'Espaçamento', state.density || 'normal', PAGE_DENSITIES)}
+    </div>`;
+    containers.forEach((c) => {
+      c.innerHTML = html;
+      c.querySelectorAll('input[name="pc-margin"]').forEach((inp) => {
+        inp.addEventListener('change', () => setPageOption('margin', inp.value));
+      });
+      c.querySelectorAll('input[name="pc-density"]').forEach((inp) => {
+        inp.addEventListener('change', () => setPageOption('density', inp.value));
+      });
+    });
   }
 
   function renderTemplatePickers() {
@@ -450,7 +523,27 @@
   function prevStep() {
     if (state.currentStep > 0) {
       goToStep(state.currentStep - 1);
+    } else {
+      goToStart();
     }
+  }
+
+  function clearCurrentSection(section) {
+    if (!section) return;
+    if (section.id === 'personal') {
+      state.personal = { fullName: '', headline: '', email: '', phone: '', location: '', linkedinUrl: '' };
+    } else if (section.id === 'summary') {
+      state.summary = '';
+    } else if (section.id === 'skills') {
+      state.skillsText = '';
+      state.skills = [];
+    } else if (section.list) {
+      state[section.id] = [];
+    }
+    saveState();
+    renderWizardStep();
+    debouncedUpdatePreviews();
+    showToast(`Seção "${SHORT_LABELS[section.id] || section.title}" limpa.`);
   }
 
   function nextStep() {
@@ -469,8 +562,8 @@
     els.screenWizard.hidden = view !== 'wizard';
     els.screenReview.hidden = view !== 'review';
     els.screenGuide.hidden = view !== 'guide';
-    if (els.headerActions) {
-      els.headerActions.hidden = view !== 'wizard';
+    if (els.headerHome) {
+      els.headerHome.hidden = view === 'home';
     }
     if (els.previewMobileDock) {
       els.previewMobileDock.hidden = (view !== 'wizard' && view !== 'review');
@@ -496,19 +589,21 @@
     } else if (currentView === 'guide') {
       EuGeroLinkedInGuide.renderGuide(els.guideContent, state);
     }
+    renderPageControls();
   }
 
   function renderSectionChecklist() {
     if (!els.sectionChecklist) return;
     els.sectionChecklist.innerHTML = SECTIONS.map((section) => {
       const mandatory = isSectionMandatory(section.id);
-      const checked = state.enabledSections.includes(section.id);
+      const checked = state.enabledSections.includes(section.id) || mandatory;
+      const rowBg = checked ? 'color-mix(in srgb, var(--color-accent) 6%, transparent)' : 'transparent';
       return `
-        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'not-allowed' : 'pointer'}; background: ${mandatory ? 'var(--color-bg)' : '#fff'}; margin-bottom: 2px;">
+        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'default' : 'pointer'}; background: ${rowBg}; margin-bottom: 2px;">
           <input type="checkbox" data-section-id="${section.id}" ${checked ? 'checked' : ''} ${mandatory ? 'disabled checked' : ''} style="width: 17px; height: 17px; accent-color: var(--color-accent);">
           <span class="section-check-label" style="display:flex; flex:1; align-items:center;">
             <strong style="font-family: var(--font-heading); font-weight: 600; font-size: 16px;">${section.title}</strong>
-            <span style="margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">${mandatory ? 'Fixo' : (checked ? 'Incluso' : 'Opcional')}</span>
+            <span style="margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">${mandatory ? 'Sempre incluída' : 'Opcional'}</span>
           </span>
         </label>
       `;
@@ -525,9 +620,10 @@
     els.wizardTimeline.innerHTML = sections.map((section, i) => {
       const label = SHORT_LABELS[section.id] || section.title;
       const isActive = i === state.currentStep;
-      const bg = isActive ? 'var(--color-neutral-900)' : 'transparent';
-      const color = isActive ? '#fff' : 'color-mix(in srgb, var(--color-text) 75%, transparent)';
-      const border = isActive ? 'var(--color-neutral-900)' : 'var(--color-divider)';
+      const isDone = i < state.currentStep;
+      const bg = isActive ? 'var(--color-accent)' : 'transparent';
+      const color = isActive ? '#fff' : (isDone ? 'var(--color-accent-700)' : 'color-mix(in srgb, var(--color-text) 65%, transparent)');
+      const border = isActive ? 'var(--color-accent)' : 'var(--color-divider)';
       const ariaCurrent = isActive ? ' aria-current="step"' : '';
       return `
         <button type="button" class="timeline-step" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent} style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid ${border}; background: ${bg}; color: ${color}; cursor: pointer; font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.02em; border-radius: 4px;">
@@ -562,8 +658,8 @@
     const counterEl = document.getElementById('wizard-step-counter');
     const descEl = document.getElementById('wizard-step-desc');
     
-    if (titleEl) titleEl.textContent = section.title;
-    if (counterEl) counterEl.textContent = `${state.currentStep + 1} de ${sections.length}`;
+    if (titleEl) titleEl.textContent = SHORT_LABELS[section.id] || section.title;
+    if (counterEl) counterEl.textContent = `Etapa ${state.currentStep + 1} de ${sections.length}`;
     if (descEl) descEl.textContent = section.description || '';
     
     if (els.wizardProgress) {
@@ -587,20 +683,37 @@
       stepEl.appendChild(grid);
     }
 
+    const actionsRow = document.createElement('div');
+    actionsRow.style.cssText = 'margin-top: 30px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center;';
+    const mutedGhost = 'font-size: 13.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent);';
+
     const aiBtn = document.createElement('button');
     aiBtn.type = 'button';
-    aiBtn.className = 'btn btn-outline btn-ai-section';
-    aiBtn.textContent = 'Pedir ajuda a IA';
+    aiBtn.className = 'btn btn-ghost btn-ai-section';
+    aiBtn.style.cssText = mutedGhost;
+    aiBtn.textContent = 'Travou? Peça ideias a uma IA →';
     aiBtn.addEventListener('click', (e) => showPrompt('section', section.id, e.currentTarget));
-    stepEl.appendChild(aiBtn);
+    actionsRow.appendChild(aiBtn);
 
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'btn btn-ghost';
+    clearBtn.style.cssText = mutedGhost;
+    clearBtn.textContent = 'Limpar esta seção';
+    clearBtn.addEventListener('click', () => clearCurrentSection(section));
+    actionsRow.appendChild(clearBtn);
+
+    stepEl.appendChild(actionsRow);
     els.wizardSteps.appendChild(stepEl);
 
     const prevBtn = document.getElementById('btn-prev');
     const nextBtn = document.getElementById('btn-next');
-    if (prevBtn) prevBtn.disabled = state.currentStep === 0;
+    if (prevBtn) {
+      prevBtn.disabled = false;
+      prevBtn.textContent = state.currentStep === 0 ? 'Configuração' : 'Anterior';
+    }
     if (nextBtn) {
-      nextBtn.textContent = state.currentStep === sections.length - 1 ? 'Ir para revisao' : 'Proximo';
+      nextBtn.textContent = state.currentStep === sections.length - 1 ? 'Revisar →' : 'Próximo';
     }
 
     renderWizardTimeline();
@@ -1207,65 +1320,44 @@
     const pageFit = EuGeroScoring.scorePageFit(state, sections);
     const aggregate = EuGeroScoring.aggregateScore(results, pageFit);
 
-    const pageFitClass = pageFit.level === 'overflow' ? 'page-fit-overflow' : pageFit.level === 'warning' ? 'page-fit-warning' : 'page-fit-ok';
-    const pageFitLabel = pageFit.level === 'overflow' ? 'Excede 1 pagina' : pageFit.level === 'warning' ? 'Atencao ao tamanho' : 'Cabe em 1 pagina';
-
-    const legendHtml = EuGeroScoring.CRITERIA_LEGEND.map((line) => `<li>${escapeHtml(line)}</li>`).join('');
-
-    let html = `
-      <div class="review-summary">
-        <h2>Revisao final</h2>
-        <div class="review-scores-row">
-          <p class="review-overall-label">Qualidade: <strong>${aggregate.label}</strong> - ${aggregate.overall}%</p>
-          <p class="review-page-fit ${pageFitClass}">${pageFitLabel} - ${pageFit.fitScore}%</p>
-        </div>
-        <div class="progress-bar" role="progressbar" aria-valuenow="${aggregate.overall}" aria-valuemin="0" aria-valuemax="100">
-          <div class="progress-fill" style="width: ${aggregate.overall}%"></div>
-        </div>
-        <p class="progress-text">${aggregate.scored} campos avaliados - ~${pageFit.metrics.totalChars} caracteres - ${pageFit.metrics.listItems} itens em listas</p>
-        <details class="review-criteria-legend">
-          <summary>Como funciona a pontuacao?</summary>
-          <ul>${legendHtml}</ul>
-        </details>
-      </div>
-    `;
-
-    if (pageFit.issues.length > 0) {
-      html += `
-        <div class="review-page-issues ${pageFitClass}">
-          <h3>Curriculo de uma pagina</h3>
-          <p>O objetivo e um CV conciso. Conteudo demais reduz a nota e pode sobrepor secoes na exportacao.</p>
-          <ul>${pageFit.issues.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
-        </div>
-      `;
+    const pct = aggregate.overall;
+    let scoreLabel = 'Em progresso';
+    let scoreMsg = 'Vamos reforçar alguns pontos para dar mais peso ao seu currículo.';
+    if (pct >= 80) {
+      scoreLabel = 'Ótimo';
+      scoreMsg = 'Seu currículo está forte e bem estruturado. Pronto para enviar!';
+    } else if (pct >= 55) {
+      scoreLabel = 'Bom';
+      scoreMsg = 'Está bom! Uns pequenos ajustes deixam ele ainda mais forte.';
     }
+
+    const muted = 'color-mix(in srgb, var(--color-text) 55%, transparent)';
+    let html = `
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div>
+          <div style="font-family: var(--font-heading); font-weight: 600; font-size: 44px; line-height: 1; color: var(--color-accent-700);">${escapeHtml(scoreLabel)}</div>
+          <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin-top: 4px;">Qualidade geral</div>
+        </div>
+        <div style="flex: 1; min-width: 240px;">
+          <div style="height: 8px; background: var(--color-neutral-200); position: relative; overflow: hidden; margin-bottom: 12px;">
+            <div style="position: absolute; inset: 0 auto 0 0; width: ${pct}%; background: var(--color-accent);"></div>
+          </div>
+          <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0;">${escapeHtml(scoreMsg)}</p>
+        </div>
+      </div>`;
 
     if (aggregate.weakFields.length > 0) {
       html += `
-        <div class="review-weak">
-          <h3>Campos para revisar (nota Fraco)</h3>
-          <ul>
+        <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 16px;">
+          <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Sugestões para melhorar</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
             ${aggregate.weakFields.map((f) => {
               const stepIndex = sections.findIndex((s) => s.id === f.sectionId);
-              return `<li><button type="button" class="link-btn" data-step="${stepIndex}">${escapeHtml(f.displayName)}</button></li>`;
+              return `<button type="button" class="link-btn" data-step="${stepIndex}" style="display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; font-size: 14px;"><span style="color: var(--color-accent);">→</span>Reforce: ${escapeHtml(f.displayName)}</button>`;
             }).join('')}
-          </ul>
-        </div>
-      `;
-    } else if (pageFit.level === 'ok') {
-      html += '<p class="review-success">Parabens! Nenhum campo com nota Fraco e volume adequado para 1 pagina.</p>';
+          </div>
+        </div>`;
     }
-
-    html += `
-      <div class="export-actions">
-        <h3>Exportar - template: <span data-current-template>${escapeHtml(TEMPLATES[state.template]?.name || 'Classico')}</span></h3>
-        <div class="btn-group">
-          <button type="button" class="btn btn-primary" id="btn-export-pdf">Exportar PDF</button>
-          <button type="button" class="btn btn-primary" id="btn-export-docx">Exportar Word</button>
-          <button type="button" class="btn btn-primary" id="btn-export-txt">Exportar TXT</button>
-        </div>
-      </div>
-    `;
 
     els.reviewContent.innerHTML = html;
 
@@ -1275,11 +1367,27 @@
       });
     });
 
-    document.getElementById('btn-export-pdf')?.addEventListener('click', (e) => handleExport('pdf', e.currentTarget));
-    document.getElementById('btn-export-docx')?.addEventListener('click', (e) => handleExport('docx', e.currentTarget));
-    document.getElementById('btn-export-txt')?.addEventListener('click', (e) => handleExport('txt', e.currentTarget));
+    renderReviewGallery();
+  }
 
-    renderReviewTemplateGallery();
+  function renderReviewGallery() {
+    const sections = activeSections();
+    const total = TEMPLATE_IDS.length;
+    reviewGalleryIndex = ((reviewGalleryIndex % total) + total) % total;
+    const galId = TEMPLATE_IDS[reviewGalleryIndex];
+    const galMeta = TEMPLATES[galId];
+    const isSelected = state.template === galId;
+
+    const preview = document.getElementById('review-gallery-preview');
+    if (preview) EuGeroPreview.updatePreview(preview, state, galId, sections);
+    const frame = document.getElementById('review-gallery-frame');
+    if (frame) frame.style.outline = isSelected ? '2px solid var(--color-accent)' : '2px solid transparent';
+    const labelEl = document.getElementById('review-gallery-label');
+    if (labelEl) labelEl.textContent = galMeta.name;
+    const counterEl = document.getElementById('review-gallery-counter');
+    if (counterEl) counterEl.textContent = `${reviewGalleryIndex + 1} de ${total}`;
+    const useBtn = document.getElementById('btn-use-gallery');
+    if (useBtn) useBtn.textContent = isSelected ? '✓ Selecionado' : 'Usar este';
   }
 
   async function handleExport(type, btn) {
