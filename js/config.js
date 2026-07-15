@@ -192,34 +192,34 @@ const EuGeroConfig = (function () {
     classic: {
       id: 'classic', name: 'Clássico', description: 'Monocromático, limpo e profissional',
       layout: 'centered', thumbClass: 'template-thumb-classic',
-      accentRgb: [30, 41, 59], textMuted: '#64748b', atsFriendly: true
+      accentRgb: [65, 97, 128], textMuted: '#6b6d6f', atsFriendly: true
     },
     modern: {
-      id: 'modern', name: 'Moderno', description: 'Barra lateral azul',
+      id: 'modern', name: 'Moderno', description: 'Barra lateral clara com acento azul',
       layout: 'sidebar', thumbClass: 'template-thumb-modern',
-      sidebarRgb: [41, 98, 255], accentHex: '2962FF', atsFriendly: false,
+      sidebarRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
       atsNote: 'Barra lateral: alguns ATS leem melhor layouts de coluna única.'
     },
     elegant: {
-      id: 'elegant', name: 'Elegante', description: 'Tipografia serifada, acento dourado',
-      layout: 'centered', thumbClass: 'template-thumb-elegant', serif: true,
-      accentRgb: [146, 64, 14], accentHex: '92400E', atsFriendly: true
+      id: 'elegant', name: 'Elegante', description: 'Tipografia condensada, acento discreto',
+      layout: 'centered', thumbClass: 'template-thumb-elegant', serif: false,
+      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
     },
     executive: {
       id: 'executive', name: 'Executivo', description: 'Faixa superior escura',
       layout: 'banner', thumbClass: 'template-thumb-executive',
-      bannerRgb: [15, 23, 42], accentHex: '0F172A', atsFriendly: true
+      bannerRgb: [29, 45, 61], accentHex: '1D2D3D', atsFriendly: true
     },
     minimal: {
       id: 'minimal', name: 'Minimalista', description: 'Alinhado à esquerda, ultra limpo',
       layout: 'left', thumbClass: 'template-thumb-minimal',
-      accentRgb: [100, 116, 139], accentHex: '64748B', atsFriendly: true
+      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
     },
     creative: {
-      id: 'creative', name: 'Criativo', description: 'Barra lateral roxa',
-      layout: 'sidebar', thumbClass: 'template-thumb-creative',
-      sidebarRgb: [124, 58, 237], accentHex: '7C3AED', atsFriendly: false,
-      atsNote: 'Barra lateral: prefira Clássico ou Minimalista para ATS rigorosos.'
+      id: 'creative', name: 'Criativo', description: 'Coluna única com selo de iniciais',
+      layout: 'creative', thumbClass: 'template-thumb-creative',
+      accentRgb: [89, 128, 166], badgeRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
+      atsNote: 'Selo gráfico no topo: prefira Clássico ou Minimalista para ATS rigorosos.'
     },
     harvard: {
       id: 'harvard', name: 'Harvard', description: 'O clássico de alta densidade acadêmica',

@@ -89,6 +89,9 @@ const EuGeroExport = (function () {
         case 'left':
           await exportPdfLeft(jsPDF, cvDoc, state, meta);
           break;
+        case 'creative':
+          await exportPdfCreative(jsPDF, cvDoc, state, meta);
+          break;
         default:
           await exportPdfClassic(jsPDF, cvDoc, state, meta);
       }
@@ -187,6 +190,131 @@ const EuGeroExport = (function () {
         } else if (block.type === 'line') {
           newPageIfNeeded(5);
           pdf.setFontSize(9);
+          pdf.text(block.text, margin, y);
+          y += 5;
+        } else if (block.type === 'entry') {
+          newPageIfNeeded(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(9);
+          pdf.setTextColor(...accent);
+          const titleLine = block.subtitle ? `${block.title}  —  ${block.subtitle}` : block.title;
+          pdf.text(titleLine, margin, y);
+          y += 4;
+          if (block.period) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(148, 163, 184);
+            pdf.text(block.period, margin, y);
+            y += 4;
+          }
+          if (block.description) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8.5);
+            pdf.setTextColor(51, 65, 85);
+            const lines = pdf.splitTextToSize(block.description, contentW);
+            newPageIfNeeded(lines.length * 3.5);
+            pdf.text(lines, margin, y);
+            y += lines.length * 3.5 + 1;
+          }
+          y += 2;
+        }
+      });
+      y += 2;
+    });
+
+    await drawFooter();
+    pdf.save(getFileName(state, 'pdf'));
+  }
+
+  async function exportPdfCreative(jsPDF, cvDoc, state, meta) {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const margin = 18;
+    const contentW = W - margin * 2;
+    let y = 20;
+    const accent = meta?.accentRgb || [89, 128, 166];
+    const badge = meta?.badgeRgb || accent;
+
+    const drawFooter = async () => {
+      const url = cvDoc.personal.linkedinUrl?.trim();
+      if (!url) return;
+      const qr = await generateQrDataUrl(url);
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 100, 100);
+      if (qr) {
+        pdf.addImage(qr, 'PNG', margin, H - 18, 10, 10);
+        pdf.text(url, margin + 12, H - 10);
+      } else {
+        pdf.text(url, margin, H - 10);
+      }
+    };
+    const newPageIfNeeded = (need) => {
+      if (y + need > H - 22) { pdf.addPage(); y = 22; }
+    };
+
+    const p = cvDoc.personal;
+    const parts = (p.fullName || '').trim().split(/\s+/).filter(Boolean);
+    const initials = parts.slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'SN';
+
+    // Selo de iniciais
+    const badgeSize = 16;
+    pdf.setFillColor(...badge);
+    pdf.rect(margin, y, badgeSize, badgeSize, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    pdf.text(initials, margin + badgeSize / 2, y + badgeSize / 2 + 2, { align: 'center' });
+
+    // Identificacao ao lado do selo
+    const idX = margin + badgeSize + 5;
+    let iy = y + 4;
+    pdf.setTextColor(29, 31, 32);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(15);
+    pdf.text(p.fullName || 'Seu Nome', idX, iy);
+    iy += 5;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(...accent);
+    pdf.text((p.headline || '').toUpperCase(), idX, iy);
+    iy += 4;
+    pdf.setFontSize(8);
+    pdf.setTextColor(107, 109, 111);
+    pdf.text(cvDoc.sidebar.contact.join('  ·  ') || '', idX, iy);
+    y = Math.max(y + badgeSize, iy) + 7;
+
+    cvDoc.sections.forEach(section => {
+      newPageIfNeeded(14);
+      pdf.setFillColor(...accent);
+      pdf.rect(margin, y - 2.6, 5, 1.4, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...accent);
+      pdf.text(section.title.toUpperCase(), margin + 7, y);
+      y += 5;
+
+      section.blocks.forEach(block => {
+        if (block.type === 'text') {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9);
+          pdf.setTextColor(51, 65, 85);
+          const lines = pdf.splitTextToSize(block.text, contentW);
+          newPageIfNeeded(lines.length * 4 + 2);
+          pdf.text(lines, margin, y);
+          y += lines.length * 4 + 3;
+        } else if (block.type === 'tags') {
+          pdf.setFontSize(8);
+          pdf.setTextColor(51, 65, 85);
+          const text = block.items.join('   ·   ');
+          const lines = pdf.splitTextToSize(text, contentW);
+          newPageIfNeeded(lines.length * 4);
+          pdf.text(lines, margin, y);
+          y += lines.length * 4 + 3;
+        } else if (block.type === 'line') {
+          newPageIfNeeded(5);
+          pdf.setFontSize(9);
+          pdf.setTextColor(51, 65, 85);
           pdf.text(block.text, margin, y);
           y += 5;
         } else if (block.type === 'entry') {
