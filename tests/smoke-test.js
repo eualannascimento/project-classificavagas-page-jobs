@@ -181,9 +181,12 @@ assert(parsed[0].name === 'JavaScript', 'Primeira habilidade parseada corretamen
 // --- Enabled sections ---
 console.log('\nSeções habilitadas:');
 
+// personal/summary/skills sao travadas (sempre incluidas), como no modelo
 const enabled = EuGeroConfig.getActiveSections(['personal', 'experiences']);
-assert(enabled.length === 2, 'Filtra seções habilitadas');
+assert(enabled.length === 4, 'Sempre inclui as seções travadas (personal, summary, skills)');
 assert(EuGeroConfig.isSectionMandatory('personal'), 'Dados pessoais é obrigatório');
+assert(EuGeroConfig.isSectionMandatory('summary'), 'Resumo é obrigatório');
+assert(EuGeroConfig.isSectionMandatory('skills'), 'Habilidades é obrigatório');
 assert(!EuGeroConfig.isSectionMandatory('projects'), 'Projetos é opcional');
 
 const normalized = EuGeroConfig.normalizeEnabledSections(['experiences']);
@@ -294,10 +297,11 @@ const testStateZeroRequired = {
     email: 'maria@test.com',
     location: 'São Paulo, SP'
   },
-  enabledSections: ['personal'] // Apenas Dados Pessoais habilitado e totalmente preenchido
+  summary: 'Resumo preenchido para atingir 100% das seções obrigatórias.',
+  enabledSections: ['personal', 'summary', 'skills'] // Seções travadas totalmente preenchidas
 };
 const progressZero = EuGeroScoring.calculateProgress(testStateZeroRequired);
-assert(progressZero === 100, 'Seção obrigatória preenchida = 100% de progresso');
+assert(progressZero === 100, 'Seções obrigatórias preenchidas = 100% de progresso');
 
 
 // --- Summary ---

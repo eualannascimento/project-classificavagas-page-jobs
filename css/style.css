@@ -1200,6 +1200,14 @@ body.modal-open {
   --doc-line-height: 1.15;
 }
 
+/* Margens (do modelo): fator sobre o padding da pagina */
+.preview-content.cv-margin-estreita { --doc-padding: 16px 14px; }
+.preview-content.cv-margin-padrao { --doc-padding: 22px 20px; }
+.preview-content.cv-margin-confortavel { --doc-padding: 30px 27px; }
+/* Espacamento (do modelo): densidade do texto */
+.preview-content.cv-density-normal { --doc-font-size: 9px; --doc-line-height: 1.35; }
+.preview-content.cv-density-condensado { --doc-font-size: 8px; --doc-line-height: 1.18; }
+
 .onboarding-tips {
   margin: 0.75rem 0 0.75rem;
   padding: 0.875rem 1rem 0.875rem 0.5rem;
@@ -1440,6 +1448,27 @@ body.modal-open {
 .cv-creative .cv-section h2::before {
   content: ""; width: 14px; height: 2px; flex: none;
   background: var(--color-accent);
+}
+
+/* ---- Controles de pagina (margens/espacamento) — seg do design system ---- */
+.seg {
+  display: inline-flex; overflow: hidden;
+  border: 1px solid var(--color-divider); border-radius: 0;
+}
+.seg-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 12.5px; cursor: pointer;
+  font-family: var(--font-body);
+}
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.cv-page-controls { display: flex; flex-wrap: wrap; gap: 18px; }
+.cv-pc-label {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  margin-bottom: 7px; font-weight: 600;
 }
 
 /* Review */

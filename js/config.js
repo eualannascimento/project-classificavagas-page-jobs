@@ -12,32 +12,27 @@ const EuGeroConfig = (function () {
     'colabori', 'participei', 'contribuí', 'capacitei', 'estruturei', 'reestruturei'
   ];
 
-  const REQUIRED_SECTION_IDS = ['personal'];
+  const REQUIRED_SECTION_IDS = ['personal', 'summary', 'skills'];
   const DEFAULT_ENABLED_SECTION_IDS = [
-    'personal', 'summary', 'experiences', 'education', 'skills'
+    'personal', 'summary', 'experiences', 'education', 'skills', 'languages'
   ];
 
   const SECTION_LABELS = {
-    personal: 'Dados Pessoais',
-    summary: 'Resumo / Sobre',
-    experiences: 'Experiências',
+    personal: 'Dados pessoais',
+    summary: 'Resumo',
+    experiences: 'Experiência',
     education: 'Formação',
     skills: 'Habilidades',
     languages: 'Idiomas',
     certifications: 'Certificados',
-    projects: 'Projetos',
-    volunteering: 'Voluntariado',
-    publications: 'Publicações',
-    awards: 'Prêmios',
-    organizations: 'Organizações',
-    courses: 'Cursos'
+    projects: 'Projetos'
   };
 
   const SECTIONS = [
     {
       id: 'personal',
-      title: 'Dados Pessoais',
-      description: 'Nome, contato e cargo desejado — base do currículo.',
+      title: 'Dados pessoais',
+      description: 'Comece pelo básico. É assim que os recrutadores vão te encontrar.',
       linkedinHint: 'Perfil → foto de capa → seção de introdução no topo do perfil',
       fields: [
         { key: 'fullName', label: 'Nome completo', type: 'text', required: true, minLength: 3, tip: 'Use seu nome como aparece em documentos oficiais. Evite apelidos.' },
@@ -50,8 +45,8 @@ const EuGeroConfig = (function () {
     },
     {
       id: 'summary',
-      title: 'Resumo / Sobre',
-      description: 'Texto de apresentação profissional.',
+      title: 'Resumo',
+      description: 'Duas ou três frases sobre quem você é e o que faz de melhor. Experiências do dia a dia valem!',
       linkedinHint: 'Perfil → seção "Sobre" → editar',
       fields: [
         { key: 'summary', label: 'Resumo profissional', type: 'textarea', required: true, minLength: 100, actionVerbs: true, tip: 'Conte sua história em 3-4 parágrafos: quem você é, o que faz, principais conquistas e objetivo. Use verbos de ação e números quando possível.' }
@@ -59,8 +54,8 @@ const EuGeroConfig = (function () {
     },
     {
       id: 'experiences',
-      title: 'Experiências Profissionais',
-      description: 'Histórico de trabalho e conquistas.',
+      title: 'Experiência',
+      description: 'Descreva o que você fez. Trabalho informal, autônomo ou voluntário também conta.',
       linkedinHint: 'Perfil → seção "Experiência" → adicionar experiência',
       list: true,
       itemFields: [
@@ -73,8 +68,8 @@ const EuGeroConfig = (function () {
     },
     {
       id: 'education',
-      title: 'Formação Acadêmica',
-      description: 'Graduação, pós e cursos formais.',
+      title: 'Formação',
+      description: 'Cursos, ensino médio, técnico ou oficinas. O mais recente primeiro.',
       linkedinHint: 'Perfil → seção "Formação acadêmica" → adicionar formação',
       list: true,
       itemFields: [
@@ -87,7 +82,7 @@ const EuGeroConfig = (function () {
     {
       id: 'skills',
       title: 'Habilidades',
-      description: 'Competências técnicas e comportamentais.',
+      description: 'Liste o que você sabe fazer. Misture habilidades técnicas e de convivência.',
       linkedinHint: 'Perfil → seção "Competências" → adicionar competência',
       fields: [
         { key: 'skillsText', label: 'Habilidades', type: 'skillsTags', required: false, minLength: 2, fullWidth: true, idealMax: 180, tip: 'Digite e pressione Enter ou ; para adicionar. Ex: JavaScript, React, Liderança', placeholder: 'Digite uma habilidade...' }
@@ -96,6 +91,7 @@ const EuGeroConfig = (function () {
     {
       id: 'languages',
       title: 'Idiomas',
+      description: 'Idiomas que você fala e o nível de cada um.',
       linkedinHint: 'Perfil → seção "Idiomas" → adicionar idioma',
       list: true,
       itemFields: [
@@ -105,7 +101,8 @@ const EuGeroConfig = (function () {
     },
     {
       id: 'certifications',
-      title: 'Certificados e Licenças',
+      title: 'Certificados',
+      description: 'Cursos livres, certificados e treinamentos que você concluiu. Curso online e da prefeitura também valem!',
       linkedinHint: 'Perfil → seção "Licenças e certificados" → adicionar',
       list: true,
       itemFields: [
@@ -118,72 +115,13 @@ const EuGeroConfig = (function () {
     {
       id: 'projects',
       title: 'Projetos',
+      description: 'Trabalhos, projetos ou iniciativas de que você participou - na escola, na comunidade ou por conta própria.',
       linkedinHint: 'Perfil → seção "Projetos" → adicionar projeto',
       list: true,
       itemFields: [
         { key: 'name', label: 'Nome do projeto', type: 'text', required: true, minLength: 3, tip: 'Nome claro que descreva o projeto.' },
         { key: 'description', label: 'Descrição', type: 'textarea', required: true, minLength: 30, actionVerbs: true, tip: 'Descreva objetivo, sua contribuição e resultados alcançados.' },
         { key: 'url', label: 'URL (opcional)', type: 'url', required: false, minLength: 0, tip: 'Link para repositório, demo ou portfólio.' }
-      ]
-    },
-    {
-      id: 'volunteering',
-      title: 'Voluntariado',
-      linkedinHint: 'Perfil → seção "Voluntariado" → adicionar experiência',
-      list: true,
-      itemFields: [
-        { key: 'organization', label: 'Organização', type: 'text', required: true, minLength: 3, tip: 'Nome da ONG, instituição ou causa.' },
-        { key: 'role', label: 'Cargo / Função', type: 'text', required: true, minLength: 3, tip: 'Sua função no voluntariado.' },
-        { key: 'startDate', label: 'Início', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de início.' },
-        { key: 'endDate', label: 'Fim', type: 'monthYear', required: false, minLength: 0, tip: 'Marque "Até hoje" se ainda atua.' },
-        { key: 'description', label: 'Descrição', type: 'textarea', required: false, minLength: 20, actionVerbs: true, tip: 'Descreva suas contribuições e impacto gerado.' }
-      ]
-    },
-    {
-      id: 'publications',
-      title: 'Publicações',
-      linkedinHint: 'Perfil → seção "Publicações" → adicionar publicação',
-      list: true,
-      itemFields: [
-        { key: 'title', label: 'Título', type: 'text', required: true, minLength: 5, tip: 'Título completo da publicação.' },
-        { key: 'publisher', label: 'Publicação / Veículo', type: 'text', required: true, minLength: 2, tip: 'Revista, blog, conferência ou editora.' },
-        { key: 'date', label: 'Data', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de publicação.' },
-        { key: 'url', label: 'URL (opcional)', type: 'url', required: false, minLength: 0, tip: 'Link para a publicação online.' }
-      ]
-    },
-    {
-      id: 'awards',
-      title: 'Prêmios e Honrarias',
-      linkedinHint: 'Perfil → seção "Prêmios e honrarias" → adicionar',
-      list: true,
-      itemFields: [
-        { key: 'title', label: 'Título do prêmio', type: 'text', required: true, minLength: 3, tip: 'Nome oficial do prêmio ou honraria.' },
-        { key: 'issuer', label: 'Emissor', type: 'text', required: true, minLength: 2, tip: 'Organização que concedeu o prêmio.' },
-        { key: 'date', label: 'Data', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano do prêmio.' },
-        { key: 'description', label: 'Descrição', type: 'textarea', required: false, minLength: 10, tip: 'Contexto e motivo do reconhecimento.' }
-      ]
-    },
-    {
-      id: 'organizations',
-      title: 'Organizações',
-      linkedinHint: 'Perfil → seção "Organizações" → adicionar',
-      list: true,
-      itemFields: [
-        { key: 'name', label: 'Nome da organização', type: 'text', required: true, minLength: 3, tip: 'Associação, sindicato, grupo profissional etc.' },
-        { key: 'role', label: 'Cargo / Função', type: 'text', required: true, minLength: 3, tip: 'Seu papel na organização.' },
-        { key: 'startDate', label: 'Início', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de início.' },
-        { key: 'endDate', label: 'Fim', type: 'monthYear', required: false, minLength: 0, tip: 'Marque "Até hoje" se ainda participa.' }
-      ]
-    },
-    {
-      id: 'courses',
-      title: 'Cursos',
-      linkedinHint: 'Perfil → seção "Cursos" → adicionar curso',
-      list: true,
-      itemFields: [
-        { key: 'name', label: 'Nome do curso', type: 'text', required: true, minLength: 3, tip: 'Nome do curso ou treinamento.' },
-        { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 2, tip: 'Plataforma ou instituição que ofereceu o curso.' },
-        { key: 'date', label: 'Data de conclusão', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de conclusão.' }
       ]
     }
   ];
@@ -200,6 +138,11 @@ const EuGeroConfig = (function () {
       sidebarRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
       atsNote: 'Barra lateral: alguns ATS leem melhor layouts de coluna única.'
     },
+    minimal: {
+      id: 'minimal', name: 'Minimalista', description: 'Alinhado à esquerda, ultra limpo',
+      layout: 'left', thumbClass: 'template-thumb-minimal',
+      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
+    },
     elegant: {
       id: 'elegant', name: 'Elegante', description: 'Tipografia condensada, acento discreto',
       layout: 'centered', thumbClass: 'template-thumb-elegant', serif: false,
@@ -210,26 +153,11 @@ const EuGeroConfig = (function () {
       layout: 'banner', thumbClass: 'template-thumb-executive',
       bannerRgb: [29, 45, 61], accentHex: '1D2D3D', atsFriendly: true
     },
-    minimal: {
-      id: 'minimal', name: 'Minimalista', description: 'Alinhado à esquerda, ultra limpo',
-      layout: 'left', thumbClass: 'template-thumb-minimal',
-      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
-    },
     creative: {
       id: 'creative', name: 'Criativo', description: 'Coluna única com selo de iniciais',
       layout: 'creative', thumbClass: 'template-thumb-creative',
       accentRgb: [89, 128, 166], badgeRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
       atsNote: 'Selo gráfico no topo: prefira Clássico ou Minimalista para ATS rigorosos.'
-    },
-    harvard: {
-      id: 'harvard', name: 'Harvard', description: 'O clássico de alta densidade acadêmica',
-      layout: 'centered', thumbClass: 'template-thumb-elegant', serif: true,
-      accentRgb: [0, 0, 0], accentHex: '000000', atsFriendly: true
-    },
-    compact_modern: {
-      id: 'compact_modern', name: 'Compacto', description: 'Design limpo focado em economizar espaço',
-      layout: 'left', thumbClass: 'template-thumb-minimal',
-      accentRgb: [30, 41, 59], accentHex: '1E293B', atsFriendly: true
     }
   };
 
@@ -250,6 +178,8 @@ const EuGeroConfig = (function () {
     return {
       version: APP_VERSION,
       template: 'classic',
+      margin: 'padrao',
+      density: 'normal',
       currentStep: 0,
       enabledSections: [...DEFAULT_ENABLED_SECTION_IDS],
       personal: { fullName: '', headline: '', email: '', phone: '', location: '', linkedinUrl: '' },
@@ -315,15 +245,10 @@ const EuGeroConfig = (function () {
     summary: 'Resumo',
     experiences: 'Experiência',
     education: 'Formação',
-    skills: 'Skills',
+    skills: 'Habilidades',
     languages: 'Idiomas',
     certifications: 'Certificados',
-    projects: 'Projetos',
-    volunteering: 'Voluntariado',
-    publications: 'Publicações',
-    awards: 'Prêmios',
-    organizations: 'Organizações',
-    courses: 'Cursos'
+    projects: 'Projetos'
   };
 
   return {

@@ -309,7 +309,9 @@ const EuGeroPreview = (function () {
       <div class="preview-a4-body${overflowClass}">${inner}</div>
       <div class="cv-page-limit" aria-hidden="true"><span>Limite de 1 pagina A4</span></div>
     `;
-    container.className = `preview-content preview-paper template-${templateId}`;
+    const margin = state.margin || 'padrao';
+    const density = state.density || 'normal';
+    container.className = `preview-content preview-paper template-${templateId} cv-margin-${margin} cv-density-${density}`;
   }
 
   return {
