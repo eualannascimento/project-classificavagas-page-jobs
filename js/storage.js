@@ -14,15 +14,23 @@ const EuGeroStorage = (function () {
     }
   }
 
+  function initialState() {
+    // Igual ao modelo: primeira visita abre com o exemplo preenchido.
+    if (typeof EuGeroSampleData !== 'undefined') {
+      return mergeWithDefaults(EuGeroSampleData.build());
+    }
+    return createEmptyState();
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return createEmptyState();
+      if (!raw) return initialState();
       const parsed = JSON.parse(raw);
       return mergeWithDefaults(parsed);
     } catch (e) {
       console.warn('Erro ao carregar localStorage:', e);
-      return createEmptyState();
+      return initialState();
     }
   }
 
