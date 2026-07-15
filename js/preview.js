@@ -262,12 +262,37 @@ const EuGeroPreview = (function () {
     `;
   }
 
+  function initialsFromName(name) {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    const ini = parts.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    return ini || 'SN';
+  }
+
+  function renderCreativeLayout(state, enabledSections) {
+    const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
+    const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
+    return `
+      <div class="cv cv-creative template-creative">
+        <header class="cv-creative-header">
+          <div class="cv-creative-badge">${escapeHtml(initialsFromName(personal.fullName))}</div>
+          <div class="cv-creative-id">
+            <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
+            <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
+            <p class="cv-contacts">${contacts.length ? contacts.map(c => escapeHtml(c)).join(' · ') : 'e-mail · telefone · cidade'}</p>
+          </div>
+        </header>
+        <div class="cv-body">${content}</div>
+      </div>
+    `;
+  }
+
   function render(state, templateId, enabledSections) {
     const meta = EuGeroConfig.getTemplateMeta(templateId);
     switch (meta.layout) {
       case 'sidebar': return renderSidebarLayout(state, enabledSections, templateId);
       case 'banner': return renderBannerLayout(state, enabledSections);
       case 'left': return renderLeftLayout(state, enabledSections);
+      case 'creative': return renderCreativeLayout(state, enabledSections);
       default: return renderCenteredLayout(state, enabledSections, templateId);
     }
   }
