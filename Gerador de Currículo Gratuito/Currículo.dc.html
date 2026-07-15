@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-fbdec0aa-1ee9-46de-b626-dd640d283087/styles.css">
+  <script src="_ds/industry-fbdec0aa-1ee9-46de-b626-dd640d283087/_ds_bundle.js"></script>
+  <style>
+    a { color: var(--color-accent); text-underline-offset: 3px; }
+    a:hover { color: var(--color-accent-700); }
+    @keyframes cvfade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes cvtoast { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .cv-input { width: 100%; min-height: 40px; padding: 8px 11px; font-family: var(--font-body); font-size: 15px; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: 0; }
+    .cv-input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+    .cv-input:focus-visible { border-color: var(--color-accent); outline: 2px solid var(--color-accent); outline-offset: 1px; }
+    textarea.cv-input { min-height: 104px; resize: vertical; line-height: 1.5; }
+    .cv-help { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex: none; border: 1px solid var(--color-accent); color: var(--color-accent-700); border-radius: 50%; font-size: 11px; font-weight: 700; line-height: 1; cursor: help; position: relative; font-family: var(--font-body); }
+    .cv-help:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .cv-tip-pop { position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%); width: 210px; background: var(--color-neutral-900); color: #fff; padding: 9px 11px; font-size: 12px; line-height: 1.45; text-transform: none; letter-spacing: 0; font-weight: 400; opacity: 0; visibility: hidden; transition: opacity .15s ease; z-index: 40; pointer-events: none; box-shadow: var(--shadow-md); }
+    .cv-tip-pop::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--color-neutral-900); }
+    .cv-help:hover .cv-tip-pop, .cv-help:focus .cv-tip-pop, .cv-help:focus-visible .cv-tip-pop { opacity: 1; visibility: visible; }
+    @media (max-width: 900px) {
+      .cv-split { grid-template-columns: 1fr !important; gap: 30px !important; }
+      .cv-aside { position: static !important; top: auto !important; }
+      .cv-form2 { grid-template-columns: 1fr !important; }
+      .cv-main { padding-left: 16px !important; padding-right: 16px !important; }
+      .cv-nav { padding-left: 16px !important; padding-right: 16px !important; flex-wrap: wrap; }
+    }
+    @media (max-width: 560px) { .cv-tip-pop { width: 160px; } }
+  </style>
+</helmet>
+<div style="min-height: 100vh; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); font-size: 15px;">
+
+  <!-- ============ NAV ============ -->
+  <nav class="cv-nav" style="display: flex; align-items: center; gap: 16px; max-width: 1180px; margin: 0 auto; padding: 18px 24px;">
+    <button onClick="{{ goHome }}" style="display: flex; align-items: baseline; gap: 9px; background: none; border: 0; padding: 0; cursor: pointer; color: inherit;">
+      <span style="font-family: var(--font-heading); font-weight: 600; font-size: 21px; letter-spacing: -0.01em;">{{ productName }}</span>
+      <span style="font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">por ClassificaVagas</span>
+    </button>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+      <sc-if value="{{ showSaved }}" hint-placeholder-val="{{ true }}">
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 0.04em; color: var(--color-accent-700);">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent);"></span>Rascunho salvo
+        </span>
+      </sc-if>
+      <sc-if value="{{ notHome }}" hint-placeholder-val="{{ true }}">
+        <button class="btn btn-ghost" onClick="{{ goHome }}" style="font-size: 14px;">Início</button>
+      </sc-if>
+    </div>
+  </nav>
+
+  <!-- ============ HOME ============ -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <main class="cv-main" style="max-width: 1180px; margin: 0 auto; padding: 24px; animation: cvfade .4s ease;">
+    <section style="padding: 40px 0 8px;">
+      <p style="font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 0 0 16px;">Gratuito · Sem cadastro · Feito no seu navegador</p>
+      <h1 style="font-family: var(--font-heading); font-weight: 600; font-size: clamp(40px, 6vw, 74px); line-height: 1.02; letter-spacing: -0.01em; text-transform: uppercase; margin: 0; max-width: 15ch;">Seu currículo pronto, sem complicação.</h1>
+      <p style="font-size: 17px; line-height: 1.55; max-width: 56ch; margin: 22px 0 0; color: color-mix(in srgb, var(--color-text) 82%, transparent);">Um passo de cada vez, com uma dica clara em cada campo. Trabalho informal, voluntário ou o primeiro emprego — tudo conta, e a gente te mostra como escrever.</p>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 40px 0 0;">
+      <div class="blueprint" style="padding: 26px; display: flex; flex-direction: column; gap: 10px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent-700); font-weight: 600;">Começar do zero</span>
+        <h3 style="font-family: var(--font-heading); font-weight: 600; font-size: 24px; text-transform: uppercase; margin: 2px 0 0;">Criar meu currículo</h3>
+        <p style="font-size: 14.5px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0; flex: 1;">Um guia passo a passo, pensado para quem nunca fez um currículo. Sem termos difíceis.</p>
+        <button class="btn btn-primary" onClick="{{ startFlow }}" style="margin-top: 10px; min-height: 44px; font-size: 15px;">Começar agora</button>
+      </div>
+      <div class="blueprint" style="padding: 26px; display: flex; flex-direction: column; gap: 10px;">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-weight: 600;">Já tenho um rascunho</span>
+        <h3 style="font-family: var(--font-heading); font-weight: 600; font-size: 24px; text-transform: uppercase; margin: 2px 0 0;">Continuar de onde parei</h3>
+        <p style="font-size: 14.5px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0; flex: 1;">Salvou um arquivo antes? Carregue e siga editando. Tudo continua no seu dispositivo.</p>
+        <button class="btn btn-secondary" onClick="{{ loadDraft }}" style="margin-top: 10px; min-height: 44px; font-size: 15px;">Carregar rascunho (.json)</button>
+      </div>
+    </section>
+
+    <section style="margin: 44px 0 0;">
+      <p style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 0 0 10px;">Como funciona</p>
+      <hr style="height: 1px; border: 0; background: var(--color-divider); margin: 0 0 22px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px;">
+        <div>
+          <div style="font-family: var(--font-heading); font-size: 15px; color: var(--color-accent-700); letter-spacing: 0.08em; font-weight: 600;">01</div>
+          <h4 style="font-family: var(--font-heading); font-weight: 600; font-size: 19px; text-transform: uppercase; margin: 6px 0 4px;">Preencha com dicas</h4>
+          <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 76%, transparent); margin: 0;">Cada campo tem um "?" com orientação e avisa quando o texto está bom.</p>
+        </div>
+        <div>
+          <div style="font-family: var(--font-heading); font-size: 15px; color: var(--color-accent-700); letter-spacing: 0.08em; font-weight: 600;">02</div>
+          <h4 style="font-family: var(--font-heading); font-weight: 600; font-size: 19px; text-transform: uppercase; margin: 6px 0 4px;">Veja em tempo real</h4>
+          <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 76%, transparent); margin: 0;">O currículo se monta ao lado enquanto você digita. Sem surpresas no final.</p>
+        </div>
+        <div>
+          <div style="font-family: var(--font-heading); font-size: 15px; color: var(--color-accent-700); letter-spacing: 0.08em; font-weight: 600;">03</div>
+          <h4 style="font-family: var(--font-heading); font-weight: 600; font-size: 19px; text-transform: uppercase; margin: 6px 0 4px;">Escolha o visual</h4>
+          <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 76%, transparent); margin: 0;">Compare os modelos com o seu conteúdo, ajuste margens e exporte.</p>
+        </div>
+      </div>
+    </section>
+
+    <section style="margin: 44px 0 24px; padding: 20px 22px; border: 1px solid var(--color-divider); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent-700);">Privacidade</span>
+      <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0; flex: 1; min-width: 240px;">Nada é enviado a servidores. Seus dados ficam apenas no seu navegador, e você decide quando salvar ou exportar.</p>
+    </section>
+  </main>
+  </sc-if>
+
+  <!-- ============ START / CONFIG ============ -->
+  <sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+  <main class="cv-main" style="max-width: 1180px; margin: 0 auto; padding: 8px 24px 40px; animation: cvfade .35s ease;">
+    <div class="cv-split" style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 40px; align-items: start;">
+      <div>
+        <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Antes de começar</p>
+        <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Vamos montar o seu, do seu jeito</h2>
+        <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 26px; max-width: 52ch;">Escolha um modelo para começar (dá para trocar depois sem perder nada) e marque as seções que fazem sentido para você.</p>
+
+        <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">Seções do currículo</p>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <sc-for list="{{ sectionList }}" as="s" hint-placeholder-count="8">
+            <label style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--color-divider); cursor: {{ s.cursor }}; background: {{ s.bg }};">
+              <input type="checkbox" checked="{{ s.on }}" disabled="{{ s.locked }}" onChange="{{ s.toggle }}" style="width: 17px; height: 17px; accent-color: var(--color-accent);">
+              <span style="font-family: var(--font-heading); font-weight: 600; font-size: 16px;">{{ s.label }}</span>
+              <span style="margin-left: auto; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">{{ s.tag }}</span>
+            </label>
+          </sc-for>
+        </div>
+        <p style="font-size: 13px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 62%, transparent); margin: 12px 2px 0;">Sem experiência formal ainda? Tudo bem — desmarque Experiência ou Formação. Você pode voltar quando quiser.</p>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px;">
+          <button class="btn btn-primary" onClick="{{ startWizard }}" style="min-height: 46px; font-size: 15px; padding-inline: 22px;">Começar a preencher</button>
+          <button class="btn btn-ghost" onClick="{{ fillSample }}" style="font-size: 14px;">Ver com exemplo pronto</button>
+          <button class="btn btn-ghost" onClick="{{ clearAll }}" style="font-size: 14px;">Limpar tudo</button>
+        </div>
+      </div>
+
+      <aside class="cv-aside" style="position: sticky; top: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
+          <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;">Prévia</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button onClick="{{ tplPrev }}" aria-label="Modelo anterior" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">‹</button>
+            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; min-width: 90px; text-align: center;">{{ templateLabel }}</span>
+            <button onClick="{{ tplNext }}" aria-label="Próximo modelo" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">›</button>
+          </div>
+        </div>
+        <div class="blueprint" style="padding: 0; background: #fff;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          {{ preview }}
+        </div>
+        <div style="margin-top: 14px;">{{ pageControls }}</div>
+      </aside>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ============ WIZARD ============ -->
+  <sc-if value="{{ isWizard }}" hint-placeholder-val="{{ true }}">
+  <main class="cv-main" style="max-width: 1180px; margin: 0 auto; padding: 8px 24px 120px; animation: cvfade .3s ease;">
+    <div class="cv-split" style="display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); gap: 40px; align-items: start;">
+      <div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+          <sc-for list="{{ steps }}" as="st" hint-placeholder-count="5">
+            <button onClick="{{ st.goto }}" style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid {{ st.border }}; background: {{ st.bg }}; color: {{ st.color }}; cursor: pointer; font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.02em;">
+              <span style="font-size: 11px; opacity: .8;">{{ st.num }}</span>{{ st.label }}
+            </button>
+          </sc-for>
+        </div>
+        <hr style="height: 1px; border: 0; background: var(--color-divider); margin: 14px 0 22px;">
+
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+          <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 30px; text-transform: uppercase; margin: 0;">{{ currentLabel }}</h2>
+          <span style="font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); white-space: nowrap;">{{ stepCounter }}</span>
+        </div>
+        <p style="font-size: 14.5px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0 0 22px; max-width: 54ch;">{{ currentHelp }}</p>
+
+        <!-- PERSONAL -->
+        <sc-if value="{{ stepPersonal }}" hint-placeholder-val="{{ true }}">
+          <div class="cv-form2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Nome completo<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Escreva seu nome completo, do jeito que quer ser chamado.</span></span></span><input class="cv-input" value="{{ personal.name }}" onChange="{{ setName }}" placeholder="Ex.: Cida Boaventura"></label>
+            <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Cargo ou área desejada<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">A vaga ou área que você busca. Ex.: Auxiliar Administrativo.</span></span></span><input class="cv-input" value="{{ personal.role }}" onChange="{{ setRole }}" placeholder="Ex.: Auxiliar Administrativo"></label>
+            <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">E-mail<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Use um e-mail que você acessa sempre — é por onde te chamam.</span></span></span><input class="cv-input" value="{{ personal.email }}" onChange="{{ setEmail }}" placeholder="voce@email.com"></label>
+            <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Telefone<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Com DDD. De preferência com WhatsApp.</span></span></span><input class="cv-input" value="{{ personal.phone }}" onChange="{{ setPhone }}" placeholder="(11) 90000-0000"></label>
+            <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Cidade<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Cidade e estado onde você mora. Ex.: Guarulhos, SP.</span></span></span><input class="cv-input" value="{{ personal.city }}" onChange="{{ setCity }}" placeholder="Cidade, UF"></label>
+            <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">LinkedIn (opcional)<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Opcional. O endereço do seu perfil, se você tiver um.</span></span></span><input class="cv-input" value="{{ personal.linkedin }}" onChange="{{ setLinkedin }}" placeholder="linkedin.com/in/voce"></label>
+          </div>
+          <div style="margin-top: 10px;">{{ emailHintEl }}</div>
+        </sc-if>
+
+        <!-- SUMMARY -->
+        <sc-if value="{{ stepSummary }}" hint-placeholder-val="{{ true }}">
+          <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Um parágrafo curto sobre você<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">2 a 3 frases sobre quem você é e o que faz bem. Experiências do dia a dia valem!</span></span></span><textarea class="cv-input" value="{{ summary }}" onChange="{{ setSummary }}" placeholder="Ex.: Pessoa comunicativa e organizada, com experiência em vendas e atendimento ao público. Busco minha primeira oportunidade com carteira assinada."></textarea></label>
+          <div style="margin-top: 10px;">{{ summaryHintEl }}</div>
+        </sc-if>
+
+        <!-- EXPERIENCE -->
+        <sc-if value="{{ stepExperience }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <sc-for list="{{ experiences }}" as="ex" hint-placeholder-count="2">
+              <div class="blueprint" style="padding: 20px;">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                  <span style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700);">Experiência {{ ex.num }}</span>
+                  <button class="btn btn-ghost" onClick="{{ ex.remove }}" style="font-size: 13px;">Remover</button>
+                </div>
+                <div class="cv-form2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Cargo ou função<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Como sua função era chamada. Trabalho informal ou autônomo também vale.</span></span></span><input class="cv-input" value="{{ ex.role }}" onChange="{{ ex.onRole }}" placeholder="Ex.: Vendedora autônoma"></label>
+                  <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Onde<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">O local. Pode ser 'autônomo', o nome de uma loja ou de um projeto.</span></span></span><input class="cv-input" value="{{ ex.company }}" onChange="{{ ex.onCompany }}" placeholder="Ex.: Doces da Cida"></label>
+                  <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Período<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">De quando até quando. Ex.: 2019 — atual.</span></span></span><input class="cv-input" value="{{ ex.period }}" onChange="{{ ex.onPeriod }}" placeholder="Ex.: 2019 — atual"></label>
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">O que você fez e conquistou<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Comece com um verbo (Vendi, Organizei…) e cite um número quando puder.</span></span></span><textarea class="cv-input" value="{{ ex.desc }}" onChange="{{ ex.onDesc }}" placeholder="Ex.: Vendi doces caseiros e atendi mais de 200 clientes fiéis."></textarea></label>
+                </div>
+                <div style="margin-top: 10px;">{{ ex.hintEl }}</div>
+              </div>
+            </sc-for>
+            <button class="btn btn-secondary" onClick="{{ addExp }}" style="align-self: flex-start; min-height: 42px;">+ Adicionar experiência</button>
+          </div>
+        </sc-if>
+
+        <!-- EDUCATION -->
+        <sc-if value="{{ stepEducation }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <sc-for list="{{ education }}" as="ed" hint-placeholder-count="1">
+              <div class="blueprint" style="padding: 20px;">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                  <span style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700);">Formação {{ ed.num }}</span>
+                  <button class="btn btn-ghost" onClick="{{ ed.remove }}" style="font-size: 13px;">Remover</button>
+                </div>
+                <div class="cv-form2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Curso ou formação<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Ensino médio, técnico, cursos livres e oficinas também contam.</span></span></span><input class="cv-input" value="{{ ed.course }}" onChange="{{ ed.onCourse }}" placeholder="Ex.: Ensino Médio completo"></label>
+                  <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Instituição<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Onde você estudou. Ex.: escola, Senai, curso online.</span></span></span><input class="cv-input" value="{{ ed.school }}" onChange="{{ ed.onSchool }}" placeholder="Ex.: EE Prof. João Ramos"></label>
+                  <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Período<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">O ano de conclusão ou o período. Ex.: 2018.</span></span></span><input class="cv-input" value="{{ ed.period }}" onChange="{{ ed.onPeriod }}" placeholder="Ex.: 2018"></label>
+                </div>
+              </div>
+            </sc-for>
+            <button class="btn btn-secondary" onClick="{{ addEdu }}" style="align-self: flex-start; min-height: 42px;">+ Adicionar formação</button>
+          </div>
+        </sc-if>
+
+        <!-- SKILLS -->
+        <sc-if value="{{ stepSkills }}" hint-placeholder-val="{{ true }}">
+          <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Digite uma habilidade e aperte Enter<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">O que você sabe fazer. Misture técnicas (Excel) e de convivência (trabalho em equipe).</span></span></span><input class="cv-input" value="{{ skillDraft }}" onChange="{{ setSkillDraft }}" onKeyDown="{{ onSkillKey }}" placeholder="Ex.: Atendimento ao cliente…"></label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;">
+            <sc-for list="{{ skills }}" as="sk" hint-placeholder-count="5">
+              <button onClick="{{ sk.remove }}" style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--color-accent); background: var(--color-accent-100); color: var(--color-accent-800); cursor: pointer; font-size: 13.5px;">{{ sk.name }}<span style="opacity: .6; font-size: 15px; line-height: 1;">×</span></button>
+            </sc-for>
+          </div>
+          <p style="font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 26px 0 10px;">Sugestões — clique para adicionar</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <sc-for list="{{ skillSuggestions }}" as="sg" hint-placeholder-count="6">
+              <button onClick="{{ sg.add }}" style="padding: 7px 12px; border: 1px dashed var(--color-divider); background: transparent; color: color-mix(in srgb, var(--color-text) 75%, transparent); cursor: pointer; font-size: 13.5px;">+ {{ sg.name }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- LANGUAGES -->
+        <sc-if value="{{ stepLanguages }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <sc-for list="{{ languages }}" as="lg" hint-placeholder-count="2">
+              <div class="cv-form2" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+                <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Idioma<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Idiomas que você fala, mesmo que básico.</span></span></span><input class="cv-input" value="{{ lg.name }}" onChange="{{ lg.onName }}" placeholder="Ex.: Inglês"></label>
+                <label><span style="display:block; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Nível</span><input class="cv-input" value="{{ lg.level }}" onChange="{{ lg.onLevel }}" placeholder="Ex.: Básico"></label>
+                <button class="btn btn-ghost" onClick="{{ lg.remove }}" style="min-height: 40px; font-size: 13px;">Remover</button>
+              </div>
+            </sc-for>
+            <button class="btn btn-secondary" onClick="{{ addLang }}" style="align-self: flex-start; min-height: 42px;">+ Adicionar idioma</button>
+          </div>
+        </sc-if>
+
+        <!-- CERTIFICATES -->
+        <sc-if value="{{ stepCertificates }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <sc-for list="{{ certificates }}" as="ct" hint-placeholder-count="2">
+              <div class="blueprint" style="padding: 20px;">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                  <span style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700);">Certificado {{ ct.num }}</span>
+                  <button class="btn btn-ghost" onClick="{{ ct.remove }}" style="font-size: 13px;">Remover</button>
+                </div>
+                <div class="cv-form2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Nome do curso ou certificado<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">O que você concluiu. Cursos online, da prefeitura ou do SENAI também contam.</span></span></span><input class="cv-input" value="{{ ct.name }}" onChange="{{ ct.onName }}" placeholder="Ex.: Informática Básica"></label>
+                  <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Onde você fez<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">A instituição que emitiu. Ex.: Fundação Bradesco, Senac, YouTube.</span></span></span><input class="cv-input" value="{{ ct.issuer }}" onChange="{{ ct.onIssuer }}" placeholder="Ex.: Fundação Bradesco"></label>
+                  <label><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Ano<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">O ano em que você concluiu. Ex.: 2023.</span></span></span><input class="cv-input" value="{{ ct.year }}" onChange="{{ ct.onYear }}" placeholder="Ex.: 2023"></label>
+                </div>
+              </div>
+            </sc-for>
+            <button class="btn btn-secondary" onClick="{{ addCert }}" style="align-self: flex-start; min-height: 42px;">+ Adicionar certificado</button>
+          </div>
+        </sc-if>
+
+        <!-- PROJECTS -->
+        <sc-if value="{{ stepProjects }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <sc-for list="{{ projects }}" as="pj" hint-placeholder-count="1">
+              <div class="blueprint" style="padding: 20px;">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                  <span style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700);">Projeto {{ pj.num }}</span>
+                  <button class="btn btn-ghost" onClick="{{ pj.remove }}" style="font-size: 13px;">Remover</button>
+                </div>
+                <div class="cv-form2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Nome do projeto<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Um trabalho ou iniciativa: da escola, da comunidade ou por conta própria.</span></span></span><input class="cv-input" value="{{ pj.name }}" onChange="{{ pj.onName }}" placeholder="Ex.: Feira de empreendedorismo"></label>
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">O que você fez<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Explique seu papel e o resultado. Comece com um verbo e cite um número quando puder.</span></span></span><textarea class="cv-input" value="{{ pj.desc }}" onChange="{{ pj.onDesc }}" placeholder="Ex.: Organizei a barraca de doces com 2 colegas e cuidei do caixa, com lucro de R$ 300."></textarea></label>
+                  <label style="grid-column: 1 / -1;"><span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">Link (opcional)<span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">Opcional. Um link para ver o projeto, se existir (rede social, site, drive).</span></span></span><input class="cv-input" value="{{ pj.link }}" onChange="{{ pj.onLink }}" placeholder="Ex.: instagram.com/seuprojeto"></label>
+                </div>
+                <div style="margin-top: 10px;">{{ pj.hintEl }}</div>
+              </div>
+            </sc-for>
+            <button class="btn btn-secondary" onClick="{{ addProj }}" style="align-self: flex-start; min-height: 42px;">+ Adicionar projeto</button>
+          </div>
+        </sc-if>
+
+        <div style="margin-top: 30px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center;">
+          <button class="btn btn-ghost" onClick="{{ openAI }}" style="font-size: 13.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent);">Travou? Peça ideias a uma IA →</button>
+          <button class="btn btn-ghost" onClick="{{ clearSectionBtn }}" style="font-size: 13.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent);">Limpar esta seção</button>
+        </div>
+      </div>
+
+      <aside class="cv-aside" style="position: sticky; top: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
+          <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;">Prévia ao vivo</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button onClick="{{ tplPrev }}" aria-label="Modelo anterior" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">‹</button>
+            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; min-width: 90px; text-align: center;">{{ templateLabel }}</span>
+            <button onClick="{{ tplNext }}" aria-label="Próximo modelo" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-divider); background: transparent; color: var(--color-accent-700); cursor: pointer; font-size: 16px; line-height: 1;">›</button>
+          </div>
+        </div>
+        <div class="blueprint" style="padding: 0; background: #fff;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          {{ preview }}
+        </div>
+        <div style="margin-top: 14px;">{{ pageControls }}</div>
+      </aside>
+    </div>
+
+    <div style="position: fixed; left: 0; right: 0; bottom: 0; background: color-mix(in srgb, var(--color-bg) 88%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--color-divider); z-index: 20;">
+      <div class="cv-main" style="max-width: 1180px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px;">
+        <button class="btn btn-secondary" onClick="{{ prevStep }}" style="min-height: 42px;">{{ prevLabel }}</button>
+        <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
+          <div style="flex: 1; height: 6px; background: var(--color-neutral-200); position: relative; overflow: hidden;">
+            <div style="position: absolute; inset: 0 auto 0 0; width: {{ progressPct }}; background: var(--color-accent); transition: width .3s ease;"></div>
+          </div>
+          <span style="font-size: 12px; white-space: nowrap; color: color-mix(in srgb, var(--color-text) 65%, transparent);">{{ progressPct }} preenchido</span>
+        </div>
+        <button class="btn btn-primary" onClick="{{ nextStep }}" style="min-height: 42px; padding-inline: 20px;">{{ nextLabel }}</button>
+      </div>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ============ REVIEW ============ -->
+  <sc-if value="{{ isReview }}" hint-placeholder-val="{{ true }}">
+  <main class="cv-main" style="max-width: 1180px; margin: 0 auto; padding: 8px 24px 60px; animation: cvfade .35s ease;">
+    <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Revisão</p>
+    <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 24px;">Quase lá — confira e escolha o visual</h2>
+
+    <div class="blueprint" style="padding: 24px; margin-bottom: 30px;">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div>
+          <div style="font-family: var(--font-heading); font-weight: 600; font-size: 44px; line-height: 1; color: var(--color-accent-700);">{{ scoreLabel }}</div>
+          <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin-top: 4px;">Qualidade geral</div>
+        </div>
+        <div style="flex: 1; min-width: 240px;">
+          <div style="height: 8px; background: var(--color-neutral-200); position: relative; overflow: hidden; margin-bottom: 12px;">
+            <div style="position: absolute; inset: 0 auto 0 0; width: {{ scorePct }}; background: var(--color-accent);"></div>
+          </div>
+          <p style="font-size: 14px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 78%, transparent); margin: 0;">{{ scoreMessage }}</p>
+        </div>
+      </div>
+      <sc-if value="{{ hasSuggestions }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 16px;">
+          <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin: 0 0 10px;">Sugestões para melhorar</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="2">
+              <button onClick="{{ sg.goto }}" style="display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; font-size: 14px;">
+                <span style="color: var(--color-accent);">→</span>{{ sg.text }}
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <p style="font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 16px;">Escolha o modelo — use as setas para ver todos</p>
+    <div style="display: grid; grid-template-columns: auto minmax(0, 340px) auto; align-items: center; justify-content: center; gap: 20px; margin-bottom: 12px;">
+      <button class="btn btn-secondary btn-icon" onClick="{{ galPrev }}" aria-label="Modelo anterior" style="width: 44px; height: 44px; font-size: 20px;">‹</button>
+      <div>
+        <div class="blueprint" style="padding: 0; background: #fff; outline: {{ galleryOutline }}; outline-offset: 3px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          {{ galleryPreview }}
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; gap: 12px;">
+          <div>
+            <div style="font-family: var(--font-heading); font-weight: 600; font-size: 18px; text-transform: uppercase; line-height: 1;">{{ galleryLabel }}</div>
+            <div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 3px;">{{ galleryCounter }}</div>
+          </div>
+          <button class="btn btn-primary" onClick="{{ useGallery }}" style="min-height: 40px;">{{ galleryState }}</button>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-icon" onClick="{{ galNext }}" aria-label="Próximo modelo" style="width: 44px; height: 44px; font-size: 20px;">›</button>
+    </div>
+
+    <div style="max-width: 720px; margin: 26px auto 0;">{{ pageControls }}</div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-top: 1px solid var(--color-divider); padding-top: 24px; margin-top: 30px;">
+      <button class="btn btn-secondary" onClick="{{ backToWizard }}" style="min-height: 44px;">Voltar a editar</button>
+      <button class="btn btn-ghost" onClick="{{ saveDraft }}" style="font-size: 14px;">Salvar rascunho (.json)</button>
+      <span style="flex: 1;"></span>
+      <button class="btn btn-secondary" onClick="{{ goGuide }}" style="min-height: 44px;">Guia do LinkedIn</button>
+      <button class="btn btn-primary" onClick="{{ doExport }}" style="min-height: 44px; padding-inline: 22px;">Baixar currículo (PDF)</button>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ============ GUIDE ============ -->
+  <sc-if value="{{ isGuide }}" hint-placeholder-val="{{ true }}">
+  <main class="cv-main" style="max-width: 900px; margin: 0 auto; padding: 8px 24px 60px; animation: cvfade .35s ease;">
+    <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Depois do currículo</p>
+    <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Leve o mesmo capricho pro LinkedIn</h2>
+    <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">Recrutadores quase sempre olham seu LinkedIn depois do currículo. Aqui vão textos prontos e dicas rápidas para deixar seu perfil no mesmo nível.</p>
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+      <sc-for list="{{ guideItems }}" as="gi" hint-placeholder-count="3">
+        <div class="blueprint" style="padding: 20px;">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 17px; text-transform: uppercase;">{{ gi.label }}</span>
+            <sc-if value="{{ gi.hasText }}" hint-placeholder-val="{{ true }}">
+              <button class="btn btn-secondary" onClick="{{ gi.copy }}" style="font-size: 13px; min-height: 36px;">Copiar</button>
+            </sc-if>
+          </div>
+          <sc-if value="{{ gi.hasText }}" hint-placeholder-val="{{ true }}">
+            <p style="font-size: 14px; line-height: 1.55; color: var(--color-accent-900); background: var(--color-accent-100); border: 1px solid var(--color-divider); padding: 12px 14px; margin: 0 0 12px; white-space: pre-wrap;">{{ gi.text }}</p>
+          </sc-if>
+          <div style="display: flex; gap: 9px; align-items: flex-start;">
+            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700); flex: none; margin-top: 3px;">Dica</span>
+            <span style="font-size: 14px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 82%, transparent);">{{ gi.tip }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top: 30px;">
+      <button class="btn btn-secondary" onClick="{{ goReview }}" style="min-height: 44px;">← Voltar à revisão</button>
+    </div>
+  </main>
+  </sc-if>
+
+  <!-- ============ AI DIALOG ============ -->
+  <sc-if value="{{ showAI }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" onClick="{{ closeAI }}" style="z-index: 50;">
+      <div class="dialog" onClick="{{ stop }}" style="width: min(580px, 100%);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 class="dialog-title">Peça ajuda a uma IA</h3>
+          <button class="btn btn-ghost" onClick="{{ closeAI }}" style="font-size: 18px;">✕</button>
+        </div>
+        <div style="display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-accent); background: var(--color-accent-100);">
+          <span style="color: var(--color-accent-800); font-weight: 700; flex: none;">!</span>
+          <p style="font-size: 13px; line-height: 1.5; color: var(--color-accent-900); margin: 0;">Esta ferramenta <strong>não tem uma IA integrada</strong> e não envia nada para lugar nenhum. Copie o texto abaixo — já com o que você preencheu — e cole na IA que você preferir (ChatGPT, Claude, Gemini, Copilot…). Você precisa abrir a IA por conta própria.</p>
+        </div>
+        <textarea class="cv-input" readonly rows="9" value="{{ aiPrompt }}" style="font-size: 13px; line-height: 1.5;"></textarea>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" onClick="{{ closeAI }}">Fechar</button>
+          <button class="btn btn-primary" onClick="{{ copyAI }}">Copiar texto</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ TOAST ============ -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 60; background: var(--color-neutral-900); color: #fff; padding: 12px 20px; font-size: 14px; box-shadow: var(--shadow-lg); animation: cvtoast .25s ease; max-width: 90vw; text-align: center;">{{ toast }}</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900},&quot;productName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Currículo&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showQualityHints&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Comportamento&quot;},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;start&quot;,&quot;wizard&quot;,&quot;review&quot;,&quot;guide&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Comportamento&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'home',
+    template: 'classic',
+    stepIndex: 0,
+    galleryIndex: 0,
+    margin: 'padrao',
+    density: 'normal',
+    optional: { experience: true, education: true, languages: true, certificates: false, projects: false },
+    skillDraft: '',
+    showAI: false,
+    toast: '',
+    dirty: false,
+    data: this.exampleData()
+  };
+
+  exampleData() {
+    return {
+      personal: { name: 'Rafael Nunes', role: 'Jovem Aprendiz / Auxiliar Administrativo', email: 'rafael.nunes@email.com', phone: '(21) 99999-0000', city: 'Rio de Janeiro, RJ', linkedin: '' },
+      summary: 'Tenho 18 anos e busco minha primeira oportunidade formal. Sou comunicativo, aprendo rápido e já ajudei no comércio da família e em projetos da escola. Tenho facilidade com computador e gosto de atendimento ao público.',
+      experiences: [
+        { role: 'Atendente (fins de semana)', company: 'Lanchonete do Seu Zé', period: '2023 — 2024', desc: 'Atendi clientes no balcão e no caixa, organizei os pedidos nos horários de pico e ajudei a controlar o estoque de bebidas.' },
+        { role: 'Monitor voluntário', company: 'Projeto Reforço na Praça', period: '2022 — 2023', desc: 'Dei reforço de matemática para 12 crianças e organizei o material de estudo toda semana.' }
+      ],
+      education: [
+        { course: 'Ensino Médio completo', school: 'Colégio Estadual Brasil', period: '2024' }
+      ],
+      skills: ['Atendimento ao cliente', 'Informática básica', 'Trabalho em equipe', 'Organização', 'Comunicação', 'Proatividade'],
+      languages: [
+        { name: 'Português', level: 'Nativo' },
+        { name: 'Inglês', level: 'Básico' }
+      ],
+      certificates: [
+        { name: 'Informática Básica (Word, Excel e Internet)', issuer: 'Fundação Bradesco', year: '2023' },
+        { name: 'Atendimento ao Cliente', issuer: 'Senac (curso livre)', year: '2024' }
+      ],
+      projects: [
+        { name: 'Feira de empreendedorismo da escola', desc: 'Montei e cuidei da barraca de doces com dois colegas: organizei o caixa e as vendas do dia, com lucro de R$ 300.', link: '' }
+      ]
+    };
+  }
+  blankData() {
+    return {
+      personal: { name: '', role: '', email: '', phone: '', city: '', linkedin: '' },
+      summary: '',
+      experiences: [{ role: '', company: '', period: '', desc: '' }],
+      education: [{ course: '', school: '', period: '' }],
+      skills: [],
+      languages: [{ name: '', level: '' }],
+      certificates: [{ name: '', issuer: '', year: '' }],
+      projects: [{ name: '', desc: '', link: '' }]
+    };
+  }
+  clearSection(id) {
+    const d = this.state.data, nd = { ...d };
+    if (id === 'personal') nd.personal = { name: '', role: '', email: '', phone: '', city: '', linkedin: '' };
+    else if (id === 'summary') nd.summary = '';
+    else if (id === 'experience') nd.experiences = [{ role: '', company: '', period: '', desc: '' }];
+    else if (id === 'education') nd.education = [{ course: '', school: '', period: '' }];
+    else if (id === 'skills') nd.skills = [];
+    else if (id === 'languages') nd.languages = [{ name: '', level: '' }];
+    else if (id === 'certificates') nd.certificates = [{ name: '', issuer: '', year: '' }];
+    else if (id === 'projects') nd.projects = [{ name: '', desc: '', link: '' }];
+    this.setState({ data: nd, dirty: true });
+  }
+  PreviewPage = ({ pw, children }) => {
+    const ref = React.useRef(null);
+    const [scale, setScale] = React.useState(0.5);
+    React.useLayoutEffect(() => {
+      const el = ref.current; if (!el) return;
+      const upd = () => { const w = el.clientWidth; if (w) setScale(w / pw); };
+      upd();
+      let ro; try { ro = new ResizeObserver(upd); ro.observe(el); } catch (e) {}
+      return () => { if (ro) ro.disconnect(); };
+    }, [pw]);
+    return React.createElement('div', { ref, style: { position: 'relative', width: '100%', aspectRatio: '1 / 1.414', overflow: 'hidden', background: '#fff' } },
+      React.createElement('div', { style: { position: 'absolute', top: 0, left: 0, width: pw + 'px', height: Math.round(pw * 1.414) + 'px', transformOrigin: 'top left', transform: 'scale(' + scale + ')' } }, children));
+  };
+
+  VERBS = ['lider','otimiz','desenvolv','cri','aument','reduz','implement','gerenci','coorden','lanc','negoci','analis','planej','execut','conduz','melhor','constru','estrutur','automatiz','entreg','organiz','dobr','triplic','apoi','atend','vend','captei','capt','arrecad','coorden','ajud'];
+  TEMPLATES = [{ id: 'classic', label: 'Clássico' }, { id: 'moderno', label: 'Moderno' }, { id: 'minimal', label: 'Minimalista' }, { id: 'elegante', label: 'Elegante' }, { id: 'executivo', label: 'Executivo' }, { id: 'criativo', label: 'Criativo' }];
+  SKILL_SUGG = ['Trabalho em equipe','Comunicação','Atendimento ao cliente','Organização','Pacote Office','Proatividade','Resolução de problemas','Liderança','Pontualidade','Vendas'];
+
+  componentDidMount() {
+    const valid = ['home', 'start', 'wizard', 'review', 'guide'];
+    let scr = this.props.startScreen;
+    try { const hash = (window.location.hash || '').replace('#', '').split('?')[0]; if (valid.includes(hash)) scr = hash; } catch (e) {}
+    if (scr && valid.includes(scr) && scr !== this.state.screen) this.setState({ screen: scr, dirty: scr !== 'home' });
+  }
+
+  go(screen) { this.setState({ screen }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
+  openReview() { const gi = Math.max(0, this.TEMPLATES.findIndex(t => t.id === this.state.template)); this.setState({ galleryIndex: gi, screen: 'review' }); if (typeof window !== 'undefined') window.scrollTo(0, 0); }
+  markDirty() { if (!this.state.dirty) this.setState({ dirty: true }); }
+  flash(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2800); }
+
+  steps() {
+    const o = this.state.optional;
+    const s = [
+      { id: 'personal', label: 'Dados', help: 'Comece pelo básico. É assim que os recrutadores vão te encontrar.' },
+      { id: 'summary', label: 'Resumo', help: 'Duas ou três frases sobre quem você é e o que faz de melhor. Experiências do dia a dia valem!' }
+    ];
+    if (o.experience) s.push({ id: 'experience', label: 'Experiência', help: 'Descreva o que você fez. Trabalho informal, autônomo ou voluntário também conta.' });
+    if (o.education) s.push({ id: 'education', label: 'Formação', help: 'Cursos, ensino médio, técnico ou oficinas. O mais recente primeiro.' });
+    s.push({ id: 'skills', label: 'Habilidades', help: 'Liste o que você sabe fazer. Misture habilidades técnicas e de convivência.' });
+    if (o.languages) s.push({ id: 'languages', label: 'Idiomas', help: 'Idiomas que você fala e o nível de cada um.' });
+    if (o.certificates) s.push({ id: 'certificates', label: 'Certificados', help: 'Cursos livres, certificados e treinamentos que você concluiu. Curso online e da prefeitura também valem!' });
+    if (o.projects) s.push({ id: 'projects', label: 'Projetos', help: 'Trabalhos, projetos ou iniciativas de que você participou — na escola, na comunidade ou por conta própria.' });
+    return s;
+  }
+
+  quality(text) {
+    const t = (text || '').trim();
+    if (!t) return { kind: 'empty', label: 'Dica: comece com um verbo de ação (ex.: Vendi, Organizei, Atendi…).' };
+    const low = t.toLowerCase();
+    const hasVerb = this.VERBS.some(v => low.includes(v));
+    const hasNum = /\d/.test(t);
+    if (t.length < 45) return { kind: 'weak', label: 'Continue — conte o que você fez e o impacto disso.' };
+    if (hasVerb && hasNum) return { kind: 'great', label: 'Ótimo! Tem verbo de ação e um resultado com número.' };
+    if (hasNum) return { kind: 'good', label: 'Bom — que tal começar com um verbo de ação para reforçar?' };
+    if (hasVerb) return { kind: 'good', label: 'Bom — tente incluir um número ou resultado concreto.' };
+    return { kind: 'weak', label: 'Adicione um verbo de ação no início da frase.' };
+  }
+  hintEl(q) {
+    const map = { empty: { c: 'var(--color-neutral-600)', i: 'info' }, weak: { c: 'var(--color-neutral-700)', i: 'arrow' }, good: { c: 'var(--color-accent-700)', i: 'check' }, great: { c: 'var(--color-accent-800)', i: 'star' } };
+    const m = map[q.kind];
+    return React.createElement('div', { style: { display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', lineHeight: 1.45, color: m.c }, role: 'status' }, this.icon(m.i, m.c), React.createElement('span', null, q.label));
+  }
+  icon(name, color) {
+    const st = { width: 15, height: 15, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flex: 'none', marginTop: '1px' } };
+    const P = (d) => React.createElement('path', { d, key: d });
+    const paths = {
+      info: [React.createElement('circle', { cx: 12, cy: 12, r: 9, key: 'c' }), P('M12 11v5'), P('M12 8h.01')],
+      arrow: [P('M5 12h14'), P('M13 6l6 6-6 6')],
+      check: [P('M20 6L9 17l-5-5')],
+      star: [P('M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3z')]
+    };
+    return React.createElement('svg', st, paths[name]);
+  }
+
+  setP(field, v) { this.setState({ data: { ...this.state.data, personal: { ...this.state.data.personal, [field]: v } } }); this.markDirty(); }
+  setSummary(v) { this.setState({ data: { ...this.state.data, summary: v } }); this.markDirty(); }
+  updateArr(key, i, field, v) { const arr = this.state.data[key].map((it, idx) => idx === i ? { ...it, [field]: v } : it); this.setState({ data: { ...this.state.data, [key]: arr } }); this.markDirty(); }
+  addArr(key, blank) { this.setState({ data: { ...this.state.data, [key]: [...this.state.data[key], blank] } }); this.markDirty(); }
+  removeArr(key, i) { this.setState({ data: { ...this.state.data, [key]: this.state.data[key].filter((_, idx) => idx !== i) } }); this.markDirty(); }
+  addSkill(name) { const n = (name || '').trim(); if (!n) return; if (this.state.data.skills.includes(n)) { this.setState({ skillDraft: '' }); return; } this.setState({ data: { ...this.state.data, skills: [...this.state.data.skills, n] }, skillDraft: '' }); this.markDirty(); }
+
+  score() {
+    const d = this.state.data, o = this.state.optional;
+    let pts = 0, max = 0;
+    const add = (ok, w) => { max += w; if (ok) pts += w; };
+    add(d.personal.name && d.personal.role, 2);
+    add(/.+@.+\..+/.test(d.personal.email), 1);
+    const sq = this.quality(d.summary).kind;
+    add(sq === 'good' || sq === 'great', 3);
+    if (o.experience) {
+      const strong = d.experiences.filter(e => ['good', 'great'].includes(this.quality(e.desc).kind)).length;
+      add(strong >= 1, 3); add(d.experiences.length >= 1, 1);
+    }
+    if (o.education) add(d.education.length >= 1 && d.education[0].course, 1);
+    add(d.skills.length >= 4, 2);
+    const pct = max ? Math.round((pts / max) * 100) : 0;
+    let label = 'Bom', msg = '';
+    if (pct >= 80) { label = 'Ótimo'; msg = 'Seu currículo está forte e bem estruturado. Pronto para enviar!'; }
+    else if (pct >= 55) { label = 'Bom'; msg = 'Está bom! Uns pequenos ajustes deixam ele ainda mais forte.'; }
+    else { label = 'Em progresso'; msg = 'Vamos reforçar alguns pontos para dar mais peso ao seu currículo.'; }
+    return { pct, label, msg };
+  }
+  suggestions() {
+    const d = this.state.data, o = this.state.optional, out = [];
+    const stepIdx = (id) => this.steps().findIndex(s => s.id === id);
+    if (!['good', 'great'].includes(this.quality(d.summary).kind)) out.push({ text: 'Reforce o resumo com um resultado concreto.', step: stepIdx('summary') });
+    if (o.experience && !d.experiences.some(e => ['good', 'great'].includes(this.quality(e.desc).kind))) out.push({ text: 'Adicione um número ou conquista em uma experiência.', step: stepIdx('experience') });
+    if (d.skills.length < 4) out.push({ text: 'Inclua mais algumas habilidades (mínimo 4).', step: stepIdx('skills') });
+    return out.filter(o => o.step >= 0);
+  }
+
+  contactBits() { const p = this.state.data.personal; return [p.email, p.phone, p.city, p.linkedin].filter(Boolean); }
+
+  buildPreview(tpl) {
+    const h = React.createElement, d = this.state.data;
+    const o = this.state.optional, p = d.personal;
+    const M = this.state.margin, dens = this.state.density === 'condensado';
+    const mF = M === 'estreita' ? 0.72 : M === 'confortavel' ? 1.28 : 1;
+    const P = Math.round(24 * mF);
+    const fs = (n) => (dens ? n * 0.94 : n).toFixed(1) + 'px';
+    const g = (n) => Math.round(dens ? n * 0.78 : n);
+    const ACC = 'var(--color-accent-700)', MUT = '#6b6d6f', INK = '#1d1f20';
+    const wrap = (children) => h(this.PreviewPage, { pw: 370 }, h('div', { style: { width: '100%', height: '100%', boxSizing: 'border-box', color: INK, fontFamily: 'var(--font-body)', overflow: 'hidden' } }, children));
+    const body = { fontSize: fs(9.5), lineHeight: dens ? 1.4 : 1.5, color: '#3a3c3e', margin: 0 };
+    const expOn = o.experience && d.experiences.length, eduOn = o.education && d.education.length;
+    const expItems = () => d.experiences.map((e, i) => h('div', { key: i, style: { marginBottom: g(9) + 'px' } },
+      h('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'baseline' } },
+        h('span', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(11), color: INK } }, e.role || 'Cargo'),
+        h('span', { style: { fontSize: fs(8.5), color: MUT, whiteSpace: 'nowrap' } }, e.period)),
+      h('div', { style: { fontSize: fs(9), color: ACC, marginBottom: '2px' } }, e.company),
+      h('p', { style: body }, e.desc)));
+    const eduItems = () => d.education.map((e, i) => h('div', { key: i, style: { marginBottom: g(6) + 'px' } },
+      h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10.5) } }, e.course || 'Curso'),
+      h('div', { style: { fontSize: fs(9), color: MUT } }, [e.school, e.period].filter(Boolean).join(' · '))));
+    const skillsLine = () => d.skills.join('  ·  ');
+    const langLine = () => d.languages.map(l => l.name + (l.level ? ' (' + l.level + ')' : '')).join('  ·  ');
+    const certOn = o.certificates && d.certificates.length;
+    const projOn = o.projects && d.projects.length;
+    const certItems = () => d.certificates.map((c, i) => h('div', { key: i, style: { marginBottom: g(5) + 'px' } },
+      h('span', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10) } }, c.name || 'Certificado'),
+      h('span', { style: { fontSize: fs(9), color: MUT } }, [c.issuer, c.year].filter(Boolean).length ? '  —  ' + [c.issuer, c.year].filter(Boolean).join(', ') : '')));
+    const projItems = () => d.projects.map((pr, i) => h('div', { key: i, style: { marginBottom: g(7) + 'px' } },
+      h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10.5) } }, pr.name || 'Projeto'),
+      pr.desc ? h('p', { style: body }, pr.desc) : null,
+      pr.link ? h('div', { style: { fontSize: fs(8.6), color: ACC, wordBreak: 'break-all' } }, pr.link) : null));
+
+    const sectionsFor = (hs, bs) => {
+      const out = [];
+      const head = (t) => h('div', { style: hs }, t);
+      const blk = (key, title, content) => out.push(h('div', { key, style: { marginBottom: g(13) + 'px' } }, head(title), content));
+      if (d.summary) blk('sum', 'Resumo', h('p', { style: bs }, d.summary));
+      if (expOn) blk('exp', 'Experiência', expItems());
+      if (projOn) blk('prj', 'Projetos', projItems());
+      if (eduOn) blk('edu', 'Formação', eduItems());
+      if (certOn) blk('crt', 'Certificados', certItems());
+      if (d.skills.length) blk('sk', 'Habilidades', h('p', { style: bs }, skillsLine()));
+      if (d.languages.length) blk('lg', 'Idiomas', h('p', { style: bs }, langLine()));
+      return out;
+    };
+
+    if (tpl === 'moderno') {
+      const shead = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10), letterSpacing: '0.12em', textTransform: 'uppercase', color: ACC, margin: '0 0 5px' };
+      return wrap(h('div', { style: { display: 'grid', gridTemplateColumns: '38% 62%', height: '100%' } },
+        h('div', { style: { background: 'var(--color-accent-100)', borderRight: '1px solid var(--color-divider)', padding: g(20) + 'px ' + Math.round(P * 0.65) + 'px' } },
+          h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(19), lineHeight: 1.05, textTransform: 'uppercase', color: 'var(--color-accent-900)' } }, p.name || 'Seu Nome'),
+          h('div', { style: { fontSize: fs(9.5), letterSpacing: '0.1em', textTransform: 'uppercase', color: ACC, margin: '4px 0 14px' } }, p.role),
+          h('div', { style: { marginBottom: g(16) + 'px' } }, h('div', { style: shead }, 'Contato'), this.contactBits().map((c, i) => h('div', { key: i, style: { fontSize: fs(8.8), color: '#3a3c3e', marginBottom: '2px', wordBreak: 'break-all' } }, c))),
+          d.skills.length ? h('div', { style: { marginBottom: g(16) + 'px' } }, h('div', { style: shead }, 'Habilidades'), d.skills.map((s, i) => h('div', { key: i, style: { fontSize: fs(9), color: '#3a3c3e', marginBottom: '2px' } }, s))) : null,
+          d.languages.length ? h('div', null, h('div', { style: shead }, 'Idiomas'), d.languages.map((l, i) => h('div', { key: i, style: { fontSize: fs(9), color: '#3a3c3e', marginBottom: '2px' } }, l.name + (l.level ? ' — ' + l.level : '')))) : null),
+        h('div', { style: { padding: g(20) + 'px ' + P + 'px' } },
+          d.summary ? h('div', { style: { marginBottom: g(14) + 'px' } }, h('div', { style: shead }, 'Resumo'), h('p', { style: body }, d.summary)) : null,
+          expOn ? h('div', { style: { marginBottom: g(14) + 'px' } }, h('div', { style: shead }, 'Experiência'), expItems()) : null,
+          projOn ? h('div', { style: { marginBottom: g(14) + 'px' } }, h('div', { style: shead }, 'Projetos'), projItems()) : null,
+          eduOn ? h('div', { style: { marginBottom: g(14) + 'px' } }, h('div', { style: shead }, 'Formação'), eduItems()) : null,
+          certOn ? h('div', null, h('div', { style: shead }, 'Certificados'), certItems()) : null)));
+    }
+    if (tpl === 'minimal') {
+      const shead = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(11), textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 ' + g(7) + 'px' };
+      return wrap(h('div', { style: { padding: (P + 4) + 'px ' + (P + 2) + 'px' } },
+        h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(26), lineHeight: 1, letterSpacing: '-0.01em' } }, p.name || 'Seu Nome'),
+        h('div', { style: { fontSize: fs(11), color: MUT, margin: '5px 0 4px' } }, p.role),
+        h('div', { style: { fontSize: fs(8.8), color: MUT, marginBottom: g(20) + 'px' } }, this.contactBits().join('  ·  ')),
+        sectionsFor(shead, body)));
+    }
+    if (tpl === 'elegante') {
+      const shead = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(9.5), textTransform: 'uppercase', letterSpacing: '0.28em', color: INK, textAlign: 'center', margin: '0 0 ' + g(7) + 'px' };
+      const bs = { ...body, textAlign: 'center' };
+      return wrap(h('div', { style: { padding: (P + 6) + 'px ' + (P + 4) + 'px' } },
+        h('div', { style: { textAlign: 'center', marginBottom: g(16) + 'px' } },
+          h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 400, fontSize: fs(25), letterSpacing: '0.14em', textTransform: 'uppercase' } }, p.name || 'Seu Nome'),
+          h('div', { style: { width: '30px', height: '1px', background: ACC, margin: g(8) + 'px auto' } }),
+          h('div', { style: { fontSize: fs(9.5), letterSpacing: '0.18em', textTransform: 'uppercase', color: ACC } }, p.role),
+          h('div', { style: { fontSize: fs(8.4), color: MUT, marginTop: '6px' } }, this.contactBits().join('   ·   '))),
+        sectionsFor(shead, bs)));
+    }
+    if (tpl === 'executivo') {
+      const shead = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10.5), textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-accent-900)', borderBottom: '1px solid var(--color-divider)', paddingBottom: '3px', margin: '0 0 ' + g(7) + 'px' };
+      return wrap(h('div', null,
+        h('div', { style: { background: 'var(--color-accent-900)', color: '#eef4fa', padding: g(18) + 'px ' + P + 'px' } },
+          h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(23), lineHeight: 1.02, textTransform: 'uppercase', letterSpacing: '0.02em' } }, p.name || 'Seu Nome'),
+          h('div', { style: { fontSize: fs(10), letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b9cde0', marginTop: '4px' } }, p.role),
+          h('div', { style: { fontSize: fs(8.6), color: '#9fb6cd', marginTop: '7px' } }, this.contactBits().join('   ·   '))),
+        h('div', { style: { padding: g(18) + 'px ' + P + 'px' } }, sectionsFor(shead, body))));
+    }
+    if (tpl === 'criativo') {
+      const initials = (p.name || 'S N').split(' ').filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase();
+      const shead = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10), textTransform: 'uppercase', letterSpacing: '0.1em', color: ACC, margin: '0 0 ' + g(6) + 'px', display: 'flex', alignItems: 'center', gap: '7px' };
+      const headWithBar = (t) => h('div', { style: shead }, h('span', { style: { width: '14px', height: '2px', background: 'var(--color-accent)', flex: 'none' } }), t);
+      const sec = [];
+      const blk = (k, t, c) => sec.push(h('div', { key: k, style: { marginBottom: g(13) + 'px' } }, headWithBar(t), c));
+      if (d.summary) blk('s', 'Resumo', h('p', { style: body }, d.summary));
+      if (expOn) blk('e', 'Experiência', expItems());
+      if (projOn) blk('pj', 'Projetos', projItems());
+      if (eduOn) blk('d', 'Formação', eduItems());
+      if (certOn) blk('ct', 'Certificados', certItems());
+      if (d.skills.length) blk('k', 'Habilidades', h('p', { style: body }, skillsLine()));
+      if (d.languages.length) blk('l', 'Idiomas', h('p', { style: body }, langLine()));
+      return wrap(h('div', { style: { padding: P + 'px' } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: g(14) + 'px', marginBottom: g(16) + 'px' } },
+          h('div', { style: { width: fs(44), height: fs(44), flex: 'none', background: 'var(--color-accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(18) } }, initials),
+          h('div', null,
+            h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(21), lineHeight: 1.02, textTransform: 'uppercase' } }, p.name || 'Seu Nome'),
+            h('div', { style: { fontSize: fs(9.5), letterSpacing: '0.12em', textTransform: 'uppercase', color: ACC, margin: '3px 0 4px' } }, p.role),
+            h('div', { style: { fontSize: fs(8.4), color: MUT } }, this.contactBits().join('  ·  ')))),
+        sec));
+    }
+    // classic
+    const shead = { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(10), letterSpacing: '0.14em', textTransform: 'uppercase', color: ACC, margin: '0 0 5px' };
+    return wrap(h('div', { style: { padding: P + 'px ' + Math.round(P * 0.92) + 'px' } },
+      h('div', { style: { textAlign: 'center', marginBottom: g(10) + 'px' } },
+        h('div', { style: { fontFamily: 'var(--font-heading)', fontWeight: 600, fontSize: fs(22), lineHeight: 1.05, textTransform: 'uppercase', letterSpacing: '0.02em' } }, p.name || 'Seu Nome'),
+        h('div', { style: { fontSize: fs(10), letterSpacing: '0.16em', textTransform: 'uppercase', color: ACC, margin: '4px 0 6px' } }, p.role),
+        h('div', { style: { fontSize: fs(8.6), color: MUT } }, this.contactBits().join('   ·   '))),
+      h('div', { style: { height: '1px', background: 'var(--color-divider)', margin: '0 0 ' + g(14) + 'px' } }),
+      sectionsFor(shead, body)));
+  }
+
+  guideItems() {
+    const d = this.state.data, p = d.personal;
+    const slug = (p.name || 'seunome').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '') || 'seunome';
+    return [
+      { label: 'Foto e capa', tip: 'Use uma foto de rosto, fundo neutro e um leve sorriso. A capa pode ser algo simples ligado à sua área.' },
+      { label: 'Título do perfil', text: (p.role || '') + (p.city ? ' · ' + p.city : ''), tip: 'Vá além do cargo: diga o que você faz ou busca. Ex.: "Auxiliar Administrativo | Atendimento e Organização".' },
+      { label: 'Sobre', text: d.summary || '', tip: 'Escreva em primeira pessoa, mostre um pouco da sua personalidade e diga o que você procura hoje.' },
+      { label: 'Experiência', tip: 'Adicione as mesmas experiências do currículo. No LinkedIn cabe mais detalhe — aproveite para contar resultados.' },
+      { label: 'Competências', text: d.skills.join(', '), tip: 'Cadastre suas habilidades e fixe as 3 principais no topo. Peça a colegas para validá-las.' },
+      { label: 'URL personalizada', text: 'linkedin.com/in/' + slug, tip: 'Deixe seu link curto e limpo — fica ótimo no topo do currículo.' },
+      { label: 'Recomendações', tip: 'Peça uma recomendação a um professor, colega ou ex-chefe. Para quem está começando, vale muito.' },
+      { label: 'Sua rede', tip: 'Conecte-se com colegas, professores e empresas do seu setor. Rede ativa significa mais oportunidades aparecendo.' }
+    ];
+  }
+
+  sectionData(id) {
+    const d = this.state.data, p = d.personal;
+    if (id === 'personal') return 'Nome: ' + p.name + '\nCargo desejado: ' + p.role + '\nCidade: ' + p.city;
+    if (id === 'summary') return 'Meu resumo atual: "' + (d.summary || '(vazio)') + '"';
+    if (id === 'experience') return 'Minhas experiências:\n' + (d.experiences.map(e => '- ' + e.role + ' em ' + e.company + ' (' + e.period + '): ' + e.desc).join('\n') || '(nenhuma)');
+    if (id === 'education') return 'Minha formação:\n' + (d.education.map(e => '- ' + e.course + ' — ' + e.school + ' (' + e.period + ')').join('\n') || '(nenhuma)');
+    if (id === 'skills') return 'Minhas habilidades: ' + (d.skills.join(', ') || '(nenhuma)');
+    if (id === 'languages') return 'Meus idiomas: ' + (d.languages.map(l => l.name + ' (' + l.level + ')').join(', ') || '(nenhum)');
+    if (id === 'certificates') return 'Meus certificados:\n' + (d.certificates.map(c => '- ' + c.name + ' — ' + c.issuer + ' (' + c.year + ')').join('\n') || '(nenhum)');
+    if (id === 'projects') return 'Meus projetos:\n' + (d.projects.map(pr => '- ' + pr.name + ': ' + pr.desc).join('\n') || '(nenhum)');
+    return '';
+  }
+  aiPrompt() {
+    const st = this.steps()[Math.min(this.state.stepIndex, this.steps().length - 1)] || this.steps()[0];
+    return 'Sou candidato(a) a uma vaga e estou preenchendo a seção "' + st.label + '" do meu currículo.\n\n' +
+      this.sectionData(st.id) + '\n\n' +
+      'Me ajude a melhorar esse texto: deixe claro e curto, use verbos de ação e destaque resultados. Se faltar informação, me faça perguntas.';
+  }
+
+  renderVals() {
+    const s = this.state, d = s.data;
+    const steps = this.steps();
+    const idx = Math.min(s.stepIndex, steps.length - 1);
+    const cur = steps[idx] || steps[0];
+    const scr = (sc) => () => this.go(sc);
+
+    let filled = 0, total = 0;
+    const req = (ok) => { total++; if (ok) filled++; };
+    req(!!d.personal.name); req(!!d.personal.role); req(/.+@.+\..+/.test(d.personal.email));
+    req(this.quality(d.summary).kind !== 'empty' && d.summary.length >= 20);
+    if (s.optional.experience) req(d.experiences.some(e => e.role && e.desc));
+    if (s.optional.education) req(d.education.length >= 1 && !!d.education[0].course);
+    req(d.skills.length >= 3);
+    const pct = total ? Math.round((filled / total) * 100) : 100;
+
+    const sc = this.score();
+    const sugg = this.suggestions();
+    const galT = this.TEMPLATES[s.galleryIndex] || this.TEMPLATES[0];
+
+    // page controls (margin + density) — shared element
+    const seg = (opts, cur, set) => React.createElement('div', { className: 'seg' },
+      opts.map(op => React.createElement('label', { key: op.v, className: 'seg-opt', style: { fontSize: '12.5px', padding: '7px 12px' } },
+        React.createElement('input', { type: 'radio', checked: cur === op.v, onChange: () => { set(op.v); } }), op.l)));
+    const lbl = (t) => React.createElement('div', { style: { fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'color-mix(in srgb, var(--color-text) 55%, transparent)', marginBottom: '7px', fontWeight: 600 } }, t);
+    const pageControls = React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '18px' } },
+      React.createElement('div', null, lbl('Margens'), seg([{ v: 'estreita', l: 'Estreita' }, { v: 'padrao', l: 'Padrão' }, { v: 'confortavel', l: 'Confortável' }], s.margin, (v) => this.setState({ margin: v }))),
+      React.createElement('div', null, lbl('Espaçamento'), seg([{ v: 'normal', l: 'Normal' }, { v: 'condensado', l: 'Condensado' }], s.density, (v) => this.setState({ density: v }))));
+
+    return {
+      productName: this.props.productName || 'Currículo',
+      isHome: s.screen === 'home', isStart: s.screen === 'start', isWizard: s.screen === 'wizard', isReview: s.screen === 'review', isGuide: s.screen === 'guide',
+      notHome: s.screen !== 'home',
+      showSaved: s.dirty && s.screen !== 'home',
+      goHome: scr('home'), startFlow: scr('start'),
+      startWizard: () => { this.setState({ stepIndex: 0 }); this.go('wizard'); },
+      loadDraft: () => this.flash('Selecione seu arquivo .json salvo anteriormente.'),
+      fillSample: () => { this.setState({ data: this.exampleData(), dirty: true }); this.flash('Exemplo carregado — edite à vontade!'); },
+      clearAll: () => { this.setState({ data: this.blankData(), dirty: true }); this.flash('Campos limpos. Comece do zero quando quiser.'); },
+      clearSectionBtn: () => { this.clearSection(cur.id); this.flash('Seção "' + cur.label + '" limpa.'); },
+
+      templateLabel: (this.TEMPLATES.find(t => t.id === s.template) || {}).label,
+      tplPrev: () => { const i = this.TEMPLATES.findIndex(t => t.id === s.template); this.setState({ template: this.TEMPLATES[(i - 1 + this.TEMPLATES.length) % this.TEMPLATES.length].id }); },
+      tplNext: () => { const i = this.TEMPLATES.findIndex(t => t.id === s.template); this.setState({ template: this.TEMPLATES[(i + 1) % this.TEMPLATES.length].id }); },
+      pageControls,
+
+      sectionList: [
+        { id: 'personal', label: 'Dados pessoais', locked: true, on: true },
+        { id: 'summary', label: 'Resumo', locked: true, on: true },
+        { id: 'experience', label: 'Experiência', locked: false, on: s.optional.experience },
+        { id: 'education', label: 'Formação', locked: false, on: s.optional.education },
+        { id: 'skills', label: 'Habilidades', locked: true, on: true },
+        { id: 'languages', label: 'Idiomas', locked: false, on: s.optional.languages },
+        { id: 'certificates', label: 'Certificados', locked: false, on: s.optional.certificates },
+        { id: 'projects', label: 'Projetos', locked: false, on: s.optional.projects }
+      ].map(x => ({
+        label: x.label, on: x.on, locked: x.locked,
+        tag: x.locked ? 'Sempre incluída' : 'Opcional',
+        cursor: x.locked ? 'default' : 'pointer',
+        bg: x.on ? 'color-mix(in srgb, var(--color-accent) 6%, transparent)' : 'transparent',
+        toggle: x.locked ? (() => {}) : (() => this.setState({ optional: { ...s.optional, [x.id]: !s.optional[x.id] } }))
+      })),
+
+      preview: this.buildPreview(s.template),
+
+      steps: steps.map((st, i) => ({
+        num: String(i + 1).padStart(2, '0'), label: st.label,
+        goto: () => this.setState({ stepIndex: i }),
+        bg: i === idx ? 'var(--color-accent)' : 'transparent',
+        color: i === idx ? '#fff' : (i < idx ? 'var(--color-accent-700)' : 'color-mix(in srgb, var(--color-text) 65%, transparent)'),
+        border: i === idx ? 'var(--color-accent)' : 'var(--color-divider)'
+      })),
+      currentLabel: cur.label, currentHelp: cur.help,
+      stepCounter: 'Etapa ' + (idx + 1) + ' de ' + steps.length,
+      stepPersonal: cur.id === 'personal', stepSummary: cur.id === 'summary', stepExperience: cur.id === 'experience', stepEducation: cur.id === 'education', stepSkills: cur.id === 'skills', stepLanguages: cur.id === 'languages', stepCertificates: cur.id === 'certificates', stepProjects: cur.id === 'projects',
+      prevLabel: idx === 0 ? 'Configuração' : 'Anterior',
+      nextLabel: idx === steps.length - 1 ? 'Revisar →' : 'Próximo',
+      prevStep: () => { if (idx === 0) this.go('start'); else { this.setState({ stepIndex: idx - 1 }); if (typeof window !== 'undefined') window.scrollTo(0, 0); } },
+      nextStep: () => { if (idx === steps.length - 1) this.openReview(); else { this.setState({ stepIndex: idx + 1 }); if (typeof window !== 'undefined') window.scrollTo(0, 0); } },
+      progressPct: pct + '%',
+
+      personal: d.personal,
+      setName: (e) => this.setP('name', e.target.value), setRole: (e) => this.setP('role', e.target.value), setEmail: (e) => this.setP('email', e.target.value),
+      setPhone: (e) => this.setP('phone', e.target.value), setCity: (e) => this.setP('city', e.target.value), setLinkedin: (e) => this.setP('linkedin', e.target.value),
+      emailHintEl: (!d.personal.email || /.+@.+\..+/.test(d.personal.email)) ? this.hintEl({ kind: 'good', label: 'Use um e-mail que você consulta com frequência.' }) : this.hintEl({ kind: 'weak', label: 'Esse e-mail parece incompleto — confira o "@" e o domínio.' }),
+
+      summary: d.summary, setSummary: (e) => this.setSummary(e.target.value),
+      summaryHintEl: (this.props.showQualityHints === false) ? null : this.hintEl(this.quality(d.summary)),
+
+      experiences: d.experiences.map((e, i) => ({
+        num: String(i + 1).padStart(2, '0'), role: e.role, company: e.company, period: e.period, desc: e.desc,
+        onRole: (ev) => this.updateArr('experiences', i, 'role', ev.target.value),
+        onCompany: (ev) => this.updateArr('experiences', i, 'company', ev.target.value),
+        onPeriod: (ev) => this.updateArr('experiences', i, 'period', ev.target.value),
+        onDesc: (ev) => this.updateArr('experiences', i, 'desc', ev.target.value),
+        remove: () => this.removeArr('experiences', i),
+        hintEl: (this.props.showQualityHints === false) ? null : this.hintEl(this.quality(e.desc))
+      })),
+      addExp: () => this.addArr('experiences', { role: '', company: '', period: '', desc: '' }),
+
+      education: d.education.map((e, i) => ({
+        num: String(i + 1).padStart(2, '0'), course: e.course, school: e.school, period: e.period,
+        onCourse: (ev) => this.updateArr('education', i, 'course', ev.target.value),
+        onSchool: (ev) => this.updateArr('education', i, 'school', ev.target.value),
+        onPeriod: (ev) => this.updateArr('education', i, 'period', ev.target.value),
+        remove: () => this.removeArr('education', i)
+      })),
+      addEdu: () => this.addArr('education', { course: '', school: '', period: '' }),
+
+      skills: d.skills.map((sk, i) => ({ name: sk, remove: () => this.removeArr('skills', i) })),
+      skillDraft: s.skillDraft, setSkillDraft: (e) => this.setState({ skillDraft: e.target.value }),
+      onSkillKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.addSkill(e.target.value); } },
+      skillSuggestions: this.SKILL_SUGG.filter(x => !d.skills.includes(x)).slice(0, 6).map(x => ({ name: x, add: () => this.addSkill(x) })),
+
+      languages: d.languages.map((l, i) => ({
+        name: l.name, level: l.level,
+        onName: (ev) => this.updateArr('languages', i, 'name', ev.target.value),
+        onLevel: (ev) => this.updateArr('languages', i, 'level', ev.target.value),
+        remove: () => this.removeArr('languages', i)
+      })),
+      addLang: () => this.addArr('languages', { name: '', level: '' }),
+
+      certificates: d.certificates.map((c, i) => ({
+        num: String(i + 1).padStart(2, '0'), name: c.name, issuer: c.issuer, year: c.year,
+        onName: (ev) => this.updateArr('certificates', i, 'name', ev.target.value),
+        onIssuer: (ev) => this.updateArr('certificates', i, 'issuer', ev.target.value),
+        onYear: (ev) => this.updateArr('certificates', i, 'year', ev.target.value),
+        remove: () => this.removeArr('certificates', i)
+      })),
+      addCert: () => this.addArr('certificates', { name: '', issuer: '', year: '' }),
+
+      projects: d.projects.map((pr, i) => ({
+        num: String(i + 1).padStart(2, '0'), name: pr.name, desc: pr.desc, link: pr.link,
+        onName: (ev) => this.updateArr('projects', i, 'name', ev.target.value),
+        onDesc: (ev) => this.updateArr('projects', i, 'desc', ev.target.value),
+        onLink: (ev) => this.updateArr('projects', i, 'link', ev.target.value),
+        remove: () => this.removeArr('projects', i),
+        hintEl: (this.props.showQualityHints === false) ? null : this.hintEl(this.quality(pr.desc))
+      })),
+      addProj: () => this.addArr('projects', { name: '', desc: '', link: '' }),
+
+      openAI: () => this.setState({ showAI: true }), closeAI: () => this.setState({ showAI: false }), showAI: s.showAI,
+      stop: (e) => e.stopPropagation(), aiPrompt: this.aiPrompt(),
+      copyAI: () => { try { navigator.clipboard.writeText(this.aiPrompt()); } catch (x) {} this.flash('Texto copiado! Agora é só colar na sua IA.'); this.setState({ showAI: false }); },
+
+      scoreLabel: sc.label, scorePct: sc.pct + '%', scoreMessage: sc.msg,
+      hasSuggestions: sugg.length > 0,
+      suggestions: sugg.map(o => ({ text: o.text, goto: () => { this.setState({ stepIndex: o.step }); this.go('wizard'); } })),
+      galleryPreview: this.buildPreview(galT.id),
+      galleryLabel: galT.label,
+      galleryCounter: (s.galleryIndex + 1) + ' de ' + this.TEMPLATES.length,
+      galleryState: s.template === galT.id ? '✓ Selecionado' : 'Usar este',
+      galleryOutline: s.template === galT.id ? '2px solid var(--color-accent)' : '1px solid transparent',
+      galPrev: () => this.setState({ galleryIndex: (s.galleryIndex - 1 + this.TEMPLATES.length) % this.TEMPLATES.length }),
+      galNext: () => this.setState({ galleryIndex: (s.galleryIndex + 1) % this.TEMPLATES.length }),
+      useGallery: () => this.setState({ template: galT.id }),
+      backToWizard: () => this.go('wizard'),
+      saveDraft: () => this.flash('Rascunho salvo no seu dispositivo (.json).'),
+      goGuide: scr('guide'), goReview: () => this.openReview(),
+      doExport: () => this.flash('A geração do PDF acontece na etapa final da plataforma.'),
+
+      guideItems: this.guideItems().map(g => { const t = (g.text || '').trim(); return { label: g.label, tip: g.tip, text: t, hasText: !!t, copy: () => { try { navigator.clipboard.writeText(t); } catch (x) {} this.flash('Copiado: ' + g.label); } }; }),
+
+      toast: s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
