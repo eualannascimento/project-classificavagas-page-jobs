@@ -182,6 +182,10 @@
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
     document.getElementById('btn-fill-sample')?.addEventListener('click', fillSampleData);
     document.getElementById('btn-change-template-wizard')?.addEventListener('click', (e) => openModal(els.modalTemplate, e.currentTarget));
+    document.getElementById('btn-prev-template-start')?.addEventListener('click', () => cycleTemplate(-1));
+    document.getElementById('btn-next-template-start')?.addEventListener('click', () => cycleTemplate(1));
+    document.getElementById('btn-prev-template')?.addEventListener('click', () => cycleTemplate(-1));
+    document.getElementById('btn-next-template')?.addEventListener('click', () => cycleTemplate(1));
     document.getElementById('btn-prev')?.addEventListener('click', prevStep);
     document.getElementById('btn-next')?.addEventListener('click', nextStep);
     document.getElementById('btn-back-wizard')?.addEventListener('click', () => goToWizard());
@@ -299,7 +303,7 @@
   function renderTemplatePickers() {
     const getThumbMarkup = (layout, id) => {
       if (layout === 'sidebar') {
-        const bg = id === 'creative' ? '#7c3aed' : '#4f46e5';
+        const bg = id === 'creative' ? 'var(--color-accent-2)' : 'var(--color-accent)';
         return `
           <div class="thumb-sidebar" style="background: ${bg}; width: 30%; height: 100%;"></div>
           <div class="thumb-main" style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;">
@@ -392,6 +396,12 @@
     updateTemplateIndicators();
     debouncedUpdatePreviews();
     saveState();
+  }
+
+  function cycleTemplate(dir) {
+    const i = TEMPLATE_IDS.indexOf(state.template);
+    const next = TEMPLATE_IDS[(i + dir + TEMPLATE_IDS.length) % TEMPLATE_IDS.length];
+    switchTemplate(next);
   }
 
   function switchTemplate(templateId) {
