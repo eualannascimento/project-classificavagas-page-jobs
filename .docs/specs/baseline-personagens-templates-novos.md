@@ -15,7 +15,7 @@ Documenta duas entregas feitas sem spec prévia, para restaurar a conformidade S
 ## 3. Regras de Negócio e Casos de Falha (Edge Cases)
 
 * **Regra 01 (Dados fictícios seguros):** Todo personagem usa figuras de domínio público (Sherlock Holmes, Hua Mulan, Hércules, Chapeuzinho Vermelho) com contatos reservados: e-mail `@exemplo.com.br` e telefones de preenchimento `(11) 99999-000x`. Nenhum dado real pode entrar em `characters.js`.
-* **Regra 02 (Estado válido):** Cada personagem é um estado completo do app: `template` deve existir em `TEMPLATE_IDS` e `enabledSections` deve conter apenas seções definidas em `SECTIONS` (incluindo as travadas `personal`, `summary`, `skills`).
+* **Regra 02 (Estado válido):** Cada personagem preenchido é um estado completo do app: `template` deve existir em `TEMPLATE_IDS` e `enabledSections` deve conter apenas seções definidas em `SECTIONS`. Existe ainda a opção "Em branco" (`state: null`) para começar do zero.
 * **Regra 03 (ATS):** Cada template novo declara `atsFriendly`; templates com layout de coluna/fundo exibem o aviso ATS existente. Faixa Clara, Pilar e Serifado são `atsFriendly: true`.
 * **Falha 01:** Se o personagem escolhido tiver template inválido, `mergeWithDefaults` normaliza para `classic` (comportamento já coberto pelo storage).
 

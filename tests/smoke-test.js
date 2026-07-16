@@ -308,6 +308,53 @@ const progressZero = EuGeroScoring.calculateProgress(testStateZeroRequired);
 assert(progressZero === 100, 'Seções obrigatórias preenchidas = 100% de progresso');
 
 
+// --- Personagens de exemplo ---
+console.log('\nPersonagens de exemplo:');
+
+loadScript('js/characters.js');
+const characters = EuGeroCharacters.CHARACTERS;
+const validSectionIds = EuGeroConfig.SECTIONS.map((s) => s.id);
+// A opcao "Em branco" (state: null) e valida: comeca do zero.
+const filledCharacters = characters.filter((c) => c.state);
+
+assert(Array.isArray(characters) && filledCharacters.length >= 4, 'Ha pelo menos 4 personagens preenchidos');
+assert(
+  characters.some((c) => c.state === null),
+  'Existe a opcao Em branco (state null) para comecar do zero'
+);
+assert(
+  filledCharacters.every((c) => EuGeroConfig.TEMPLATE_IDS.includes(c.state.template)),
+  'Todo personagem usa template existente'
+);
+assert(
+  filledCharacters.every((c) => c.state.enabledSections.every((id) => validSectionIds.includes(id))),
+  'Todo personagem habilita apenas secoes validas'
+);
+assert(
+  filledCharacters.every((c) => c.state.personal.fullName && c.state.personal.headline),
+  'Todo personagem tem nome e headline'
+);
+assert(
+  filledCharacters.every((c) => c.state.personal.email.endsWith('@exemplo.com.br')),
+  'Contatos usam dominio reservado @exemplo.com.br (sem PII real)'
+);
+assert(
+  EuGeroCharacters.getById(characters[0].id) === characters[0],
+  'getById retorna o personagem correto'
+);
+
+// --- Templates completos ---
+console.log('\nCatalogo de templates:');
+
+assert(EuGeroConfig.TEMPLATE_IDS.length === 9, 'Catalogo tem 9 templates');
+assert(
+  EuGeroConfig.TEMPLATE_IDS.every((id) => {
+    const t = EuGeroConfig.TEMPLATES[id];
+    return t.id === id && t.name && t.description && typeof t.atsFriendly === 'boolean';
+  }),
+  'Todo template tem id, name, description e flag atsFriendly booleana'
+);
+
 // --- Consistencia do CDN docx (libs.js x export.js) ---
 console.log('\nCDN docx:');
 
