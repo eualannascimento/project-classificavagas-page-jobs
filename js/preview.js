@@ -233,12 +233,12 @@ const EuGeroPreview = (function () {
     `;
   }
 
-  function renderBannerLayout(state, enabledSections) {
+  function renderBannerLayout(state, enabledSections, templateId) {
     const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
     const contacts = [personal.email, personal.phone, personal.location].filter(Boolean);
 
     return `
-      <div class="cv cv-executive template-executive">
+      <div class="cv cv-executive template-${templateId || 'executive'}">
         <header class="cv-banner">
           <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
           <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
@@ -249,12 +249,12 @@ const EuGeroPreview = (function () {
     `;
   }
 
-  function renderLeftLayout(state, enabledSections) {
+  function renderLeftLayout(state, enabledSections, templateId) {
     const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
     const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
 
     return `
-      <div class="cv cv-minimal template-minimal">
+      <div class="cv cv-minimal template-${templateId || 'minimal'}">
         <header class="cv-header-left">
           <h1 class="cv-name">${escapeHtml(personal.fullName) || 'Seu Nome'}</h1>
           <p class="cv-headline">${escapeHtml(personal.headline) || 'Título profissional'}</p>
@@ -293,8 +293,8 @@ const EuGeroPreview = (function () {
     const meta = EuGeroConfig.getTemplateMeta(templateId);
     switch (meta.layout) {
       case 'sidebar': return renderSidebarLayout(state, enabledSections, templateId);
-      case 'banner': return renderBannerLayout(state, enabledSections);
-      case 'left': return renderLeftLayout(state, enabledSections);
+      case 'banner': return renderBannerLayout(state, enabledSections, templateId);
+      case 'left': return renderLeftLayout(state, enabledSections, templateId);
       case 'creative': return renderCreativeLayout(state, enabledSections);
       default: return renderCenteredLayout(state, enabledSections, templateId);
     }
