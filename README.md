@@ -5,12 +5,13 @@ Plataforma web estatica, 100% gratuita e sem servidor, para criar curriculos de 
 ## Funcionalidades
 
 - **Homepage** com explicacao do objetivo e acesso central
+- **Selecao de personagens** de exemplo (figuras de dominio publico) para comecar de um curriculo preenchido
 - **Wizard passo a passo** com 13 secoes alinhadas ao LinkedIn
-- **6 templates**: Classico, Moderno, Elegante, Executivo, Minimalista, Criativo
+- **9 templates**: Classico, Moderno, Minimalista, Elegante, Executivo, Criativo, Faixa Clara, Pilar, Serifado
 - **Preview ao vivo** com linha de corte de 1 pagina A4 e alerta de overflow
 - **Pontuacao por qualidade** (Fraco / Bom / Otimo) - textos curtos e bons nao sao punidos
 - **Revisao** com galeria comparativa de todos os templates
-- **Exportacao** PDF (QR Code do LinkedIn), Word (.docx) e TXT
+- **Exportacao** PDF (QR Code do LinkedIn), Word (.doc fiel a previa ou .docx) e TXT
 - **Backup JSON** - exportar e importar rascunhos
 - **Guia LinkedIn** e prompts para IA (copiar/colar manual)
 - **Roteamento por hash** (`#/wizard/experiences`) com suporte a Voltar/Avancar do navegador
@@ -41,7 +42,7 @@ python3 -m http.server 8080
 index.html
 css/style.css
 js/
-  config.js         Secoes, campos, 6 templates, flags ATS
+  config.js         Secoes, campos, 9 templates, flags ATS
   dates.js          Mes/ano e formatacao de periodos
   scoring.js        Pontuacao por qualidade + fit de 1 pagina
   validation.js     E-mail, URL, campos obrigatorios
@@ -49,7 +50,8 @@ js/
   prompts.js        Prompts IA externos
   preview.js        Preview ao vivo
   cv-data.js        Modelo unico para preview/export
-  export.js         PDF, Word, TXT
+  characters.js     Personagens de exemplo (estados completos)
+  export.js         PDF, Word (.doc e .docx), TXT
   linkedin-guide.js Guia LinkedIn
   router.js         Hash routing
   a11y.js           Modais acessiveis (Esc, focus trap)
@@ -68,7 +70,7 @@ tests/smoke-test.js
 | Google Fonts | Parcial | Fallback system-ui se CDN falhar |
 | **jsPDF** (PDF) | Sim, se cache/CDN ok | Copie para `vendor/jspdf.umd.min.js` para offline total |
 | **qrcode** (QR no PDF) | Sim, se cache/CDN ok | Copie para `vendor/qrcode.min.js` |
-| **docx.js** (Word) | Nao na 1a exportacao | Import dinamico do CDN; TXT/PDF funcionam sem Word |
+| **docx.js** (Word .docx) | Nao na 1a exportacao | Import dinamico do CDN; o .doc fiel a previa, TXT e PDF funcionam sem internet |
 | Prompts IA | N/A | Copia manual - nenhuma API e chamada |
 
 Se jsPDF ou qrcode nao carregarem, a app exibe toast explicativo e mantem exportacao TXT (e Word se docx estiver disponivel).
