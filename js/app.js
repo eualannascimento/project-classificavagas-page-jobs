@@ -664,8 +664,8 @@
       const cls = `timeline-step${isActive ? ' active' : ''}${isDone ? ' done' : ''}`;
       const ariaCurrent = isActive ? ' aria-current="step"' : '';
       return `
-        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent}>
-          <span class="timeline-step-num">${i + 1}</span>${escapeHtml(label)}
+        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}" aria-label="Etapa ${i + 1}: ${escapeAttr(label)}"${ariaCurrent}>
+          <span class="timeline-step-num">${i + 1}</span><span class="timeline-step-label">${escapeHtml(label)}</span>
         </button>
       `;
     }).join('');
