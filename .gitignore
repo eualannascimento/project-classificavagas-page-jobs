@@ -10,3 +10,6 @@ Thumbs.db
 # Editores
 .idea/
 .vscode/
+
+# Diario de execucao e transitorio (.rules/context-management.md, secao 5)
+.docs/journal/
