@@ -157,12 +157,13 @@
   }
 
   function galleryStep(dir) {
-    reviewGalleryIndex += dir;
-    renderReviewGallery();
-  }
-
-  function useGalleryTemplate() {
-    switchTemplate(TEMPLATE_IDS[((reviewGalleryIndex % TEMPLATE_IDS.length) + TEMPLATE_IDS.length) % TEMPLATE_IDS.length]);
+    // Navegar ja aplica o modelo (sem precisar de "Usar este").
+    const total = TEMPLATE_IDS.length;
+    reviewGalleryIndex = ((reviewGalleryIndex + dir) % total + total) % total;
+    state.template = TEMPLATE_IDS[reviewGalleryIndex];
+    saveState();
+    updateTemplateIndicators();
+    debouncedUpdatePreviews();
     renderReviewGallery();
   }
 
@@ -206,7 +207,6 @@
     document.getElementById('btn-back-wizard')?.addEventListener('click', () => goToWizard());
     document.getElementById('btn-gal-prev')?.addEventListener('click', () => galleryStep(-1));
     document.getElementById('btn-gal-next')?.addEventListener('click', () => galleryStep(1));
-    document.getElementById('btn-use-gallery')?.addEventListener('click', useGalleryTemplate);
     document.getElementById('btn-export-pdf')?.addEventListener('click', printCv);
     document.getElementById('btn-export-docx')?.addEventListener('click', (e) => handleExport('docx', e.currentTarget));
     document.getElementById('btn-guide')?.addEventListener('click', goToGuide);
@@ -592,6 +592,8 @@
       EuGeroLinkedInGuide.renderGuide(els.guideContent, state);
     }
     renderPageControls();
+    observeA4Wraps();
+    requestAnimationFrame(scaleReviewPreviews);
   }
 
   function renderSectionChecklist() {
@@ -1429,8 +1431,6 @@
     if (labelEl) labelEl.textContent = galMeta.name;
     const counterEl = document.getElementById('review-gallery-counter');
     if (counterEl) counterEl.textContent = `${reviewGalleryIndex + 1} de ${total}`;
-    const useBtn = document.getElementById('btn-use-gallery');
-    if (useBtn) useBtn.textContent = isSelected ? '✓ Selecionado' : 'Usar este';
   }
 
   /**
@@ -1453,7 +1453,7 @@
     try {
       let result;
       if (type === 'pdf') result = await EuGeroExport.exportPdf(state, state.template);
-      else if (type === 'docx') result = await EuGeroExport.exportDocx(state, state.template);
+      else if (type === 'docx') result = await EuGeroExport.exportDoc(state);
       else result = EuGeroExport.exportTxt(state);
 
       if (result?.ok) {
@@ -1501,6 +1501,16 @@
     });
 
     requestAnimationFrame(scaleReviewPreviews);
+  }
+
+  let a4Observer = null;
+
+  function observeA4Wraps() {
+    // Re-escala sempre que a moldura muda de tamanho ou aparece
+    // (troca de tela, abrir overlay, girar o celular) - evita previa "bugada".
+    if (a4Observer || typeof ResizeObserver === 'undefined') return;
+    a4Observer = new ResizeObserver(() => scaleReviewPreviews());
+    document.querySelectorAll('.preview-a4-wrap').forEach((wrap) => a4Observer.observe(wrap));
   }
 
   function scaleReviewPreviews() {

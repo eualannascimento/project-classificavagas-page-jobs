@@ -751,9 +751,28 @@ textarea.cv-input { min-height: 104px; resize: vertical; line-height: 1.5; }
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-bottom: 4px;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
   .wizard-timeline::-webkit-scrollbar { display: none; }
   .wizard-timeline .timeline-step { flex: none; white-space: nowrap; }
+
+  /* Cabecalho e formulario do wizard mais compactos no celular */
+  #wizard-step-title { font-size: 24px !important; }
+  #screen-wizard { padding-bottom: 150px !important; }
+  #screen-wizard .list-item-card.blueprint { padding: 14px !important; }
+  #screen-wizard .cv-form2[style*="1fr 1fr auto"] { grid-template-columns: 1fr 1fr !important; }
+  #screen-wizard .cv-form2[style*="1fr 1fr auto"] .btn-remove-item { grid-column: 1 / -1; justify-self: start; }
+
+  /* Barra inferior compacta: botoes maiores, sem texto de progresso */
+  .wizard-bottom-inner {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) !important;
+    gap: 10px !important;
+  }
+  #wizard-progress-text { display: none; }
+  #btn-prev, #btn-next { flex: none; min-height: 46px !important; padding-inline: 16px !important; }
 }
 
 .wizard-panel,
@@ -1313,6 +1332,42 @@ body.modal-open {
   content: ""; width: 1.556em; height: 2px; flex: none;
   background: var(--color-accent);
 }
+
+/* ---- Faixa Clara: banner suave accent-100 com texto escuro ---- */
+.template-faixa .cv-banner {
+  background: var(--color-accent-100);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-divider);
+}
+.template-faixa .cv-banner .cv-name { color: var(--color-accent-900); }
+.template-faixa .cv-banner .cv-headline { color: var(--color-accent-700); }
+.template-faixa .cv-banner .cv-contacts { color: #6b6d6f; }
+.template-faixa .cv-section h2 { color: var(--color-accent-700); border-bottom: none; }
+
+/* ---- Pilar: titulos de secao com barra lateral de acento ---- */
+.template-pilar .cv-name { text-transform: uppercase; }
+.template-pilar .cv-header-left { border-left: 0.333em solid var(--color-accent); padding-left: 1em; }
+.template-pilar .cv-section h2 {
+  color: var(--color-text);
+  border-left: 0.333em solid var(--color-accent);
+  padding-left: 0.778em;
+  letter-spacing: 0.1em;
+}
+
+/* ---- Serifado: tipografia tradicional com serifa ---- */
+.template-serifado .cv-name,
+.template-serifado .cv-section h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #2b2b2d;
+}
+.template-serifado .cv-name { text-transform: none; letter-spacing: 0; }
+.template-serifado .cv-headline { color: #5d5d60; text-transform: none; letter-spacing: 0.04em; }
+.template-serifado .cv-section h2 {
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: 0.222em;
+}
+.template-serifado .cv-item-sub { color: #5d5d60; }
 
 /* ---- Impressão: o PDF sai identico a previa (Salvar como PDF) ---- */
 #print-cv { display: none; }
