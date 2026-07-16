@@ -22,16 +22,18 @@ const EuGeroSampleData = (function () {
         {
           company: 'Lanchonete do Seu Zé',
           title: 'Atendente (fins de semana)',
-          startDate: '2023-01',
-          endDate: '2024-12',
+          period: '2023 - 2024',
+          startDate: '',
+          endDate: '',
           endCurrent: false,
           description: 'Atendi clientes no balcão e no caixa, organizei os pedidos nos horários de pico e ajudei a controlar o estoque de bebidas.'
         },
         {
           company: 'Projeto Reforço na Praça',
           title: 'Monitor voluntário',
-          startDate: '2022-01',
-          endDate: '2023-12',
+          period: '2022 - 2023',
+          startDate: '',
+          endDate: '',
           endCurrent: false,
           description: 'Dei reforço de matemática para 12 crianças e organizei o material de estudo toda semana.'
         }
@@ -39,8 +41,9 @@ const EuGeroSampleData = (function () {
       education: [{
         institution: 'Colégio Estadual Brasil',
         degree: 'Ensino Médio completo',
+        period: '2024',
         startDate: '',
-        endDate: '2024-12',
+        endDate: '',
         endCurrent: false
       }],
       languages: [
@@ -48,8 +51,8 @@ const EuGeroSampleData = (function () {
         { language: 'Inglês', level: 'Básico' }
       ],
       certifications: [
-        { name: 'Informática Básica (Word, Excel e Internet)', issuer: 'Fundação Bradesco', date: '2023-12', url: '' },
-        { name: 'Atendimento ao Cliente', issuer: 'Senac (curso livre)', date: '2024-12', url: '' }
+        { name: 'Informática Básica (Word, Excel e Internet)', issuer: 'Fundação Bradesco', year: '2023' },
+        { name: 'Atendimento ao Cliente', issuer: 'Senac (curso livre)', year: '2024' }
       ],
       projects: [{
         name: 'Feira de empreendedorismo da escola',

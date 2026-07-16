@@ -62,11 +62,11 @@ const EuGeroCvData = (function () {
     if (enabledIds.has('experiences')) {
       const items = filterItems(state.experiences, ['company', 'title', 'description']);
       if (items.length) {
-        pushSection('experiences', 'Experiência Profissional', items.map(e => ({
+        pushSection('experiences', 'Experiência', items.map(e => ({
           type: 'entry',
           title: e.title || '',
           subtitle: e.company || '',
-          period: formatPeriod(e.startDate, e.endDate, e.endCurrent),
+          period: e.period || formatPeriod(e.startDate, e.endDate, e.endCurrent),
           description: e.description || ''
         })));
       }
@@ -75,11 +75,11 @@ const EuGeroCvData = (function () {
     if (enabledIds.has('education')) {
       const items = filterItems(state.education, ['institution', 'degree']);
       if (items.length) {
-        pushSection('education', 'Formação Acadêmica', items.map(e => ({
+        pushSection('education', 'Formação', items.map(e => ({
           type: 'entry',
           title: e.degree || '',
           subtitle: e.institution || '',
-          period: formatPeriod(e.startDate, e.endDate, e.endCurrent),
+          period: e.period || formatPeriod(e.startDate, e.endDate, e.endCurrent),
           description: ''
         })));
       }
@@ -92,22 +92,22 @@ const EuGeroCvData = (function () {
     if (enabledIds.has('languages')) {
       const items = filterItems(state.languages, ['language']);
       if (items.length) {
-        pushSection('languages', 'Idiomas', items.map(l => ({
-          type: 'line',
-          text: `${l.language}${l.level ? ` — ${l.level}` : ''}`
-        })));
+        pushSection('languages', 'Idiomas', [{
+          type: 'text',
+          text: items.map(l => `${l.language}${l.level ? ` (${l.level})` : ''}`).join('  ·  ')
+        }]);
       }
     }
 
     if (enabledIds.has('certifications')) {
       const items = filterItems(state.certifications, ['name']);
       if (items.length) {
-        pushSection('certifications', 'Certificados e Licenças', items.map(c => ({
+        pushSection('certifications', 'Certificados', items.map(c => ({
           type: 'entry',
           title: c.name,
-          subtitle: [c.issuer, fmtDate(c.date)].filter(Boolean).join(' · '),
+          subtitle: [c.issuer, c.year || fmtDate(c.date)].filter(Boolean).join(' · '),
           period: '',
-          description: c.url || ''
+          description: ''
         })));
       }
     }

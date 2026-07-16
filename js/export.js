@@ -65,6 +65,21 @@ const EuGeroExport = (function () {
     }
   }
 
+  /**
+   * Aplica margens e espaçamento escolhidos na prévia ao PDF:
+   * escala todas as fontes (densidade) e devolve o fator de margem.
+   */
+  function tunePdf(pdf, state) {
+    const fsFactor = state?.density === 'condensado' ? 0.94 : 1;
+    if (fsFactor !== 1) {
+      const original = pdf.setFontSize.bind(pdf);
+      pdf.setFontSize = (n) => original(n * fsFactor);
+    }
+    if (state?.margin === 'estreita') return 0.72;
+    if (state?.margin === 'confortavel') return 1.28;
+    return 1;
+  }
+
   async function exportPdf(state, templateId) {
     if (typeof EuGeroLibs !== 'undefined' && !EuGeroLibs.hasJsPdf()) {
       return { ok: false, error: 'PDF indisponivel: biblioteca jsPDF nao carregada. Verifique conexao ou pasta vendor/.' };
@@ -106,11 +121,11 @@ const EuGeroExport = (function () {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
-    const margin = 18;
+    const margin = Math.round(18 * tunePdf(pdf, state));
     const contentW = W - margin * 2;
     let y = 22;
     const accent = meta?.accentRgb || CLASSIC_DARK;
-    const isElegant = meta?.serif === true;
+    const isElegant = meta?.id === 'elegant';
 
     const drawFooter = async () => {
       const url = cvDoc.personal.linkedinUrl?.trim();
@@ -137,12 +152,12 @@ const EuGeroExport = (function () {
     pdf.setTextColor(...accent);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(isElegant ? 19 : 18);
-    pdf.text(p.fullName || 'Seu Nome', W / 2, y, { align: 'center' });
+    pdf.text((p.fullName || 'Seu Nome').toUpperCase(), W / 2, y, { align: 'center' });
     y += 7;
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(10);
-    pdf.setTextColor(71, 85, 105);
-    pdf.text(p.headline || '', W / 2, y, { align: 'center' });
+    pdf.setFontSize(9);
+    pdf.setTextColor(...accent);
+    pdf.text((p.headline || '').toUpperCase(), W / 2, y, { align: 'center' });
     y += 5;
     const contact = cvDoc.sidebar.contact.join('  ·  ');
     pdf.setFontSize(8);
@@ -162,12 +177,12 @@ const EuGeroExport = (function () {
       newPageIfNeeded(14);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
-      pdf.setTextColor(...accent);
-      pdf.text(section.title.toUpperCase(), margin, y);
-      y += 1;
-      pdf.setDrawColor(203, 213, 225);
-      pdf.setLineWidth(0.2);
-      pdf.line(margin, y, W - margin, y);
+      pdf.setTextColor(...(isElegant ? [29, 31, 32] : accent));
+      if (isElegant) {
+        pdf.text(section.title.toUpperCase().split('').join(' '), W / 2, y, { align: 'center' });
+      } else {
+        pdf.text(section.title.toUpperCase(), margin, y);
+      }
       y += 5;
 
       section.blocks.forEach(block => {
@@ -196,15 +211,20 @@ const EuGeroExport = (function () {
           newPageIfNeeded(12);
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(9);
-          pdf.setTextColor(...accent);
-          const titleLine = block.subtitle ? `${block.title}  —  ${block.subtitle}` : block.title;
-          pdf.text(titleLine, margin, y);
-          y += 4;
+          pdf.setTextColor(29, 31, 32);
+          pdf.text(block.title, margin, y);
           if (block.period) {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(8);
-            pdf.setTextColor(148, 163, 184);
-            pdf.text(block.period, margin, y);
+            pdf.setTextColor(107, 109, 111);
+            pdf.text(block.period, W - margin, y, { align: 'right' });
+          }
+          y += 4;
+          if (block.subtitle) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(...accent);
+            pdf.text(block.subtitle, margin, y);
             y += 4;
           }
           if (block.description) {
@@ -230,7 +250,7 @@ const EuGeroExport = (function () {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
-    const margin = 18;
+    const margin = Math.round(18 * tunePdf(pdf, state));
     const contentW = W - margin * 2;
     let y = 20;
     const accent = meta?.accentRgb || [89, 128, 166];
@@ -321,15 +341,20 @@ const EuGeroExport = (function () {
           newPageIfNeeded(12);
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(9);
-          pdf.setTextColor(...accent);
-          const titleLine = block.subtitle ? `${block.title}  —  ${block.subtitle}` : block.title;
-          pdf.text(titleLine, margin, y);
-          y += 4;
+          pdf.setTextColor(29, 31, 32);
+          pdf.text(block.title, margin, y);
           if (block.period) {
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(8);
-            pdf.setTextColor(148, 163, 184);
-            pdf.text(block.period, margin, y);
+            pdf.setTextColor(107, 109, 111);
+            pdf.text(block.period, W - margin, y, { align: 'right' });
+          }
+          y += 4;
+          if (block.subtitle) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(8);
+            pdf.setTextColor(...accent);
+            pdf.text(block.subtitle, margin, y);
             y += 4;
           }
           if (block.description) {
@@ -355,42 +380,49 @@ const EuGeroExport = (function () {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
+    tunePdf(pdf, state);
     const sidebarW = 68;
     const mainX = sidebarW + 8;
     const mainW = W - mainX - 12;
     let mainY = 18;
-    const sidebarColor = meta.sidebarRgb || MODERN_BLUE;
-    const accentHex = meta.accentHex || '2962FF';
-    const accentRgb = sidebarColor;
+    // Sidebar clara com texto escuro, igual à prévia (accent-100 / accent-2-100).
+    const isCreativeSide = meta.id === 'creative';
+    const SIDE_BG = isCreativeSide ? [238, 246, 255] : [238, 246, 255];
+    const SIDE_NAME = isCreativeSide ? [31, 45, 58] : [29, 45, 61];
+    const SIDE_ACCENT = isCreativeSide ? [72, 96, 119] : [65, 97, 128];
+    const SIDE_TEXT = [58, 60, 62];
+    const accentRgb = SIDE_ACCENT;
 
     const drawSidebar = () => {
-      pdf.setFillColor(...sidebarColor);
+      pdf.setFillColor(...SIDE_BG);
       pdf.rect(0, 0, sidebarW, H, 'F');
+      pdf.setDrawColor(200, 205, 210);
+      pdf.setLineWidth(0.2);
+      pdf.line(sidebarW, 0, sidebarW, H);
 
       let sy = 16;
-      pdf.setTextColor(255, 255, 255);
+      pdf.setTextColor(...SIDE_NAME);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(14);
-      const nameLines = pdf.splitTextToSize(cvDoc.personal.fullName || 'Seu Nome', sidebarW - 12);
+      const nameLines = pdf.splitTextToSize((cvDoc.personal.fullName || 'Seu Nome').toUpperCase(), sidebarW - 12);
       pdf.text(nameLines, 8, sy);
       sy += nameLines.length * 5 + 2;
 
+      pdf.setTextColor(...SIDE_ACCENT);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(8);
-      const headLines = pdf.splitTextToSize(cvDoc.personal.headline || '', sidebarW - 12);
+      pdf.setFontSize(7.5);
+      const headLines = pdf.splitTextToSize((cvDoc.personal.headline || '').toUpperCase(), sidebarW - 12);
       pdf.text(headLines, 8, sy);
       sy += headLines.length * 3.5 + 6;
 
       const sidebarBlock = (title, lines) => {
         if (!lines.length) return;
+        pdf.setTextColor(...SIDE_ACCENT);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(7);
         pdf.text(title.toUpperCase(), 8, sy);
-        sy += 1;
-        pdf.setDrawColor(255, 255, 255);
-        pdf.setLineWidth(0.15);
-        pdf.line(8, sy, sidebarW - 8, sy);
         sy += 4;
+        pdf.setTextColor(...SIDE_TEXT);
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(7.5);
         lines.forEach(line => {
@@ -403,7 +435,7 @@ const EuGeroExport = (function () {
 
       sidebarBlock('Contato', cvDoc.sidebar.contact.length ? cvDoc.sidebar.contact : ['']);
       sidebarBlock('Habilidades', cvDoc.sidebar.skills);
-      sidebarBlock('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} — ${l.level}`));
+      sidebarBlock('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language}${l.level ? ' - ' + l.level : ''}`));
     };
 
     const mainSections = EuGeroCvData.getMainSections(cvDoc, templateId);
@@ -499,7 +531,7 @@ const EuGeroExport = (function () {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
-    const margin = 15;
+    const margin = Math.round(15 * tunePdf(pdf, state));
     const contentW = W - margin * 2;
     const bannerColor = meta.bannerRgb || [15, 23, 42];
     let y = 38;
@@ -566,7 +598,7 @@ const EuGeroExport = (function () {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const W = pdf.internal.pageSize.getWidth();
     const H = pdf.internal.pageSize.getHeight();
-    const margin = 20;
+    const margin = Math.round(20 * tunePdf(pdf, state));
     const contentW = W - margin * 2;
     let y = 22;
 
