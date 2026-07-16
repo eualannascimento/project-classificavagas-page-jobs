@@ -46,6 +46,7 @@
 
   function cacheElements() {
     els.screenHome = document.getElementById('screen-home');
+    els.screenCharacters = document.getElementById('screen-characters');
     els.screenStart = document.getElementById('screen-start');
     els.screenWizard = document.getElementById('screen-wizard');
     els.screenReview = document.getElementById('screen-review');
@@ -189,7 +190,7 @@
   function bindGlobalEvents() {
     renderTemplatePickers();
 
-    document.getElementById('btn-enter-app')?.addEventListener('click', goToStart);
+    document.getElementById('btn-enter-app')?.addEventListener('click', () => navigateTo('characters'));
     document.getElementById('btn-go-home')?.addEventListener('click', goToHome);
     document.getElementById('btn-header-home')?.addEventListener('click', goToHome);
     document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport?.click());
@@ -318,6 +319,38 @@
     saveState();
     render();
     showToast('Exemplo carregado. Ajuste com seus dados reais.');
+  }
+
+  function renderCharacterGrid() {
+    const grid = document.getElementById('character-grid');
+    if (!grid || typeof EuGeroCharacters === 'undefined') return;
+    grid.innerHTML = EuGeroCharacters.CHARACTERS.map((c) => `
+      <button type="button" class="character-card${c.state ? '' : ' character-card-blank'}" data-character="${c.id}">
+        <span class="character-avatar" aria-hidden="true">${escapeHtml(c.initials)}</span>
+        <span class="character-kicker">${escapeHtml(c.tagline)}</span>
+        <span class="character-name">${escapeHtml(c.name)}</span>
+        <span class="character-role">${escapeHtml(c.role)}</span>
+        <span class="character-cta">Escolher →</span>
+      </button>
+    `).join('');
+    grid.querySelectorAll('.character-card').forEach((card) => {
+      card.addEventListener('click', () => pickCharacter(card.dataset.character));
+    });
+  }
+
+  function pickCharacter(id) {
+    const character = EuGeroCharacters.getById(id);
+    if (!character) return;
+    if (character.state) {
+      // Cópia profunda para não mutar o módulo de personagens.
+      state = EuGeroStorage.mergeWithDefaults(JSON.parse(JSON.stringify(character.state)));
+      showToast(`Currículo de exemplo carregado: ${character.name}. Edite à vontade!`);
+    } else {
+      state = EuGeroStorage.mergeWithDefaults(EuGeroConfig.createEmptyState());
+      showToast('Página em branco pronta. Vamos montar o seu!');
+    }
+    saveState();
+    goToStart();
   }
 
   function clearAll() {
@@ -560,6 +593,7 @@
 
   function showView(view) {
     els.screenHome.hidden = view !== 'home';
+    if (els.screenCharacters) els.screenCharacters.hidden = view !== 'characters';
     els.screenStart.hidden = view !== 'start';
     els.screenWizard.hidden = view !== 'wizard';
     els.screenReview.hidden = view !== 'review';
@@ -579,7 +613,9 @@
       card.classList.toggle('selected', card.dataset.template === state.template);
     });
 
-    if (currentView === 'start') {
+    if (currentView === 'characters') {
+      renderCharacterGrid();
+    } else if (currentView === 'start') {
       renderSectionChecklist();
       updateTemplatePreviewMinis();
       debouncedUpdatePreviews();
