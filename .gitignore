@@ -1,0 +1,12 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários e pacotes
+*.zip
+*.log
+*.tmp
+
+# Editores
+.idea/
+.vscode/
