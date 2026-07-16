@@ -65,7 +65,6 @@
     els.fileImport = document.getElementById('file-import');
     els.toast = document.getElementById('toast');
     els.previewOverlay = document.getElementById('preview-overlay');
-    els.headerHome = document.getElementById('btn-header-home');
     els.includeDataCheckbox = document.getElementById('include-data-checkbox');
     els.privacyPromptWarning = document.getElementById('privacy-prompt-warning');
     els.savedIndicator = document.getElementById('saved-indicator');
@@ -192,7 +191,6 @@
 
     document.getElementById('btn-enter-app')?.addEventListener('click', () => navigateTo('characters'));
     document.getElementById('btn-go-home')?.addEventListener('click', goToHome);
-    document.getElementById('btn-header-home')?.addEventListener('click', goToHome);
     document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport?.click());
 
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
@@ -205,6 +203,7 @@
     document.getElementById('btn-next-template')?.addEventListener('click', () => cycleTemplate(1));
     document.getElementById('btn-prev')?.addEventListener('click', prevStep);
     document.getElementById('btn-next')?.addEventListener('click', nextStep);
+    document.getElementById('btn-finish')?.addEventListener('click', goToReview);
     document.getElementById('btn-back-wizard')?.addEventListener('click', () => goToWizard());
     document.getElementById('btn-gal-prev')?.addEventListener('click', () => galleryStep(-1));
     document.getElementById('btn-gal-next')?.addEventListener('click', () => galleryStep(1));
@@ -598,11 +597,12 @@
     els.screenWizard.hidden = view !== 'wizard';
     els.screenReview.hidden = view !== 'review';
     els.screenGuide.hidden = view !== 'guide';
-    if (els.headerHome) {
-      els.headerHome.hidden = view === 'home';
-    }
     if (els.previewMobileDock) {
       els.previewMobileDock.hidden = (view !== 'start' && view !== 'wizard' && view !== 'review');
+      // No wizard o botao flutua acima da barra fixa; nas demais, junto da base.
+      els.previewMobileDock.style.bottom = view === 'wizard'
+        ? 'calc(4.8rem + env(safe-area-inset-bottom))'
+        : 'calc(16px + env(safe-area-inset-bottom))';
     }
   }
 
@@ -661,13 +661,11 @@
       const label = SHORT_LABELS[section.id] || section.title;
       const isActive = i === state.currentStep;
       const isDone = i < state.currentStep;
-      const bg = isActive ? 'var(--color-accent)' : 'transparent';
-      const color = isActive ? '#fff' : (isDone ? 'var(--color-accent-700)' : 'color-mix(in srgb, var(--color-text) 65%, transparent)');
-      const border = isActive ? 'var(--color-accent)' : 'var(--color-divider)';
+      const cls = `timeline-step${isActive ? ' active' : ''}${isDone ? ' done' : ''}`;
       const ariaCurrent = isActive ? ' aria-current="step"' : '';
       return `
-        <button type="button" class="timeline-step" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent} style="display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid ${border}; background: ${bg}; color: ${color}; cursor: pointer; font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.02em; border-radius: 4px;">
-          <span style="font-size: 11px; opacity: .8;">${i + 1}</span>${escapeHtml(label)}
+        <button type="button" class="${cls}" data-step="${i}" title="${escapeAttr(section.title)}"${ariaCurrent}>
+          <span class="timeline-step-num">${i + 1}</span>${escapeHtml(label)}
         </button>
       `;
     }).join('');
