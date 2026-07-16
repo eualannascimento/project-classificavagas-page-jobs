@@ -35,12 +35,12 @@ const EuGeroConfig = (function () {
       description: 'Comece pelo básico. É assim que os recrutadores vão te encontrar.',
       linkedinHint: 'Perfil → foto de capa → seção de introdução no topo do perfil',
       fields: [
-        { key: 'fullName', label: 'Nome completo', type: 'text', required: true, minLength: 3, tip: 'Use seu nome como aparece em documentos oficiais. Evite apelidos.' },
-        { key: 'headline', label: 'Cargo desejado / Título profissional', type: 'text', required: true, minLength: 10, tip: 'Descreva sua função e especialidade em uma linha. Ex: "Desenvolvedor Full Stack | React & Node.js"' },
-        { key: 'email', label: 'E-mail', type: 'email', required: true, minLength: 5, tip: 'Use um e-mail profissional. Evite apelidos ou números aleatórios.' },
-        { key: 'phone', label: 'Telefone', type: 'tel', required: false, minLength: 8, tip: 'Inclua DDD. Formato: (11) 99999-9999' },
-        { key: 'location', label: 'Cidade / Estado', type: 'text', required: true, minLength: 3, tip: 'Informe cidade e estado. Ex: "São Paulo, SP"' },
-        { key: 'linkedinUrl', label: 'URL do LinkedIn', type: 'url', required: false, minLength: 10, tip: 'Cole a URL completa do seu perfil. Será usada no QR Code do PDF.' }
+        { key: 'fullName', label: 'Nome completo', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Cida Boaventura', tip: 'Escreva seu nome completo, do jeito que quer ser chamado.' },
+        { key: 'headline', label: 'Cargo ou área desejada', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Auxiliar Administrativo', tip: 'A vaga ou área que você busca. Ex.: Auxiliar Administrativo.' },
+        { key: 'email', label: 'E-mail', type: 'email', required: true, minLength: 5, placeholder: 'voce@email.com', tip: 'Use um e-mail que você acessa sempre - é por onde te chamam.' },
+        { key: 'phone', label: 'Telefone', type: 'tel', required: false, minLength: 8, placeholder: '(11) 90000-0000', tip: 'Com DDD. De preferência com WhatsApp.' },
+        { key: 'location', label: 'Cidade', type: 'text', required: true, minLength: 3, placeholder: 'Cidade, UF', tip: 'Cidade e estado onde você mora. Ex.: Guarulhos, SP.' },
+        { key: 'linkedinUrl', label: 'LinkedIn (opcional)', type: 'url', required: false, minLength: 10, placeholder: 'linkedin.com/in/voce', tip: 'Opcional. O endereço do seu perfil, se você tiver um.' }
       ]
     },
     {
@@ -49,7 +49,7 @@ const EuGeroConfig = (function () {
       description: 'Duas ou três frases sobre quem você é e o que faz de melhor. Experiências do dia a dia valem!',
       linkedinHint: 'Perfil → seção "Sobre" → editar',
       fields: [
-        { key: 'summary', label: 'Resumo profissional', type: 'textarea', required: true, minLength: 100, actionVerbs: true, tip: 'Conte sua história em 3-4 parágrafos: quem você é, o que faz, principais conquistas e objetivo. Use verbos de ação e números quando possível.' }
+        { key: 'summary', label: 'Um parágrafo curto sobre você', type: 'textarea', required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Ex.: Pessoa comunicativa e organizada, com experiência em vendas e atendimento ao público. Busco minha primeira oportunidade com carteira assinada.', tip: '2 a 3 frases sobre quem você é e o que faz bem. Experiências do dia a dia valem!' }
       ]
     },
     {
@@ -59,11 +59,10 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Experiência" → adicionar experiência',
       list: true,
       itemFields: [
-        { key: 'company', label: 'Empresa', type: 'text', required: true, minLength: 2, tip: 'Nome oficial da empresa.' },
-        { key: 'title', label: 'Cargo', type: 'text', required: true, minLength: 3, tip: 'Título exato ou equivalente ao cargo exercido.' },
-        { key: 'startDate', label: 'Início', type: 'monthYear', required: true, minLength: 4, tip: 'Selecione mês e ano de início.' },
-        { key: 'endDate', label: 'Fim', type: 'monthYear', required: false, minLength: 0, tip: 'Marque "Até hoje" se ainda trabalha aqui.' },
-        { key: 'description', label: 'Descrição das atividades', type: 'textarea', required: true, minLength: 50, actionVerbs: true, tip: 'Use bullet points mentais: verbos de ação + resultado mensurável. Ex: "Implementei sistema que reduziu tempo de processamento em 40%".' }
+        { key: 'title', label: 'Cargo ou função', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Vendedora autônoma', tip: 'Como sua função era chamada. Trabalho informal ou autônomo também vale.' },
+        { key: 'company', label: 'Onde', type: 'text', required: true, minLength: 2, placeholder: 'Ex.: Doces da Cida', tip: "O local. Pode ser 'autônomo', o nome de uma loja ou de um projeto." },
+        { key: 'period', label: 'Período', type: 'text', required: false, minLength: 0, placeholder: 'Ex.: 2019 - atual', tip: 'De quando até quando. Ex.: 2019 - atual.' },
+        { key: 'description', label: 'O que você fez e conquistou', type: 'textarea', required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Ex.: Vendi doces caseiros e atendi mais de 200 clientes fiéis.', tip: 'Comece com um verbo (Vendi, Organizei…) e cite um número quando puder.' }
       ]
     },
     {
@@ -73,10 +72,9 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Formação acadêmica" → adicionar formação',
       list: true,
       itemFields: [
-        { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 3, tip: 'Nome completo da universidade ou escola.' },
-        { key: 'degree', label: 'Curso / Grau', type: 'text', required: true, minLength: 3, tip: 'Ex: Bacharelado em Ciência da Computação' },
-        { key: 'startDate', label: 'Início', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de início.' },
-        { key: 'endDate', label: 'Conclusão', type: 'monthYear', required: false, minLength: 4, tip: 'Marque "Até hoje" se ainda cursa.' }
+        { key: 'degree', label: 'Curso ou formação', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Ensino Médio completo', tip: 'Ensino médio, técnico, cursos livres e oficinas também contam.' },
+        { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 3, placeholder: 'Ex.: EE Prof. João Ramos', tip: 'Onde você estudou. Ex.: escola, Senai, curso online.' },
+        { key: 'period', label: 'Período', type: 'text', required: false, minLength: 0, placeholder: 'Ex.: 2018', tip: 'O ano de conclusão ou o período. Ex.: 2018.' }
       ]
     },
     {
@@ -85,7 +83,7 @@ const EuGeroConfig = (function () {
       description: 'Liste o que você sabe fazer. Misture habilidades técnicas e de convivência.',
       linkedinHint: 'Perfil → seção "Competências" → adicionar competência',
       fields: [
-        { key: 'skillsText', label: 'Habilidades', type: 'skillsTags', required: false, minLength: 2, fullWidth: true, idealMax: 180, tip: 'Digite e pressione Enter ou ; para adicionar. Ex: JavaScript, React, Liderança', placeholder: 'Digite uma habilidade...' }
+        { key: 'skillsText', label: 'Digite uma habilidade e aperte Enter', type: 'skillsTags', required: false, minLength: 2, fullWidth: true, tip: 'O que você sabe fazer. Misture técnicas (Excel) e de convivência (trabalho em equipe).', placeholder: 'Ex.: Atendimento ao cliente…' }
       ]
     },
     {
@@ -95,8 +93,8 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Idiomas" → adicionar idioma',
       list: true,
       itemFields: [
-        { key: 'language', label: 'Idioma', type: 'text', required: true, minLength: 2, tip: 'Ex: Inglês, Espanhol, Francês' },
-        { key: 'level', label: 'Nível de proficiência', type: 'select', options: ['Básico', 'Intermediário', 'Avançado', 'Fluente', 'Nativo'], required: true, minLength: 3, tip: 'Seja honesto — recrutadores podem testar em entrevistas.' }
+        { key: 'language', label: 'Idioma', type: 'text', required: true, minLength: 2, placeholder: 'Ex.: Inglês', tip: 'Idiomas que você fala, mesmo que básico.' },
+        { key: 'level', label: 'Nível', type: 'text', required: false, minLength: 0, placeholder: 'Ex.: Básico' }
       ]
     },
     {
@@ -106,10 +104,9 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Licenças e certificados" → adicionar',
       list: true,
       itemFields: [
-        { key: 'name', label: 'Nome do certificado', type: 'text', required: true, minLength: 3, tip: 'Nome oficial como aparece no certificado.' },
-        { key: 'issuer', label: 'Emissor', type: 'text', required: true, minLength: 2, tip: 'Ex: AWS, Google, Coursera, Microsoft' },
-        { key: 'date', label: 'Data de emissão', type: 'monthYear', required: false, minLength: 4, tip: 'Mês e ano de emissão.' },
-        { key: 'url', label: 'URL (opcional)', type: 'url', required: false, minLength: 0, tip: 'Link para verificação do certificado, se disponível.' }
+        { key: 'name', label: 'Nome do curso ou certificado', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Informática Básica', tip: 'O que você concluiu. Cursos online, da prefeitura ou do SENAI também contam.' },
+        { key: 'issuer', label: 'Onde você fez', type: 'text', required: true, minLength: 2, placeholder: 'Ex.: Fundação Bradesco', tip: 'A instituição que emitiu. Ex.: Fundação Bradesco, Senac, YouTube.' },
+        { key: 'year', label: 'Ano', type: 'text', required: false, minLength: 0, placeholder: 'Ex.: 2023', tip: 'O ano em que você concluiu. Ex.: 2023.' }
       ]
     },
     {
@@ -119,9 +116,9 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Projetos" → adicionar projeto',
       list: true,
       itemFields: [
-        { key: 'name', label: 'Nome do projeto', type: 'text', required: true, minLength: 3, tip: 'Nome claro que descreva o projeto.' },
-        { key: 'description', label: 'Descrição', type: 'textarea', required: true, minLength: 30, actionVerbs: true, tip: 'Descreva objetivo, sua contribuição e resultados alcançados.' },
-        { key: 'url', label: 'URL (opcional)', type: 'url', required: false, minLength: 0, tip: 'Link para repositório, demo ou portfólio.' }
+        { key: 'name', label: 'Nome do projeto', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Feira de empreendedorismo', tip: 'Um trabalho ou iniciativa: da escola, da comunidade ou por conta própria.' },
+        { key: 'description', label: 'O que você fez', type: 'textarea', required: true, minLength: 30, actionVerbs: true, fullWidth: true, placeholder: 'Ex.: Organizei a barraca de doces com 2 colegas e cuidei do caixa, com lucro de R$ 300.', tip: 'Explique seu papel e o resultado. Comece com um verbo e cite um número quando puder.' },
+        { key: 'url', label: 'Link (opcional)', type: 'url', required: false, minLength: 0, fullWidth: true, placeholder: 'Ex.: instagram.com/seuprojeto', tip: 'Opcional. Um link para ver o projeto, se existir (rede social, site, drive).' }
       ]
     }
   ];

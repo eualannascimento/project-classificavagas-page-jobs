@@ -18,7 +18,7 @@
   let toastTimer = null;
 
   const els = {};
-  const REVIEW_PREVIEW_BASE_WIDTH = 340;
+  const A4_BASE_WIDTH = 370;
   const LIBS_WARN_KEY = 'eugero-libs-warned';
 
   function init() {
@@ -351,23 +351,24 @@
   function renderPageControls() {
     const containers = document.querySelectorAll('[data-page-controls]');
     if (!containers.length) return;
+    // O name precisa ser único por container: radios com o mesmo name no
+    // documento formam um grupo só e desmarcam uns aos outros.
     const seg = (name, title, cur, opts) => `
       <div>
         <div class="cv-pc-label">${title}</div>
         <div class="seg">
-          ${opts.map((o) => `<label class="seg-opt"><input type="radio" name="pc-${name}" value="${o.v}" ${cur === o.v ? 'checked' : ''}>${o.l}</label>`).join('')}
+          ${opts.map((o) => `<label class="seg-opt"><input type="radio" name="${name}" value="${o.v}" ${cur === o.v ? 'checked' : ''}>${o.l}</label>`).join('')}
         </div>
       </div>`;
-    const html = `<div class="cv-page-controls">
-      ${seg('margin', 'Margens', state.margin || 'padrao', PAGE_MARGINS)}
-      ${seg('density', 'Espaçamento', state.density || 'normal', PAGE_DENSITIES)}
-    </div>`;
-    containers.forEach((c) => {
-      c.innerHTML = html;
-      c.querySelectorAll('input[name="pc-margin"]').forEach((inp) => {
+    containers.forEach((c, ci) => {
+      c.innerHTML = `<div class="cv-page-controls">
+        ${seg(`pc-margin-${ci}`, 'Margens', state.margin || 'padrao', PAGE_MARGINS)}
+        ${seg(`pc-density-${ci}`, 'Espaçamento', state.density || 'normal', PAGE_DENSITIES)}
+      </div>`;
+      c.querySelectorAll(`input[name="pc-margin-${ci}"]`).forEach((inp) => {
         inp.addEventListener('change', () => setPageOption('margin', inp.value));
       });
-      c.querySelectorAll('input[name="pc-density"]').forEach((inp) => {
+      c.querySelectorAll(`input[name="pc-density-${ci}"]`).forEach((inp) => {
         inp.addEventListener('change', () => setPageOption('density', inp.value));
       });
     });
@@ -838,15 +839,9 @@
       return wrap;
     }
 
-    const labelRow = document.createElement('div');
-    labelRow.className = 'field-label-row';
-    labelRow.innerHTML = `
-      <span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">
-        ${field.label}${field.required ? ' <span class="required">*</span>' : ''}
-        ${renderFieldTip(field)}
-      </span>
-      <div class="field-score" aria-live="polite"></div>
-    `;
+    const labelRow = document.createElement('span');
+    labelRow.style.cssText = 'display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);';
+    labelRow.innerHTML = `${field.label}${renderFieldTip(field)}`;
     wrap.appendChild(labelRow);
 
     let input;
@@ -855,20 +850,11 @@
       input.className = 'cv-input';
       input.id = id;
       input.name = field.key;
-      input.rows = field.key === 'skillsText' ? 2 : 3;
+      input.rows = 3;
       if (field.placeholder) input.placeholder = field.placeholder;
       if (field.required) input.required = true;
       input.value = value;
       wrap.appendChild(input);
-      const updateCounter = renderCharCounter(wrap, field, () => input.value);
-      input.addEventListener('input', () => {
-        setFieldValue(section, field, input.value, options.item, options.index);
-        updateFieldScore(wrap, field, input.value);
-        updateCounter();
-        clearFieldValidation(wrap);
-        debouncedUpdatePreviews();
-        saveState();
-      });
     } else if (field.type === 'select') {
       input = document.createElement('select');
       input.className = 'cv-input';
@@ -879,13 +865,6 @@
         `<option value="${escapeAttr(o)}" ${value === o ? 'selected' : ''}>${escapeHtml(o)}</option>`
       ).join('')}`;
       wrap.appendChild(input);
-      input.addEventListener('change', () => {
-        setFieldValue(section, field, input.value, options.item, options.index);
-        updateFieldScore(wrap, field, input.value);
-        clearFieldValidation(wrap);
-        debouncedUpdatePreviews();
-        saveState();
-      });
     } else {
       input = document.createElement('input');
       input.className = 'cv-input';
@@ -893,20 +872,82 @@
       input.id = id;
       input.name = field.key;
       input.value = value;
+      if (field.placeholder) input.placeholder = field.placeholder;
       if (field.required) input.required = true;
       wrap.appendChild(input);
-      input.addEventListener('input', () => {
-        setFieldValue(section, field, input.value, options.item, options.index);
-        updateFieldScore(wrap, field, input.value);
-        clearFieldValidation(wrap);
-        debouncedUpdatePreviews();
-        saveState();
-      });
     }
 
-    wrap.insertAdjacentHTML('beforeend', renderFieldTip(field));
-    updateFieldScore(wrap, field, value);
+    // Dica de qualidade sob o campo, igual ao modelo.
+    let hintEl = null;
+    const hintKind = field.actionVerbs ? 'quality' : (field.type === 'email' ? 'email' : null);
+    if (hintKind) {
+      hintEl = document.createElement('div');
+      hintEl.className = 'field-hint';
+      hintEl.setAttribute('role', 'status');
+      wrap.appendChild(hintEl);
+      updateFieldHint(hintEl, hintKind, value);
+    }
+
+    const eventName = field.type === 'select' ? 'change' : 'input';
+    input.addEventListener(eventName, () => {
+      setFieldValue(section, field, input.value, options.item, options.index);
+      if (hintEl) updateFieldHint(hintEl, hintKind, input.value);
+      clearFieldValidation(wrap);
+      debouncedUpdatePreviews();
+      saveState();
+    });
+
     return wrap;
+  }
+
+  // --- Dicas de qualidade (mesma heuristica e textos do modelo) ---
+  const QUALITY_VERBS = ['lider', 'otimiz', 'desenvolv', 'cri', 'aument', 'reduz', 'implement', 'gerenci',
+    'coorden', 'lanc', 'negoci', 'analis', 'planej', 'execut', 'conduz', 'melhor', 'constru', 'estrutur',
+    'automatiz', 'entreg', 'organiz', 'dobr', 'triplic', 'apoi', 'atend', 'vend', 'captei', 'capt', 'arrecad', 'ajud'];
+
+  function textQuality(text) {
+    const t = (text || '').trim();
+    if (!t) return { kind: 'empty', label: 'Dica: comece com um verbo de ação (ex.: Vendi, Organizei, Atendi…).' };
+    const low = t.toLowerCase();
+    const hasVerb = QUALITY_VERBS.some((v) => low.includes(v));
+    const hasNum = /\d/.test(t);
+    if (t.length < 45) return { kind: 'weak', label: 'Continue - conte o que você fez e o impacto disso.' };
+    if (hasVerb && hasNum) return { kind: 'great', label: 'Ótimo! Tem verbo de ação e um resultado com número.' };
+    if (hasNum) return { kind: 'good', label: 'Bom - que tal começar com um verbo de ação para reforçar?' };
+    if (hasVerb) return { kind: 'good', label: 'Bom - tente incluir um número ou resultado concreto.' };
+    return { kind: 'weak', label: 'Adicione um verbo de ação no início da frase.' };
+  }
+
+  const HINT_STYLE = {
+    empty: { c: 'var(--color-neutral-600)', i: 'info' },
+    weak: { c: 'var(--color-neutral-700)', i: 'arrow' },
+    good: { c: 'var(--color-accent-700)', i: 'check' },
+    great: { c: 'var(--color-accent-800)', i: 'star' }
+  };
+
+  function hintIconSvg(name, color) {
+    const open = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">`;
+    const paths = {
+      info: '<circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 8h.01"></path>',
+      arrow: '<path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path>',
+      check: '<path d="M20 6L9 17l-5-5"></path>',
+      star: '<path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3z"></path>'
+    };
+    return `${open}${paths[name]}</svg>`;
+  }
+
+  function updateFieldHint(el, kind, value) {
+    let q;
+    if (kind === 'email') {
+      q = (!value || /.+@.+\..+/.test(value))
+        ? { kind: 'good', label: 'Use um e-mail que você consulta com frequência.' }
+        : { kind: 'weak', label: 'Esse e-mail parece incompleto - confira o "@" e o domínio.' };
+    } else {
+      q = textQuality(value);
+    }
+    const m = HINT_STYLE[q.kind];
+    el.style.color = m.c;
+    el.innerHTML = `${hintIconSvg(m.i, m.c)}<span>${escapeHtml(q.label)}</span>`;
   }
 
   function renderMonthYearField(wrap, section, field, value, { id, index, item }) {
@@ -992,29 +1033,28 @@
     updateFieldScore(wrap, field, value);
   }
 
+  const SKILL_SUGGESTIONS = ['Trabalho em equipe', 'Comunicação', 'Atendimento ao cliente', 'Organização',
+    'Pacote Office', 'Proatividade', 'Resolução de problemas', 'Liderança', 'Pontualidade', 'Vendas'];
+
   function renderSkillsTagsField(wrap, section, field, value, id) {
     const tags = EuGeroConfig.parseSkillsText(value || state.skillsText);
 
     wrap.innerHTML = `
-      <div class="field-label-row">
-        <label for="${id}">${field.label}${field.required ? ' <span class="required">*</span>' : ''}</label>
-        <div class="field-score" aria-live="polite"></div>
-      </div>
-      <div class="skills-tags-field">
-        <div class="skills-tags-chips" role="list"></div>
-        <input type="text" id="${id}" class="skills-tags-input" placeholder="${escapeAttr(field.placeholder || 'Digite uma habilidade...')}" autocomplete="off">
-      </div>
-      ${renderFieldTip(field)}
+      <span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">${field.label}${renderFieldTip(field)}</span>
+      <input type="text" id="${id}" class="cv-input" placeholder="${escapeAttr(field.placeholder || 'Ex.: Atendimento ao cliente…')}" autocomplete="off">
+      <div class="skills-tags-chips" role="list"></div>
+      <p class="skills-suggest-title">Sugestões - clique para adicionar</p>
+      <div class="skills-suggest-row"></div>
     `;
 
     const chipsEl = wrap.querySelector('.skills-tags-chips');
-    const input = wrap.querySelector('.skills-tags-input');
+    const suggestEl = wrap.querySelector('.skills-suggest-row');
+    const input = wrap.querySelector(`#${CSS.escape(id)}`);
 
     function syncTags(newTags) {
       const text = newTags.map((t) => t.name || t).filter(Boolean).join('; ');
       state.skillsText = text;
       state.skills = newTags;
-      updateFieldScore(wrap, field, text);
       clearFieldValidation(wrap);
       debouncedUpdatePreviews();
       saveState();
@@ -1022,18 +1062,28 @@
 
     function renderChips() {
       chipsEl.innerHTML = tags.map((tag, i) => `
-        <span class="skills-tag-chip" role="listitem">
-          ${escapeHtml(tag.name || tag)}
-          <button type="button" class="skills-tag-remove" aria-label="Remover ${escapeAttr(tag.name || tag)}" data-index="${i}">x</button>
-        </span>
+        <button type="button" class="skills-tag-chip" role="listitem" data-index="${i}" aria-label="Remover ${escapeAttr(tag.name || tag)}">
+          ${escapeHtml(tag.name || tag)}<span class="skills-tag-remove">×</span>
+        </button>
       `).join('');
-      chipsEl.querySelectorAll('.skills-tag-remove').forEach((btn) => {
+      chipsEl.querySelectorAll('.skills-tag-chip').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const idx = parseInt(btn.dataset.index, 10);
-          tags.splice(idx, 1);
+          tags.splice(parseInt(btn.dataset.index, 10), 1);
           renderChips();
+          renderSuggestions();
           syncTags(tags);
         });
+      });
+    }
+
+    function renderSuggestions() {
+      const existing = new Set(tags.map((t) => (t.name || t).toLowerCase()));
+      const options = SKILL_SUGGESTIONS.filter((s) => !existing.has(s.toLowerCase())).slice(0, 6);
+      suggestEl.innerHTML = options.map((s) =>
+        `<button type="button" class="skills-suggest-btn" data-name="${escapeAttr(s)}">+ ${escapeHtml(s)}</button>`
+      ).join('');
+      suggestEl.querySelectorAll('.skills-suggest-btn').forEach((btn) => {
+        btn.addEventListener('click', () => addTag(btn.dataset.name));
       });
     }
 
@@ -1043,10 +1093,12 @@
       if (tags.some((t) => (t.name || t).toLowerCase() === name.toLowerCase())) return;
       tags.push({ name });
       renderChips();
+      renderSuggestions();
       syncTags(tags);
     }
 
     renderChips();
+    renderSuggestions();
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ';') {
@@ -1056,6 +1108,7 @@
       } else if (e.key === 'Backspace' && !input.value && tags.length) {
         tags.pop();
         renderChips();
+        renderSuggestions();
         syncTags(tags);
       }
     });
@@ -1066,8 +1119,6 @@
         input.value = '';
       }
     });
-
-    updateFieldScore(wrap, field, value);
   }
 
   function getFieldValue(section, field, item) {
@@ -1105,6 +1156,7 @@
     const listEl = document.createElement('div');
     listEl.className = 'list-items';
     listEl.id = `list-items-${section.id}`;
+    listEl.style.cssText = `display: flex; flex-direction: column; gap: ${section.id === 'languages' ? '14px' : '20px'};`;
 
     if (items.length === 0) items.push(createEmptyListItem(section.id));
 
@@ -1117,80 +1169,74 @@
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'btn btn-secondary btn-add-item';
-    addBtn.textContent = '+ Adicionar item';
+    addBtn.style.cssText = 'align-self: flex-start; min-height: 42px; margin-top: 20px;';
+    addBtn.textContent = `+ Adicionar ${(LIST_ITEM_LABELS[section.id] || 'item').toLowerCase()}`;
     addBtn.addEventListener('click', () => appendListItem(section.id));
     container.appendChild(addBtn);
 
     return container;
   }
 
+  const LIST_ITEM_LABELS = {
+    experiences: 'Experi\u00eancia',
+    education: 'Forma\u00e7\u00e3o',
+    languages: 'Idioma',
+    certifications: 'Certificado',
+    projects: 'Projeto'
+  };
+
   function createListItemEl(section, item, index) {
+    const makeRemoveBtn = (card) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-ghost btn-remove-item';
+      btn.style.fontSize = '13px';
+      btn.textContent = 'Remover';
+      btn.addEventListener('click', () => {
+        removeListItem(section.id, parseInt(card.dataset.index, 10));
+      });
+      return btn;
+    };
+
+    // Idiomas: linha simples (Idioma | N\u00edvel | Remover), como no modelo.
+    if (section.id === 'languages') {
+      const card = document.createElement('div');
+      card.className = 'list-item-card cv-form2';
+      card.dataset.index = String(index);
+      card.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;';
+      section.itemFields.forEach((field) => {
+        card.appendChild(renderField(section, field, { item, index, id: `field-${section.id}-${index}-${field.key}` }));
+      });
+      const removeBtn = makeRemoveBtn(card);
+      removeBtn.style.minHeight = '40px';
+      card.appendChild(removeBtn);
+      return card;
+    }
+
+    // Demais listas: card blueprint com cantos, como no modelo.
     const card = document.createElement('div');
-    card.className = 'list-item-card';
+    card.className = 'list-item-card blueprint';
     card.dataset.index = String(index);
+    card.style.padding = '20px';
+    card.innerHTML = '<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>';
 
     const header = document.createElement('div');
-    header.className = 'list-item-header';
-    header.innerHTML = `<span class="list-item-num">Item ${index + 1}</span>`;
+    header.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;';
+    const num = document.createElement('span');
+    num.className = 'list-item-num';
+    num.style.cssText = 'font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700);';
+    num.textContent = `${LIST_ITEM_LABELS[section.id] || 'Item'} ${String(index + 1).padStart(2, '0')}`;
+    header.appendChild(num);
+    header.appendChild(makeRemoveBtn(card));
     card.appendChild(header);
 
     const grid = document.createElement('div');
-    grid.className = 'field-grid field-grid-item';
-
+    grid.className = 'cv-form2';
+    grid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 14px;';
     section.itemFields.forEach((field) => {
-      if (field.type === 'monthYear') {
-        const wrap = document.createElement('div');
-        wrap.className = 'field-group';
-        wrap.dataset.section = section.id;
-        wrap.dataset.field = field.key;
-        const id = `field-${section.id}-${index}-${field.key}`;
-        renderMonthYearField(wrap, section, field, item[field.key] || '', { id, index, item });
-        grid.appendChild(wrap);
-      } else {
-        grid.appendChild(renderField(section, field, { item, index, id: `field-${section.id}-${index}-${field.key}` }));
-      }
+      grid.appendChild(renderField(section, field, { item, index, id: `field-${section.id}-${index}-${field.key}` }));
     });
-
     card.appendChild(grid);
-
-    const actions = document.createElement('div');
-    actions.className = 'list-item-actions';
-
-    const upBtn = document.createElement('button');
-    upBtn.type = 'button';
-    upBtn.className = 'btn btn-ghost btn-icon btn-reorder-up';
-    upBtn.setAttribute('aria-label', 'Mover para cima');
-    upBtn.textContent = '\u2191';
-    upBtn.disabled = index === 0;
-    upBtn.addEventListener('click', () => {
-      const idx = parseInt(card.dataset.index, 10);
-      reorderListItem(section.id, idx, -1);
-    });
-
-    const downBtn = document.createElement('button');
-    downBtn.type = 'button';
-    downBtn.className = 'btn btn-ghost btn-icon btn-reorder-down';
-    downBtn.setAttribute('aria-label', 'Mover para baixo');
-    downBtn.textContent = '\u2193';
-    downBtn.addEventListener('click', () => {
-      const idx = parseInt(card.dataset.index, 10);
-      reorderListItem(section.id, idx, 1);
-    });
-
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'btn btn-danger btn-remove-item';
-    removeBtn.setAttribute('aria-label', 'Remover item');
-    removeBtn.textContent = 'Remover';
-    removeBtn.addEventListener('click', () => {
-      const idx = parseInt(card.dataset.index, 10);
-      removeListItem(section.id, idx);
-    });
-
-    actions.appendChild(upBtn);
-    actions.appendChild(downBtn);
-    actions.appendChild(removeBtn);
-    card.appendChild(actions);
 
     return card;
   }
@@ -1198,15 +1244,12 @@
   function reindexListCards(sectionId) {
     const container = document.getElementById(`list-items-${sectionId}`);
     if (!container) return;
+    const label = LIST_ITEM_LABELS[sectionId] || 'Item';
     const cards = container.querySelectorAll('.list-item-card');
     cards.forEach((card, i) => {
       card.dataset.index = String(i);
       const num = card.querySelector('.list-item-num');
-      if (num) num.textContent = `Item ${i + 1}`;
-      const up = card.querySelector('.btn-reorder-up');
-      const down = card.querySelector('.btn-reorder-down');
-      if (up) up.disabled = i === 0;
-      if (down) down.disabled = i === cards.length - 1;
+      if (num) num.textContent = `${label} ${String(i + 1).padStart(2, '0')}`;
     });
   }
 
@@ -1236,7 +1279,6 @@
   function removeListItem(sectionId, index) {
     const items = state[sectionId];
     if (!items || index < 0 || index >= items.length) return;
-    if (!confirm('Remover este item?')) return;
 
     const removed = { ...items[index] };
     const removedIndex = index;
@@ -1448,16 +1490,13 @@
   }
 
   function scaleReviewPreviews() {
-    document.querySelectorAll('.review-template-preview-wrap').forEach((wrap) => {
-      const preview = wrap.querySelector('.review-template-preview');
-      if (!preview) return;
-      const width = wrap.clientWidth;
+    // Escala as prévias dentro da moldura A4 (base do modelo: 370px de largura).
+    document.querySelectorAll('.preview-a4-wrap > .preview-content').forEach((preview) => {
+      const width = preview.parentElement.clientWidth;
       if (width <= 0) return;
-      const scale = width / REVIEW_PREVIEW_BASE_WIDTH;
-      preview.style.width = `${REVIEW_PREVIEW_BASE_WIDTH}px`;
+      const scale = width / A4_BASE_WIDTH;
+      preview.style.width = `${A4_BASE_WIDTH}px`;
       preview.style.transform = `scale(${scale})`;
-      preview.style.transformOrigin = 'top left';
-      wrap.style.height = `${(297 / 210) * width}px`;
     });
   }
 
@@ -1478,6 +1517,7 @@
     updateMobilePreviewDock();
     updateTemplatePreviewMinis();
     updateProgressBar();
+    requestAnimationFrame(scaleReviewPreviews);
   }
 
   const debouncedUpdatePreviews = debounce(updateAllPreviews, 150);
