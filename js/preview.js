@@ -51,15 +51,15 @@ const EuGeroPreview = (function () {
         <article class="cv-item">
           <div class="cv-item-header">
             <strong>${escapeHtml(e.title || 'Cargo')}</strong>
-            <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate, e.endCurrent))}</span>
+            <span class="cv-period">${escapeHtml(e.period || formatPeriod(e.startDate, e.endDate, e.endCurrent))}</span>
           </div>
           <div class="cv-item-sub">${escapeHtml(e.company || '')}</div>
           ${e.description ? `<p class="cv-desc">${escapeHtml(e.description).replace(/\n/g, '<br>')}</p>` : ''}
         </article>
       `).join('');
-      return renderSection('Experiência Profissional', html);
+      return renderSection('Experiência', html);
     }
-    return showSkeleton ? renderSkeletonSection('Experiência Profissional') : '';
+    return showSkeleton ? renderSkeletonSection('Experiência') : '';
   }
 
   function renderEducation(items, showSkeleton) {
@@ -68,18 +68,19 @@ const EuGeroPreview = (function () {
         <article class="cv-item">
           <strong>${escapeHtml(e.degree || 'Curso')}</strong>
           <div class="cv-item-sub">${escapeHtml(e.institution || '')}</div>
-          <span class="cv-period">${escapeHtml(formatPeriod(e.startDate, e.endDate))}</span>
+          <span class="cv-period">${escapeHtml(e.period || formatPeriod(e.startDate, e.endDate))}</span>
         </article>
       `).join('');
-      return renderSection('Formação Acadêmica', html);
+      return renderSection('Formação', html);
     }
-    return showSkeleton ? renderSkeletonSection('Formação Acadêmica') : '';
+    return showSkeleton ? renderSkeletonSection('Formação') : '';
   }
 
   function renderSkills(state, showSkeleton) {
     const skills = getSkillsFromState(state);
     if (skills.length) {
-      const html = `<div class="cv-skills">${skills.map(s => `<span class="cv-skill-tag">${escapeHtml(s.name || s)}</span>`).join('')}</div>`;
+      // Linha única separada por "·", igual ao modelo.
+      const html = `<p class="cv-summary">${skills.map(s => escapeHtml(s.name || s)).join('  ·  ')}</p>`;
       return renderSection('Habilidades', html);
     }
     return showSkeleton ? renderSkeletonSection('Habilidades') : '';
@@ -87,8 +88,10 @@ const EuGeroPreview = (function () {
 
   function renderLanguages(items, showSkeleton) {
     if (hasListData(items, ['language'])) {
-      const html = items.filter(l => l.language).map(l => `<div class="cv-item"><strong>${escapeHtml(l.language)}</strong> — ${escapeHtml(l.level || '')}</div>`).join('');
-      return renderSection('Idiomas', html);
+      const line = items.filter(l => l.language)
+        .map(l => `${escapeHtml(l.language)}${l.level ? ` (${escapeHtml(l.level)})` : ''}`)
+        .join('  ·  ');
+      return renderSection('Idiomas', `<p class="cv-summary">${line}</p>`);
     }
     return showSkeleton ? renderSkeletonSection('Idiomas') : '';
   }
@@ -134,8 +137,8 @@ const EuGeroPreview = (function () {
     }
 
     if (isSectionEnabled(enabledSet, 'certifications')) {
-      content += renderGenericList('Certificados e Licenças', state.certifications, ['name'], c => `
-        <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer || '')}${c.date ? ` · ${escapeHtml(fmtDate(c.date))}` : ''}</div></article>
+      content += renderGenericList('Certificados', state.certifications, ['name'], c => `
+        <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer || '')}${(c.year || c.date) ? ` · ${escapeHtml(c.year || fmtDate(c.date))}` : ''}</div></article>
       `, true);
     }
     if (isSectionEnabled(enabledSet, 'projects')) {
