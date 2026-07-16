@@ -168,8 +168,12 @@ const entries = EuGeroLinkedInGuide.buildEntries(filledState);
 assert(entries.length > 0, 'Guia gera entradas para dados preenchidos');
 assert(entries.some(e => e.title.includes('Sobre') || e.content.includes('Profissional')), 'Guia inclui resumo');
 
+// O guia mantém passos fixos de orientação (Foto, Título, URL, Recomendações)
+// mesmo sem dados, mas omite as seções condicionais vazias.
 const emptyEntries = EuGeroLinkedInGuide.buildEntries(emptyState);
-assert(emptyEntries.length === 0, 'Guia omite seções vazias');
+assert(!emptyEntries.some(e => ['Sobre', 'Experiência', 'Competências', 'Idiomas', 'Formação'].includes(e.title)),
+  'Guia omite seções vazias (mantém só passos fixos)');
+assert(emptyEntries.every(e => e.path && e.tip), 'Todo passo do guia tem caminho e dica');
 
 // --- Skills semicolon parsing ---
 console.log('\nHabilidades (ponto e vírgula):');
