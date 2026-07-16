@@ -4,7 +4,7 @@
 const EuGeroRouter = (function () {
   'use strict';
 
-  const VIEWS = new Set(['home', 'start', 'wizard', 'review', 'guide']);
+  const VIEWS = new Set(['home', 'characters', 'start', 'wizard', 'review', 'guide']);
 
   function parseHash(hash) {
     const raw = (hash != null ? hash : location.hash || '').replace(/^#\/?/, '').trim();

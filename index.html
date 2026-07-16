@@ -81,6 +81,14 @@
     </main>
 
     <!-- Início: template + seções + preview -->
+    <!-- Seleção de personagem -->
+    <main id="screen-characters" class="screen cv-main" hidden style="max-width: 1180px; margin: 0 auto; padding: 8px 24px 60px;">
+      <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Antes de começar</p>
+      <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Escolha um ponto de partida</h2>
+      <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">Comece com um exemplo divertido já preenchido para ver como um bom currículo se escreve — dá para editar tudo depois — ou parta de uma página em branco.</p>
+      <div id="character-grid" class="character-grid"></div>
+    </main>
+
     <main id="screen-start" class="screen cv-main" hidden>
       <div class="cv-split">
         <div>
@@ -320,6 +328,7 @@
   <script src="js/storage.js"></script>
   <script src="js/prompts.js"></script>
   <script src="js/sample-data.js"></script>
+  <script src="js/characters.js"></script>
   <script src="js/cv-data.js"></script>
   <script src="js/preview.js"></script>
   <script src="js/libs.js"></script>

@@ -1369,6 +1369,100 @@ body.modal-open {
 }
 .template-serifado .cv-item-sub { color: #5d5d60; }
 
+/* ---- Seleção de personagem (estilo escolha de jogo) ---- */
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 20px;
+}
+
+.character-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 28px 18px 22px;
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.character-card:hover {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  transform: translateY(-3px);
+}
+
+.character-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.character-avatar {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 26px;
+}
+
+.character-card-blank .character-avatar {
+  background: transparent;
+  border: 1px dashed var(--color-divider);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.character-card-blank:hover .character-avatar {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.character-kicker {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color-accent-700);
+}
+
+.character-card-blank .character-kicker {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.character-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+.character-role {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--color-text) 72%, transparent);
+  flex: 1;
+}
+
+.character-cta {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+
 /* ---- Impressão: o PDF sai identico a previa (Salvar como PDF) ---- */
 #print-cv { display: none; }
 @media print {
