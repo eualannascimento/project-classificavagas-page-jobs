@@ -66,6 +66,75 @@ const EuGeroExport = (function () {
   }
 
   /**
+   * Word editável fiel à prévia: gera um .doc em HTML com o MESMO markup
+   * da prévia e o CSS dos templates com as variáveis resolvidas
+   * (Word não entende var()/color-mix). Abre no Word e no Google Docs.
+   */
+  const DOC_VAR_MAP = [
+    ["var(--font-heading)", "'Arial Narrow', Arial, sans-serif"],
+    ["var(--font-body)", "Arial, sans-serif"],
+    ['var(--color-accent-2-100)', '#eef6ff'],
+    ['var(--color-accent-100)', '#eef6ff'],
+    ['var(--color-accent-700)', '#416180'],
+    ['var(--color-accent-800)', '#2c455d'],
+    ['var(--color-accent-900)', '#1d2d3d'],
+    ['var(--color-accent)', '#5980a6'],
+    ['var(--color-neutral-100)', '#f5f5f8'],
+    ['var(--color-neutral-200)', '#e7e7ea'],
+    ['var(--color-neutral-500)', '#98989b'],
+    ['var(--color-neutral-600)', '#7a7a7d'],
+    ['var(--color-neutral-800)', '#424244'],
+    ['var(--color-divider)', '#d4d4d7'],
+    ['var(--color-text)', '#1d1f20']
+  ];
+
+  let cvCssCache = null;
+
+  function getCvCss() {
+    // Le as regras do curriculo direto da folha ja carregada (sem rede).
+    if (cvCssCache) return cvCssCache;
+    let css = '';
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (const rule of rules) {
+        const sel = rule.selectorText || '';
+        if (/^\.(cv|template-|preview-content)/.test(sel) || sel.includes(' .cv') || sel.includes('.cv-')) {
+          css += rule.cssText + '\n';
+        }
+      }
+    }
+    DOC_VAR_MAP.forEach(([from, to]) => { css = css.split(from).join(to); });
+    css = css.replace(/color-mix\([^)]*\)/g, '#7a7a7d');
+    cvCssCache = css;
+    return css;
+  }
+
+  async function exportDoc(state) {
+    try {
+      const sections = EuGeroConfig.getActiveSections(state.enabledSections);
+      const inner = EuGeroPreview.render(state, state.template, sections);
+      const css = getCvCss();
+      const html = `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Currículo</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.35; color: #1a1a2e; margin: 24px; }
+  ${css}
+  /* Cabecalhos de item legiveis no Word (sem flex) */
+  .cv-item-header { display: block; }
+  .cv-item-header .cv-period { float: right; }
+</style></head>
+<body>${inner}</body></html>`;
+      downloadBlob(new Blob(['﻿', html], { type: 'application/msword' }), getFileName(state, 'doc'));
+      return { ok: true };
+    } catch (e) {
+      console.error('Erro ao exportar Word:', e);
+      return { ok: false, error: 'Nao foi possivel gerar o arquivo Word.' };
+    }
+  }
+
+  /**
    * Aplica margens e espaçamento escolhidos na prévia ao PDF:
    * escala todas as fontes (densidade) e devolve o fator de margem.
    */
@@ -893,6 +962,7 @@ const EuGeroExport = (function () {
   }
 
   return {
+    exportDoc,
     exportTxt,
     exportPdf,
     exportDocx,
