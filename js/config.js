@@ -155,6 +155,21 @@ const EuGeroConfig = (function () {
       layout: 'creative', thumbClass: 'template-thumb-creative',
       accentRgb: [89, 128, 166], badgeRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
       atsNote: 'Selo gráfico no topo: prefira Clássico ou Minimalista para ATS rigorosos.'
+    },
+    faixa: {
+      id: 'faixa', name: 'Faixa Clara', description: 'Faixa superior suave em azul claro',
+      layout: 'banner', thumbClass: 'template-thumb-executive',
+      bannerRgb: [238, 246, 255], accentHex: '416180', atsFriendly: true
+    },
+    pilar: {
+      id: 'pilar', name: 'Pilar', description: 'Títulos com barra lateral de acento',
+      layout: 'left', thumbClass: 'template-thumb-minimal',
+      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
+    },
+    serifado: {
+      id: 'serifado', name: 'Serifado', description: 'Tipografia serifada tradicional',
+      layout: 'centered', thumbClass: 'template-thumb-classic',
+      accentRgb: [43, 43, 45], accentHex: '2B2B2D', atsFriendly: true
     }
   };
 
