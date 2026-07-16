@@ -19,7 +19,8 @@ const EuGeroLibs = (function () {
     if (docxChecked) return docxAvailable;
     docxChecked = true;
     try {
-      await import('https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js');
+      // Mesma URL usada em export.js: a checagem deve refletir o caminho real de export.
+      await import('https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm');
       docxAvailable = true;
     } catch (e) {
       docxAvailable = false;
