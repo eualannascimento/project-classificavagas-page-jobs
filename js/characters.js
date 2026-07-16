@@ -15,7 +15,7 @@ const EuGeroCharacters = (function () {
     enabledSections: ['personal', 'summary', 'experiences', 'education', 'skills', 'languages'],
     personal: {
       fullName: 'Sherlock Holmes',
-      headline: 'Especialista em Inteligência Investigativa | Analista de Dados Complexos',
+      headline: 'Analista de Inteligência | Investigação e Dados',
       email: 'sherlock.holmes@exemplo.com.br',
       phone: '(11) 99999-0001',
       location: 'Londres, Reino Unido',
@@ -27,14 +27,14 @@ const EuGeroCharacters = (function () {
       {
         company: 'Prática Privada (221B Baker St.)',
         title: 'Consultor Investigativo Sênior',
-        period: '1881 - Presente',
+        period: '2016 - Atual',
         startDate: '', endDate: '', endCurrent: true,
         description: 'Desenvolveu e implementou metodologias de dedução lógica que aumentaram a taxa de elucidação de casos em 95%. Liderou a investigação independente de mais de 100 incidentes de alta complexidade, elaborando relatórios técnicos detalhados para tomada de decisão.'
       },
       {
         company: 'Scotland Yard',
         title: 'Consultor Técnico Especialista',
-        period: '1881 - Presente',
+        period: '2018 - Atual',
         startDate: '', endDate: '', endCurrent: true,
         description: 'Presta consultoria técnica sob demanda para diretores e inspetores. Otimizou processos de análise de cenas, reduzindo o tempo de triagem inicial de evidências pela metade através de protocolos inovadores.'
       }
@@ -43,7 +43,7 @@ const EuGeroCharacters = (function () {
       {
         institution: 'Universidade de Oxford (Christ Church)',
         degree: 'Especialização em Química Forense e Metodologias Analíticas',
-        period: '1870 - 1874',
+        period: '2008 - 2012',
         startDate: '', endDate: '', endCurrent: false
       }
     ],
@@ -58,7 +58,7 @@ const EuGeroCharacters = (function () {
     languages: [
       { language: 'Inglês', level: 'Nativo' },
       { language: 'Francês', level: 'Fluente' },
-      { language: 'Alemão', level: 'Intermediário Avançado' }
+      { language: 'Alemão', level: 'Intermediário' }
     ],
     certifications: [],
     projects: [
@@ -70,7 +70,7 @@ const EuGeroCharacters = (function () {
     ]
   };
 
-  const ROBIN = {
+  const MULAN = {
     version: '1.0.0',
     template: 'executive',
     margin: 'padrao',
@@ -78,56 +78,56 @@ const EuGeroCharacters = (function () {
     currentStep: 0,
     enabledSections: ['personal', 'summary', 'experiences', 'education', 'skills', 'languages'],
     personal: {
-      fullName: 'Robin de Locksley (Robin Hood)',
-      headline: 'Gerente de Operações Estratégicas | Liderança Ágil | Impacto Social',
-      email: 'robin.locksley@exemplo.com.br',
+      fullName: 'Hua Mulan',
+      headline: 'Gerente de Operações | Liderança de Equipes',
+      email: 'mulan.hua@exemplo.com.br',
       phone: '(11) 99999-0002',
-      location: 'Nottinghamshire, Inglaterra',
+      location: 'Vale do Rio Amarelo, China',
       linkedinUrl: ''
     },
-    summary: 'Líder estratégico orientado a resultados e impacto social, com forte atuação em operações de campo e logística reversa. Especialista em construir e motivar equipes de alto desempenho em cenários de recursos limitados. Foco na reestruturação de processos financeiros para garantir a distribuição equitativa de ativos empresariais.',
-    skillsText: 'Liderança de Equipes; Gestão de Operações; Planejamento Estratégico; Logística Reversa; Negociação de Conflitos; Metodologias Ágeis',
+    summary: 'Gerente de operações com experiência em liderança de equipes de alto desempenho em ambientes de pressão extrema. Reconhecida por assumir desafios acima da própria função e entregar resultados consistentes. Forte atuação em planejamento estratégico, logística de campo e desenvolvimento de pessoas.',
+    skillsText: 'Liderança de Equipes; Planejamento Estratégico; Logística de Campo; Adaptabilidade; Disciplina e Consistência; Comunicação Interpessoal',
     experiences: [
       {
-        company: 'Organização Merry Men',
-        title: 'Diretor de Operações e Estratégia (COO)',
-        period: '1190 - Presente',
+        company: 'Guarda Imperial',
+        title: 'Gerente de Operações de Campo',
+        period: '2019 - Atual',
         startDate: '', endDate: '', endCurrent: true,
-        description: 'Lidera uma equipe multifuncional de mais de 50 colaboradores na execução de operações táticas diárias. Implementou um sistema eficiente de interceptação e redistribuição de ativos, aumentando o repasse de recursos à comunidade local em 300% no primeiro ano.'
+        description: 'Lidera uma equipe de 40 pessoas em operações críticas com metas agressivas. Reestruturou a rotina de treinamento e logística, elevando a prontidão operacional da unidade em 60% e reduzindo desperdício de suprimentos em 25%.'
       },
       {
-        company: 'Forças Armadas (Campanha Terceira Cruzada)',
-        title: 'Gestor de Equipes Táticas',
-        period: '1189 - 1192',
+        company: 'Negócios da Família Hua',
+        title: 'Coordenadora de Produção e Logística',
+        period: '2015 - 2019',
         startDate: '', endDate: '', endCurrent: false,
-        description: 'Comandou esquadrões de apoio em operações internacionais. Gerenciou recursos críticos e desenvolveu estratégias de posicionamento que reduziram as perdas operacionais em 40% durante as campanhas.'
+        description: 'Coordenou a produção agrícola e a distribuição local dos produtos da família. Organizei rotas de entrega e controle de estoque, aumentando a margem das vendas em 30% em duas temporadas.'
       }
     ],
     education: [
       {
-        institution: 'Academia de Locksley',
-        degree: 'Formação Executiva em Estratégia de Defesa e Gestão de Recursos',
-        period: '1175 - 1185',
+        institution: 'Academia Imperial de Estratégia',
+        degree: 'Formação em Estratégia, Tática e Gestão de Pessoas',
+        period: '2011 - 2015',
         startDate: '', endDate: '', endCurrent: false
       }
     ],
     skills: [
-      { name: 'Liderança e Mentoria' },
-      { name: 'Estratégia Operacional' },
-      { name: 'Gestão de Stakeholders' },
-      { name: 'Gerenciamento de Riscos' },
-      { name: 'Comunicação Assertiva' },
+      { name: 'Liderança pelo Exemplo' },
+      { name: 'Gestão de Operações' },
+      { name: 'Tomada de Decisão sob Pressão' },
+      { name: 'Treinamento e Mentoria' },
+      { name: 'Resolução de Conflitos' },
       { name: 'Precisão Técnica (Arquearia)' }
     ],
     languages: [
-      { language: 'Inglês Antigo', level: 'Nativo' },
-      { language: 'Francês Normando', level: 'Fluente' }
+      { language: 'Mandarim', level: 'Nativo' },
+      { language: 'Português', level: 'Fluente' }
     ],
     certifications: [],
     projects: [
       {
-        name: 'Iniciativa Fundo Sherwood',
-        description: 'Estruturou um fundo comunitário autossustentável para apoio microfinanceiro a pequenos agricultores afetados por políticas fiscais agressivas.',
+        name: 'Programa de Prontidão da Unidade',
+        description: 'Desenhou um programa de treinamento progressivo que levou uma equipe iniciante ao nível de elite em 12 meses, com zero desistências.',
         url: ''
       }
     ]
@@ -142,7 +142,7 @@ const EuGeroCharacters = (function () {
     enabledSections: ['personal', 'summary', 'experiences', 'education', 'skills', 'languages'],
     personal: {
       fullName: 'Hércules (Heracles)',
-      headline: 'Gerente de Projetos Críticos | Especialista em Execução de Escopos Complexos',
+      headline: 'Gerente de Projetos | Execução de Alta Complexidade',
       email: 'heracles.projetos@exemplo.com.br',
       phone: '(11) 99999-0003',
       location: 'Monte Olimpo, Grécia',
@@ -154,14 +154,14 @@ const EuGeroCharacters = (function () {
       {
         company: 'Micenas S.A. (Governo de Euristeu)',
         title: 'Project Manager Sênior (Portfólio 12 Trabalhos)',
-        period: 'Idade Heroica',
+        period: '2014 - 2022',
         startDate: '', endDate: '', endCurrent: false,
         description: "Gerenciou e entregou com sucesso 12 projetos classificados como de 'Risco Nível Máximo', cumprindo 100% do escopo original. Atuou ativamente na mitigação de ameaças biológicas (ex: controle populacional da Hidra) e na logística complexa de transporte de ativos internacionais."
       },
       {
         company: 'Expedição Argonautas',
         title: 'Coordenador de Segurança Operacional',
-        period: 'Idade Heroica',
+        period: '2012 - 2014',
         startDate: '', endDate: '', endCurrent: false,
         description: 'Responsável pela integridade física da equipe e pela proteção dos ativos da embarcação durante expedição de longo prazo. Garantiu a continuidade dos negócios frente a incidentes climáticos e operacionais imprevisíveis.'
       }
@@ -170,7 +170,7 @@ const EuGeroCharacters = (function () {
       {
         institution: 'Academia Quíron de Excelência',
         degree: 'Bacharelado em Estratégia de Combate e Gestão de Sobrevivência',
-        period: 'Juventude',
+        period: '2006 - 2010',
         startDate: '', endDate: '', endCurrent: false
       }
     ],
@@ -189,7 +189,7 @@ const EuGeroCharacters = (function () {
       {
         name: 'Certificação PMP (Project Management Professional) - Equivalência Olimpo',
         issuer: 'Conselho do Monte Olimpo',
-        year: ''
+        year: '2015'
       }
     ],
     projects: [
@@ -210,7 +210,7 @@ const EuGeroCharacters = (function () {
     enabledSections: ['personal', 'summary', 'experiences', 'education', 'skills', 'languages'],
     personal: {
       fullName: 'Chapeuzinho Vermelho',
-      headline: 'Especialista em Logística Last-Mile | Gestão de Cadeia de Suprimentos | Atendimento ao Cliente',
+      headline: 'Coordenadora de Logística | Entregas e Atendimento',
       email: 'chapeuzinho.logistica@exemplo.com.br',
       phone: '(11) 99999-0004',
       location: 'Vila da Floresta',
@@ -222,14 +222,14 @@ const EuGeroCharacters = (function () {
       {
         company: 'Distribuidora Florestal / Contrato Familiar',
         title: 'Coordenadora de Entregas Prioritárias',
-        period: 'Contínuo',
+        period: '2021 - Atual',
         startDate: '', endDate: '', endCurrent: true,
         description: 'Responsável pela ponta da cadeia de suprimentos, garantindo a entrega de kits de saúde e nutrição para o público sênior em zonas remotas. Mantém uma taxa de 100% de precisão nos pedidos despachados e forte relacionamento com os clientes finais.'
       },
       {
         company: 'Comitê de Segurança da Rota dos Lenhadores',
         title: 'Analista de Mitigação de Riscos',
-        period: 'Pós-Incidente',
+        period: '2023 - Atual',
         startDate: '', endDate: '', endCurrent: true,
         description: 'Mapeou vulnerabilidades na rota de entrega principal, elaborando um plano de contingência focado em desvios seguros e comunicação de emergência. A iniciativa reduziu a exposição da equipe a abordagens não autorizadas (predadores locais).'
       }
@@ -238,7 +238,7 @@ const EuGeroCharacters = (function () {
       {
         institution: 'Ensino Domiciliar Aplicado',
         degree: 'Formação em Logística Básica, Botânica e Orientação Geográfica',
-        period: 'Concluído',
+        period: '2020',
         startDate: '', endDate: '', endCurrent: false
       }
     ],
@@ -257,7 +257,7 @@ const EuGeroCharacters = (function () {
       {
         name: 'Workshop de Compliance e Prevenção a Fraudes de Identidade',
         issuer: 'Instituto de Segurança da Floresta',
-        year: ''
+        year: '2023'
       }
     ],
     projects: [
@@ -279,12 +279,12 @@ const EuGeroCharacters = (function () {
       state: SHERLOCK
     },
     {
-      id: 'robin',
-      name: 'Robin Hood',
-      role: 'Liderança e operações estratégicas',
-      initials: 'RH',
+      id: 'mulan',
+      name: 'Hua Mulan',
+      role: 'Liderança e operações de equipe',
+      initials: 'HM',
       tagline: 'Exemplo pronto',
-      state: ROBIN
+      state: MULAN
     },
     {
       id: 'hercules',
