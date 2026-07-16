@@ -207,7 +207,8 @@
     document.getElementById('btn-gal-prev')?.addEventListener('click', () => galleryStep(-1));
     document.getElementById('btn-gal-next')?.addEventListener('click', () => galleryStep(1));
     document.getElementById('btn-use-gallery')?.addEventListener('click', useGalleryTemplate);
-    document.getElementById('btn-export-pdf')?.addEventListener('click', (e) => handleExport('pdf', e.currentTarget));
+    document.getElementById('btn-export-pdf')?.addEventListener('click', printCv);
+    document.getElementById('btn-export-docx')?.addEventListener('click', (e) => handleExport('docx', e.currentTarget));
     document.getElementById('btn-guide')?.addEventListener('click', goToGuide);
     document.getElementById('btn-back-review')?.addEventListener('click', goToReview);
     document.getElementById('btn-back-start')?.addEventListener('click', goToStart);
@@ -567,7 +568,7 @@
       els.headerHome.hidden = view === 'home';
     }
     if (els.previewMobileDock) {
-      els.previewMobileDock.hidden = (view !== 'wizard' && view !== 'review');
+      els.previewMobileDock.hidden = (view !== 'start' && view !== 'wizard' && view !== 'review');
     }
   }
 
@@ -1430,6 +1431,19 @@
     if (counterEl) counterEl.textContent = `${reviewGalleryIndex + 1} de ${total}`;
     const useBtn = document.getElementById('btn-use-gallery');
     if (useBtn) useBtn.textContent = isSelected ? '✓ Selecionado' : 'Usar este';
+  }
+
+  /**
+   * PDF identico a previa: renderiza o mesmo HTML da previa em tamanho A4
+   * e abre a impressao do navegador (Salvar como PDF).
+   */
+  function printCv() {
+    const el = document.getElementById('print-cv');
+    if (!el) return;
+    el.innerHTML = EuGeroPreview.render(state, state.template, activeSections());
+    el.className = `preview-content template-${state.template} cv-margin-${state.margin || 'padrao'} cv-density-${state.density || 'normal'}`;
+    showToast('Na janela de impressão, escolha "Salvar como PDF".', { duration: 4000 });
+    setTimeout(() => window.print(), 150);
   }
 
   async function handleExport(type, btn) {
