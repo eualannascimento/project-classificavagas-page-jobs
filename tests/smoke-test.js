@@ -308,6 +308,20 @@ const progressZero = EuGeroScoring.calculateProgress(testStateZeroRequired);
 assert(progressZero === 100, 'Seções obrigatórias preenchidas = 100% de progresso');
 
 
+// --- Consistencia do CDN docx (libs.js x export.js) ---
+console.log('\nCDN docx:');
+
+function extractDocxUrl(relativePath) {
+  const code = fs.readFileSync(path.join(__dirname, '..', relativePath), 'utf8');
+  const match = code.match(/https:\/\/cdn\.jsdelivr\.net\/npm\/docx@[^'"]+/);
+  return match ? match[0] : null;
+}
+
+const docxUrlLibs = extractDocxUrl('js/libs.js');
+const docxUrlExport = extractDocxUrl('js/export.js');
+assert(!!docxUrlLibs && !!docxUrlExport, 'libs.js e export.js referenciam o CDN docx');
+assert(docxUrlLibs === docxUrlExport, 'Checagem (libs.js) e export (export.js) usam a MESMA URL do docx');
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 
