@@ -206,7 +206,7 @@ const EuGeroPreview = (function () {
             <div class="cv-sidebar-section">
               <h3>Idiomas</h3>
               ${state.languages?.length
-                ? state.languages.map(l => `<p>${escapeHtml(l.language)} — ${escapeHtml(l.level)}</p>`).join('')
+                ? state.languages.map(l => `<p>${escapeHtml(l.language)}${l.level ? ` - ${escapeHtml(l.level)}` : ''}</p>`).join('')
                 : '<p class="cv-muted">Seus idiomas</p>'}
             </div>
           ` : ''}

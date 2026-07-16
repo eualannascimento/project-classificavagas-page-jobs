@@ -126,7 +126,7 @@
     <main id="screen-wizard" class="screen cv-main" hidden style="padding-bottom: 120px;">
       <div class="cv-split">
         <div>
-          <nav id="wizard-timeline" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;"></nav>
+          <nav id="wizard-timeline" class="wizard-timeline"></nav>
           <hr style="height: 1px; border: 0; background: var(--color-divider); margin: 14px 0 22px;">
 
           <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
@@ -212,6 +212,7 @@
         <button type="button" class="btn btn-ghost" id="btn-export-json-review" style="font-size: 14px;">Salvar rascunho (.json)</button>
         <span style="flex: 1;"></span>
         <button type="button" class="btn btn-secondary" id="btn-guide" style="min-height: 44px;">Guia do LinkedIn</button>
+        <button type="button" class="btn btn-secondary" id="btn-export-docx" style="min-height: 44px;" title="Arquivo editável: abre no Word e no Google Docs">Baixar editável (Word)</button>
         <button type="button" class="btn btn-primary" id="btn-export-pdf" style="min-height: 44px; padding-inline: 22px;">Baixar currículo (PDF)</button>
       </div>
     </main>
@@ -232,9 +233,8 @@
 
     <!-- Preview mobile dock -->
     <aside id="preview-mobile-dock" class="preview-mobile-dock" aria-label="Previa do curriculo">
-      <button type="button" class="preview-mobile-dock-btn" id="btn-expand-mobile-preview" aria-label="Ampliar previa">
-        <div class="preview-mobile-dock-thumb" data-preview-mobile></div>
-        <span class="preview-mobile-dock-label">Previa · <span data-current-template>Classico</span></span>
+      <button type="button" class="preview-mobile-dock-btn" id="btn-expand-mobile-preview" aria-label="Ver prévia do currículo">
+        <span class="preview-mobile-dock-label">Ver prévia</span>
       </button>
     </aside>
     </div>
@@ -257,10 +257,13 @@
     <div id="modal-prompt" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-prompt-title">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 id="modal-prompt-title">Prompt para IA externa</h2>
+          <h2 id="modal-prompt-title">Peça ajuda a uma IA</h2>
           <button type="button" class="modal-close" aria-label="Fechar">✕</button>
         </div>
-        <p class="modal-desc">Copie este prompt e cole no ChatGPT, Claude ou qualquer IA. Nenhum dado é enviado automaticamente.</p>
+        <div style="display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-accent); background: var(--color-accent-100); margin-bottom: 12px;">
+          <span style="color: var(--color-accent-800); font-weight: 700; flex: none;">!</span>
+          <p style="font-size: 13px; line-height: 1.5; color: var(--color-accent-900); margin: 0;">Esta ferramenta <strong>não tem uma IA integrada</strong> e não envia nada para lugar nenhum. Copie o texto abaixo — já com tudo o que você preencheu no formulário — e cole na IA que você preferir (ChatGPT, Claude, Gemini, Copilot…). Você precisa abrir a IA por conta própria.</p>
+        </div>
         <label class="checkbox-label">
           <input type="checkbox" id="include-data-checkbox" checked>
           Incluir meus dados no prompt
@@ -306,6 +309,8 @@
       <button type="button" id="toast-action" class="toast-action" hidden>Desfazer</button>
     </div>
   </div>
+
+  <div id="print-cv" aria-hidden="true"></div>
 
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>

@@ -59,13 +59,13 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
 
     if (state.experiences?.length) {
       parts.push(`## Experiências\n${formatListSection(state.experiences, e =>
-        `Empresa: ${e.company}\nCargo: ${e.title}\nPeríodo: ${e.startDate} - ${e.endDate || 'Atual'}\nDescrição: ${e.description}`
+        `Cargo: ${e.title}\nOnde: ${e.company}\nPeríodo: ${e.period || `${e.startDate || ''} - ${e.endDate || 'Atual'}`}\nDescrição: ${e.description}`
       )}`);
     }
 
     if (state.education?.length) {
       parts.push(`## Formação\n${formatListSection(state.education, e =>
-        `Instituição: ${e.institution}\nCurso: ${e.degree}\nPeríodo: ${e.startDate || ''} - ${e.endDate || ''}`
+        `Curso: ${e.degree}\nInstituição: ${e.institution}\nPeríodo: ${e.period || `${e.startDate || ''} - ${e.endDate || ''}`}`
       )}`);
     }
 
@@ -82,7 +82,7 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
 
     if (state.certifications?.length) {
       parts.push(`## Certificados\n${formatListSection(state.certifications, c =>
-        `${c.name} - ${c.issuer} (${c.date || ''})`
+        `${c.name} - ${c.issuer} (${c.year || c.date || ''})`
       )}`);
     }
 
@@ -156,10 +156,13 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
   }
 
   function buildSectionPrompt(sectionId, state, includeData) {
+    const label = EuGeroConfig.SECTION_LABELS?.[sectionId]
+      || EuGeroConfig.SECTIONS.find(s => s.id === sectionId)?.title
+      || 'esta seção';
     const instruction = SECTION_PROMPTS[sectionId] || 'Ajude-me com esta seção do currículo.';
-    let prompt = `${instruction}\n\nForneça sugestões de texto prontas para copiar e colar.`;
+    let prompt = `Sou candidato(a) a uma vaga e estou preenchendo a seção "${label}" do meu currículo.\n\n${instruction}\n\nMe ajude a melhorar: deixe claro e curto, use verbos de ação e destaque resultados. Se faltar informação, me faça perguntas. Forneça sugestões de texto prontas para copiar e colar.`;
     if (includeData) {
-      prompt += '\n\n--- MEUS DADOS DESTA SEÇÃO ---\n\n' + formatSectionData(sectionId, state);
+      prompt += '\n\n--- MEU CURRÍCULO COMPLETO ATÉ AGORA (foque na seção "' + label + '", mas use o restante como contexto) ---\n\n' + formatStateData(state);
     } else {
       prompt += '\n\n(Não incluí meus dados — aguardo fornecer as informações necessárias.)';
     }
