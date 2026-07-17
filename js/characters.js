@@ -271,6 +271,14 @@ const EuGeroCharacters = (function () {
 
   const CHARACTERS = [
     {
+      id: 'blank',
+      name: 'Em branco',
+      role: 'Comece do zero, do seu jeito',
+      initials: '+',
+      tagline: 'Página limpa',
+      state: null
+    },
+    {
       id: 'sherlock',
       name: 'Sherlock Holmes',
       role: 'Investigação e análise de dados',
@@ -301,14 +309,6 @@ const EuGeroCharacters = (function () {
       initials: 'CV',
       tagline: 'Exemplo pronto',
       state: CHAPEUZINHO
-    },
-    {
-      id: 'blank',
-      name: 'Em branco',
-      role: 'Comece do zero, do seu jeito',
-      initials: '+',
-      tagline: 'Página limpa',
-      state: null
     }
   ];
 

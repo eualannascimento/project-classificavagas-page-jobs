@@ -15,10 +15,7 @@ const EuGeroStorage = (function () {
   }
 
   function initialState() {
-    // Igual ao modelo: primeira visita abre com o exemplo preenchido.
-    if (typeof EuGeroSampleData !== 'undefined') {
-      return mergeWithDefaults(EuGeroSampleData.build());
-    }
+    // Visitante novo comeca vazio; o conteudo de exemplo vem da tela de personagens.
     return createEmptyState();
   }
 

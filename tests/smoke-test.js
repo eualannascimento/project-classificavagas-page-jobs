@@ -323,6 +323,10 @@ assert(
   'Existe a opcao Em branco (state null) para comecar do zero'
 );
 assert(
+  characters[0].id === 'blank' && characters[0].state === null,
+  'Em branco e o primeiro ponto de partida'
+);
+assert(
   filledCharacters.every((c) => EuGeroConfig.TEMPLATE_IDS.includes(c.state.template)),
   'Todo personagem usa template existente'
 );
