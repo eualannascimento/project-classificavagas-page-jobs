@@ -30,6 +30,15 @@ No mobile, a homepage exige rolagem para ver as ações principais. Esta entrega
 * [x] CA02: em viewport mobile, as duas caixas de ação ficam lado a lado e a seção "Como funciona" não aparece.
 * [x] CA03: em viewport desktop (>= 769px), o layout permanece o atual (grid auto-fit, "Como funciona" visível, texto de privacidade completo).
 
+## Revisão (2026-07-17): distribuição estética
+
+Feedback do usuário sobre a primeira entrega: design bom, distribuição ruim. Correções:
+
+* **Colisão de classe:** `home-hero` colidia com CSS morto da "Homepage (Antiga)" (`text-align: center`), centralizando o hero indevidamente em todas as larguras. Classe renomeada para `home-intro`.
+* **Camada dupla de compactação:** as regras antigas da home no bloco `@media 900px` (PR #17) foram removidas; a compactação vive em um único bloco.
+* **Distribuição vertical:** no mobile a home ocupa `100dvh` menos o cabeçalho; o bloco de introdução centraliza verticalmente no espaço livre e ações + privacidade ancoram na base (sem vazio no rodapé).
+* **CA04:** botões dos dois cartões alinhados na mesma base (`margin-top: auto`); hero alinhado à esquerda em todas as larguras.
+
 ## 6. Fora de Escopo
 
 * Mudanças nas demais telas (wizard, review, guia).
