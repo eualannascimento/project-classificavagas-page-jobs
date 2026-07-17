@@ -26,12 +26,12 @@
     ensureToastStructure();
     bindGlobalEvents();
 
+    // Sem hash na URL, sempre abrir na home; deep links por hash continuam valendo.
     const initialRoute = EuGeroRouter.getInitialRoute();
     if (initialRoute) {
       applyRouteState(initialRoute);
     } else {
-      const hasProgress = state.personal?.fullName || state.currentStep > 0;
-      currentView = hasProgress ? 'wizard' : 'home';
+      currentView = 'home';
     }
 
     EuGeroRouter.subscribe((route) => {
@@ -194,8 +194,7 @@
     document.getElementById('btn-import-home')?.addEventListener('click', () => els.fileImport?.click());
 
     document.getElementById('btn-start-wizard')?.addEventListener('click', startWizard);
-    document.getElementById('btn-fill-sample')?.addEventListener('click', fillSampleData);
-    document.getElementById('btn-clear-all')?.addEventListener('click', clearAll);
+    document.getElementById('btn-back-start')?.addEventListener('click', () => navigateTo('characters'));
     document.getElementById('btn-change-template-wizard')?.addEventListener('click', (e) => openModal(els.modalTemplate, e.currentTarget));
     document.getElementById('btn-prev-template-start')?.addEventListener('click', () => cycleTemplate(-1));
     document.getElementById('btn-next-template-start')?.addEventListener('click', () => cycleTemplate(1));
@@ -205,6 +204,7 @@
     document.getElementById('btn-next')?.addEventListener('click', nextStep);
     document.getElementById('btn-finish')?.addEventListener('click', goToReview);
     document.getElementById('btn-back-wizard')?.addEventListener('click', () => goToWizard());
+    document.getElementById('btn-wizard-to-start')?.addEventListener('click', goToStart);
     document.getElementById('btn-gal-prev')?.addEventListener('click', () => galleryStep(-1));
     document.getElementById('btn-gal-next')?.addEventListener('click', () => galleryStep(1));
     document.getElementById('btn-export-pdf')?.addEventListener('click', printCv);
@@ -312,14 +312,6 @@
     }, 2000);
   }
 
-  function fillSampleData() {
-    const sample = EuGeroSampleData.build();
-    state = EuGeroStorage.mergeWithDefaults({ ...state, ...sample });
-    saveState();
-    render();
-    showToast('Exemplo carregado. Ajuste com seus dados reais.');
-  }
-
   function renderCharacterGrid() {
     const grid = document.getElementById('character-grid');
     if (!grid || typeof EuGeroCharacters === 'undefined') return;
@@ -350,18 +342,6 @@
     }
     saveState();
     goToStart();
-  }
-
-  function clearAll() {
-    const fresh = EuGeroConfig.createEmptyState();
-    fresh.template = state.template;
-    fresh.margin = state.margin;
-    fresh.density = state.density;
-    fresh.enabledSections = [...state.enabledSections];
-    state = EuGeroStorage.mergeWithDefaults(fresh);
-    saveState();
-    render();
-    showToast('Campos limpos. Comece do zero quando quiser.');
   }
 
   const PAGE_MARGINS = [
@@ -580,6 +560,21 @@
     showToast(`Seção "${SHORT_LABELS[section.id] || section.title}" limpa.`);
   }
 
+  function removeSectionFromWizard(section) {
+    if (!section || isSectionMandatory(section.id)) return;
+    const label = SHORT_LABELS[section.id] || section.title;
+    const enabled = state.enabledSections.filter((id) => id !== section.id);
+    state.enabledSections = normalizeEnabledSections(enabled);
+    const sections = activeSections();
+    if (state.currentStep > sections.length - 1) {
+      state.currentStep = Math.max(0, sections.length - 1);
+    }
+    saveState();
+    renderSectionChecklist();
+    navigateTo('wizard', sections[state.currentStep]?.id || null);
+    showToast(`Seção "${label}" removida do currículo.`);
+  }
+
   function nextStep() {
     validateCurrentStep();
     const sections = activeSections();
@@ -639,7 +634,7 @@
       const checked = state.enabledSections.includes(section.id) || mandatory;
       const rowBg = checked ? 'color-mix(in srgb, var(--color-accent) 6%, transparent)' : 'transparent';
       return `
-        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" style="display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'default' : 'pointer'}; background: ${rowBg}; margin-bottom: 2px;">
+        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" style="display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'default' : 'pointer'}; background: ${rowBg}; margin-bottom: 2px;">
           <input type="checkbox" data-section-id="${section.id}" ${checked ? 'checked' : ''} ${mandatory ? 'disabled checked' : ''} style="width: 17px; height: 17px; accent-color: var(--color-accent);">
           <span class="section-check-label" style="display:flex; flex:1; align-items:center;">
             <strong style="font-family: var(--font-heading); font-weight: 600; font-size: 16px;">${section.title}</strong>
@@ -740,6 +735,17 @@
     clearBtn.textContent = 'Limpar esta seção';
     clearBtn.addEventListener('click', () => clearCurrentSection(section));
     actionsRow.appendChild(clearBtn);
+
+    // Seções opcionais podem ser removidas do currículo direto do wizard.
+    if (!isSectionMandatory(section.id)) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-ghost';
+      removeBtn.style.cssText = mutedGhost;
+      removeBtn.textContent = 'Remover esta seção do currículo';
+      removeBtn.addEventListener('click', () => removeSectionFromWizard(section));
+      actionsRow.appendChild(removeBtn);
+    }
 
     stepEl.appendChild(actionsRow);
     els.wizardSteps.appendChild(stepEl);
