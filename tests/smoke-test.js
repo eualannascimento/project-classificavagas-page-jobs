@@ -409,6 +409,89 @@ assert(noWordRefs.length === 0, `Sem referencias a Word/export removidos${noWord
 assert(!fs.existsSync(path.join(__dirname, '..', 'js/export.js')), 'js/export.js removido');
 assert(!fs.existsSync(path.join(__dirname, '..', 'js/cv-data.js')), 'js/cv-data.js removido');
 
+// --- Ajustes de textos ATS ---
+console.log('\nTextos ATS (dicas de campos revisadas):');
+
+const headlineField = EuGeroConfig.SECTIONS.find(s => s.id === 'personal').fields.find(f => f.key === 'headline');
+assert(headlineField.tip === 'Use um cargo ou uma área clara. Quando fizer sentido, use o mesmo termo adotado nas vagas que procura.', 'Dica de cargo/área revisada');
+
+const summarySection = EuGeroConfig.SECTIONS.find(s => s.id === 'summary');
+assert(summarySection.description === 'Escreva duas ou três frases sobre sua experiência, suas principais habilidades e o tipo de oportunidade que busca.', 'Descricao do resumo revisada');
+assert(summarySection.fields[0].tip === 'Inclua sua área, experiências e habilidades mais relevantes. Use termos da vaga somente quando eles representarem de verdade o seu perfil.', 'Dica do resumo revisada');
+
+const experienceFields = EuGeroConfig.SECTIONS.find(s => s.id === 'experiences').itemFields;
+assert(experienceFields.find(f => f.key === 'title').tip === 'Use um nome de função claro e conhecido. Se o título usado pela empresa for pouco comum, acrescente uma forma equivalente entre parênteses, sem alterar o sentido.', 'Dica de cargo/funcao revisada');
+assert(experienceFields.find(f => f.key === 'period').tip === 'Informe o mês e o ano de início e fim. Marque “Até hoje” se ainda realiza essa atividade.', 'Dica de periodo (experiencia) revisada');
+assert(experienceFields.find(f => f.key === 'description').tip === 'Descreva suas atividades, os conhecimentos ou as ferramentas usadas e os resultados relevantes. Use termos específicos e verdadeiros, sem repetir palavras apenas para aumentar a correspondência com a vaga.', 'Dica de atividades e resultados revisada');
+
+const educationFields = EuGeroConfig.SECTIONS.find(s => s.id === 'education').itemFields;
+assert(educationFields.find(f => f.key === 'degree').tip === 'Informe o nome completo do curso, da formação ou da atividade de aprendizagem. Evite abreviações pouco conhecidas.', 'Dica de curso/formacao revisada');
+assert(educationFields.find(f => f.key === 'institution').tip === 'Informe o nome completo da escola, faculdade, plataforma ou instituição.', 'Dica de instituicao (formacao) revisada');
+
+const skillsSection = EuGeroConfig.SECTIONS.find(s => s.id === 'skills');
+assert(skillsSection.description === 'Liste habilidades, ferramentas, tecnologias e formas de trabalhar que sejam relevantes para a oportunidade desejada.', 'Descricao de habilidades revisada');
+assert(skillsSection.fields[0].tip === 'Priorize conhecimentos relacionados à vaga. Use os nomes mais conhecidos no mercado e adicione somente habilidades que você realmente possui.', 'Dica de habilidades revisada');
+
+const certFields = EuGeroConfig.SECTIONS.find(s => s.id === 'certifications').itemFields;
+assert(certFields.find(f => f.key === 'name').tip === 'Informe o nome completo do curso, treinamento ou certificação. Evite siglas sem escrever também o nome por extenso.', 'Dica de nome de certificacao revisada');
+assert(certFields.find(f => f.key === 'issuer').tip === 'Informe o nome completo da instituição ou plataforma responsável.', 'Dica de instituicao (certificacao) revisada');
+
+const projectFields = EuGeroConfig.SECTIONS.find(s => s.id === 'projects').itemFields;
+assert(projectFields.find(f => f.key === 'description').tip === 'Explique sua participação, as ferramentas ou os conhecimentos usados e os resultados, quando houver. Inclua termos da área somente quando corresponderem ao que você fez.', 'Dica de participacao em projetos revisada');
+
+console.log('\nTextos ATS (catalogo de modelos):');
+
+const sidebarNote = 'Este modelo divide o conteúdo em mais de uma área visual. Alguns sistemas podem misturar a ordem das informações. Para uma leitura mais segura, prefira um modelo de uma coluna.';
+['petroleo', 'oliva', 'modern'].forEach((id) => {
+  assert(EuGeroConfig.TEMPLATES[id].atsNote === sidebarNote, `Nota de ATS revisada para modelo com barra lateral (${id})`);
+});
+const creativeNote = 'Este modelo usa um elemento gráfico no topo. Alguns sistemas podem ignorar ou reorganizar essa parte do conteúdo.';
+['creative', 'rosado'].forEach((id) => {
+  assert(EuGeroConfig.TEMPLATES[id].atsNote === creativeNote, `Nota de ATS revisada para modelo com selo gráfico (${id})`);
+});
+
+console.log('\nTextos ATS (prompts de IA):');
+
+assert(EuGeroPrompts.SECTION_PROMPTS.summary.includes('Se eu fornecer uma descrição de vaga'), 'Instrucao de resumo cita descricao da vaga');
+assert(EuGeroPrompts.SECTION_PROMPTS.experiences.includes('Se eu fornecer uma descrição de vaga'), 'Instrucao de experiencia cita descricao da vaga');
+assert(EuGeroPrompts.SECTION_PROMPTS.skills.includes('Se eu incluir uma descrição de vaga'), 'Instrucao de habilidades cita descricao da vaga');
+
+const generalPromptNoData = EuGeroPrompts.buildGeneralPrompt({}, false);
+assert(generalPromptNoData.includes('se eu fornecer uma descrição de vaga, compare o currículo com os requisitos'), 'Introducao geral inclui orientacao sobre descricao da vaga');
+assert(generalPromptNoData.includes('não repita palavras-chave de forma artificial'), 'Introducao geral pede para nao repetir palavras-chave de forma artificial');
+assert(generalPromptNoData.includes('não invente experiências, ferramentas, resultados ou qualificações'), 'Introducao geral reforca nao inventar informacoes');
+
+const sectionPromptNoJob = EuGeroPrompts.buildSectionPrompt('summary', {}, false);
+assert(sectionPromptNoJob.includes('Se houver uma descrição de vaga, use-a apenas como referência'), 'Frase-guia revisada aparece no prompt de secao');
+assert(!sectionPromptNoJob.includes('DESCRIÇÃO DA VAGA'), 'Sem bloco de descricao da vaga quando nao informada');
+
+const sectionPromptWithJob = EuGeroPrompts.buildSectionPrompt('summary', {}, false, 'Vaga de Analista de Dados Senior');
+assert(sectionPromptWithJob.includes('Vaga de Analista de Dados Senior'), 'Descricao da vaga informada entra no prompt de secao');
+
+console.log('\nTextos ATS (index.html):');
+
+const htmlContent = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+assert(htmlContent.includes('Leitura por ATS'), 'HTML tem o rotulo "Leitura por ATS" na previa do start');
+assert(htmlContent.includes('Descrição da vaga'), 'Modal de IA tem o campo "Descrição da vaga"');
+assert(htmlContent.includes('Cole aqui a descrição da vaga'), 'Placeholder do campo descricao da vaga presente');
+assert(htmlContent.includes('O texto permanece neste dispositivo'), 'Nota de privacidade do campo descricao da vaga presente');
+assert(htmlContent.includes('Algumas plataformas usam sistemas ATS para ler e organizar currículos'), 'Paragrafo do modal trocar modelo atualizado');
+
+console.log('\nTextos ATS (js/app.js):');
+
+const appJsContent = fs.readFileSync(path.join(__dirname, '..', 'js/app.js'), 'utf8');
+assert(appJsContent.includes('Estrutura favorável a ATS'), 'Selo "Estrutura favoravel a ATS" presente em app.js');
+assert(appJsContent.includes('Pode dificultar a leitura por ATS'), 'Selo "Pode dificultar a leitura por ATS" presente em app.js');
+assert(!appJsContent.includes('Favorável a ATS'), 'Selo antigo "Favorável a ATS" removido de app.js');
+assert(!appJsContent.includes('Pode exigir atenção no ATS'), 'Texto antigo de selo removido de app.js');
+assert(appJsContent.includes('confirme se o texto pode ser selecionado e copiado'), 'Toast de exportacao pede confirmar texto selecionavel');
+assert(appJsContent.includes('revise os campos preenchidos automaticamente'), 'Orientacao pos-download pede revisar campos importados');
+assert(appJsContent.includes('Esta verificação considera apenas a estrutura e a organização do currículo'), 'Texto de apoio do painel Leitura por ATS presente em app.js');
+assert(appJsContent.includes('Estrutura favorável') && appJsContent.includes('Revise a estrutura'), 'Status do painel Leitura por ATS presentes em app.js');
+assert(appJsContent.includes('Antes de enviar'), 'Rotulo da checklist "Antes de enviar" presente em app.js');
+assert(appJsContent.includes('Confirme se o texto do PDF pode ser selecionado e copiado.'), 'Checklist inclui item sobre texto selecionavel no PDF');
+assert(appJsContent.includes('Dica: leia os requisitos da vaga e confira se as habilidades'), 'Dica de habilidades x requisitos da vaga presente abaixo das sugestoes');
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 
