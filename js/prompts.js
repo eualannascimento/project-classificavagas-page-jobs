@@ -3,13 +3,13 @@
  */
 const EuGeroPrompts = (function () {
   const SECTION_PROMPTS = {
-    personal: 'Revise meus dados pessoais para o currículo e o LinkedIn. Sugira um título profissional claro, uma apresentação adequada dos contatos e melhorias para a URL do LinkedIn.',
-    summary: 'Ajude a escrever um resumo profissional curto, com duas ou três frases, destacando experiência, habilidades, objetivo e proposta de valor. Não invente informações.',
-    experiences: 'Ajude a melhorar as descrições das minhas experiências. Use verbos de ação, destaque responsabilidades e inclua resultados mensuráveis apenas quando houver dados suficientes.',
-    education: 'Ajude a organizar minha formação acadêmica, incluindo curso, instituição, período e informações relevantes já fornecidas.',
-    skills: 'Sugira habilidades técnicas e comportamentais coerentes com meu perfil e com o cargo desejado. Separe sugestões confirmadas das que precisam ser validadas por mim.',
-    languages: 'Ajude a apresentar meus idiomas e níveis de proficiência de forma clara e adequada ao currículo e ao LinkedIn.',
-    certifications: 'Ajude a organizar minhas certificações e cursos, com nome, instituição e ano de conclusão.',
+    personal: 'Revise os dados que escolhi incluir no currículo e no LinkedIn. Sugira um título profissional claro, uma forma simples de apresentar os contatos e melhorias para a URL do LinkedIn. Não sugira informações pessoais que não sejam necessárias.',
+    summary: 'Ajude a escrever um resumo profissional curto, com duas ou três frases, destacando experiência, habilidades e objetivo. Não invente informações.',
+    experiences: 'Ajude a melhorar as descrições das minhas experiências. Use verbos de ação, deixe claras as responsabilidades e inclua resultados apenas quando houver dados suficientes.',
+    education: 'Ajude a organizar minha formação, incluindo curso, instituição, período e outras informações relevantes que eu já tenha fornecido.',
+    skills: 'Sugira habilidades técnicas e formas de trabalhar coerentes com as informações fornecidas e com o cargo ou a área de interesse. Separe o que já está confirmado do que preciso validar.',
+    languages: 'Ajude a apresentar meus idiomas e níveis de forma clara e adequada ao currículo e ao LinkedIn.',
+    certifications: 'Ajude a organizar minhas certificações e meus cursos, com nome, instituição e ano de conclusão.',
     projects: 'Ajude a descrever meus projetos, destacando objetivo, participação, tecnologias e resultados já informados.',
     volunteering: 'Ajude-me a descrever minhas experiências de Voluntariado de forma impactante para currículo.',
     publications: 'Ajude-me a formatar minhas Publicações para perfil LinkedIn e currículo.',
@@ -18,23 +18,25 @@ const EuGeroPrompts = (function () {
     courses: 'Ajude-me a formatar meus Cursos complementares para currículo e LinkedIn.'
   };
 
-  const GENERAL_INTRO = `Atue como especialista em recrutamento e otimização de currículos para o mercado brasileiro.
+  const GENERAL_INTRO = `Atue como especialista em recrutamento e melhoria de currículos para o mercado brasileiro.
 
 Ajude a revisar e melhorar meu currículo e meu perfil no LinkedIn.
 
 Siga estas orientações:
 - use verbos de ação em português;
-- inclua resultados mensuráveis sempre que houver informações suficientes;
-- escreva de forma clara, concisa e profissional;
-- adapte o conteúdo ao cargo desejado;
+- inclua números e resultados apenas quando houver informações suficientes;
+- escreva de forma clara, curta e profissional;
+- adapte o conteúdo ao cargo ou à área de interesse;
 - organize a resposta pelas seções do currículo;
-- não invente experiências, resultados ou qualificações.`;
+- não invente experiências, resultados ou qualificações;
+- use linguagem respeitosa e inclusiva;
+- avalie somente informações relacionadas à oportunidade e não faça suposições sobre gênero, identidade de gênero, idade, raça ou cor, origem, religião, deficiência, aparência, orientação sexual, estado civil, situação familiar ou outras características pessoais.`;
 
   const TRANSLATION_INTRO = `Traduza meu currículo do português para um inglês profissional e natural.
 
-Mantenha a organização por seções, adapte corretamente os termos técnicos e preserve os nomes de empresas e instituições.
+Mantenha a organização por seções, adapte os termos técnicos e preserve os nomes de empresas e instituições.
 
-Use verbos de ação adequados ao contexto e não acrescente informações que não estejam no texto original.
+Use verbos de ação adequados ao contexto e não acrescente informações que não estejam no texto original. Quando o idioma permitir, não presuma gênero nem outras características pessoais que não tenham sido informadas.
 
 Apresente a tradução seção por seção.`;
 
@@ -165,7 +167,7 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
       || EuGeroConfig.SECTIONS.find(s => s.id === sectionId)?.title
       || 'esta seção';
     const instruction = SECTION_PROMPTS[sectionId] || 'Ajude-me com esta seção do currículo.';
-    let prompt = `Estou preenchendo a seção “${label}” do meu currículo.\n\n${instruction}\n\nRevise o conteúdo para deixá-lo claro, curto e profissional. Use verbos de ação e destaque resultados quando houver dados suficientes. Não invente informações. Caso falte algo importante, faça perguntas objetivas antes de sugerir a versão final. Apresente textos prontos para copiar e colar.`;
+    let prompt = `Estou preenchendo a seção “${label}” do meu currículo.\n\n${instruction}\n\nRevise o conteúdo para deixá-lo claro, curto e profissional. Use verbos de ação e destaque resultados quando houver dados suficientes e isso fizer sentido. Não invente informações. Evite estereótipos, termos discriminatórios e suposições sobre características pessoais. Caso falte algo importante, faça perguntas objetivas antes de sugerir a versão final. Apresente textos prontos para copiar e colar.`;
     if (includeData) {
       prompt += '\n\n--- MEU CURRÍCULO COMPLETO ATÉ AGORA (foque na seção "' + label + '", mas use o restante como contexto) ---\n\n' + formatStateData(state);
     } else {

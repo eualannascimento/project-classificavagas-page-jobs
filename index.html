@@ -20,7 +20,7 @@
       </button>
       <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
         <span id="saved-indicator" hidden style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 0.04em; color: var(--color-accent-700);">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent);"></span>Rascunho salvo
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent);"></span>Rascunho salvo neste dispositivo
         </span>
       </div>
     </nav>
@@ -31,7 +31,7 @@
       <section class="home-intro">
         <p class="home-eyebrow">Gratuito · Sem cadastro · Feito no seu navegador</p>
         <h1 class="home-title">Seu currículo pronto, sem complicação.</h1>
-        <p class="home-subtitle">Preencha um campo de cada vez, com orientações simples. Experiências formais, informais, voluntárias ou de primeiro emprego também contam.</p>
+        <p class="home-subtitle">Preencha um campo de cada vez, com orientações simples. Inclua as experiências e atividades que fizerem sentido para você e crie um currículo claro e bem apresentado.</p>
       </section>
 
       <section class="home-actions">
@@ -39,14 +39,14 @@
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <span class="home-action-kicker home-action-kicker-accent">Começar do zero</span>
           <h3 class="home-action-title">Criar meu currículo</h3>
-          <p class="home-action-desc">Siga um passo a passo simples, com orientações claras em cada etapa.</p>
+          <p class="home-action-desc">Siga um passo a passo simples, com orientações em cada etapa.</p>
           <button type="button" class="btn btn-primary" id="btn-enter-app" style="margin-top: 10px; min-height: 44px; font-size: 15px;">Começar agora</button>
         </div>
         <div class="blueprint home-action-card">
           <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
           <span class="home-action-kicker">Já tenho um rascunho</span>
           <h3 class="home-action-title">Continuar de onde parei</h3>
-          <p class="home-action-desc">Carregue um rascunho salvo e continue a edição. Seus dados permanecem no seu dispositivo.</p>
+          <p class="home-action-desc">Carregue um rascunho salvo e continue a edição. Seus dados ficam no seu dispositivo.</p>
           <button type="button" class="btn btn-secondary" id="btn-import-home" style="margin-top: 10px; min-height: 44px; font-size: 15px;">Carregar rascunho (.json)</button>
         </div>
       </section>
@@ -55,13 +55,13 @@
         <details class="home-how">
           <summary><span class="home-how-badge" aria-hidden="true">?</span>Como funciona?</summary>
           <div class="home-how-steps">
-            <p><strong>01 · Preencha com orientações.</strong> Cada campo oferece uma dica e ajuda você a melhorar o texto.</p>
-            <p><strong>02 · Acompanhe em tempo real.</strong> O currículo é atualizado ao lado enquanto você preenche.</p>
-            <p><strong>03 · Escolha o visual.</strong> Compare os modelos, ajuste margens e espaçamento e exporte o currículo.</p>
+            <p><strong>01 · Preencha com orientações.</strong> Cada campo traz uma dica para ajudar você a escrever.</p>
+            <p><strong>02 · Veja o resultado na hora.</strong> O currículo é atualizado ao lado enquanto você preenche.</p>
+            <p><strong>03 · Escolha o visual.</strong> Compare os modelos, ajuste a página e baixe seu currículo.</p>
           </div>
         </details>
 
-        <p class="home-privacy"><span class="home-privacy-tag">Privacidade</span> Seus dados não são enviados a servidores.</p>
+        <p class="home-privacy"><span class="home-privacy-tag">Privacidade</span> Os dados preenchidos no currículo permanecem neste dispositivo e não são enviados pelo site.</p>
       </div>
     </main>
 
@@ -70,7 +70,7 @@
     <main id="screen-characters" class="screen cv-main" hidden style="max-width: 1180px; margin: 0 auto; padding: 8px 24px 60px;">
       <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Antes de começar</p>
       <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Escolha um ponto de partida</h2>
-      <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">Use um exemplo pronto para entender a estrutura ou comece com uma página em branco. Você poderá editar tudo depois.</p>
+      <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">Use um exemplo pronto para entender como preencher ou comece com uma página em branco. Você poderá editar tudo depois.</p>
       <div id="character-grid" class="character-grid"></div>
     </main>
 
@@ -78,14 +78,14 @@
       <div class="cv-split">
         <div>
           <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Antes de começar</p>
-          <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Prepare seu currículo do seu jeito</h2>
-          <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 26px; max-width: 52ch;">Escolha um modelo e selecione as seções que deseja incluir. Você poderá alterar tudo depois sem perder seus dados.</p>
+          <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Monte seu currículo do seu jeito</h2>
+          <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 26px; max-width: 52ch;">Escolha um modelo e marque as seções que deseja incluir. Você poderá alterar essas opções depois sem perder seus dados.</p>
   
           <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">Seções do currículo</p>
           <div id="section-checklist" style="display: flex; flex-direction: column; gap: 2px;">
             <!-- JS will populate the checklist here using the new label structure -->
           </div>
-          <p style="font-size: 13px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 62%, transparent); margin: 12px 2px 0;">Ainda não tem experiência formal? Sem problema. Desmarque Experiência ou Formação e adicione essas seções quando quiser.</p>
+          <p style="font-size: 13px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 62%, transparent); margin: 12px 2px 0;">Inclua somente as seções que fizerem sentido para você agora. É possível adicionar ou remover seções depois.</p>
   
           <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px;">
             <button type="button" class="btn btn-primary" id="btn-start-wizard" style="min-height: 46px; font-size: 15px; padding-inline: 22px;">Começar a preencher</button>
@@ -216,8 +216,8 @@
     <!-- Guia LinkedIn -->
     <main id="screen-guide" class="screen cv-main" hidden style="max-width: 900px; margin: 0 auto; padding: 8px 24px 60px;">
       <p style="font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; color: var(--color-accent-700); margin: 8px 0 8px;">Depois do currículo</p>
-      <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Leve o mesmo cuidado ao LinkedIn</h2>
-      <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">Muitos recrutadores consultam o LinkedIn durante o processo seletivo. Use estas sugestões para manter seu perfil alinhado ao currículo.</p>
+      <h2 style="font-family: var(--font-heading); font-weight: 600; font-size: 34px; text-transform: uppercase; line-height: 1.05; margin: 0 0 12px;">Leve o mesmo cuidado para o LinkedIn</h2>
+      <p style="font-size: 15px; line-height: 1.55; color: color-mix(in srgb, var(--color-text) 80%, transparent); margin: 0 0 30px; max-width: 60ch;">O LinkedIn pode complementar seu currículo. Use estas orientações para manter as informações claras e consistentes nos dois lugares.</p>
       
       <div id="guide-content" class="guide-content" style="display: flex; flex-direction: column; gap: 18px;"></div>
       
@@ -258,14 +258,14 @@
         </div>
         <div style="display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--color-accent); background: var(--color-accent-100); margin-bottom: 12px;">
           <span style="color: var(--color-accent-800); font-weight: 700; flex: none;">!</span>
-          <p style="font-size: 13px; line-height: 1.5; color: var(--color-accent-900); margin: 0;">Esta ferramenta <strong>não possui IA integrada</strong> e não envia seus dados. Copie o texto abaixo e cole na ferramenta de IA que preferir, como ChatGPT, Claude, Gemini ou Copilot.</p>
+          <p style="font-size: 13px; line-height: 1.5; color: var(--color-accent-900); margin: 0;">Esta ferramenta <strong>não possui uma IA integrada</strong> e não envia seus dados por conta própria. O texto só é compartilhado quando você o copia e cola em outra ferramenta.</p>
         </div>
         <label class="checkbox-label">
           <input type="checkbox" id="include-data-checkbox" checked>
           Incluir meus dados no prompt
         </label>
         <p id="privacy-prompt-warning" class="privacy-warning" hidden role="alert">
-          Atenção: o prompt incluirá dados pessoais, como e-mail e telefone. Use apenas ferramentas de IA em que você confia.
+          Atenção: o prompt pode incluir dados pessoais, como e-mail e telefone. Antes de copiar, revise e remova o que não deseja compartilhar. Consulte também as regras de privacidade da ferramenta escolhida.
         </p>
         <textarea id="prompt-text" class="prompt-textarea" readonly rows="12"></textarea>
         <button type="button" class="btn btn-primary" id="btn-copy-prompt">Copiar prompt</button>
@@ -279,6 +279,7 @@
           <h2 id="modal-template-title">Trocar modelo</h2>
           <button type="button" class="modal-close" aria-label="Fechar">✕</button>
         </div>
+        <p style="font-size: 12.5px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">ATS são sistemas usados por algumas empresas para organizar candidaturas. A leitura pode variar entre plataformas.</p>
         <div id="modal-template-grid" class="modal-template-grid"></div>
       </div>
     </div>

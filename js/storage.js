@@ -64,11 +64,11 @@ const EuGeroStorage = (function () {
     }
 
     if (!data.personal || typeof data.personal !== 'object') {
-      return { valid: false, error: 'Arquivo inválido: dados pessoais ausentes.' };
+      return { valid: false, error: 'Arquivo inválido: faltam os dados pessoais.' };
     }
 
     if (data.version && typeof data.version !== 'string') {
-      return { valid: false, error: 'Arquivo inválido: versão incompatível.' };
+      return { valid: false, error: 'Arquivo inválido: versão não compatível.' };
     }
 
     return { valid: true, data: mergeWithDefaults(data) };

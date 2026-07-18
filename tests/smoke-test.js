@@ -386,9 +386,10 @@ const langSection = EuGeroConfig.SECTIONS.find((s) => s.id === 'languages');
 const levelField = langSection.itemFields.find((f) => f.key === 'level');
 assert(levelField.type === 'select', 'Nivel de idioma e um select');
 assert(
-  Array.isArray(levelField.options) && levelField.options.length === 5 && levelField.options.includes('Fluente'),
-  'Select de nivel tem os 5 niveis predefinidos'
+  Array.isArray(levelField.options) && levelField.options.length === 4 && levelField.options.includes('Fluente'),
+  'Select de nivel tem os 4 niveis predefinidos'
 );
+assert(!levelField.options.includes('Nativo'), 'Nivel de idioma nao inclui Nativo (evita inferencia de nacionalidade/origem)');
 
 // --- Sem travessao em textos de UI ---
 console.log('\nTextos sem travessao:');
