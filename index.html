@@ -97,18 +97,23 @@
           <div style="margin-bottom: 12px;">
             <span style="font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;">Prévia</span>
           </div>
-          <div class="start-preview-wrap">
-            <button type="button" id="btn-prev-template-start" class="start-gal-arrow start-gal-prev" aria-label="Modelo anterior">‹</button>
-            <div class="blueprint" style="padding: 0; background: #fff;">
-              <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-              <div class="preview-a4-wrap"><div data-preview class="preview-content template-classic" style="pointer-events: none;"></div></div>
+          <div style="display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;">
+            <button type="button" class="btn btn-secondary btn-icon" id="btn-prev-template-start" aria-label="Modelo anterior" style="width: 44px; height: 44px; font-size: 20px;">‹</button>
+            <div>
+              <div class="blueprint" style="padding: 0; background: #fff;">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <div class="preview-a4-wrap"><div data-preview class="preview-content template-classic" style="pointer-events: none;"></div></div>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; gap: 12px;">
+                <div>
+                  <div data-current-template id="start-gallery-label" style="font-family: var(--font-heading); font-weight: 600; font-size: 18px; text-transform: uppercase; line-height: 1;">Clássico</div>
+                  <div id="start-gallery-counter" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 3px;">1 de 20</div>
+                </div>
+              </div>
             </div>
-            <button type="button" id="btn-next-template-start" class="start-gal-arrow start-gal-next" aria-label="Próximo modelo">›</button>
+            <button type="button" class="btn btn-secondary btn-icon" id="btn-next-template-start" aria-label="Próximo modelo" style="width: 44px; height: 44px; font-size: 20px;">›</button>
           </div>
-          <div style="margin-top: 10px; text-align: center;">
-            <span style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;"><span data-current-template>Clássico</span></span>
-          </div>
-          <div data-page-controls style="margin-top: 12px;"></div>
+          <div data-page-controls style="margin-top: 18px;"></div>
         </aside>
       </div>
     </main>
@@ -204,7 +209,6 @@
         <button type="button" class="btn btn-ghost" id="btn-export-json-review" style="font-size: 14px;">Salvar rascunho (.json)</button>
         <span class="review-actions-spacer" style="flex: 1;"></span>
         <button type="button" class="btn btn-secondary" id="btn-guide" style="min-height: 44px; display: inline-flex; align-items: center; gap: 8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45z"></path></svg>Guia do LinkedIn</button>
-        <button type="button" class="btn btn-secondary" id="btn-export-docx" style="min-height: 44px;" title="Arquivo editável: abre no Word e no Google Docs">Baixar editável (Word)</button>
         <button type="button" class="btn btn-primary" id="btn-export-pdf" style="min-height: 48px; padding-inline: 26px; font-size: 15.5px;">Baixar currículo (PDF)</button>
       </div>
     </main>
@@ -312,10 +316,7 @@
   <script src="js/prompts.js"></script>
   <script src="js/sample-data.js"></script>
   <script src="js/characters.js"></script>
-  <script src="js/cv-data.js"></script>
   <script src="js/preview.js"></script>
-  <script src="js/libs.js"></script>
-  <script src="js/export.js"></script>
   <script src="js/linkedin-guide.js"></script>
   <script src="js/router.js"></script>
   <script src="js/a11y.js"></script>

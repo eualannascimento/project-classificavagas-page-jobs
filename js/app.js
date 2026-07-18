@@ -19,7 +19,6 @@
 
   const els = {};
   const A4_BASE_WIDTH = 370;
-  const LIBS_WARN_KEY = 'eugero-libs-warned';
 
   function init() {
     cacheElements();
@@ -41,7 +40,6 @@
     });
 
     render();
-    probeLibrariesOnce();
   }
 
   function cacheElements() {
@@ -171,21 +169,6 @@
     navigateTo('guide');
   }
 
-  async function probeLibrariesOnce() {
-    if (typeof EuGeroLibs === 'undefined') return;
-    try {
-      const caps = await EuGeroLibs.probeAll();
-      if (sessionStorage.getItem(LIBS_WARN_KEY)) return;
-      const msgs = EuGeroLibs.missingMessages(caps);
-      if (msgs.length) {
-        showToast(msgs.join(' '), { duration: 7000 });
-        sessionStorage.setItem(LIBS_WARN_KEY, '1');
-      }
-    } catch (e) {
-      /* ignore probe errors */
-    }
-  }
-
   function bindGlobalEvents() {
     renderTemplatePickers();
 
@@ -208,7 +191,6 @@
     document.getElementById('btn-gal-prev')?.addEventListener('click', () => galleryStep(-1));
     document.getElementById('btn-gal-next')?.addEventListener('click', () => galleryStep(1));
     document.getElementById('btn-export-pdf')?.addEventListener('click', printCv);
-    document.getElementById('btn-export-docx')?.addEventListener('click', (e) => handleExport('docx', e.currentTarget));
     document.getElementById('btn-guide')?.addEventListener('click', goToGuide);
     document.getElementById('btn-back-review')?.addEventListener('click', goToReview);
     document.getElementById('btn-back-start')?.addEventListener('click', goToStart);
@@ -389,10 +371,10 @@
 
   function renderTemplatePickers() {
     const getThumbMarkup = (layout, id) => {
+      const accent = TEMPLATES[id]?.thumbAccent || '#334155';
       if (layout === 'sidebar') {
-        const bg = id === 'creative' ? 'var(--color-accent-2)' : 'var(--color-accent)';
         return `
-          <div class="thumb-sidebar" style="background: ${bg}; width: 30%; height: 100%;"></div>
+          <div class="thumb-sidebar" style="background: ${accent}; width: 30%; height: 100%;"></div>
           <div class="thumb-main" style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;">
             <div class="thumb-line" style="height: 4px; background: #cbd5e1; width: 80%; border-radius: 1px;"></div>
             <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 100%; border-radius: 1px;"></div>
@@ -404,7 +386,7 @@
       if (layout === 'banner') {
         return `
           <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
-            <div class="thumb-banner" style="background: #0f172a; height: 25%; width: 100%;"></div>
+            <div class="thumb-banner" style="background: ${accent}; height: 25%; width: 100%;"></div>
             <div style="flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 4px;">
               <div class="thumb-line" style="height: 3px; background: #cbd5e1; width: 60%; border-radius: 1px;"></div>
               <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 90%; border-radius: 1px;"></div>
@@ -416,18 +398,18 @@
       if (layout === 'left') {
         return `
           <div style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 6px; gap: 4px; align-items: flex-start; text-align: left;">
-            <div class="thumb-line" style="height: 5px; background: #475569; width: 50%; border-radius: 1px; margin-bottom: 2px;"></div>
+            <div class="thumb-line" style="height: 5px; background: ${accent}; width: 50%; border-radius: 1px; margin-bottom: 2px;"></div>
             <div class="thumb-line" style="height: 3px; background: #cbd5e1; width: 90%; border-radius: 1px;"></div>
             <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 80%; border-radius: 1px;"></div>
             <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 95%; border-radius: 1px;"></div>
           </div>
         `;
       }
-      // Centered (classic, elegant)
-      const accent = id === 'elegant' ? '#92400e' : '#334155';
+      // Centrado (classic, elegant, serifado, esmeralda, bordo, violeta, linha)
+      const isCreative = layout === 'creative';
       return `
-        <div style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 6px; gap: 4px; align-items: center; text-align: center;">
-          <div class="thumb-line" style="height: 5px; background: ${accent}; width: 60%; border-radius: 1px; margin-bottom: 2px;"></div>
+        <div style="display: flex; flex-direction: column; width: 100%; height: 100%; padding: 6px; gap: 4px; align-items: ${isCreative ? 'flex-start' : 'center'}; text-align: ${isCreative ? 'left' : 'center'};">
+          ${isCreative ? `<div style="display:flex; gap:5px; align-items:center; margin-bottom:2px;"><div style="width:12px; height:12px; background:${accent};"></div><div class="thumb-line" style="height:5px; background:${accent}; width:34px; border-radius:1px;"></div></div>` : `<div class="thumb-line" style="height: 5px; background: ${accent}; width: 60%; border-radius: 1px; margin-bottom: 2px;"></div>`}
           <div class="thumb-line" style="height: 3px; background: #cbd5e1; width: 40%; border-radius: 1px;"></div>
           <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 80%; border-radius: 1px; margin-top: 4px;"></div>
           <div class="thumb-line" style="height: 3px; background: #e2e8f0; width: 90%; border-radius: 1px;"></div>
@@ -509,6 +491,12 @@
     document.querySelectorAll('[data-current-template]').forEach((el) => {
       el.textContent = TEMPLATES[state.template]?.name || 'Classico';
     });
+    // Contador do preview do start (mesmo formato da galeria da review).
+    const startCounter = document.getElementById('start-gallery-counter');
+    if (startCounter) {
+      const idx = TEMPLATE_IDS.indexOf(state.template);
+      startCounter.textContent = `${idx + 1} de ${TEMPLATE_IDS.length}`;
+    }
   }
 
   function toggleSection(sectionId, checked) {
@@ -1507,6 +1495,17 @@
    * PDF identico a previa: renderiza o mesmo HTML da previa em tamanho A4
    * e abre a impressao do navegador (Salvar como PDF).
    */
+  /** Nome-base do arquivo: CV_<NOME>_<CARGO>, sem acento nem simbolo. */
+  function cvFileBaseName() {
+    const clean = (t) => (t || '')
+      .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const nome = clean(state.personal?.fullName) || 'Curriculo';
+    const cargo = clean(state.personal?.headline);
+    return cargo ? `CV_${nome}_${cargo}` : `CV_${nome}`;
+  }
+
   function printCv() {
     const el = document.getElementById('print-cv');
     if (!el) return;
@@ -1514,31 +1513,11 @@
     el.className = `preview-content template-${state.template} cv-margin-${state.margin || 'padrao'} cv-density-${state.density || 'normal'}`;
     // O nome sugerido no "Salvar como PDF" vem do titulo da pagina: CV_<NOME>_<CARGO>.
     const prevTitle = document.title;
-    document.title = EuGeroExport.getBaseName(state);
+    document.title = cvFileBaseName();
     const restore = () => { document.title = prevTitle; window.removeEventListener('afterprint', restore); };
     window.addEventListener('afterprint', restore);
     showToast('Na janela de impressão, escolha "Salvar como PDF".', { duration: 4000 });
     setTimeout(() => window.print(), 150);
-  }
-
-  async function handleExport(type, btn) {
-    if (!btn) return;
-    btn.disabled = true;
-    btn.classList.add('is-loading');
-    try {
-      const result = await EuGeroExport.exportDocx(state, state.template);
-
-      if (result?.ok) {
-        showToast('Exportado com sucesso!');
-      } else {
-        showToast(result?.error || 'Falha na exportacao.', { error: true });
-      }
-    } catch (err) {
-      showToast('Falha na exportacao.', { error: true });
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove('is-loading');
-    }
   }
 
   function renderReviewTemplateGallery() {
@@ -1610,6 +1589,9 @@
     document.querySelectorAll('[data-preview]').forEach((container) => {
       EuGeroPreview.updatePreview(container, state, state.template, sections);
     });
+    // A previa da review nao tem [data-preview] (id proprio): atualiza a parte
+    // para refletir margem/espacamento e troca de modelo.
+    if (currentView === 'review') renderReviewGallery();
     updateMobilePreviewDock();
     updateTemplatePreviewMinis();
     updateProgressBar();
@@ -1832,7 +1814,6 @@
     appendListItem,
     removeListItem,
     reorderListItem,
-    handleExport,
     debouncedUpdatePreviews
   };
 

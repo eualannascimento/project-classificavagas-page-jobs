@@ -7,11 +7,11 @@ Plataforma web estatica, 100% gratuita e sem servidor, para criar curriculos de 
 - **Homepage** com explicacao do objetivo e acesso central
 - **Selecao de personagens** de exemplo (figuras de dominio publico) para comecar de um curriculo preenchido
 - **Wizard passo a passo** com 13 secoes alinhadas ao LinkedIn
-- **9 templates**: Classico, Moderno, Minimalista, Elegante, Executivo, Criativo, Faixa Clara, Pilar, Serifado
+- **20 templates** esteticos e prontos para vaga (a maioria amigavel a ATS; alguns mais criativos com barra lateral ou selo)
 - **Preview ao vivo** com linha de corte de 1 pagina A4 e alerta de overflow
 - **Pontuacao por qualidade** (Fraco / Bom / Otimo) - textos curtos e bons nao sao punidos
 - **Revisao** com galeria comparativa de todos os templates
-- **Exportacao** PDF (impressao do navegador, identico a previa) e Word (.docx real, editavel no Word, Google Docs e Apple Pages)
+- **Exportacao** PDF pela impressao do navegador ("Salvar como PDF"), 100% identico a previa em qualquer modelo
 - **Backup JSON** - exportar e importar rascunhos
 - **Guia LinkedIn** e prompts para IA (copiar/colar manual)
 - **Roteamento por hash** (`#/wizard/experiences`) com suporte a Voltar/Avancar do navegador
@@ -42,20 +42,17 @@ python3 -m http.server 8080
 index.html
 css/style.css
 js/
-  config.js         Secoes, campos, 9 templates, flags ATS
+  config.js         Secoes, campos, 20 templates, flags ATS
   dates.js          Mes/ano e formatacao de periodos
   scoring.js        Pontuacao por qualidade + fit de 1 pagina
   validation.js     E-mail, URL, campos obrigatorios
   storage.js        localStorage + JSON
   prompts.js        Prompts IA externos
-  preview.js        Preview ao vivo
-  cv-data.js        Modelo unico para preview/export
+  preview.js        Preview ao vivo (fonte unica do PDF via impressao)
   characters.js     Personagens de exemplo (estados completos)
-  export.js         Word (.docx real via docx.js)
   linkedin-guide.js Guia LinkedIn
   router.js         Hash routing
   a11y.js           Modais acessiveis (Esc, focus trap)
-  libs.js           Deteccao do docx.js (CDN)
   sample-data.js    Dados de exemplo
   app.js            Orquestracao
 tests/smoke-test.js
@@ -68,10 +65,9 @@ tests/smoke-test.js
 | App (HTML/CSS/JS) | Sim | Funciona abrindo `index.html` |
 | Google Fonts | Parcial | Fallback system-ui se CDN falhar |
 | **PDF** (impressao do navegador) | Sim | Usa `window.print()` sobre o HTML da previa; nenhuma biblioteca |
-| **docx.js** (Word .docx) | Nao na 1a exportacao | Import dinamico do CDN; o PDF continua funcionando sem internet |
 | Prompts IA | N/A | Copia manual - nenhuma API e chamada |
 
-Se o docx.js nao carregar, a app exibe toast explicativo; o PDF continua disponivel offline.
+A exportacao e apenas PDF (impressao do navegador) e funciona 100% offline.
 
 ## Testes
 
@@ -79,7 +75,7 @@ Se o docx.js nao carregar, a app exibe toast explicativo; o PDF continua disponi
 node tests/smoke-test.js
 ```
 
-Cobre: scoring, validacao, datas, router, page fit, JSON, prompts, CvData, templates ATS e dados de exemplo.
+Cobre: scoring, validacao, datas, router, page fit, JSON, prompts, catalogo de 20 templates, flags ATS e dados de exemplo.
 
 ## Deploy (GitHub Pages)
 
