@@ -23,22 +23,22 @@ const EuGeroLinkedInGuide = (function () {
       title: 'Foto e capa',
       path: 'Seu perfil → toque na foto → Adicionar foto',
       content: '',
-      tip: 'Foto de rosto, fundo neutro e um leve sorriso. A capa pode ser algo simples ligado à sua área.'
+      tip: 'Use uma foto de rosto, com fundo neutro e boa iluminação. Na capa, escolha uma imagem simples relacionada à sua área.'
     });
 
     entries.push({
       title: 'Título do perfil',
-      path: 'Seu perfil → lápis (✎) no topo → campo "Título"',
+      path: 'Seu perfil → lápis (✎) no topo → campo “Título”',
       content: [p.headline, p.location].filter(Boolean).join(' · '),
-      tip: 'Vá além do cargo: diga o que você faz ou busca.'
+      tip: 'Além do cargo, informe sua área de atuação ou o tipo de oportunidade que busca.'
     });
 
     if (!isEmpty(state.summary)) {
       entries.push({
         title: 'Sobre',
-        path: 'Seu perfil → seção "Sobre" → lápis (✎)',
+        path: 'Seu perfil → seção “Sobre” → lápis (✎)',
         content: state.summary,
-        tip: 'Escreva em primeira pessoa e diga o que você procura hoje.'
+        tip: 'Escreva em primeira pessoa e explique brevemente sua experiência, seus pontos fortes e o que busca.'
       });
     }
 
@@ -46,14 +46,14 @@ const EuGeroLinkedInGuide = (function () {
     if (exps.length) {
       entries.push({
         title: 'Experiência',
-        path: 'Seu perfil → seção "Experiência" → botão + → Adicionar cargo',
+        path: 'Seu perfil → seção “Experiência” → botão + → Adicionar cargo',
         content: exps.map(e => [
           `Cargo: ${e.title || ''}`,
           `Empresa: ${e.company || ''}`,
           `Período: ${e.period || 'preencha no LinkedIn'}`,
           e.description ? `Descrição: ${e.description}` : ''
         ].filter(Boolean).join('\n')).join('\n\n'),
-        tip: 'No LinkedIn cabe mais detalhe que no currículo - aproveite para contar resultados.'
+        tip: 'Aproveite o espaço para detalhar atividades, resultados e aprendizados relevantes.'
       });
     }
 
@@ -61,9 +61,9 @@ const EuGeroLinkedInGuide = (function () {
     if (edus.length) {
       entries.push({
         title: 'Formação',
-        path: 'Seu perfil → seção "Formação acadêmica" → botão +',
+        path: 'Seu perfil → seção “Formação acadêmica” → botão +',
         content: edus.map(e => `${e.degree || ''} - ${e.institution || ''}${e.period ? ` (${e.period})` : ''}`).join('\n'),
-        tip: 'Cursos técnicos e livres também contam.'
+        tip: 'Inclua também cursos técnicos e outras formações relevantes.'
       });
     }
 
@@ -71,9 +71,9 @@ const EuGeroLinkedInGuide = (function () {
     if (skills.length) {
       entries.push({
         title: 'Competências',
-        path: 'Seu perfil → seção "Competências" → botão + (adicione uma por vez)',
+        path: 'Seu perfil → seção “Competências” → botão +',
         content: skills.join(', '),
-        tip: 'Fixe as 3 principais no topo e peça a colegas para validá-las.'
+        tip: 'Destaque as três competências mais importantes e solicite validações a pessoas que conhecem seu trabalho.'
       });
     }
 
@@ -81,24 +81,24 @@ const EuGeroLinkedInGuide = (function () {
     if (langs.length) {
       entries.push({
         title: 'Idiomas',
-        path: 'Seu perfil → "Adicionar seção do perfil" → Idiomas',
+        path: 'Seu perfil → “Adicionar seção do perfil” → Idiomas',
         content: langs.map(l => `${l.language}${l.level ? ` - ${l.level}` : ''}`).join('\n'),
-        tip: 'Seja honesto com o nível - podem testar na entrevista.'
+        tip: 'Informe seu nível com precisão, pois ele poderá ser avaliado durante o processo seletivo.'
       });
     }
 
     entries.push({
       title: 'URL personalizada',
-      path: 'Seu perfil → "Editar perfil público e URL" (canto superior direito)',
+      path: 'Seu perfil → “Editar perfil público e URL”',
       content: `linkedin.com/in/${slugFromName(p.fullName)}`,
-      tip: 'Um link curto e limpo fica ótimo no topo do currículo.'
+      tip: 'Uma URL curta e personalizada facilita a leitura e fica melhor no currículo.'
     });
 
     entries.push({
       title: 'Recomendações',
-      path: 'Perfil de um colega → botão "Mais" → Solicitar recomendação',
+      path: 'Perfil de um contato → botão “Mais” → Solicitar recomendação',
       content: '',
-      tip: 'Peça a um professor, colega ou ex-chefe. Para quem está começando, vale muito.'
+      tip: 'Peça uma recomendação a professores, colegas, clientes ou antigos gestores que conheçam seu trabalho.'
     });
 
     return entries;
@@ -142,7 +142,7 @@ const EuGeroLinkedInGuide = (function () {
           const card = btn.closest('.guide-entry');
           const feedback = card?.querySelector('.copy-feedback');
           if (feedback) {
-            feedback.textContent = 'Copiado!';
+            feedback.textContent = 'Copiado.';
             setTimeout(() => { feedback.textContent = ''; }, 2000);
           }
         });

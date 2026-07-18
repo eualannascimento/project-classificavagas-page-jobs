@@ -110,10 +110,10 @@ assert(!promptWithoutData.includes('maria@test.com'), 'Prompt geral sem dados n�
 assert(promptWithoutData.includes('Não incluí meus dados'), 'Prompt sem dados indica ausência de dados pessoais');
 
 const sectionPrompt = EuGeroPrompts.buildSectionPrompt('experiences', filledState, true);
-assert(sectionPrompt.includes('Experiências'), 'Prompt por seção contém contexto da seção');
+assert(sectionPrompt.toLowerCase().includes('experiência'), 'Prompt por seção contém contexto da seção');
 
 const translationPrompt = EuGeroPrompts.buildTranslationPrompt(filledState, true);
-assert(translationPrompt.includes('português para inglês'), 'Prompt de tradução contém instrução correta');
+assert(translationPrompt.includes('português') && translationPrompt.includes('inglês'), 'Prompt de tradução contém instrução correta');
 assert(translationPrompt.includes('Maria Teste'), 'Prompt de tradução inclui dados quando marcado');
 
 // --- JSON serialize/deserialize ---

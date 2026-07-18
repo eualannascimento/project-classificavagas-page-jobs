@@ -317,10 +317,10 @@
     if (character.state) {
       // Cópia profunda para não mutar o módulo de personagens.
       state = EuGeroStorage.mergeWithDefaults(JSON.parse(JSON.stringify(character.state)));
-      showToast(`Currículo de exemplo carregado: ${character.name}. Edite à vontade!`);
+      showToast(`Exemplo de ${character.name} carregado. Agora, personalize com suas informações.`);
     } else {
       state = EuGeroStorage.mergeWithDefaults(EuGeroConfig.createEmptyState());
-      showToast('Página em branco pronta. Vamos montar o seu!');
+      showToast('Página em branco pronta. Comece a montar seu currículo.');
     }
     saveState();
     goToStart();
@@ -420,7 +420,7 @@
     const cardHtml = (t) => {
       const atsBadge = t.atsFriendly
         ? '<span class="badge badge-ats">ATS</span>'
-        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'Layout pode afetar leitura ATS')}">Atenção ATS</span>`;
+        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'Layout pode afetar leitura ATS')}">Atenção ao ATS</span>`;
       return `
         <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
           <div class="template-thumb ${t.thumbClass}">${getThumbMarkup(t.layout, t.id)}</div>
@@ -439,7 +439,7 @@
     if (modalGrid) {
       modalGrid.innerHTML = TEMPLATE_IDS.map((id) => {
         const t = TEMPLATES[id];
-        const atsNote = t.atsFriendly ? 'Compativel com ATS' : (t.atsNote || 'Atenção ATS');
+        const atsNote = t.atsFriendly ? 'Compatível com ATS' : (t.atsNote || 'Atenção ao ATS');
         return `<button type="button" class="modal-template-option" data-template="${t.id}"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.description)} - ${escapeHtml(atsNote)}</span></button>`;
       }).join('');
     }
@@ -484,7 +484,7 @@
     saveState();
     updateTemplateIndicators();
     debouncedUpdatePreviews();
-    showToast(`Template alterado para ${TEMPLATES[templateId].name}`);
+    showToast(`Modelo alterado para ${TEMPLATES[templateId].name}.`);
   }
 
   function updateTemplateIndicators() {
@@ -545,7 +545,7 @@
     saveState();
     renderWizardStep();
     debouncedUpdatePreviews();
-    showToast(`Seção "${SHORT_LABELS[section.id] || section.title}" limpa.`);
+    showToast(`Seção “${SHORT_LABELS[section.id] || section.title}” limpa.`);
   }
 
   function removeSectionFromWizard(section) {
@@ -560,7 +560,7 @@
     saveState();
     renderSectionChecklist();
     navigateTo('wizard', sections[state.currentStep]?.id || null);
-    showToast(`Seção "${label}" removida do currículo.`);
+    showToast(`Seção “${label}” removida do currículo.`);
   }
 
   function nextStep() {
@@ -712,7 +712,7 @@
     aiBtn.type = 'button';
     aiBtn.className = 'btn btn-ghost btn-ai-section';
     aiBtn.style.cssText = mutedGhost;
-    aiBtn.textContent = 'Travou? Peça ideias a uma IA →';
+    aiBtn.textContent = 'Precisa de ideias? Peça ajuda a uma IA →';
     aiBtn.addEventListener('click', (e) => showPrompt('section', section.id, e.currentTarget));
     actionsRow.appendChild(aiBtn);
 
@@ -730,7 +730,7 @@
       removeBtn.type = 'button';
       removeBtn.className = 'btn btn-ghost';
       removeBtn.style.cssText = mutedGhost;
-      removeBtn.textContent = 'Remover esta seção do currículo';
+      removeBtn.textContent = 'Remover esta seção';
       removeBtn.addEventListener('click', () => removeSectionFromWizard(section));
       actionsRow.appendChild(removeBtn);
     }
@@ -759,7 +759,7 @@
   function renderFieldTip(field) {
     if (!field.tip) return '';
     return `
-      <span class="cv-help" tabindex="0" aria-label="Ajuda">?<span class="cv-tip-pop">${escapeHtml(field.tip)}</span></span>
+      <span class="cv-help" tabindex="0" aria-label="Ver dica do campo">?<span class="cv-tip-pop">${escapeHtml(field.tip)}</span></span>
     `;
   }
 
@@ -938,15 +938,15 @@
 
   function textQuality(text) {
     const t = (text || '').trim();
-    if (!t) return { kind: 'empty', label: 'Dica: comece com um verbo de ação (ex.: Vendi, Organizei, Atendi…).' };
+    if (!t) return { kind: 'empty', label: 'Dica: comece com um verbo de ação, como “Vendi”, “Organizei” ou “Atendi”.' };
     const low = t.toLowerCase();
     const hasVerb = QUALITY_VERBS.some((v) => low.includes(v));
     const hasNum = /\d/.test(t);
-    if (t.length < 45) return { kind: 'weak', label: 'Continue - conte o que você fez e o impacto disso.' };
-    if (hasVerb && hasNum) return { kind: 'great', label: 'Ótimo! Tem verbo de ação e um resultado com número.' };
-    if (hasNum) return { kind: 'good', label: 'Bom - que tal começar com um verbo de ação para reforçar?' };
-    if (hasVerb) return { kind: 'good', label: 'Bom - tente incluir um número ou resultado concreto.' };
-    return { kind: 'weak', label: 'Adicione um verbo de ação no início da frase.' };
+    if (t.length < 45) return { kind: 'weak', label: 'Continue: explique o que você fez e qual foi o resultado.' };
+    if (hasVerb && hasNum) return { kind: 'great', label: 'Ótimo! O texto apresenta uma ação e um resultado concreto.' };
+    if (hasNum) return { kind: 'good', label: 'Bom começo. Inclua um verbo de ação para destacar sua participação.' };
+    if (hasVerb) return { kind: 'good', label: 'Bom começo. Inclua um número ou resultado concreto, se possível.' };
+    return { kind: 'weak', label: 'Comece a frase com um verbo de ação.' };
   }
 
   const HINT_STYLE = {
@@ -976,7 +976,7 @@
         el.innerHTML = '';
         return;
       }
-      q = { kind: 'weak', label: 'Esse e-mail parece incompleto. Confira o "@" e o domínio.' };
+      q = { kind: 'weak', label: 'Este e-mail parece incompleto. Confira o “@” e o domínio.' };
     } else {
       q = textQuality(value);
     }
@@ -1009,7 +1009,7 @@
       ${showEndCurrent ? `
         <label class="checkbox-label end-current-label">
           <input type="checkbox" class="end-current-checkbox" ${item.endCurrent ? 'checked' : ''}>
-          Ate hoje
+          Até hoje
         </label>
       ` : ''}
       ${renderFieldTip(field)}
@@ -1407,13 +1407,13 @@
 
     const pct = aggregate.overall;
     let scoreLabel = 'Em progresso';
-    let scoreMsg = 'Vamos reforçar alguns pontos para dar mais peso ao seu currículo.';
+    let scoreMsg = 'Alguns ajustes podem deixar seu currículo mais completo.';
     if (pct >= 80) {
       scoreLabel = 'Ótimo';
-      scoreMsg = 'Seu currículo está forte e bem estruturado. Pronto para enviar!';
+      scoreMsg = 'Seu currículo está claro e bem estruturado. Pronto para enviar.';
     } else if (pct >= 55) {
       scoreLabel = 'Bom';
-      scoreMsg = 'Está bom! Uns pequenos ajustes deixam ele ainda mais forte.';
+      scoreMsg = 'Seu currículo está bem estruturado. Pequenos ajustes podem fortalecê-lo.';
     }
 
     const muted = 'color-mix(in srgb, var(--color-text) 55%, transparent)';
@@ -1436,7 +1436,7 @@
     const STATUS_META = {
       otimo: { label: 'Ótimo', cls: 'rf-otimo' },
       bom: { label: 'Bom', cls: 'rf-bom' },
-      fraco: { label: 'Reforce', cls: 'rf-fraco' },
+      fraco: { label: 'Revisar', cls: 'rf-fraco' },
       vazio: { label: 'Vazio', cls: 'rf-vazio' }
     };
 
@@ -1516,7 +1516,7 @@
     document.title = cvFileBaseName();
     const restore = () => { document.title = prevTitle; window.removeEventListener('afterprint', restore); };
     window.addEventListener('afterprint', restore);
-    showToast('Na janela de impressão, escolha "Salvar como PDF".', { duration: 4000 });
+    showToast('Na janela de impressão, selecione “Salvar como PDF”.', { duration: 4000 });
     setTimeout(() => window.print(), 150);
   }
 
@@ -1529,7 +1529,7 @@
       const selected = state.template === id;
       const atsBadge = t.atsFriendly
         ? '<span class="badge badge-ats">ATS</span>'
-        : '<span class="badge badge-ats-warn">Atencao ATS</span>';
+        : '<span class="badge badge-ats-warn">Atenção ao ATS</span>';
       return `
         <button type="button" class="review-template-card${selected ? ' selected' : ''}" data-template="${t.id}" aria-pressed="${selected}">
           <span class="review-template-name">${escapeHtml(t.name)} ${atsBadge}</span>
@@ -1608,7 +1608,7 @@
 
   function exportJson() {
     EuGeroStorage.downloadJson(state);
-    showToast('Rascunho exportado com sucesso!');
+    showToast('Rascunho salvo em arquivo.');
   }
 
   function handleImport(e) {
@@ -1616,7 +1616,7 @@
     if (!file) return;
 
     if (!file.name.endsWith('.json')) {
-      showToast('Selecione um arquivo .json valido.', { error: true });
+      showToast('Selecione um arquivo .json válido.', { error: true });
       e.target.value = '';
       return;
     }
@@ -1636,9 +1636,9 @@
         } else {
           navigateTo('home', null, { replace: true });
         }
-        showToast('Rascunho carregado com sucesso!');
+        showToast('Rascunho carregado com sucesso.');
       } catch (err) {
-        showToast('Arquivo corrompido ou invalido. Tente outro arquivo.', { error: true });
+        showToast('O arquivo está corrompido ou é inválido. Tente outro arquivo.', { error: true });
       }
     };
     reader.readAsText(file);
@@ -1674,8 +1674,8 @@
 
   async function copyPrompt() {
     const ok = await copyToClipboard(els.promptText?.value || '');
-    if (ok) showToast('Prompt copiado!');
-    else showToast('Nao foi possivel copiar. Selecione o texto manualmente.', { error: true });
+    if (ok) showToast('Prompt copiado.');
+    else showToast('Não foi possível copiar. Selecione o texto e copie manualmente.', { error: true });
   }
 
   async function copyToClipboard(text) {
