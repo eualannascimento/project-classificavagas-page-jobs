@@ -2840,6 +2840,50 @@ body.modal-open {
 .home-privacy { font-size: 13.5px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 72%, transparent); margin: 0; flex: 1; min-width: 260px; text-align: right; }
 .home-privacy-tag { font-family: var(--font-heading); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent-700); font-size: 12px; }
 
+/* Wizard: tabs numeradas dos itens de lista (um formulario por vez) */
+.list-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 14px;
+}
+.list-tab {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.list-tab:hover { border-color: var(--color-accent); color: var(--color-accent-700); }
+.list-tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+.list-tab-add {
+  border-style: dashed;
+  color: var(--color-accent-700);
+  font-size: 17px;
+}
+
+/* Idiomas: linha Idioma | Nivel | remover compacto (todas as larguras) */
+.lang-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
 /* Prévia do start: setas sobrepostas no meio, como na review */
 .start-preview-wrap { position: relative; }
 .start-gal-arrow {
