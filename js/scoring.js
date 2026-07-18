@@ -319,13 +319,21 @@ const EuGeroScoring = (function () {
     activeSecs.forEach(section => {
       if (section.list) {
         const items = state[section.id] || [];
+        const requiredItemFields = (section.itemFields || []).filter(field => field.required);
+        if (requiredItemFields.length === 0) return;
+
+        if (items.length === 0) {
+          // Secao habilitada mas sem nenhum item: conta como pendente em vez
+          // de ficar fora do denominador (P0.5).
+          totalRequired += 1;
+          return;
+        }
+
         items.forEach(item => {
-          (section.itemFields || []).forEach(field => {
-            if (field.required) {
-              totalRequired++;
-              if (item[field.key] !== undefined && String(item[field.key]).trim().length > 0) {
-                filledRequired++;
-              }
+          requiredItemFields.forEach(field => {
+            totalRequired++;
+            if (item[field.key] !== undefined && String(item[field.key]).trim().length > 0) {
+              filledRequired++;
             }
           });
         });

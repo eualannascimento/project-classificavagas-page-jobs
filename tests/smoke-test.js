@@ -23,6 +23,27 @@ loadScript('js/prompts.js');
 loadScript('js/router.js');
 loadScript('js/sample-data.js');
 
+// js/preview.js só usa document.createElement('div') para escapar HTML;
+// shim mínimo o suficiente para carregar o módulo sem um DOM real.
+global.document = {
+  createElement() {
+    let text = '';
+    return {
+      set textContent(value) { text = value == null ? '' : String(value); },
+      get textContent() { return text; },
+      get innerHTML() {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+    };
+  }
+};
+loadScript('js/preview.js');
+
 let passed = 0;
 let failed = 0;
 
@@ -195,6 +216,21 @@ assert(!EuGeroConfig.isSectionMandatory('projects'), 'Projetos é opcional');
 const normalized = EuGeroConfig.normalizeEnabledSections(['experiences']);
 assert(normalized.includes('personal'), 'Sempre inclui seção obrigatória');
 
+// --- P0.1: gate de avanço do wizard (não avança com validação falha) ---
+console.log('\nGate de avanço do wizard:');
+
+const staying = EuGeroValidation.resolveStepAdvance(false, 1, 4);
+assert(staying.action === 'stay' && staying.step === 1, 'Etapa inválida não avança nem muda o step atual');
+
+const advancing = EuGeroValidation.resolveStepAdvance(true, 1, 4);
+assert(advancing.action === 'advance' && advancing.step === 2, 'Etapa válida avança para o próximo step');
+
+const reviewing = EuGeroValidation.resolveStepAdvance(true, 3, 4);
+assert(reviewing.action === 'review', 'Última etapa válida vai para a revisão em vez de avançar');
+
+const stayingLast = EuGeroValidation.resolveStepAdvance(false, 3, 4);
+assert(stayingLast.action === 'stay' && stayingLast.step === 3, 'Última etapa inválida não vai para a revisão');
+
 // --- Page fit (one-page CV) ---
 console.log('\nCurrículo de uma página:');
 
@@ -262,10 +298,11 @@ assert(EuGeroConfig.getTemplateMeta('modern').atsFriendly === false, 'Moderno av
 console.log('\nProgresso de Preenchimento:');
 
 const testStateEmpty = EuGeroConfig.createEmptyState();
-// For personal, we have 4 required fields: fullName, headline, email, location.
-// For summary, we have 1: summary.
-// For experiences, if empty list, no fields are active/required (since items are dynamically added).
-// So total required fields = 5.
+// Seções ativas por padrão: personal (4 campos obrigatórios: fullName,
+// headline, email, location), summary (1: summary), skills (0, o campo de
+// texto de habilidades não é obrigatório), experiences/education/languages
+// (seções de lista habilitadas e vazias contam 1 cada como pendentes - P0.5).
+// Total = 4 + 1 + 1 + 1 + 1 = 8.
 const progressEmpty = EuGeroScoring.calculateProgress(testStateEmpty);
 assert(progressEmpty === 0, 'Estado vazio = 0% de progresso');
 
@@ -277,10 +314,9 @@ const testStatePartial = {
     email: 'maria@test.com'
   }
 };
-// 2 fields out of 5 required fields filled.
-// Math.round((2 / 5) * 100) = 40.
+// 2 campos preenchidos de 8 obrigatórios. Math.round((2 / 8) * 100) = 25.
 const progressPartial = EuGeroScoring.calculateProgress(testStatePartial);
-assert(progressPartial === 40, 'Estado parcial (2/5) = 40% de progresso');
+assert(progressPartial === 25, 'Estado parcial (2/8, seções de lista vazias contam) = 25% de progresso');
 
 const testStateZeroRequired = {
   ...testStateEmpty,
