@@ -118,7 +118,7 @@ const EuGeroCvData = (function () {
         pushSection('projects', 'Projetos', items.map(p => ({
           type: 'entry',
           title: p.name,
-          subtitle: p.url || '',
+          subtitle: '',
           period: '',
           description: p.description || ''
         })));

@@ -1512,6 +1512,11 @@
     if (!el) return;
     el.innerHTML = EuGeroPreview.render(state, state.template, activeSections());
     el.className = `preview-content template-${state.template} cv-margin-${state.margin || 'padrao'} cv-density-${state.density || 'normal'}`;
+    // O nome sugerido no "Salvar como PDF" vem do titulo da pagina: CV_<NOME>_<CARGO>.
+    const prevTitle = document.title;
+    document.title = EuGeroExport.getBaseName(state);
+    const restore = () => { document.title = prevTitle; window.removeEventListener('afterprint', restore); };
+    window.addEventListener('afterprint', restore);
     showToast('Na janela de impressão, escolha "Salvar como PDF".', { duration: 4000 });
     setTimeout(() => window.print(), 150);
   }
@@ -1521,10 +1526,7 @@
     btn.disabled = true;
     btn.classList.add('is-loading');
     try {
-      let result;
-      if (type === 'pdf') result = await EuGeroExport.exportPdf(state, state.template);
-      else if (type === 'docx') result = await EuGeroExport.exportDoc(state);
-      else result = EuGeroExport.exportTxt(state);
+      const result = await EuGeroExport.exportDocx(state, state.template);
 
       if (result?.ok) {
         showToast('Exportado com sucesso!');

@@ -1,19 +1,11 @@
 /**
- * Deteccao de bibliotecas externas (CDN ou vendor local).
+ * Deteccao da biblioteca externa usada na exportacao Word (.docx via CDN).
  */
 const EuGeroLibs = (function () {
   'use strict';
 
   let docxChecked = null;
   let docxAvailable = false;
-
-  function hasJsPdf() {
-    return typeof window.jspdf !== 'undefined' || typeof jspdf !== 'undefined';
-  }
-
-  function hasQrCode() {
-    return typeof QRCode !== 'undefined';
-  }
 
   async function checkDocx() {
     if (docxChecked) return docxAvailable;
@@ -38,20 +30,12 @@ const EuGeroLibs = (function () {
   }
 
   async function probeAll() {
-    const pdf = hasJsPdf();
-    const qr = hasQrCode();
     const docx = await checkDocx();
-    return { pdf, qr, docx, txt: true };
+    return { docx };
   }
 
   function missingMessages(capabilities) {
     const msgs = [];
-    if (!capabilities.pdf) {
-      msgs.push('PDF: biblioteca jsPDF nao carregada. Use conexao na primeira visita ou arquivo em vendor/.');
-    }
-    if (!capabilities.qr) {
-      msgs.push('QR Code no PDF: biblioteca qrcode nao carregada.');
-    }
     if (!capabilities.docx) {
       msgs.push('Word: exportacao DOCX exige internet na primeira exportacao (CDN docx.js).');
     }
@@ -59,8 +43,6 @@ const EuGeroLibs = (function () {
   }
 
   return {
-    hasJsPdf,
-    hasQrCode,
     checkDocx,
     markDocxAvailable,
     hasDocxSync,

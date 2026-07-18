@@ -11,7 +11,7 @@ Plataforma web estatica, 100% gratuita e sem servidor, para criar curriculos de 
 - **Preview ao vivo** com linha de corte de 1 pagina A4 e alerta de overflow
 - **Pontuacao por qualidade** (Fraco / Bom / Otimo) - textos curtos e bons nao sao punidos
 - **Revisao** com galeria comparativa de todos os templates
-- **Exportacao** PDF (QR Code do LinkedIn), Word (.doc fiel a previa ou .docx) e TXT
+- **Exportacao** PDF (impressao do navegador, identico a previa) e Word (.docx real, editavel no Word, Google Docs e Apple Pages)
 - **Backup JSON** - exportar e importar rascunhos
 - **Guia LinkedIn** e prompts para IA (copiar/colar manual)
 - **Roteamento por hash** (`#/wizard/experiences`) com suporte a Voltar/Avancar do navegador
@@ -51,14 +51,13 @@ js/
   preview.js        Preview ao vivo
   cv-data.js        Modelo unico para preview/export
   characters.js     Personagens de exemplo (estados completos)
-  export.js         PDF, Word (.doc e .docx), TXT
+  export.js         Word (.docx real via docx.js)
   linkedin-guide.js Guia LinkedIn
   router.js         Hash routing
   a11y.js           Modais acessiveis (Esc, focus trap)
-  libs.js           Deteccao de bibliotecas CDN
+  libs.js           Deteccao do docx.js (CDN)
   sample-data.js    Dados de exemplo
   app.js            Orquestracao
-vendor/             (opcional) jsPDF e qrcode locais para offline
 tests/smoke-test.js
 ```
 
@@ -68,12 +67,11 @@ tests/smoke-test.js
 |---------|------------------------|-------|
 | App (HTML/CSS/JS) | Sim | Funciona abrindo `index.html` |
 | Google Fonts | Parcial | Fallback system-ui se CDN falhar |
-| **jsPDF** (PDF) | Sim, se cache/CDN ok | Copie para `vendor/jspdf.umd.min.js` para offline total |
-| **qrcode** (QR no PDF) | Sim, se cache/CDN ok | Copie para `vendor/qrcode.min.js` |
-| **docx.js** (Word .docx) | Nao na 1a exportacao | Import dinamico do CDN; o .doc fiel a previa, TXT e PDF funcionam sem internet |
+| **PDF** (impressao do navegador) | Sim | Usa `window.print()` sobre o HTML da previa; nenhuma biblioteca |
+| **docx.js** (Word .docx) | Nao na 1a exportacao | Import dinamico do CDN; o PDF continua funcionando sem internet |
 | Prompts IA | N/A | Copia manual - nenhuma API e chamada |
 
-Se jsPDF ou qrcode nao carregarem, a app exibe toast explicativo e mantem exportacao TXT (e Word se docx estiver disponivel).
+Se o docx.js nao carregar, a app exibe toast explicativo; o PDF continua disponivel offline.
 
 ## Testes
 
