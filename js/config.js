@@ -123,53 +123,94 @@ const EuGeroConfig = (function () {
     }
   ];
 
+  // 20 modelos. Todos pensados para uma vaga real (estéticos e legíveis); os
+  // marcados atsFriendly: false têm coluna/selo e são os mais "criativos".
+  // thumbAccent tinge o cartão de escolha; a prévia e o PDF usam o CSS do tema.
   const TEMPLATES = {
     classic: {
       id: 'classic', name: 'Clássico', description: 'Monocromático, limpo e profissional',
-      layout: 'centered', thumbClass: 'template-thumb-classic',
-      accentRgb: [65, 97, 128], textMuted: '#6b6d6f', atsFriendly: true
-    },
-    modern: {
-      id: 'modern', name: 'Moderno', description: 'Barra lateral clara com acento azul',
-      layout: 'sidebar', thumbClass: 'template-thumb-modern',
-      sidebarRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
-      atsNote: 'Barra lateral: alguns ATS leem melhor layouts de coluna única.'
+      layout: 'centered', thumbAccent: '#334155', atsFriendly: true
     },
     minimal: {
       id: 'minimal', name: 'Minimalista', description: 'Alinhado à esquerda, ultra limpo',
-      layout: 'left', thumbClass: 'template-thumb-minimal',
-      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
-    },
-    elegant: {
-      id: 'elegant', name: 'Elegante', description: 'Tipografia condensada, acento discreto',
-      layout: 'centered', thumbClass: 'template-thumb-elegant', serif: false,
-      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
-    },
-    executive: {
-      id: 'executive', name: 'Executivo', description: 'Faixa superior escura',
-      layout: 'banner', thumbClass: 'template-thumb-executive',
-      bannerRgb: [29, 45, 61], accentHex: '1D2D3D', atsFriendly: true
-    },
-    creative: {
-      id: 'creative', name: 'Criativo', description: 'Coluna única com selo de iniciais',
-      layout: 'creative', thumbClass: 'template-thumb-creative',
-      accentRgb: [89, 128, 166], badgeRgb: [89, 128, 166], accentHex: '5980A6', atsFriendly: false,
-      atsNote: 'Selo gráfico no topo: prefira Clássico ou Minimalista para ATS rigorosos.'
-    },
-    faixa: {
-      id: 'faixa', name: 'Faixa Clara', description: 'Faixa superior suave em azul claro',
-      layout: 'banner', thumbClass: 'template-thumb-executive',
-      bannerRgb: [238, 246, 255], accentHex: '416180', atsFriendly: true
-    },
-    pilar: {
-      id: 'pilar', name: 'Pilar', description: 'Títulos com barra lateral de acento',
-      layout: 'left', thumbClass: 'template-thumb-minimal',
-      accentRgb: [65, 97, 128], accentHex: '416180', atsFriendly: true
+      layout: 'left', thumbAccent: '#334155', atsFriendly: true
     },
     serifado: {
       id: 'serifado', name: 'Serifado', description: 'Tipografia serifada tradicional',
-      layout: 'centered', thumbClass: 'template-thumb-classic',
-      accentRgb: [43, 43, 45], accentHex: '2B2B2D', atsFriendly: true
+      layout: 'centered', thumbAccent: '#2b2b2d', atsFriendly: true
+    },
+    elegant: {
+      id: 'elegant', name: 'Elegante', description: 'Centrado, tipografia fina e espaçada',
+      layout: 'centered', thumbAccent: '#334155', atsFriendly: true
+    },
+    linha: {
+      id: 'linha', name: 'Linha', description: 'Títulos com fio fino acima, ar minimalista',
+      layout: 'centered', thumbAccent: '#334155', atsFriendly: true
+    },
+    pilar: {
+      id: 'pilar', name: 'Pilar', description: 'Títulos com barra lateral de acento',
+      layout: 'left', thumbAccent: '#334155', atsFriendly: true
+    },
+    grafite: {
+      id: 'grafite', name: 'Grafite', description: 'Esquerda, cinza grafite e títulos fortes',
+      layout: 'left', thumbAccent: '#374151', atsFriendly: true
+    },
+    esmeralda: {
+      id: 'esmeralda', name: 'Esmeralda', description: 'Centrado, acento verde esmeralda',
+      layout: 'centered', thumbAccent: '#0f766e', atsFriendly: true
+    },
+    petroleo: {
+      id: 'petroleo', name: 'Petróleo', description: 'Barra lateral em azul petróleo',
+      layout: 'sidebar', thumbAccent: '#155e75', atsFriendly: false,
+      atsNote: 'Barra lateral: alguns ATS leem melhor coluna única.'
+    },
+    marinho: {
+      id: 'marinho', name: 'Marinho', description: 'Faixa superior em azul marinho',
+      layout: 'banner', thumbAccent: '#1e3a5f', atsFriendly: true
+    },
+    bordo: {
+      id: 'bordo', name: 'Bordô', description: 'Centrado, vinho sóbrio com serifa',
+      layout: 'centered', thumbAccent: '#7a2230', atsFriendly: true
+    },
+    ambar: {
+      id: 'ambar', name: 'Âmbar', description: 'Esquerda, acento âmbar acolhedor',
+      layout: 'left', thumbAccent: '#92400e', atsFriendly: true
+    },
+    oliva: {
+      id: 'oliva', name: 'Oliva', description: 'Barra lateral em verde oliva',
+      layout: 'sidebar', thumbAccent: '#256345', atsFriendly: false,
+      atsNote: 'Barra lateral: alguns ATS leem melhor coluna única.'
+    },
+    modern: {
+      id: 'modern', name: 'Moderno', description: 'Barra lateral clara com acento azul',
+      layout: 'sidebar', thumbAccent: '#5980a6', atsFriendly: false,
+      atsNote: 'Barra lateral: alguns ATS leem melhor coluna única.'
+    },
+    executive: {
+      id: 'executive', name: 'Executivo', description: 'Faixa superior escura',
+      layout: 'banner', thumbAccent: '#1d2d3d', atsFriendly: true
+    },
+    carvao: {
+      id: 'carvao', name: 'Carvão', description: 'Faixa superior em preto carvão',
+      layout: 'banner', thumbAccent: '#1f2937', atsFriendly: true
+    },
+    faixa: {
+      id: 'faixa', name: 'Faixa Clara', description: 'Faixa superior suave em azul claro',
+      layout: 'banner', thumbAccent: '#c9dcf0', atsFriendly: true
+    },
+    violeta: {
+      id: 'violeta', name: 'Violeta', description: 'Centrado, acento violeta contemporâneo',
+      layout: 'centered', thumbAccent: '#573a8a', atsFriendly: true
+    },
+    creative: {
+      id: 'creative', name: 'Criativo', description: 'Coluna única com selo de iniciais',
+      layout: 'creative', thumbAccent: '#5980a6', atsFriendly: false,
+      atsNote: 'Selo gráfico no topo: prefira modelos sem selo para ATS rigorosos.'
+    },
+    rosado: {
+      id: 'rosado', name: 'Rosado', description: 'Selo de iniciais em rosé, para portfólios',
+      layout: 'creative', thumbAccent: '#9f2544', atsFriendly: false,
+      atsNote: 'Selo gráfico no topo: prefira modelos sem selo para ATS rigorosos.'
     }
   };
 

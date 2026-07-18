@@ -271,11 +271,11 @@ const EuGeroPreview = (function () {
     return ini || 'SN';
   }
 
-  function renderCreativeLayout(state, enabledSections) {
+  function renderCreativeLayout(state, enabledSections, templateId) {
     const { personal, content } = buildContent(state, enabledSections, { modernLayout: false });
     const contacts = [personal.email, personal.phone, personal.location, personal.linkedinUrl].filter(Boolean);
     return `
-      <div class="cv cv-creative template-creative">
+      <div class="cv cv-creative template-${templateId || 'creative'}">
         <header class="cv-creative-header">
           <div class="cv-creative-badge">${escapeHtml(initialsFromName(personal.fullName))}</div>
           <div class="cv-creative-id">
@@ -295,7 +295,7 @@ const EuGeroPreview = (function () {
       case 'sidebar': return renderSidebarLayout(state, enabledSections, templateId);
       case 'banner': return renderBannerLayout(state, enabledSections, templateId);
       case 'left': return renderLeftLayout(state, enabledSections, templateId);
-      case 'creative': return renderCreativeLayout(state, enabledSections);
+      case 'creative': return renderCreativeLayout(state, enabledSections, templateId);
       default: return renderCenteredLayout(state, enabledSections, templateId);
     }
   }

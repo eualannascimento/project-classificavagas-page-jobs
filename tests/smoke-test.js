@@ -20,7 +20,6 @@ loadScript('js/scoring.js');
 loadScript('js/validation.js');
 loadScript('js/storage.js');
 loadScript('js/prompts.js');
-loadScript('js/cv-data.js');
 loadScript('js/router.js');
 loadScript('js/sample-data.js');
 
@@ -196,16 +195,6 @@ assert(!EuGeroConfig.isSectionMandatory('projects'), 'Projetos é opcional');
 const normalized = EuGeroConfig.normalizeEnabledSections(['experiences']);
 assert(normalized.includes('personal'), 'Sempre inclui seção obrigatória');
 
-// --- CV data model (preview + export) ---
-console.log('\nModelo CV (export fiel):');
-
-const cvDoc = EuGeroCvData.build(filledState);
-assert(cvDoc.personal.fullName === 'Maria Teste', 'CvData inclui dados pessoais');
-assert(cvDoc.sections.some(s => s.id === 'summary'), 'CvData inclui resumo');
-const mainModern = EuGeroCvData.getMainSections(cvDoc, 'modern');
-assert(!mainModern.some(s => s.id === 'skills'), 'Template moderno: skills só na sidebar');
-assert(cvDoc.sidebar.skills.length >= 0, 'Sidebar moderna estruturada');
-
 // --- Page fit (one-page CV) ---
 console.log('\nCurrículo de uma página:');
 
@@ -350,13 +339,18 @@ assert(
 // --- Templates completos ---
 console.log('\nCatalogo de templates:');
 
-assert(EuGeroConfig.TEMPLATE_IDS.length === 9, 'Catalogo tem 9 templates');
+assert(EuGeroConfig.TEMPLATE_IDS.length === 20, 'Catalogo tem 20 templates');
 assert(
   EuGeroConfig.TEMPLATE_IDS.every((id) => {
     const t = EuGeroConfig.TEMPLATES[id];
-    return t.id === id && t.name && t.description && typeof t.atsFriendly === 'boolean';
+    return t.id === id && t.name && t.description && typeof t.atsFriendly === 'boolean'
+      && ['centered', 'left', 'banner', 'sidebar', 'creative'].includes(t.layout);
   }),
-  'Todo template tem id, name, description e flag atsFriendly booleana'
+  'Todo template tem id, name, description, layout valido e flag atsFriendly booleana'
+);
+assert(
+  EuGeroConfig.TEMPLATE_IDS.filter((id) => EuGeroConfig.TEMPLATES[id].atsFriendly).length >= 12,
+  'Maioria dos modelos e amigavel a ATS (uso em vaga real)'
 );
 
 // --- Feedback acionavel por secao ---
@@ -403,19 +397,16 @@ const uiSources = ['index.html', 'js/config.js', 'js/prompts.js', 'js/characters
 const withDash = uiSources.filter((p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8').match(/—|–/));
 assert(withDash.length === 0, `Nenhum travessao em textos de UI${withDash.length ? ' (falha: ' + withDash.join(', ') + ')' : ''}`);
 
-// --- Consistencia do CDN docx (libs.js x export.js) ---
-console.log('\nCDN docx:');
+// --- Exportacao apenas PDF: sem residuos de Word/DOCX no projeto ---
+console.log('\nExportacao (somente PDF):');
 
-function extractDocxUrl(relativePath) {
-  const code = fs.readFileSync(path.join(__dirname, '..', relativePath), 'utf8');
-  const match = code.match(/https:\/\/cdn\.jsdelivr\.net\/npm\/docx@[^'"]+/);
-  return match ? match[0] : null;
-}
-
-const docxUrlLibs = extractDocxUrl('js/libs.js');
-const docxUrlExport = extractDocxUrl('js/export.js');
-assert(!!docxUrlLibs && !!docxUrlExport, 'libs.js e export.js referenciam o CDN docx');
-assert(docxUrlLibs === docxUrlExport, 'Checagem (libs.js) e export (export.js) usam a MESMA URL do docx');
+const noWordRefs = ['js/app.js', 'index.html'].filter((p) => {
+  const code = fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
+  return /export\.js|libs\.js|cv-data\.js|exportDocx|EuGeroExport|EuGeroLibs|EuGeroCvData/.test(code);
+});
+assert(noWordRefs.length === 0, `Sem referencias a Word/export removidos${noWordRefs.length ? ' (falha: ' + noWordRefs.join(', ') + ')' : ''}`);
+assert(!fs.existsSync(path.join(__dirname, '..', 'js/export.js')), 'js/export.js removido');
+assert(!fs.existsSync(path.join(__dirname, '..', 'js/cv-data.js')), 'js/cv-data.js removido');
 
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
