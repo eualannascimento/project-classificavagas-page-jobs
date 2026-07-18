@@ -298,10 +298,11 @@ assert(EuGeroConfig.getTemplateMeta('modern').atsFriendly === false, 'Moderno av
 console.log('\nProgresso de Preenchimento:');
 
 const testStateEmpty = EuGeroConfig.createEmptyState();
-// For personal, we have 4 required fields: fullName, headline, email, location.
-// For summary, we have 1: summary.
-// For experiences, if empty list, no fields are active/required (since items are dynamically added).
-// So total required fields = 5.
+// Seções ativas por padrão: personal (4 campos obrigatórios: fullName,
+// headline, email, location), summary (1: summary), skills (0, o campo de
+// texto de habilidades não é obrigatório), experiences/education/languages
+// (seções de lista habilitadas e vazias contam 1 cada como pendentes - P0.5).
+// Total = 4 + 1 + 1 + 1 + 1 = 8.
 const progressEmpty = EuGeroScoring.calculateProgress(testStateEmpty);
 assert(progressEmpty === 0, 'Estado vazio = 0% de progresso');
 
@@ -313,10 +314,9 @@ const testStatePartial = {
     email: 'maria@test.com'
   }
 };
-// 2 fields out of 5 required fields filled.
-// Math.round((2 / 5) * 100) = 40.
+// 2 campos preenchidos de 8 obrigatórios. Math.round((2 / 8) * 100) = 25.
 const progressPartial = EuGeroScoring.calculateProgress(testStatePartial);
-assert(progressPartial === 40, 'Estado parcial (2/5) = 40% de progresso');
+assert(progressPartial === 25, 'Estado parcial (2/8, seções de lista vazias contam) = 25% de progresso');
 
 const testStateZeroRequired = {
   ...testStateEmpty,
@@ -489,6 +489,33 @@ const normalFontMatch = cssCode.match(/cv-density-normal\s*\{[^}]*--doc-font-siz
 const condensedFontMatch = cssCode.match(/cv-density-condensado\s*\{[^}]*--doc-font-size:\s*([\d.]+)pt/);
 assert(normalFontMatch && parseFloat(normalFontMatch[1]) >= 10, 'Fonte normal (previa/PDF) nunca abaixo de 10pt');
 assert(condensedFontMatch && parseFloat(condensedFontMatch[1]) >= 10, 'Fonte condensada (previa/PDF) nunca abaixo de 10pt');
+
+// --- P0.5: progresso não ignora seção de lista habilitada e vazia ---
+console.log('\nProgresso de preenchimento:');
+
+const filledPersonal = {
+  fullName: 'Maria Teste',
+  headline: 'Engenheira de Dados',
+  email: 'maria@teste.com',
+  location: 'São Paulo, SP'
+};
+const progressStateEmptyList = {
+  enabledSections: ['experiences'],
+  personal: filledPersonal,
+  summary: 'Resumo profissional completo com experiência relevante em dados.',
+  skillsText: 'SQL; Python; Power BI',
+  experiences: []
+};
+const progressWithEmptyExperiences = EuGeroScoring.calculateProgress(progressStateEmptyList);
+assert(progressWithEmptyExperiences < 100, 'Seção "Experiência" habilitada e vazia não conta como 100% preenchida');
+
+const progressStateFilledList = {
+  ...progressStateEmptyList,
+  experiences: [{ title: 'Engenheira de Dados', company: 'Empresa X', description: 'Descrição com mais de quarenta e cinco caracteres para passar na validação obrigatória.' }]
+};
+const progressWithFilledExperiences = EuGeroScoring.calculateProgress(progressStateFilledList);
+assert(progressWithFilledExperiences > progressWithEmptyExperiences, 'Preencher a experiência aumenta o progresso em relação à seção vazia');
+assert(progressWithFilledExperiences === 100, 'Todos os campos obrigatórios preenchidos resulta em 100%');
 
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
