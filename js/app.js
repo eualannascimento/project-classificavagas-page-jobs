@@ -564,11 +564,13 @@
   }
 
   function nextStep() {
-    validateCurrentStep();
+    const isValid = validateCurrentStep();
     const sections = activeSections();
-    if (state.currentStep < sections.length - 1) {
-      goToStep(state.currentStep + 1);
-    } else {
+    const decision = EuGeroValidation.resolveStepAdvance(isValid, state.currentStep, sections.length);
+
+    if (decision.action === 'advance') {
+      goToStep(decision.step);
+    } else if (decision.action === 'review') {
       goToReview();
     }
   }

@@ -195,6 +195,21 @@ assert(!EuGeroConfig.isSectionMandatory('projects'), 'Projetos é opcional');
 const normalized = EuGeroConfig.normalizeEnabledSections(['experiences']);
 assert(normalized.includes('personal'), 'Sempre inclui seção obrigatória');
 
+// --- P0.1: gate de avanço do wizard (não avança com validação falha) ---
+console.log('\nGate de avanço do wizard:');
+
+const staying = EuGeroValidation.resolveStepAdvance(false, 1, 4);
+assert(staying.action === 'stay' && staying.step === 1, 'Etapa inválida não avança nem muda o step atual');
+
+const advancing = EuGeroValidation.resolveStepAdvance(true, 1, 4);
+assert(advancing.action === 'advance' && advancing.step === 2, 'Etapa válida avança para o próximo step');
+
+const reviewing = EuGeroValidation.resolveStepAdvance(true, 3, 4);
+assert(reviewing.action === 'review', 'Última etapa válida vai para a revisão em vez de avançar');
+
+const stayingLast = EuGeroValidation.resolveStepAdvance(false, 3, 4);
+assert(stayingLast.action === 'stay' && stayingLast.step === 3, 'Última etapa inválida não vai para a revisão');
+
 // --- Page fit (one-page CV) ---
 console.log('\nCurrículo de uma página:');
 
