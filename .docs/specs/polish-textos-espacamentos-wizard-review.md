@@ -34,11 +34,11 @@ Pacote de refinamento em todo o site: tom de texto discreto, direto e encorajado
 
 ## 5. Critérios de Aceite (verificáveis por teste)
 
-* [ ] CA01: nenhum travessão em textos visíveis de `index.html` e nos textos de UI de `js/`.
-* [ ] CA02: `buildSectionFeedback` retorna, para um estado com resumo fraco, uma dica específica citando verbo de ação (coberto no smoke-test).
-* [ ] CA03: no wizard, adicionar item em experiências não empilha um segundo formulário: há tabs numeradas e um formulário por vez.
-* [ ] CA04: nível de idioma renderiza como select com os 5 níveis.
-* [ ] CA05: home mobile 390x730 sem scroll, inclusive com "Como funciona" aberto.
+* [x] CA01: nenhum travessão em textos visíveis de `index.html` e nos textos de UI de `js/`.
+* [x] CA02: `buildSectionFeedback` retorna, para um estado com resumo fraco, uma dica específica citando verbo de ação (coberto no smoke-test).
+* [x] CA03: no wizard, adicionar item em experiências não empilha um segundo formulário: há tabs numeradas e um formulário por vez.
+* [x] CA04: nível de idioma renderiza como select com os 5 níveis.
+* [x] CA05: home mobile 390x730 sem scroll, inclusive com "Como funciona" aberto.
 
 ## 6. Fora de Escopo
 

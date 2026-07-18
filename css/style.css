@@ -406,13 +406,13 @@ textarea.cv-input { min-height: 104px; resize: vertical; line-height: 1.5; }
   /* Selecao de personagem: galeria 3 colunas x 2 linhas */
   #screen-characters h2 { font-size: 26px !important; }
   #screen-characters h2 + p { font-size: 13.5px !important; margin-bottom: 14px !important; }
-  .character-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .character-card { padding: 12px 6px 10px; gap: 5px; }
-  .character-avatar { width: 40px; height: 40px; font-size: 16px; }
-  .character-kicker { display: none; }
-  .character-name { font-size: 12.5px; line-height: 1.15; }
-  .character-role { display: none; }
-  .character-cta { display: none; }
+  #screen-characters .character-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  #screen-characters .character-card { padding: 12px 6px 10px; gap: 5px; }
+  #screen-characters .character-avatar { width: 40px; height: 40px; font-size: 16px; }
+  #screen-characters .character-kicker { display: none; }
+  #screen-characters .character-name { font-size: 12.5px; line-height: 1.15; }
+  #screen-characters .character-role { display: none; }
+  #screen-characters .character-cta { display: none; }
 
   /* Start: espacamentos levemente menores; nota auxiliar sai */
   #screen-start h2 { font-size: 26px !important; margin-bottom: 8px !important; }

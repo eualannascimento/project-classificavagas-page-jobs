@@ -289,14 +289,19 @@ const EuGeroScoring = (function () {
       const tips = rs
         .filter((r) => r.score !== 'otimo')
         .sort((a, b) => SCORE_VALUES[a.score] - SCORE_VALUES[b.score])
-        .slice(0, 3)
         .map((r) => ({
+          score: r.score,
           label: r.itemIndex != null && (state[section.id] || []).length > 1
             ? `${r.fieldConfig.label} (item ${r.itemIndex + 1})`
             : r.fieldConfig.label,
           advice: explainField(r.value, r.fieldConfig, actionVerbs),
           itemIndex: r.itemIndex
-        }));
+        }))
+        // Campo "bom" so vira dica quando ha uma acao concreta a tomar;
+        // conselho generico em campo razoavel e ruido, nao ajuda.
+        .filter((t) => t.score === 'fraco' || t.advice !== 'dá para deixar mais específico')
+        .slice(0, 3)
+        .map(({ score, ...t }) => t);
 
       return { sectionId: section.id, title: section.title, status, tips };
     });
