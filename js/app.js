@@ -64,6 +64,7 @@
     els.toast = document.getElementById('toast');
     els.previewOverlay = document.getElementById('preview-overlay');
     els.includeDataCheckbox = document.getElementById('include-data-checkbox');
+    els.jobDescriptionTextarea = document.getElementById('job-description-textarea');
     els.privacyPromptWarning = document.getElementById('privacy-prompt-warning');
     els.savedIndicator = document.getElementById('saved-indicator');
     els.previewMobileDock = document.getElementById('preview-mobile-dock');
@@ -220,6 +221,7 @@
       refreshPromptText();
       updatePrivacyWarning();
     });
+    els.jobDescriptionTextarea?.addEventListener('input', refreshPromptText);
 
     document.querySelectorAll('.modal-close').forEach((btn) => {
       btn.addEventListener('click', () => closeModal(btn.closest('.modal')));
@@ -419,8 +421,8 @@
 
     const cardHtml = (t) => {
       const atsBadge = t.atsFriendly
-        ? '<span class="badge badge-ats">Favorável a ATS</span>'
-        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'A leitura pode variar conforme o sistema ATS.')}">Pode exigir atenção no ATS</span>`;
+        ? '<span class="badge badge-ats">Estrutura favorável a ATS</span>'
+        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'A leitura pode variar conforme o sistema ATS.')}">Pode dificultar a leitura por ATS</span>`;
       return `
         <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
           <div class="template-thumb ${t.thumbClass}">${getThumbMarkup(t.layout, t.id)}</div>
@@ -439,7 +441,7 @@
     if (modalGrid) {
       modalGrid.innerHTML = TEMPLATE_IDS.map((id) => {
         const t = TEMPLATES[id];
-        const atsNote = t.atsFriendly ? 'Formato favorável a ATS' : (t.atsNote || 'Pode exigir atenção no ATS');
+        const atsNote = t.atsFriendly ? 'Estrutura simples e favorável à leitura por ATS' : (t.atsNote || 'Pode dificultar a leitura por ATS');
         return `<button type="button" class="modal-template-option" data-template="${t.id}"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.description)} - ${escapeHtml(atsNote)}</span></button>`;
       }).join('');
     }
@@ -496,6 +498,13 @@
     if (startCounter) {
       const idx = TEMPLATE_IDS.indexOf(state.template);
       startCounter.textContent = `${idx + 1} de ${TEMPLATE_IDS.length}`;
+    }
+    const startAtsNote = document.getElementById('start-ats-note');
+    if (startAtsNote) {
+      const meta = TEMPLATES[state.template];
+      startAtsNote.textContent = meta?.atsFriendly
+        ? 'Estrutura simples, que costuma facilitar a leitura por plataformas de recrutamento.'
+        : 'Este visual pode dificultar a leitura automática. Para candidaturas em plataformas de recrutamento, prefira um modelo de uma coluna.';
     }
   }
 
@@ -1081,6 +1090,7 @@
       <div class="skills-tags-chips" role="list"></div>
       <p class="skills-suggest-title">Sugestões para adicionar</p>
       <div class="skills-suggest-row"></div>
+      <p style="font-size: 12.5px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 8px 0 0;">Dica: leia os requisitos da vaga e confira se as habilidades que você possui também aparecem no currículo com nomes claros.</p>
     `;
 
     const chipsEl = wrap.querySelector('.skills-tags-chips');
@@ -1463,6 +1473,34 @@
         </div>
       </div>`;
 
+    // Painel de leitura por ATS: considera apenas a estrutura do modelo escolhido.
+    const currentTemplate = TEMPLATES[state.template];
+    const atsStatusLabel = currentTemplate?.atsFriendly ? 'Estrutura favorável' : 'Revise a estrutura';
+    const atsStatusDesc = currentTemplate?.atsFriendly
+      ? 'O modelo escolhido usa uma organização simples, que costuma facilitar a leitura automática.'
+      : 'Para plataformas de recrutamento, um modelo de uma coluna e sem elementos gráficos costuma ser mais seguro.';
+    const atsChecklist = [
+      'Use títulos claros para cada seção.',
+      'Mantenha as datas no formato mês e ano.',
+      'Use o mesmo idioma da vaga.',
+      'Evite foto e informações importantes dentro de imagens.',
+      'Confirme se o texto do PDF pode ser selecionado e copiado.',
+      'Depois do envio, revise os dados importados pela plataforma.'
+    ];
+    html += `
+      <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 14px;">
+        <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 6px;">Leitura por ATS</p>
+        <p style="font-size: 12.5px; line-height: 1.5; color: ${muted}; margin: 0 0 10px;">Esta verificação considera apenas a estrutura e a organização do currículo. Ela não garante aprovação nem substitui o preenchimento dos campos da plataforma.</p>
+        <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+          <span class="rf-badge ${currentTemplate?.atsFriendly ? 'rf-otimo' : 'rf-fraco'}">${escapeHtml(atsStatusLabel)}</span>
+          <span style="font-size: 13.5px; color: color-mix(in srgb, var(--color-text) 78%, transparent);">${escapeHtml(atsStatusDesc)}</span>
+        </div>
+        <p style="font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: ${muted}; margin: 0 0 6px;">Antes de enviar</p>
+        <ul style="margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: color-mix(in srgb, var(--color-text) 78%, transparent);">
+          ${atsChecklist.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+        </ul>
+      </div>`;
+
     els.reviewContent.innerHTML = html;
 
     els.reviewContent.querySelectorAll('.link-btn').forEach((btn) => {
@@ -1515,9 +1553,13 @@
     // O nome sugerido no "Salvar como PDF" vem do titulo da pagina: CV_<NOME>_<CARGO>.
     const prevTitle = document.title;
     document.title = cvFileBaseName();
-    const restore = () => { document.title = prevTitle; window.removeEventListener('afterprint', restore); };
+    const restore = () => {
+      document.title = prevTitle;
+      window.removeEventListener('afterprint', restore);
+      showToast('Ao enviar o currículo para uma plataforma de vagas, revise os campos preenchidos automaticamente, principalmente cargos, empresas, datas, formação e descrições.', { duration: 7000 });
+    };
     window.addEventListener('afterprint', restore);
-    showToast('Na janela de impressão, selecione “Salvar como PDF”.', { duration: 4000 });
+    showToast('Na janela de impressão, selecione “Salvar como PDF”. Depois, abra o arquivo e confirme se o texto pode ser selecionado e copiado.', { duration: 5000 });
     setTimeout(() => window.print(), 150);
   }
 
@@ -1529,8 +1571,8 @@
       const t = TEMPLATES[id];
       const selected = state.template === id;
       const atsBadge = t.atsFriendly
-        ? '<span class="badge badge-ats">Favorável a ATS</span>'
-        : '<span class="badge badge-ats-warn">Pode exigir atenção no ATS</span>';
+        ? '<span class="badge badge-ats">Estrutura favorável a ATS</span>'
+        : '<span class="badge badge-ats-warn">Pode dificultar a leitura por ATS</span>';
       return `
         <button type="button" class="review-template-card${selected ? ' selected' : ''}" data-template="${t.id}" aria-pressed="${selected}">
           <span class="review-template-name">${escapeHtml(t.name)} ${atsBadge}</span>
@@ -1657,9 +1699,10 @@
 
   function refreshPromptText() {
     const includeData = els.includeDataCheckbox?.checked ?? true;
+    const jobDescription = els.jobDescriptionTextarea?.value || '';
     let prompt = '';
-    if (promptContext.type === 'general') prompt = EuGeroPrompts.buildGeneralPrompt(state, includeData);
-    else if (promptContext.type === 'section') prompt = EuGeroPrompts.buildSectionPrompt(promptContext.sectionId, state, includeData);
+    if (promptContext.type === 'general') prompt = EuGeroPrompts.buildGeneralPrompt(state, includeData, jobDescription);
+    else if (promptContext.type === 'section') prompt = EuGeroPrompts.buildSectionPrompt(promptContext.sectionId, state, includeData, jobDescription);
     else if (promptContext.type === 'translation') prompt = EuGeroPrompts.buildTranslationPrompt(state, includeData);
     if (els.promptText) els.promptText.value = prompt;
     updatePrivacyWarning();
