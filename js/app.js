@@ -317,7 +317,7 @@
     if (character.state) {
       // Cópia profunda para não mutar o módulo de personagens.
       state = EuGeroStorage.mergeWithDefaults(JSON.parse(JSON.stringify(character.state)));
-      showToast(`Exemplo de ${character.name} carregado. Agora, personalize com suas informações.`);
+      showToast(`Exemplo de ${character.name} carregado. Substitua o conteúdo pelas informações que se aplicam a você.`);
     } else {
       state = EuGeroStorage.mergeWithDefaults(EuGeroConfig.createEmptyState());
       showToast('Página em branco pronta. Comece a montar seu currículo.');
@@ -419,8 +419,8 @@
 
     const cardHtml = (t) => {
       const atsBadge = t.atsFriendly
-        ? '<span class="badge badge-ats">ATS</span>'
-        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'Layout pode afetar leitura ATS')}">Atenção ao ATS</span>`;
+        ? '<span class="badge badge-ats">Favorável a ATS</span>'
+        : `<span class="badge badge-ats-warn" title="${escapeAttr(t.atsNote || 'A leitura pode variar conforme o sistema ATS.')}">Pode exigir atenção no ATS</span>`;
       return `
         <button type="button" class="template-card" data-template="${t.id}" aria-label="Template ${escapeAttr(t.name)}">
           <div class="template-thumb ${t.thumbClass}">${getThumbMarkup(t.layout, t.id)}</div>
@@ -439,7 +439,7 @@
     if (modalGrid) {
       modalGrid.innerHTML = TEMPLATE_IDS.map((id) => {
         const t = TEMPLATES[id];
-        const atsNote = t.atsFriendly ? 'Compatível com ATS' : (t.atsNote || 'Atenção ao ATS');
+        const atsNote = t.atsFriendly ? 'Formato favorável a ATS' : (t.atsNote || 'Pode exigir atenção no ATS');
         return `<button type="button" class="modal-template-option" data-template="${t.id}"><strong>${escapeHtml(t.name)}</strong><span>${escapeHtml(t.description)} - ${escapeHtml(atsNote)}</span></button>`;
       }).join('');
     }
@@ -938,15 +938,15 @@
 
   function textQuality(text) {
     const t = (text || '').trim();
-    if (!t) return { kind: 'empty', label: 'Dica: comece com um verbo de ação, como “Vendi”, “Organizei” ou “Atendi”.' };
+    if (!t) return { kind: 'empty', label: 'Dica: comece descrevendo uma ação que você realizou.' };
     const low = t.toLowerCase();
     const hasVerb = QUALITY_VERBS.some((v) => low.includes(v));
     const hasNum = /\d/.test(t);
-    if (t.length < 45) return { kind: 'weak', label: 'Continue: explique o que você fez e qual foi o resultado.' };
-    if (hasVerb && hasNum) return { kind: 'great', label: 'Ótimo! O texto apresenta uma ação e um resultado concreto.' };
-    if (hasNum) return { kind: 'good', label: 'Bom começo. Inclua um verbo de ação para destacar sua participação.' };
-    if (hasVerb) return { kind: 'good', label: 'Bom começo. Inclua um número ou resultado concreto, se possível.' };
-    return { kind: 'weak', label: 'Comece a frase com um verbo de ação.' };
+    if (t.length < 45) return { kind: 'weak', label: 'Continue: conte o que você fez e acrescente contexto ou resultado, se houver.' };
+    if (hasVerb && hasNum) return { kind: 'great', label: 'Ótimo! O texto deixa clara a sua participação e apresenta um resultado concreto.' };
+    if (hasNum) return { kind: 'good', label: 'Bom começo. Explique qual foi a sua participação nesse resultado.' };
+    if (hasVerb) return { kind: 'good', label: 'Bom começo. Acrescente o contexto, o impacto ou o resultado, se tiver essa informação.' };
+    return { kind: 'weak', label: 'Comece com um verbo de ação e deixe clara a sua participação.' };
   }
 
   const HINT_STYLE = {
@@ -976,7 +976,7 @@
         el.innerHTML = '';
         return;
       }
-      q = { kind: 'weak', label: 'Este e-mail parece incompleto. Confira o “@” e o domínio.' };
+      q = { kind: 'weak', label: 'Este e-mail parece incompleto. Confira o “@” e o final do endereço.' };
     } else {
       q = textQuality(value);
     }
@@ -1069,17 +1069,17 @@
     updateFieldScore(wrap, field, value);
   }
 
-  const SKILL_SUGGESTIONS = ['Trabalho em equipe', 'Comunicação', 'Atendimento ao cliente', 'Organização',
-    'Pacote Office', 'Proatividade', 'Resolução de problemas', 'Liderança', 'Pontualidade', 'Vendas'];
+  const SKILL_SUGGESTIONS = ['Trabalho em equipe', 'Comunicação clara', 'Atendimento ao cliente', 'Organização',
+    'Pacote Office', 'Iniciativa', 'Resolução de problemas', 'Liderança', 'Gestão do tempo', 'Vendas'];
 
   function renderSkillsTagsField(wrap, section, field, value, id) {
     const tags = EuGeroConfig.parseSkillsText(value || state.skillsText);
 
     wrap.innerHTML = `
       <span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">${field.label}${renderFieldTip(field)}</span>
-      <input type="text" id="${id}" class="cv-input" placeholder="${escapeAttr(field.placeholder || 'Ex.: Atendimento ao cliente…')}" autocomplete="off">
+      <input type="text" id="${id}" class="cv-input" placeholder="${escapeAttr(field.placeholder || 'Digite uma habilidade…')}" autocomplete="off">
       <div class="skills-tags-chips" role="list"></div>
-      <p class="skills-suggest-title">Sugestões: clique para adicionar</p>
+      <p class="skills-suggest-title">Sugestões para adicionar</p>
       <div class="skills-suggest-row"></div>
     `;
 
@@ -1406,22 +1406,23 @@
     const aggregate = EuGeroScoring.aggregateScore(results, pageFit);
 
     const pct = aggregate.overall;
-    let scoreLabel = 'Em progresso';
-    let scoreMsg = 'Alguns ajustes podem deixar seu currículo mais completo.';
+    let scoreLabel = 'Em andamento';
+    let scoreMsg = 'Algumas seções ainda podem ser preenchidas ou revisadas.';
     if (pct >= 80) {
-      scoreLabel = 'Ótimo';
-      scoreMsg = 'Seu currículo está claro e bem estruturado. Pronto para enviar.';
+      scoreLabel = 'Muito bem preenchido';
+      scoreMsg = 'As principais seções estão preenchidas. Faça uma última revisão antes de enviar.';
     } else if (pct >= 55) {
-      scoreLabel = 'Bom';
-      scoreMsg = 'Seu currículo está bem estruturado. Pequenos ajustes podem fortalecê-lo.';
+      scoreLabel = 'Bem preenchido';
+      scoreMsg = 'O currículo está organizado. Revise os pontos indicados antes de finalizar.';
     }
 
     const muted = 'color-mix(in srgb, var(--color-text) 55%, transparent)';
     let html = `
+      <p style="font-size: 12.5px; line-height: 1.5; color: ${muted}; margin: 0 0 16px;">Esta análise considera apenas o preenchimento do currículo. Ela não avalia seu perfil nem garante resultados em processos seletivos.</p>
       <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
         <div>
           <div style="font-family: var(--font-heading); font-weight: 600; font-size: 44px; line-height: 1; color: var(--color-accent-700);">${escapeHtml(scoreLabel)}</div>
-          <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin-top: 4px;">Qualidade geral</div>
+          <div style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin-top: 4px;">Nível de preenchimento</div>
         </div>
         <div style="flex: 1; min-width: 240px;">
           <div style="height: 8px; background: var(--color-neutral-200); position: relative; overflow: hidden; margin-bottom: 12px;">
@@ -1431,18 +1432,18 @@
         </div>
       </div>`;
 
-    // Quadro por secao: o que ja esta bom e o que reforcar, com dica especifica.
+    // Quadro por secao: o que ja esta preenchido e o que reforcar, com dica especifica.
     const feedback = EuGeroScoring.buildSectionFeedback(state, sections, ACTION_VERBS);
     const STATUS_META = {
-      otimo: { label: 'Ótimo', cls: 'rf-otimo' },
-      bom: { label: 'Bom', cls: 'rf-bom' },
-      fraco: { label: 'Revisar', cls: 'rf-fraco' },
-      vazio: { label: 'Vazio', cls: 'rf-vazio' }
+      otimo: { label: 'Bem preenchida', cls: 'rf-otimo' },
+      bom: { label: 'Parcialmente preenchida', cls: 'rf-bom' },
+      fraco: { label: 'Pouco preenchida', cls: 'rf-fraco' },
+      vazio: { label: 'Sem conteúdo', cls: 'rf-vazio' }
     };
 
     html += `
       <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 14px;">
-        <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Seção por seção</p>
+        <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Preenchimento por seção</p>
         <div class="review-feedback">
           ${feedback.map((f) => {
             const meta = STATUS_META[f.status] || STATUS_META.bom;
@@ -1528,8 +1529,8 @@
       const t = TEMPLATES[id];
       const selected = state.template === id;
       const atsBadge = t.atsFriendly
-        ? '<span class="badge badge-ats">ATS</span>'
-        : '<span class="badge badge-ats-warn">Atenção ao ATS</span>';
+        ? '<span class="badge badge-ats">Favorável a ATS</span>'
+        : '<span class="badge badge-ats-warn">Pode exigir atenção no ATS</span>';
       return `
         <button type="button" class="review-template-card${selected ? ' selected' : ''}" data-template="${t.id}" aria-pressed="${selected}">
           <span class="review-template-name">${escapeHtml(t.name)} ${atsBadge}</span>
@@ -1638,7 +1639,7 @@
         }
         showToast('Rascunho carregado com sucesso.');
       } catch (err) {
-        showToast('O arquivo está corrompido ou é inválido. Tente outro arquivo.', { error: true });
+        showToast('Este arquivo está corrompido ou não é válido. Tente outro.', { error: true });
       }
     };
     reader.readAsText(file);

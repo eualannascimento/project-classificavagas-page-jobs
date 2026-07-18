@@ -21,16 +21,16 @@ const EuGeroLinkedInGuide = (function () {
 
     entries.push({
       title: 'Foto e capa',
-      path: 'Seu perfil → toque na foto → Adicionar foto',
+      path: 'Seu perfil → selecione a foto → Adicionar foto',
       content: '',
-      tip: 'Use uma foto de rosto, com fundo neutro e boa iluminação. Na capa, escolha uma imagem simples relacionada à sua área.'
+      tip: 'A foto e a capa são opcionais. Caso use uma foto, escolha uma imagem nítida. Não é necessário usar roupa formal nem um cenário profissional. A capa pode ter uma imagem simples relacionada à sua área.'
     });
 
     entries.push({
       title: 'Título do perfil',
       path: 'Seu perfil → lápis (✎) no topo → campo “Título”',
       content: [p.headline, p.location].filter(Boolean).join(' · '),
-      tip: 'Além do cargo, informe sua área de atuação ou o tipo de oportunidade que busca.'
+      tip: 'Além do cargo, você pode informar sua área ou o tipo de oportunidade que busca.'
     });
 
     if (!isEmpty(state.summary)) {
@@ -38,7 +38,7 @@ const EuGeroLinkedInGuide = (function () {
         title: 'Sobre',
         path: 'Seu perfil → seção “Sobre” → lápis (✎)',
         content: state.summary,
-        tip: 'Escreva em primeira pessoa e explique brevemente sua experiência, seus pontos fortes e o que busca.'
+        tip: 'Escreva em primeira pessoa e fale brevemente sobre suas experiências, habilidades e o que busca.'
       });
     }
 
@@ -53,7 +53,7 @@ const EuGeroLinkedInGuide = (function () {
           `Período: ${e.period || 'preencha no LinkedIn'}`,
           e.description ? `Descrição: ${e.description}` : ''
         ].filter(Boolean).join('\n')).join('\n\n'),
-        tip: 'Aproveite o espaço para detalhar atividades, resultados e aprendizados relevantes.'
+        tip: 'Use o espaço para explicar melhor suas atividades, seus resultados e o que aprendeu.'
       });
     }
 
@@ -63,7 +63,7 @@ const EuGeroLinkedInGuide = (function () {
         title: 'Formação',
         path: 'Seu perfil → seção “Formação acadêmica” → botão +',
         content: edus.map(e => `${e.degree || ''} - ${e.institution || ''}${e.period ? ` (${e.period})` : ''}`).join('\n'),
-        tip: 'Inclua também cursos técnicos e outras formações relevantes.'
+        tip: 'Inclua também cursos técnicos e outras formações importantes para sua área.'
       });
     }
 
@@ -73,7 +73,7 @@ const EuGeroLinkedInGuide = (function () {
         title: 'Competências',
         path: 'Seu perfil → seção “Competências” → botão +',
         content: skills.join(', '),
-        tip: 'Destaque as três competências mais importantes e solicite validações a pessoas que conhecem seu trabalho.'
+        tip: 'Destaque até três competências relevantes. Você pode pedir validações a pessoas que conhecem suas atividades.'
       });
     }
 
@@ -83,7 +83,7 @@ const EuGeroLinkedInGuide = (function () {
         title: 'Idiomas',
         path: 'Seu perfil → “Adicionar seção do perfil” → Idiomas',
         content: langs.map(l => `${l.language}${l.level ? ` - ${l.level}` : ''}`).join('\n'),
-        tip: 'Informe seu nível com precisão, pois ele poderá ser avaliado durante o processo seletivo.'
+        tip: 'Escolha o nível que melhor representa seu uso atual do idioma.'
       });
     }
 
@@ -91,14 +91,14 @@ const EuGeroLinkedInGuide = (function () {
       title: 'URL personalizada',
       path: 'Seu perfil → “Editar perfil público e URL”',
       content: `linkedin.com/in/${slugFromName(p.fullName)}`,
-      tip: 'Uma URL curta e personalizada facilita a leitura e fica melhor no currículo.'
+      tip: 'Uma URL curta e personalizada é mais fácil de ler e fica melhor no currículo.'
     });
 
     entries.push({
       title: 'Recomendações',
       path: 'Perfil de um contato → botão “Mais” → Solicitar recomendação',
       content: '',
-      tip: 'Peça uma recomendação a professores, colegas, clientes ou antigos gestores que conheçam seu trabalho.'
+      tip: 'Peça uma recomendação a alguém que tenha acompanhado suas atividades em trabalho, estudo, projetos ou ações voluntárias.'
     });
 
     return entries;
