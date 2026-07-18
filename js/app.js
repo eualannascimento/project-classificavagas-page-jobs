@@ -18,7 +18,10 @@
   let toastTimer = null;
 
   const els = {};
-  const A4_BASE_WIDTH = 370;
+  // 210mm convertido para px (unidade CSS absoluta: 96px = 1in = 25.4mm) -
+  // a previa usa a largura fisica real da pagina A4 antes da escala de
+  // exibicao, entao previa e impressao usam exatamente a mesma tipografia (P0.4).
+  const A4_BASE_WIDTH = 210 * 96 / 25.4;
 
   function init() {
     cacheElements();
@@ -1567,12 +1570,12 @@
   }
 
   function scaleReviewPreviews() {
-    // Escala as prévias dentro da moldura A4 (base do modelo: 370px de largura).
+    // Escala as prévias dentro da moldura A4 (largura fisica real: 210mm).
     document.querySelectorAll('.preview-a4-wrap > .preview-content').forEach((preview) => {
       const width = preview.parentElement.clientWidth;
       if (width <= 0) return;
       const scale = width / A4_BASE_WIDTH;
-      preview.style.width = `${A4_BASE_WIDTH}px`;
+      preview.style.width = '210mm';
       preview.style.transform = `scale(${scale})`;
     });
   }

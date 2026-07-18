@@ -478,6 +478,18 @@ assert(editorHtml.includes('cv-section-skeleton'), 'Modo padrão (editor) preser
 const printCvUsesExportMode = /EuGeroPreview\.render\(\s*state\s*,\s*state\.template\s*,\s*activeSections\(\)\s*,\s*['"]export['"]\s*\)/.test(appJsCode);
 assert(printCvUsesExportMode, 'printCv() chama EuGeroPreview.render com modo "export"');
 
+// --- P0.4: tipografia unificada entre previa e PDF, sem fator de conversão ---
+console.log('\nTipografia unificada (previa = PDF):');
+
+const cssCode = fs.readFileSync(path.join(__dirname, '..', 'css/style.css'), 'utf8');
+assert(!cssCode.includes('calc(210mm *'), 'CSS não usa mais fator de conversão calc(210mm * X / 370) entre previa e impressão');
+assert(!appJsCode.includes('A4_BASE_WIDTH = 370'), 'app.js não usa mais 370px arbitrário como base da página A4');
+
+const normalFontMatch = cssCode.match(/cv-density-normal\s*\{[^}]*--doc-font-size:\s*([\d.]+)pt/);
+const condensedFontMatch = cssCode.match(/cv-density-condensado\s*\{[^}]*--doc-font-size:\s*([\d.]+)pt/);
+assert(normalFontMatch && parseFloat(normalFontMatch[1]) >= 10, 'Fonte normal (previa/PDF) nunca abaixo de 10pt');
+assert(condensedFontMatch && parseFloat(condensedFontMatch[1]) >= 10, 'Fonte condensada (previa/PDF) nunca abaixo de 10pt');
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 

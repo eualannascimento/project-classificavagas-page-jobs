@@ -1145,30 +1145,34 @@ body.modal-open {
   flex: 1;
 }
 
+/* Unidades fisicas (mm/pt) em vez de px: previa e impressao usam exatamente
+   o mesmo calculo tipografico, sem fator de conversao entre as duas (P0.4).
+   Guardrails: fonte nunca abaixo de 10pt, entrelinha nunca abaixo de 1.2,
+   margens nunca abaixo de 12mm. */
 .preview-content.preview-paper,
 .preview-content {
   background: #fff;
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
-  min-height: 480px;
-  padding: var(--doc-padding, 22px 20px);
-  font-size: var(--doc-font-size, 9px);
+  min-height: 297mm;
+  padding: var(--doc-padding, 16mm);
+  font-size: var(--doc-font-size, 10.5pt);
   line-height: var(--doc-line-height, 1.35);
   color: #1a1a2e;
 }
 
 .preview-content.condensed-mode {
-  --doc-padding: 14px 14px;
-  --doc-font-size: 8px;
-  --doc-line-height: 1.15;
+  --doc-padding: 12mm;
+  --doc-font-size: 10pt;
+  --doc-line-height: 1.2;
 }
 
-/* Margens (do modelo): fator sobre o padding da pagina */
-.preview-content.cv-margin-estreita { --doc-padding: 16px 14px; }
-.preview-content.cv-margin-padrao { --doc-padding: 22px 20px; }
-.preview-content.cv-margin-confortavel { --doc-padding: 30px 27px; }
-/* Espacamento (do modelo): densidade do texto */
-.preview-content.cv-density-normal { --doc-font-size: 9px; --doc-line-height: 1.35; }
-.preview-content.cv-density-condensado { --doc-font-size: 8px; --doc-line-height: 1.18; }
+/* Margens (do modelo): padding real da pagina, sempre >= 12mm */
+.preview-content.cv-margin-estreita { --doc-padding: 12mm; }
+.preview-content.cv-margin-padrao { --doc-padding: 16mm; }
+.preview-content.cv-margin-confortavel { --doc-padding: 20mm; }
+/* Espacamento (do modelo): densidade do texto, sempre >= 10pt e >= 1.2 de entrelinha */
+.preview-content.cv-density-normal { --doc-font-size: 10.5pt; --doc-line-height: 1.35; }
+.preview-content.cv-density-condensado { --doc-font-size: 10pt; --doc-line-height: 1.2; }
 
 .onboarding-tips {
   margin: 0.75rem 0 0.75rem;
@@ -1658,20 +1662,13 @@ body.modal-open {
   #print-cv {
     display: block !important;
     width: 210mm;
-    min-height: 296mm;
+    min-height: 297mm;
     background: #fff;
     box-shadow: none;
-    /* mesma proporcao da previa: base 9px em 370px de largura */
-    font-size: calc(210mm * 9 / 370);
-    line-height: var(--doc-line-height, 1.35);
-    color: #1a1a2e;
-    padding: var(--doc-padding);
+    /* font-size, line-height e padding vem das mesmas regras .preview-content
+       usadas na previa (unidades fisicas mm/pt) - sem conversao aqui (P0.4). */
   }
-  #print-cv.cv-margin-estreita { --doc-padding: calc(210mm * 16 / 370) calc(210mm * 14 / 370); }
-  #print-cv.cv-margin-padrao { --doc-padding: calc(210mm * 22 / 370) calc(210mm * 20 / 370); }
-  #print-cv.cv-margin-confortavel { --doc-padding: calc(210mm * 30 / 370) calc(210mm * 27 / 370); }
-  #print-cv.cv-density-condensado { font-size: calc(210mm * 8 / 370); --doc-line-height: 1.18; }
-  #print-cv .cv-sidebar-layout { min-height: calc(296mm - 2 * 210mm * 22 / 370); }
+  #print-cv .cv-sidebar-layout { min-height: calc(297mm - 2 * var(--doc-padding, 16mm)); }
 }
 
 /* ---- Moldura A4 da prévia (proporção 1:1.414, igual ao modelo) ---- */
@@ -1687,10 +1684,11 @@ body.modal-open {
   top: 0;
   left: 0;
   transform-origin: top left;
-  /* Uma pagina A4 exata ANTES da escala (370px de base x 1.414). Com min-height
-     100% a pagina saia mais curta que a moldura depois da escala, deixando um
-     vao e a sombra da borda inferior aparecia como um "traco" no meio. */
-  min-height: 523px;
+  /* Uma pagina A4 fisica exata (210mm x 297mm) ANTES da escala de exibicao.
+     Com min-height 100% a pagina saia mais curta que a moldura depois da
+     escala, deixando um vao e a sombra da borda inferior aparecia como um
+     "traco" no meio. */
+  min-height: 297mm;
   /* A moldura (.blueprint) ja desenha a borda: sem sombra solta aqui dentro. */
   box-shadow: none;
 }
@@ -2790,7 +2788,7 @@ body.modal-open {
   position: absolute;
   left: 0;
   right: 0;
-  top: 480px;
+  top: 297mm;
   border-top: 2px dashed var(--color-danger);
   pointer-events: none;
   z-index: 2;
@@ -2806,12 +2804,12 @@ body.modal-open {
   padding: 0 0.25rem;
 }
 
-.preview-overflow .preview-a4-body::after {
+.preview-a4-body.preview-overflow::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
-  top: 480px;
+  top: 297mm;
   bottom: 0;
   background: linear-gradient(transparent, rgba(220, 38, 38, 0.08));
   pointer-events: none;
