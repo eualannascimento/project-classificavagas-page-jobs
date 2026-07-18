@@ -14,6 +14,7 @@ function loadScript(relativePath) {
 }
 
 // Carregar módulos na ordem correta
+loadScript('js/utils.js');
 loadScript('js/config.js');
 loadScript('js/dates.js');
 loadScript('js/scoring.js');
@@ -528,10 +529,35 @@ assert(appJsContent.includes('Antes de enviar'), 'Rotulo da checklist "Antes de 
 assert(appJsContent.includes('Confirme se o texto do PDF pode ser selecionado e copiado.'), 'Checklist inclui item sobre texto selecionavel no PDF');
 assert(appJsContent.includes('Dica: leia os requisitos da vaga e confira se as habilidades'), 'Dica de habilidades x requisitos da vaga presente abaixo das sugestoes');
 
-// --- Summary ---
-console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
+// --- Utilitários compartilhados (EuGeroUtils) ---
+console.log('\nUtilitários compartilhados:');
 
-if (failed > 0) {
-  process.exit(1);
+assert(
+  EuGeroUtils.escapeHtml(`<b>"a" & 'b'</b>`) === '&lt;b&gt;&quot;a&quot; &amp; &#39;b&#39;&lt;/b&gt;',
+  'escapeHtml escapa &, <, >, " e \''
+);
+assert(
+  EuGeroUtils.escapeAttr('<b>"a" & b</b>') === '&lt;b&gt;&quot;a&quot; &amp; b&lt;/b&gt;',
+  'escapeAttr escapa &, ", < e >'
+);
+
+let debounceCalls = 0;
+const debounced = EuGeroUtils.debounce(() => { debounceCalls++; }, 10);
+debounced();
+debounced();
+debounced();
+
+setTimeout(() => {
+  assert(debounceCalls === 1, 'debounce cancela chamadas anteriores e executa só a última');
+  finishTests();
+}, 30);
+
+function finishTests() {
+  // --- Summary ---
+  console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
+
+  if (failed > 0) {
+    process.exit(1);
+  }
 }
 
