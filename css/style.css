@@ -2840,6 +2840,58 @@ body.modal-open {
 .home-privacy { font-size: 13.5px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 72%, transparent); margin: 0; flex: 1; min-width: 260px; text-align: right; }
 .home-privacy-tag { font-family: var(--font-heading); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent-700); font-size: 12px; }
 
+/* Review: quadro de qualidade secao por secao */
+.review-feedback { display: flex; flex-direction: column; gap: 10px; }
+.review-feedback-row { display: flex; flex-direction: column; gap: 5px; }
+.rf-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+.rf-badge {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--color-divider);
+  min-width: 62px;
+  text-align: center;
+}
+.rf-otimo { color: #2E6B47; border-color: color-mix(in srgb, #2E6B47 45%, transparent); background: color-mix(in srgb, #2E6B47 8%, transparent); }
+.rf-bom { color: var(--color-accent-700); border-color: color-mix(in srgb, var(--color-accent) 45%, transparent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.rf-fraco { color: #8C4A2E; border-color: color-mix(in srgb, #8C4A2E 45%, transparent); background: color-mix(in srgb, #8C4A2E 8%, transparent); }
+.rf-vazio { color: color-mix(in srgb, var(--color-text) 50%, transparent); }
+.rf-title { font-family: var(--font-heading); font-weight: 600; font-size: 15px; text-transform: uppercase; }
+.rf-tips { display: flex; flex-direction: column; gap: 3px; padding-left: 72px; }
+.rf-tip {
+  background: none;
+  border: 0;
+  padding: 1px 0;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--color-text) 74%, transparent);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+}
+.rf-tip:hover { color: var(--color-accent-700); }
+
+@media (max-width: 768px) {
+  .rf-tips { padding-left: 0; }
+  /* Baixar PDF em destaque no mobile: primeiro e largura total */
+  .review-actions { flex-direction: column; align-items: stretch; }
+  .review-actions .btn { width: 100%; justify-content: center; }
+  .review-actions-spacer { display: none; }
+  #btn-export-pdf { order: -1; min-height: 52px !important; font-size: 16px !important; }
+}
+
 /* Wizard: tabs numeradas dos itens de lista (um formulario por vez) */
 .list-tabs {
   display: flex;

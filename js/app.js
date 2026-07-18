@@ -1443,18 +1443,36 @@
         </div>
       </div>`;
 
-    if (aggregate.weakFields.length > 0) {
-      html += `
-        <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 16px;">
-          <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Sugestões para melhorar</p>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${aggregate.weakFields.map((f) => {
-              const stepIndex = sections.findIndex((s) => s.id === f.sectionId);
-              return `<button type="button" class="link-btn" data-step="${stepIndex}" style="display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; font-size: 14px;"><span style="color: var(--color-accent);">→</span>Reforce: ${escapeHtml(f.displayName)}</button>`;
-            }).join('')}
-          </div>
-        </div>`;
-    }
+    // Quadro por secao: o que ja esta bom e o que reforcar, com dica especifica.
+    const feedback = EuGeroScoring.buildSectionFeedback(state, sections, ACTION_VERBS);
+    const STATUS_META = {
+      otimo: { label: 'Ótimo', cls: 'rf-otimo' },
+      bom: { label: 'Bom', cls: 'rf-bom' },
+      fraco: { label: 'Reforce', cls: 'rf-fraco' },
+      vazio: { label: 'Vazio', cls: 'rf-vazio' }
+    };
+
+    html += `
+      <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 14px;">
+        <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Seção por seção</p>
+        <div class="review-feedback">
+          ${feedback.map((f) => {
+            const meta = STATUS_META[f.status] || STATUS_META.bom;
+            const stepIndex = sections.findIndex((s) => s.id === f.sectionId);
+            const tips = f.tips.map((t) =>
+              `<button type="button" class="rf-tip link-btn" data-step="${stepIndex}">${escapeHtml(t.label)}: ${escapeHtml(t.advice)}</button>`
+            ).join('');
+            return `
+              <div class="review-feedback-row">
+                <button type="button" class="rf-head link-btn" data-step="${stepIndex}">
+                  <span class="rf-badge ${meta.cls}">${meta.label}</span>
+                  <span class="rf-title">${escapeHtml(f.title)}</span>
+                </button>
+                ${tips ? `<div class="rf-tips">${tips}</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
 
     els.reviewContent.innerHTML = html;
 
