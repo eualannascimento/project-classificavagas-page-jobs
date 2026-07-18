@@ -4,10 +4,10 @@
 const EuGeroPrompts = (function () {
   const SECTION_PROMPTS = {
     personal: 'Revise os dados que escolhi incluir no currículo e no LinkedIn. Sugira um título profissional claro, uma forma simples de apresentar os contatos e melhorias para a URL do LinkedIn. Não sugira informações pessoais que não sejam necessárias.',
-    summary: 'Ajude a escrever um resumo profissional curto, com duas ou três frases, destacando experiência, habilidades e objetivo. Não invente informações.',
-    experiences: 'Ajude a melhorar as descrições das minhas experiências. Use verbos de ação, deixe claras as responsabilidades e inclua resultados apenas quando houver dados suficientes.',
+    summary: 'Ajude a escrever um resumo profissional curto, com duas ou três frases, destacando experiência, habilidades e objetivo. Se eu fornecer uma descrição de vaga, use termos compatíveis com ela somente quando forem verdadeiros para o meu perfil. Não invente informações.',
+    experiences: 'Ajude a melhorar as descrições das minhas experiências. Use verbos de ação e deixe claras as atividades, ferramentas, conhecimentos e resultados. Se eu fornecer uma descrição de vaga, destaque apenas as relações que forem verdadeiras e não repita palavras-chave de forma artificial.',
     education: 'Ajude a organizar minha formação, incluindo curso, instituição, período e outras informações relevantes que eu já tenha fornecido.',
-    skills: 'Sugira habilidades técnicas e formas de trabalhar coerentes com as informações fornecidas e com o cargo ou a área de interesse. Separe o que já está confirmado do que preciso validar.',
+    skills: 'Sugira habilidades técnicas e formas de trabalhar coerentes com as informações fornecidas. Se eu incluir uma descrição de vaga, compare os requisitos com meu perfil e separe o que já está confirmado do que ainda preciso validar.',
     languages: 'Ajude a apresentar meus idiomas e níveis de forma clara e adequada ao currículo e ao LinkedIn.',
     certifications: 'Ajude a organizar minhas certificações e meus cursos, com nome, instituição e ano de conclusão.',
     projects: 'Ajude a descrever meus projetos, destacando objetivo, participação, tecnologias e resultados já informados.',
@@ -30,7 +30,13 @@ Siga estas orientações:
 - organize a resposta pelas seções do currículo;
 - não invente experiências, resultados ou qualificações;
 - use linguagem respeitosa e inclusiva;
-- avalie somente informações relacionadas à oportunidade e não faça suposições sobre gênero, identidade de gênero, idade, raça ou cor, origem, religião, deficiência, aparência, orientação sexual, estado civil, situação familiar ou outras características pessoais.`;
+- avalie somente informações relacionadas à oportunidade e não faça suposições sobre gênero, identidade de gênero, idade, raça ou cor, origem, religião, deficiência, aparência, orientação sexual, estado civil, situação familiar ou outras características pessoais;
+- se eu fornecer uma descrição de vaga, compare o currículo com os requisitos;
+- identifique habilidades e termos relevantes que já estejam presentes no meu histórico;
+- use o mesmo idioma da vaga;
+- não repita palavras-chave de forma artificial;
+- não invente experiências, ferramentas, resultados ou qualificações;
+- indique separadamente qualquer requisito que eu ainda precise confirmar.`;
 
   const TRANSLATION_INTRO = `Traduza meu currículo do português para um inglês profissional e natural.
 
@@ -152,28 +158,33 @@ LinkedIn: ${p.linkedinUrl || '(não preenchido)'}`;
     }
   }
 
-  function buildGeneralPrompt(state, includeData) {
+  function appendJobDescription(prompt, jobDescription) {
+    if (!jobDescription || !jobDescription.trim()) return prompt;
+    return prompt + '\n\n--- DESCRIÇÃO DA VAGA (use apenas como referência para destacar informações verdadeiras e relevantes, sem inventar nem repetir palavras-chave de forma artificial) ---\n\n' + jobDescription.trim();
+  }
+
+  function buildGeneralPrompt(state, includeData, jobDescription) {
     let prompt = GENERAL_INTRO;
     if (includeData) {
       prompt += '\n\n--- MEUS DADOS ATUAIS ---\n\n' + formatStateData(state);
     } else {
       prompt += '\n\n(Não incluí meus dados pessoais. Forneça sugestões genéricas baseadas nas informações que eu fornecer em seguida.)';
     }
-    return prompt;
+    return appendJobDescription(prompt, jobDescription);
   }
 
-  function buildSectionPrompt(sectionId, state, includeData) {
+  function buildSectionPrompt(sectionId, state, includeData, jobDescription) {
     const label = EuGeroConfig.SECTION_LABELS?.[sectionId]
       || EuGeroConfig.SECTIONS.find(s => s.id === sectionId)?.title
       || 'esta seção';
     const instruction = SECTION_PROMPTS[sectionId] || 'Ajude-me com esta seção do currículo.';
-    let prompt = `Estou preenchendo a seção “${label}” do meu currículo.\n\n${instruction}\n\nRevise o conteúdo para deixá-lo claro, curto e profissional. Use verbos de ação e destaque resultados quando houver dados suficientes e isso fizer sentido. Não invente informações. Evite estereótipos, termos discriminatórios e suposições sobre características pessoais. Caso falte algo importante, faça perguntas objetivas antes de sugerir a versão final. Apresente textos prontos para copiar e colar.`;
+    let prompt = `Estou preenchendo a seção "${label}" do meu currículo.\n\n${instruction}\n\nSe houver uma descrição de vaga, use-a apenas como referência para destacar informações verdadeiras e relevantes. Não invente experiências nem repita palavras-chave de forma artificial. Caso falte algo importante, faça perguntas objetivas antes de sugerir a versão final. Apresente textos claros, curtos e prontos para copiar e colar.`;
     if (includeData) {
       prompt += '\n\n--- MEU CURRÍCULO COMPLETO ATÉ AGORA (foque na seção "' + label + '", mas use o restante como contexto) ---\n\n' + formatStateData(state);
     } else {
       prompt += '\n\n(Não incluí meus dados. Aguardo fornecer as informações necessárias.)';
     }
-    return prompt;
+    return appendJobDescription(prompt, jobDescription);
   }
 
   function buildTranslationPrompt(state, includeData) {

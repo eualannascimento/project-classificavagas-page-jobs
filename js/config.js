@@ -36,7 +36,7 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → foto de capa → seção de introdução no topo do perfil',
       fields: [
         { key: 'fullName', label: 'Nome para o currículo', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Digite o nome que deseja usar', tip: 'Use o nome pelo qual deseja ser apresentado. Não inclua números de documentos.' },
-        { key: 'headline', label: 'Cargo ou área desejada', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Informe o cargo ou a área que busca', tip: 'Informe o cargo ou a área em que deseja trabalhar.' },
+        { key: 'headline', label: 'Cargo ou área desejada', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Informe o cargo ou a área que busca', tip: 'Use um cargo ou uma área clara. Quando fizer sentido, use o mesmo termo adotado nas vagas que procura.' },
         { key: 'email', label: 'E-mail', type: 'email', required: true, minLength: 5, placeholder: 'Digite seu e-mail', tip: 'Use um e-mail que você acessa com frequência.' },
         { key: 'phone', label: 'Telefone', type: 'tel', required: false, minLength: 8, placeholder: 'Digite seu telefone com DDD', tip: 'Inclua o DDD e um número em que possa receber ligações ou mensagens.' },
         { key: 'location', label: 'Cidade', type: 'text', required: true, minLength: 3, placeholder: 'Digite sua cidade e estado', tip: 'Informe apenas a cidade e o estado. Não é necessário incluir o endereço completo.' },
@@ -46,10 +46,10 @@ const EuGeroConfig = (function () {
     {
       id: 'summary',
       title: 'Resumo',
-      description: 'Escreva duas ou três frases sobre suas experiências, habilidades e o tipo de oportunidade que busca.',
+      description: 'Escreva duas ou três frases sobre sua experiência, suas principais habilidades e o tipo de oportunidade que busca.',
       linkedinHint: 'Perfil → seção "Sobre" → editar',
       fields: [
-        { key: 'summary', label: 'Um parágrafo curto sobre você', type: 'textarea', rows: 7, required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Escreva um breve resumo sobre seu perfil', tip: 'Fale sobre suas habilidades, experiências e seu objetivo de trabalho. Seja breve e direto.' }
+        { key: 'summary', label: 'Um parágrafo curto sobre você', type: 'textarea', rows: 7, required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Escreva um breve resumo sobre seu perfil', tip: 'Inclua sua área, experiências e habilidades mais relevantes. Use termos da vaga somente quando eles representarem de verdade o seu perfil.' }
       ]
     },
     {
@@ -59,10 +59,10 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Experiência" → adicionar experiência',
       list: true,
       itemFields: [
-        { key: 'title', label: 'Cargo ou função', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Informe seu cargo ou função', tip: 'Informe o nome da função que você exercia.' },
+        { key: 'title', label: 'Cargo ou função', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Informe seu cargo ou função', tip: 'Use um nome de função claro e conhecido. Se o título usado pela empresa for pouco comum, acrescente uma forma equivalente entre parênteses, sem alterar o sentido.' },
         { key: 'company', label: 'Empresa, organização ou projeto', type: 'text', required: true, minLength: 2, placeholder: 'Informe onde realizou essa atividade', tip: 'Informe o nome da empresa, organização ou projeto. Se foi por conta própria, escreva “Trabalho independente”.' },
-        { key: 'period', label: 'Período', type: 'text', required: false, minLength: 0, placeholder: 'Mês e ano de início e fim', tip: 'Informe quando começou e quando terminou. Marque “Até hoje” se ainda trabalha no local.' },
-        { key: 'description', label: 'Atividades e resultados', type: 'textarea', required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Descreva o que você fez', tip: 'Explique sua participação. Inclua efeitos, resultados ou números apenas quando essa informação existir e fizer sentido.' }
+        { key: 'period', label: 'Período', type: 'text', required: false, minLength: 0, placeholder: 'Mês e ano de início e fim', tip: 'Informe o mês e o ano de início e fim. Marque “Até hoje” se ainda realiza essa atividade.' },
+        { key: 'description', label: 'Atividades e resultados', type: 'textarea', required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Descreva o que você fez', tip: 'Descreva suas atividades, os conhecimentos ou as ferramentas usadas e os resultados relevantes. Use termos específicos e verdadeiros, sem repetir palavras apenas para aumentar a correspondência com a vaga.' }
       ]
     },
     {
@@ -72,18 +72,18 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Formação acadêmica" → adicionar formação',
       list: true,
       itemFields: [
-        { key: 'degree', label: 'Curso ou formação', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Digite o nome da formação', tip: 'Informe o nome do curso, da formação ou da atividade de aprendizagem.' },
-        { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 3, placeholder: 'Nome da instituição', tip: 'Informe o nome da escola, faculdade, plataforma ou instituição.' },
+        { key: 'degree', label: 'Curso ou formação', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Digite o nome da formação', tip: 'Informe o nome completo do curso, da formação ou da atividade de aprendizagem. Evite abreviações pouco conhecidas.' },
+        { key: 'institution', label: 'Instituição', type: 'text', required: true, minLength: 3, placeholder: 'Nome da instituição', tip: 'Informe o nome completo da escola, faculdade, plataforma ou instituição.' },
         { key: 'period', label: 'Período', type: 'text', required: false, minLength: 0, placeholder: 'Ano de conclusão ou período cursado', tip: 'Informe o ano de conclusão ou o período em que estudou.' }
       ]
     },
     {
       id: 'skills',
       title: 'Habilidades',
-      description: 'Liste conhecimentos e formas de trabalhar que sejam relevantes para a oportunidade desejada.',
+      description: 'Liste habilidades, ferramentas, tecnologias e formas de trabalhar que sejam relevantes para a oportunidade desejada.',
       linkedinHint: 'Perfil → seção "Competências" → adicionar competência',
       fields: [
-        { key: 'skillsText', label: 'Digite uma habilidade', type: 'skillsTags', required: false, minLength: 2, fullWidth: true, tip: 'Digite e confirme para adicionar. Inclua conhecimentos técnicos e habilidades de organização, colaboração ou atendimento que sejam relevantes.', placeholder: 'Digite uma habilidade…' }
+        { key: 'skillsText', label: 'Digite uma habilidade', type: 'skillsTags', required: false, minLength: 2, fullWidth: true, tip: 'Priorize conhecimentos relacionados à vaga. Use os nomes mais conhecidos no mercado e adicione somente habilidades que você realmente possui.', placeholder: 'Digite uma habilidade…' }
       ]
     },
     {
@@ -104,8 +104,8 @@ const EuGeroConfig = (function () {
       linkedinHint: 'Perfil → seção "Licenças e certificados" → adicionar',
       list: true,
       itemFields: [
-        { key: 'name', label: 'Nome do curso ou certificação', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Nome do curso ou da certificação', tip: 'Informe o nome do curso, treinamento ou certificação.' },
-        { key: 'issuer', label: 'Instituição', type: 'text', required: true, minLength: 2, placeholder: 'Instituição responsável', tip: 'Informe o nome da instituição ou plataforma responsável pelo curso.' },
+        { key: 'name', label: 'Nome do curso ou certificação', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Nome do curso ou da certificação', tip: 'Informe o nome completo do curso, treinamento ou certificação. Evite siglas sem escrever também o nome por extenso.' },
+        { key: 'issuer', label: 'Instituição', type: 'text', required: true, minLength: 2, placeholder: 'Instituição responsável', tip: 'Informe o nome completo da instituição ou plataforma responsável.' },
         { key: 'year', label: 'Ano', type: 'text', required: false, minLength: 0, placeholder: 'Ano de conclusão', tip: 'Informe o ano em que concluiu.' }
       ]
     },
@@ -117,7 +117,7 @@ const EuGeroConfig = (function () {
       list: true,
       itemFields: [
         { key: 'name', label: 'Nome do projeto', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Nome do projeto ou da iniciativa', tip: 'Informe o nome do projeto ou da iniciativa.' },
-        { key: 'description', label: 'Sua participação', type: 'textarea', required: true, minLength: 30, actionVerbs: true, fullWidth: true, placeholder: 'Descreva o que você fez no projeto', tip: 'Explique sua participação. Inclua efeitos, resultados ou números apenas quando essa informação existir e fizer sentido.' },
+        { key: 'description', label: 'Sua participação', type: 'textarea', required: true, minLength: 30, actionVerbs: true, fullWidth: true, placeholder: 'Descreva o que você fez no projeto', tip: 'Explique sua participação, as ferramentas ou os conhecimentos usados e os resultados, quando houver. Inclua termos da área somente quando corresponderem ao que você fez.' },
         { key: 'url', label: 'Link (opcional)', type: 'url', required: false, minLength: 0, fullWidth: true, placeholder: 'Link para o projeto', tip: 'Adicione um link para o projeto, caso ele possa ser visto online.' }
       ]
     }
@@ -162,7 +162,7 @@ const EuGeroConfig = (function () {
     petroleo: {
       id: 'petroleo', name: 'Petróleo', description: 'Barra lateral em azul-petróleo',
       layout: 'sidebar', thumbAccent: '#155e75', atsFriendly: false,
-      atsNote: 'Alguns sistemas ATS podem ler melhor currículos com uma única coluna. A leitura varia conforme o sistema.'
+      atsNote: 'Este modelo divide o conteúdo em mais de uma área visual. Alguns sistemas podem misturar a ordem das informações. Para uma leitura mais segura, prefira um modelo de uma coluna.'
     },
     marinho: {
       id: 'marinho', name: 'Marinho', description: 'Faixa superior em azul-marinho',
@@ -179,12 +179,12 @@ const EuGeroConfig = (function () {
     oliva: {
       id: 'oliva', name: 'Oliva', description: 'Barra lateral em verde-oliva',
       layout: 'sidebar', thumbAccent: '#256345', atsFriendly: false,
-      atsNote: 'Alguns sistemas ATS podem ler melhor currículos com uma única coluna. A leitura varia conforme o sistema.'
+      atsNote: 'Este modelo divide o conteúdo em mais de uma área visual. Alguns sistemas podem misturar a ordem das informações. Para uma leitura mais segura, prefira um modelo de uma coluna.'
     },
     modern: {
       id: 'modern', name: 'Moderno', description: 'Barra lateral clara, com detalhes em azul',
       layout: 'sidebar', thumbAccent: '#5980a6', atsFriendly: false,
-      atsNote: 'Alguns sistemas ATS podem ler melhor currículos com uma única coluna. A leitura varia conforme o sistema.'
+      atsNote: 'Este modelo divide o conteúdo em mais de uma área visual. Alguns sistemas podem misturar a ordem das informações. Para uma leitura mais segura, prefira um modelo de uma coluna.'
     },
     executive: {
       id: 'executive', name: 'Executivo', description: 'Faixa superior escura e visual formal',
@@ -205,12 +205,12 @@ const EuGeroConfig = (function () {
     creative: {
       id: 'creative', name: 'Criativo', description: 'Coluna única, com selo de iniciais',
       layout: 'creative', thumbAccent: '#5980a6', atsFriendly: false,
-      atsNote: 'Alguns sistemas ATS podem ter dificuldade com elementos gráficos no topo. A leitura varia conforme o sistema.'
+      atsNote: 'Este modelo usa um elemento gráfico no topo. Alguns sistemas podem ignorar ou reorganizar essa parte do conteúdo.'
     },
     rosado: {
       id: 'rosado', name: 'Rosado', description: 'Selo de iniciais em tom rosé, indicado para portfólios',
       layout: 'creative', thumbAccent: '#9f2544', atsFriendly: false,
-      atsNote: 'Alguns sistemas ATS podem ter dificuldade com elementos gráficos no topo. A leitura varia conforme o sistema.'
+      atsNote: 'Este modelo usa um elemento gráfico no topo. Alguns sistemas podem ignorar ou reorganizar essa parte do conteúdo.'
     }
   };
 

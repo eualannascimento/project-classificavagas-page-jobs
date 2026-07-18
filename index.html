@@ -110,6 +110,10 @@
                   <div id="start-gallery-counter" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-top: 3px;">1 de 20</div>
                 </div>
               </div>
+              <div style="margin-top: 10px;">
+                <div style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">Leitura por ATS</div>
+                <div id="start-ats-note" style="font-size: 12.5px; line-height: 1.4; color: color-mix(in srgb, var(--color-text) 75%, transparent); margin-top: 2px;"></div>
+              </div>
             </div>
             <button type="button" class="btn btn-secondary btn-icon" id="btn-next-template-start" aria-label="Próximo modelo" style="width: 44px; height: 44px; font-size: 20px;">›</button>
           </div>
@@ -267,6 +271,10 @@
         <p id="privacy-prompt-warning" class="privacy-warning" hidden role="alert">
           Atenção: o prompt pode incluir dados pessoais, como e-mail e telefone. Antes de copiar, revise e remova o que não deseja compartilhar. Consulte também as regras de privacidade da ferramenta escolhida.
         </p>
+        <label for="job-description-textarea" style="display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px;">Descrição da vaga (opcional)</label>
+        <textarea id="job-description-textarea" rows="4" placeholder="Cole aqui a descrição da vaga" style="width: 100%; box-sizing: border-box; font: inherit; padding: 8px 10px; border: 1px solid var(--color-divider); margin-bottom: 4px;"></textarea>
+        <p style="font-size: 12px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 4px;">Use este campo para comparar o currículo com os requisitos da oportunidade. Mantenha somente sugestões que correspondam às suas experiências e habilidades reais.</p>
+        <p style="font-size: 12px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">O texto permanece neste dispositivo e só será compartilhado quando você copiar o prompt.</p>
         <textarea id="prompt-text" class="prompt-textarea" readonly rows="12"></textarea>
         <button type="button" class="btn btn-primary" id="btn-copy-prompt">Copiar prompt</button>
       </div>
@@ -279,7 +287,7 @@
           <h2 id="modal-template-title">Trocar modelo</h2>
           <button type="button" class="modal-close" aria-label="Fechar">✕</button>
         </div>
-        <p style="font-size: 12.5px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">ATS são sistemas usados por algumas empresas para organizar candidaturas. A leitura pode variar entre plataformas.</p>
+        <p style="font-size: 12.5px; line-height: 1.5; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 12px;">Algumas plataformas usam sistemas ATS para ler e organizar currículos. Modelos simples, com uma coluna e sem imagens, costumam facilitar essa leitura.</p>
         <div id="modal-template-grid" class="modal-template-grid"></div>
       </div>
     </div>
