@@ -24,7 +24,7 @@ const EuGeroConfig = (function () {
     education: 'Formação',
     skills: 'Habilidades',
     languages: 'Idiomas',
-    certifications: 'Certificados',
+    certifications: 'Certificações',
     projects: 'Projetos'
   };
 
@@ -37,7 +37,7 @@ const EuGeroConfig = (function () {
       fields: [
         { key: 'fullName', label: 'Nome completo', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Cida Boaventura', tip: 'Escreva seu nome completo, do jeito que quer ser chamado.' },
         { key: 'headline', label: 'Cargo ou área desejada', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Auxiliar Administrativo', tip: 'A vaga ou área que você busca. Ex.: Auxiliar Administrativo.' },
-        { key: 'email', label: 'E-mail', type: 'email', required: true, minLength: 5, placeholder: 'voce@email.com', tip: 'Use um e-mail que você acessa sempre - é por onde te chamam.' },
+        { key: 'email', label: 'E-mail', type: 'email', required: true, minLength: 5, placeholder: 'voce@email.com', tip: 'Use um e-mail que você acessa sempre. É por onde te chamam.' },
         { key: 'phone', label: 'Telefone', type: 'tel', required: false, minLength: 8, placeholder: '(11) 90000-0000', tip: 'Com DDD. De preferência com WhatsApp.' },
         { key: 'location', label: 'Cidade', type: 'text', required: true, minLength: 3, placeholder: 'Cidade, UF', tip: 'Cidade e estado onde você mora. Ex.: Guarulhos, SP.' },
         { key: 'linkedinUrl', label: 'LinkedIn (opcional)', type: 'url', required: false, minLength: 10, placeholder: 'linkedin.com/in/voce', tip: 'Opcional. O endereço do seu perfil, se você tiver um.' }
@@ -49,7 +49,7 @@ const EuGeroConfig = (function () {
       description: 'Duas ou três frases sobre quem você é e o que faz de melhor. Experiências do dia a dia valem!',
       linkedinHint: 'Perfil → seção "Sobre" → editar',
       fields: [
-        { key: 'summary', label: 'Um parágrafo curto sobre você', type: 'textarea', required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Ex.: Pessoa comunicativa e organizada, com experiência em vendas e atendimento ao público. Busco minha primeira oportunidade com carteira assinada.', tip: '2 a 3 frases sobre quem você é e o que faz bem. Experiências do dia a dia valem!' }
+        { key: 'summary', label: 'Um parágrafo curto sobre você', type: 'textarea', rows: 7, required: true, minLength: 45, actionVerbs: true, fullWidth: true, placeholder: 'Ex.: Pessoa comunicativa e organizada, com experiência em vendas e atendimento ao público. Busco minha primeira oportunidade com carteira assinada.', tip: '2 a 3 frases sobre quem você é e o que faz bem. Experiências do dia a dia valem!' }
       ]
     },
     {
@@ -94,17 +94,17 @@ const EuGeroConfig = (function () {
       list: true,
       itemFields: [
         { key: 'language', label: 'Idioma', type: 'text', required: true, minLength: 2, placeholder: 'Ex.: Inglês', tip: 'Idiomas que você fala, mesmo que básico.' },
-        { key: 'level', label: 'Nível', type: 'text', required: false, minLength: 0, placeholder: 'Ex.: Básico' }
+        { key: 'level', label: 'Nível', type: 'select', required: false, minLength: 0, options: ['Básico', 'Intermediário', 'Avançado', 'Fluente', 'Nativo'] }
       ]
     },
     {
       id: 'certifications',
-      title: 'Certificados',
-      description: 'Cursos livres, certificados e treinamentos que você concluiu. Curso online e da prefeitura também valem!',
+      title: 'Certificações',
+      description: 'Cursos livres, certificações e treinamentos que você concluiu. Curso online e da prefeitura também valem!',
       linkedinHint: 'Perfil → seção "Licenças e certificados" → adicionar',
       list: true,
       itemFields: [
-        { key: 'name', label: 'Nome do curso ou certificado', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Informática Básica', tip: 'O que você concluiu. Cursos online, da prefeitura ou do SENAI também contam.' },
+        { key: 'name', label: 'Nome do curso ou certificação', type: 'text', required: true, minLength: 3, fullWidth: true, placeholder: 'Ex.: Informática Básica', tip: 'O que você concluiu. Cursos online, da prefeitura ou do SENAI também contam.' },
         { key: 'issuer', label: 'Onde você fez', type: 'text', required: true, minLength: 2, placeholder: 'Ex.: Fundação Bradesco', tip: 'A instituição que emitiu. Ex.: Fundação Bradesco, Senac, YouTube.' },
         { key: 'year', label: 'Ano', type: 'text', required: false, minLength: 0, placeholder: 'Ex.: 2023', tip: 'O ano em que você concluiu. Ex.: 2023.' }
       ]
@@ -259,7 +259,7 @@ const EuGeroConfig = (function () {
     education: 'Formação',
     skills: 'Habilidades',
     languages: 'Idiomas',
-    certifications: 'Certificados',
+    certifications: 'Certificações',
     projects: 'Projetos'
   };
 

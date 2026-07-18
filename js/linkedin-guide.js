@@ -1,5 +1,5 @@
 /**
- * Guia LinkedIn — passos curtos e acionáveis, com o caminho exato
+ * Guia LinkedIn - passos curtos e acionáveis, com o caminho exato
  * dentro do LinkedIn e o texto pronto para colar (agrupado por seção).
  */
 const EuGeroLinkedInGuide = (function () {

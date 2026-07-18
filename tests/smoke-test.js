@@ -359,6 +359,50 @@ assert(
   'Todo template tem id, name, description e flag atsFriendly booleana'
 );
 
+// --- Feedback acionavel por secao ---
+console.log('\nFeedback por secao (review):');
+
+const weakState = {
+  ...emptyState,
+  personal: { fullName: 'Ana Prova', headline: 'Atendente', email: 'ana@test.com', phone: '', location: 'Recife, PE', linkedinUrl: '' },
+  summary: 'Trabalhei atendendo clientes na loja do meu bairro durante dois anos seguidos sem parar.'
+};
+const feedback = EuGeroScoring.buildSectionFeedback(
+  weakState, EuGeroConfig.getActiveSections(['personal', 'summary']), EuGeroConfig.ACTION_VERBS
+);
+const summaryFeedback = feedback.find((f) => f.sectionId === 'summary');
+assert(!!summaryFeedback, 'Feedback inclui a secao Resumo');
+assert(
+  summaryFeedback.tips.some((t) => t.advice.includes('verbo de ação')),
+  'Resumo sem verbo de acao recebe dica especifica citando verbo'
+);
+assert(
+  feedback.every((f) => ['otimo', 'bom', 'fraco', 'vazio'].includes(f.status)),
+  'Todo status de secao e um dos quatro conhecidos'
+);
+assert(
+  EuGeroScoring.explainField('', { required: true, minLength: 3 }, EuGeroConfig.ACTION_VERBS) === 'preencha este campo',
+  'Campo vazio: dica de preencher'
+);
+
+// --- Nivel de idioma predefinido ---
+console.log('\nNivel de idioma:');
+
+const langSection = EuGeroConfig.SECTIONS.find((s) => s.id === 'languages');
+const levelField = langSection.itemFields.find((f) => f.key === 'level');
+assert(levelField.type === 'select', 'Nivel de idioma e um select');
+assert(
+  Array.isArray(levelField.options) && levelField.options.length === 5 && levelField.options.includes('Fluente'),
+  'Select de nivel tem os 5 niveis predefinidos'
+);
+
+// --- Sem travessao em textos de UI ---
+console.log('\nTextos sem travessao:');
+
+const uiSources = ['index.html', 'js/config.js', 'js/prompts.js', 'js/characters.js', 'js/linkedin-guide.js'];
+const withDash = uiSources.filter((p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8').match(/—|–/));
+assert(withDash.length === 0, `Nenhum travessao em textos de UI${withDash.length ? ' (falha: ' + withDash.join(', ') + ')' : ''}`);
+
 // --- Consistencia do CDN docx (libs.js x export.js) ---
 console.log('\nCDN docx:');
 

@@ -1,5 +1,5 @@
 /**
- * Modelo de dados do currículo — fonte única para preview e exportação.
+ * Modelo de dados do currículo - fonte única para preview e exportação.
  */
 const EuGeroCvData = (function () {
   const { getActiveSections, getSkillsFromState } = EuGeroConfig;

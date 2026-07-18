@@ -317,7 +317,7 @@
     if (!grid || typeof EuGeroCharacters === 'undefined') return;
     grid.innerHTML = EuGeroCharacters.CHARACTERS.map((c) => `
       <button type="button" class="character-card${c.state ? '' : ' character-card-blank'}" data-character="${c.id}">
-        <span class="character-avatar" aria-hidden="true">${escapeHtml(c.initials)}</span>
+        <span class="character-avatar" aria-hidden="true"${c.avatarColor ? ` style="background: ${escapeAttr(c.avatarColor)};"` : ''}>${escapeHtml(c.initials)}</span>
         <span class="character-kicker">${escapeHtml(c.tagline)}</span>
         <span class="character-name">${escapeHtml(c.name)}</span>
         <span class="character-role">${escapeHtml(c.role)}</span>
@@ -593,7 +593,7 @@
     els.screenReview.hidden = view !== 'review';
     els.screenGuide.hidden = view !== 'guide';
     if (els.previewMobileDock) {
-      els.previewMobileDock.hidden = (view !== 'start' && view !== 'wizard' && view !== 'review');
+      els.previewMobileDock.hidden = (view !== 'wizard' && view !== 'review');
       // No wizard o botao flutua acima da barra fixa; nas demais, junto da base.
       els.previewMobileDock.style.bottom = view === 'wizard'
         ? 'calc(4.8rem + env(safe-area-inset-bottom))'
@@ -709,7 +709,7 @@
     } else if (section.fields) {
       const grid = document.createElement('div');
       grid.className = 'cv-form2';
-      grid.style.marginTop = '16px';
+      grid.style.marginTop = '12px';
       section.fields.forEach((field) => {
         grid.appendChild(renderField(section, field));
       });
@@ -717,7 +717,7 @@
     }
 
     const actionsRow = document.createElement('div');
-    actionsRow.style.cssText = 'margin-top: 30px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center;';
+    actionsRow.style.cssText = 'margin-top: 18px; display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center;';
     const mutedGhost = 'font-size: 13.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent);';
 
     const aiBtn = document.createElement('button');
@@ -893,7 +893,7 @@
       input.className = 'cv-input';
       input.id = id;
       input.name = field.key;
-      input.rows = 3;
+      input.rows = field.rows || 3;
       if (field.placeholder) input.placeholder = field.placeholder;
       if (field.required) input.required = true;
       input.value = value;
@@ -982,12 +982,17 @@
   function updateFieldHint(el, kind, value) {
     let q;
     if (kind === 'email') {
-      q = (!value || /.+@.+\..+/.test(value))
-        ? { kind: 'good', label: 'Use um e-mail que você consulta com frequência.' }
-        : { kind: 'weak', label: 'Esse e-mail parece incompleto - confira o "@" e o domínio.' };
+      // E-mail valido nao precisa de dica; so avisa quando parece errado.
+      if (!value || /.+@.+\..+/.test(value)) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      q = { kind: 'weak', label: 'Esse e-mail parece incompleto. Confira o "@" e o domínio.' };
     } else {
       q = textQuality(value);
     }
+    el.hidden = false;
     const m = HINT_STYLE[q.kind];
     el.style.color = m.c;
     el.innerHTML = `${hintIconSvg(m.i, m.c)}<span>${escapeHtml(q.label)}</span>`;
@@ -1086,7 +1091,7 @@
       <span style="display:flex; align-items:center; gap:7px; font-size: 13px; margin-bottom: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);">${field.label}${renderFieldTip(field)}</span>
       <input type="text" id="${id}" class="cv-input" placeholder="${escapeAttr(field.placeholder || 'Ex.: Atendimento ao cliente…')}" autocomplete="off">
       <div class="skills-tags-chips" role="list"></div>
-      <p class="skills-suggest-title">Sugestões - clique para adicionar</p>
+      <p class="skills-suggest-title">Sugestões: clique para adicionar</p>
       <div class="skills-suggest-row"></div>
     `;
 
@@ -1122,6 +1127,9 @@
     function renderSuggestions() {
       const existing = new Set(tags.map((t) => (t.name || t).toLowerCase()));
       const options = SKILL_SUGGESTIONS.filter((s) => !existing.has(s.toLowerCase())).slice(0, 6);
+      // Sem sugestoes restantes, o titulo some junto.
+      const titleEl = wrap.querySelector('.skills-suggest-title');
+      if (titleEl) titleEl.hidden = options.length === 0;
       suggestEl.innerHTML = options.map((s) =>
         `<button type="button" class="skills-suggest-btn" data-name="${escapeAttr(s)}">+ ${escapeHtml(s)}</button>`
       ).join('');
@@ -1189,19 +1197,74 @@
     }
   }
 
+  // Secoes com formulario grande mostram UM item por vez, com tabs numeradas.
+  // Idiomas fica de fora: as linhas sao curtas e cabem empilhadas.
+  const TABBED_LIST_SECTIONS = ['experiences', 'education', 'certifications', 'projects'];
+  const listActiveIndex = {};
+
+  function isTabbedListSection(sectionId) {
+    return TABBED_LIST_SECTIONS.includes(sectionId);
+  }
+
+  function getActiveItemIndex(sectionId) {
+    const items = state[sectionId] || [];
+    const idx = listActiveIndex[sectionId] ?? 0;
+    return Math.min(Math.max(0, idx), Math.max(0, items.length - 1));
+  }
+
+  function renderListTabs(section, items) {
+    const tabs = document.createElement('div');
+    tabs.className = 'list-tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', `Itens de ${section.title}`);
+
+    const active = getActiveItemIndex(section.id);
+    items.forEach((item, i) => {
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = `list-tab${i === active ? ' active' : ''}`;
+      tab.setAttribute('role', 'tab');
+      tab.setAttribute('aria-selected', i === active ? 'true' : 'false');
+      tab.setAttribute('aria-label', `${LIST_ITEM_LABELS[section.id] || 'Item'} ${i + 1}`);
+      tab.textContent = String(i + 1);
+      tab.addEventListener('click', () => {
+        listActiveIndex[section.id] = i;
+        renderWizardStep();
+      });
+      tabs.appendChild(tab);
+    });
+
+    const addTab = document.createElement('button');
+    addTab.type = 'button';
+    addTab.className = 'list-tab list-tab-add';
+    addTab.title = `Adicionar ${(LIST_ITEM_LABELS[section.id] || 'item').toLowerCase()}`;
+    addTab.setAttribute('aria-label', addTab.title);
+    addTab.textContent = '+';
+    addTab.addEventListener('click', () => appendListItem(section.id));
+    tabs.appendChild(addTab);
+
+    return tabs;
+  }
+
   function renderListSection(section) {
     const container = document.createElement('div');
     container.className = 'list-section';
 
     if (!Array.isArray(state[section.id])) state[section.id] = [];
     const items = state[section.id];
+    if (items.length === 0) items.push(createEmptyListItem(section.id));
+
+    if (isTabbedListSection(section.id)) {
+      const active = getActiveItemIndex(section.id);
+      container.appendChild(renderListTabs(section, items));
+      container.appendChild(createListItemEl(section, items[active], active));
+      return container;
+    }
 
     const listEl = document.createElement('div');
     listEl.className = 'list-items';
     listEl.id = `list-items-${section.id}`;
-    listEl.style.cssText = `display: flex; flex-direction: column; gap: ${section.id === 'languages' ? '14px' : '20px'};`;
-
-    if (items.length === 0) items.push(createEmptyListItem(section.id));
+    listEl.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
 
     items.forEach((item, index) => {
       listEl.appendChild(createListItemEl(section, item, index));
@@ -1212,7 +1275,7 @@
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
     addBtn.className = 'btn btn-secondary btn-add-item';
-    addBtn.style.cssText = 'align-self: flex-start; min-height: 42px; margin-top: 20px;';
+    addBtn.style.cssText = 'align-self: flex-start; min-height: 42px; margin-top: 16px;';
     addBtn.textContent = `+ Adicionar ${(LIST_ITEM_LABELS[section.id] || 'item').toLowerCase()}`;
     addBtn.addEventListener('click', () => appendListItem(section.id));
     container.appendChild(addBtn);
@@ -1224,7 +1287,7 @@
     experiences: 'Experi\u00eancia',
     education: 'Forma\u00e7\u00e3o',
     languages: 'Idioma',
-    certifications: 'Certificado',
+    certifications: 'Certifica\u00e7\u00e3o',
     projects: 'Projeto'
   };
 
@@ -1241,17 +1304,19 @@
       return btn;
     };
 
-    // Idiomas: linha simples (Idioma | N\u00edvel | Remover), como no modelo.
+    // Idiomas: linha simples (Idioma | Nivel | x), com remover compacto.
     if (section.id === 'languages') {
       const card = document.createElement('div');
-      card.className = 'list-item-card cv-form2';
+      card.className = 'list-item-card lang-row';
       card.dataset.index = String(index);
-      card.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;';
       section.itemFields.forEach((field) => {
         card.appendChild(renderField(section, field, { item, index, id: `field-${section.id}-${index}-${field.key}` }));
       });
       const removeBtn = makeRemoveBtn(card);
-      removeBtn.style.minHeight = '40px';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.setAttribute('aria-label', 'Remover idioma');
+      removeBtn.title = 'Remover idioma';
+      removeBtn.style.cssText = 'font-size: 18px; width: 40px; min-height: 40px; padding: 0;';
       card.appendChild(removeBtn);
       return card;
     }
@@ -1284,39 +1349,21 @@
     return card;
   }
 
-  function reindexListCards(sectionId) {
-    const container = document.getElementById(`list-items-${sectionId}`);
-    if (!container) return;
-    const label = LIST_ITEM_LABELS[sectionId] || 'Item';
-    const cards = container.querySelectorAll('.list-item-card');
-    cards.forEach((card, i) => {
-      card.dataset.index = String(i);
-      const num = card.querySelector('.list-item-num');
-      if (num) num.textContent = `${label} ${String(i + 1).padStart(2, '0')}`;
-    });
+  function refreshListSection() {
+    renderWizardStep();
+    saveState();
+    debouncedUpdatePreviews();
   }
 
   function appendListItem(sectionId) {
     const section = SECTIONS.find((s) => s.id === sectionId);
     if (!section) return;
     if (!Array.isArray(state[sectionId])) state[sectionId] = [];
-    const newItem = createEmptyListItem(sectionId);
-    state[sectionId].push(newItem);
-    const index = state[sectionId].length - 1;
-
-    const container = document.getElementById(`list-items-${sectionId}`);
-    if (container) {
-      const card = createListItemEl(section, newItem, index);
-      container.appendChild(card);
-      reindexListCards(sectionId);
-      const firstField = card.querySelector('input:not([type="checkbox"]), textarea, select');
-      firstField?.focus();
-    } else {
-      renderWizardStep();
-    }
-
-    saveState();
-    debouncedUpdatePreviews();
+    state[sectionId].push(createEmptyListItem(sectionId));
+    listActiveIndex[sectionId] = state[sectionId].length - 1;
+    refreshListSection();
+    const firstField = els.wizardSteps?.querySelector('.list-item-card input:not([type="checkbox"]), .list-item-card textarea, .list-item-card select');
+    firstField?.focus();
   }
 
   function removeListItem(sectionId, index) {
@@ -1327,40 +1374,17 @@
     const removedIndex = index;
     items.splice(index, 1);
 
-    const container = document.getElementById(`list-items-${sectionId}`);
-    const card = container?.querySelector(`.list-item-card[data-index="${index}"]`);
-    card?.remove();
-    reindexListCards(sectionId);
-
-    if (items.length === 0) {
-      appendListItem(sectionId);
-    }
-
-    saveState();
-    debouncedUpdatePreviews();
+    if (items.length === 0) items.push(createEmptyListItem(sectionId));
+    listActiveIndex[sectionId] = Math.min(removedIndex, items.length - 1);
+    refreshListSection();
 
     showToast('Item removido.', {
       actionLabel: 'Desfazer',
       duration: 5000,
       onAction: () => {
-        const section = SECTIONS.find((s) => s.id === sectionId);
-        if (!section) return;
         state[sectionId].splice(removedIndex, 0, removed);
-        const listContainer = document.getElementById(`list-items-${sectionId}`);
-        if (listContainer) {
-          const newCard = createListItemEl(section, removed, removedIndex);
-          const siblings = listContainer.querySelectorAll('.list-item-card');
-          if (removedIndex >= siblings.length) {
-            listContainer.appendChild(newCard);
-          } else {
-            listContainer.insertBefore(newCard, siblings[removedIndex]);
-          }
-          reindexListCards(sectionId);
-        } else {
-          renderWizardStep();
-        }
-        saveState();
-        debouncedUpdatePreviews();
+        listActiveIndex[sectionId] = removedIndex;
+        refreshListSection();
         showToast('Item restaurado.');
       }
     });
@@ -1374,20 +1398,8 @@
     const tmp = items[index];
     items[index] = items[newIndex];
     items[newIndex] = tmp;
-
-    const container = document.getElementById(`list-items-${sectionId}`);
-    if (!container) return;
-    const cards = Array.from(container.querySelectorAll('.list-item-card'));
-    const cardA = cards[index];
-    const cardB = cards[newIndex];
-    if (direction < 0) {
-      container.insertBefore(cardA, cardB);
-    } else {
-      container.insertBefore(cardB, cardA);
-    }
-    reindexListCards(sectionId);
-    saveState();
-    debouncedUpdatePreviews();
+    listActiveIndex[sectionId] = newIndex;
+    refreshListSection();
   }
 
   function updateFieldScore(wrap, field, value) {
@@ -1431,18 +1443,36 @@
         </div>
       </div>`;
 
-    if (aggregate.weakFields.length > 0) {
-      html += `
-        <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 16px;">
-          <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Sugestões para melhorar</p>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${aggregate.weakFields.map((f) => {
-              const stepIndex = sections.findIndex((s) => s.id === f.sectionId);
-              return `<button type="button" class="link-btn" data-step="${stepIndex}" style="display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; font-size: 14px;"><span style="color: var(--color-accent);">→</span>Reforce: ${escapeHtml(f.displayName)}</button>`;
-            }).join('')}
-          </div>
-        </div>`;
-    }
+    // Quadro por secao: o que ja esta bom e o que reforcar, com dica especifica.
+    const feedback = EuGeroScoring.buildSectionFeedback(state, sections, ACTION_VERBS);
+    const STATUS_META = {
+      otimo: { label: 'Ótimo', cls: 'rf-otimo' },
+      bom: { label: 'Bom', cls: 'rf-bom' },
+      fraco: { label: 'Reforce', cls: 'rf-fraco' },
+      vazio: { label: 'Vazio', cls: 'rf-vazio' }
+    };
+
+    html += `
+      <div style="margin-top: 18px; border-top: 1px solid var(--color-divider); padding-top: 14px;">
+        <p style="font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: ${muted}; margin: 0 0 10px;">Seção por seção</p>
+        <div class="review-feedback">
+          ${feedback.map((f) => {
+            const meta = STATUS_META[f.status] || STATUS_META.bom;
+            const stepIndex = sections.findIndex((s) => s.id === f.sectionId);
+            const tips = f.tips.map((t) =>
+              `<button type="button" class="rf-tip link-btn" data-step="${stepIndex}">${escapeHtml(t.label)}: ${escapeHtml(t.advice)}</button>`
+            ).join('');
+            return `
+              <div class="review-feedback-row">
+                <button type="button" class="rf-head link-btn" data-step="${stepIndex}">
+                  <span class="rf-badge ${meta.cls}">${meta.label}</span>
+                  <span class="rf-title">${escapeHtml(f.title)}</span>
+                </button>
+                ${tips ? `<div class="rf-tips">${tips}</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
 
     els.reviewContent.innerHTML = html;
 

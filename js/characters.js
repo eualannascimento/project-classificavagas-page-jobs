@@ -276,6 +276,7 @@ const EuGeroCharacters = (function () {
       role: 'Comece do zero, do seu jeito',
       initials: '+',
       tagline: 'Página limpa',
+      avatarColor: null,
       state: null
     },
     {
@@ -284,6 +285,7 @@ const EuGeroCharacters = (function () {
       role: 'Investigação e análise de dados',
       initials: 'SH',
       tagline: 'Exemplo pronto',
+      avatarColor: '#3E5F73',
       state: SHERLOCK
     },
     {
@@ -292,6 +294,7 @@ const EuGeroCharacters = (function () {
       role: 'Liderança e operações de equipe',
       initials: 'HM',
       tagline: 'Exemplo pronto',
+      avatarColor: '#8E4A54',
       state: MULAN
     },
     {
@@ -300,6 +303,7 @@ const EuGeroCharacters = (function () {
       role: 'Projetos críticos sob pressão',
       initials: 'HC',
       tagline: 'Exemplo pronto',
+      avatarColor: '#A3813F',
       state: HERCULES
     },
     {
@@ -308,6 +312,7 @@ const EuGeroCharacters = (function () {
       role: 'Logística e atendimento ao cliente',
       initials: 'CV',
       tagline: 'Exemplo pronto',
+      avatarColor: '#7A5E8C',
       state: CHAPEUZINHO
     }
   ];

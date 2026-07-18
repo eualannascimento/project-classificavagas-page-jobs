@@ -148,7 +148,7 @@ const EuGeroPreview = (function () {
     }
     if (isSectionEnabled(enabledSet, 'volunteering')) {
       content += renderGenericList('Voluntariado', state.volunteering, ['organization'], v => `
-        <article class="cv-item"><strong>${escapeHtml(v.role || 'Função')}</strong> — ${escapeHtml(v.organization)}<span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate, v.endCurrent))}</span></article>
+        <article class="cv-item"><strong>${escapeHtml(v.role || 'Função')}</strong> · ${escapeHtml(v.organization)}<span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate, v.endCurrent))}</span></article>
       `, true);
     }
     if (isSectionEnabled(enabledSet, 'publications')) {
@@ -158,12 +158,12 @@ const EuGeroPreview = (function () {
     }
     if (isSectionEnabled(enabledSet, 'awards')) {
       content += renderGenericList('Prêmios e Honrarias', state.awards, ['title'], a => `
-        <article class="cv-item"><strong>${escapeHtml(a.title)}</strong> — ${escapeHtml(a.issuer || '')}</article>
+        <article class="cv-item"><strong>${escapeHtml(a.title)}</strong> · ${escapeHtml(a.issuer || '')}</article>
       `, true);
     }
     if (isSectionEnabled(enabledSet, 'organizations')) {
       content += renderGenericList('Organizações', state.organizations, ['name'], o => `
-        <article class="cv-item"><strong>${escapeHtml(o.name)}</strong> — ${escapeHtml(o.role || '')}</article>
+        <article class="cv-item"><strong>${escapeHtml(o.name)}</strong> · ${escapeHtml(o.role || '')}</article>
       `, true);
     }
     if (isSectionEnabled(enabledSet, 'courses')) {
