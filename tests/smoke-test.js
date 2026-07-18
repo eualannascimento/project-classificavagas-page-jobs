@@ -440,7 +440,7 @@ console.log('\nExportacao (somente PDF):');
 
 const noWordRefs = ['js/app.js', 'index.html'].filter((p) => {
   const code = fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
-  return /export\.js|libs\.js|cv-data\.js|exportDocx|EuGeroExport|EuGeroLibs|EuGeroCvData/.test(code);
+  return /(?:^|["'/])export\.js|libs\.js|cv-data\.js|exportDocx|EuGeroExport|EuGeroLibs|EuGeroCvData/.test(code);
 });
 assert(noWordRefs.length === 0, `Sem referencias a Word/export removidos${noWordRefs.length ? ' (falha: ' + noWordRefs.join(', ') + ')' : ''}`);
 assert(!fs.existsSync(path.join(__dirname, '..', 'js/export.js')), 'js/export.js removido');
@@ -658,6 +658,134 @@ const debounced = EuGeroUtils.debounce(() => { debounceCalls++; }, 10);
 debounced();
 debounced();
 debounced();
+
+// --- Download direto de PDF (jsPDF vendorizado, sem dialogo de impressao) ---
+console.log('\nDownload direto de PDF (jsPDF vendorizado):');
+
+assert(fs.existsSync(path.join(__dirname, '..', 'js/vendor/jspdf.umd.min.js')), 'jsPDF vendorizado presente em js/vendor/');
+assert(fs.existsSync(path.join(__dirname, '..', 'js/vendor/fonts-barlow.js')), 'Fontes Barlow vendorizadas presentes em js/vendor/');
+assert(fs.existsSync(path.join(__dirname, '..', 'js/pdf-export.js')), 'js/pdf-export.js presente');
+
+const reviewJsCode = fs.readFileSync(path.join(__dirname, '..', 'js/screens/review.js'), 'utf8');
+assert(!reviewJsCode.includes('window.print('), 'downloadPdf nao abre mais a caixa de dialogo de impressao (sem window.print)');
+assert(reviewJsCode.includes('EuGeroPdfExport.generatePdf('), 'downloadPdf chama EuGeroPdfExport.generatePdf');
+assert(reviewJsCode.includes('doc.save(`${cvFileBaseName()}.pdf`)'), 'downloadPdf baixa o arquivo com o nome CV_<NOME>_<CARGO>.pdf');
+assert(/catch[\s\S]{0,200}showToast\([^)]*error:\s*true/.test(reviewJsCode), 'Falha na geracao do PDF exibe toast de erro (CA06)');
+
+assert(appJsCode.includes("EuGeroReviewScreen.downloadPdf"), 'Botao de exportar PDF chama downloadPdf em vez de printCv');
+assert(!appJsCode.includes('EuGeroReviewScreen.printCv'), 'printCv (fluxo antigo de impressao) nao e mais referenciado em app.js');
+assert(htmlContent.includes('<script src="js/pdf-export.js">'), 'index.html inclui js/pdf-export.js');
+
+{
+  const fakeDocument = {
+    createElement(tag) {
+      if (tag === 'canvas') {
+        return { width: 0, height: 0, getContext: () => ({ measureText: () => ({ width: 0 }), font: '' }), toDataURL: () => 'data:image/png;base64,' };
+      }
+      return { style: {} };
+    }
+  };
+  const sandbox = {
+    console,
+    atob: (s) => Buffer.from(s, 'base64').toString('binary'),
+    btoa: (s) => Buffer.from(s, 'binary').toString('base64'),
+    navigator: { userAgent: 'node' },
+    document: fakeDocument,
+    Blob: class {},
+    URL: { createObjectURL: () => '' },
+    TextEncoder, TextDecoder,
+    Uint8Array, Uint8ClampedArray, Int8Array, Int16Array, Uint16Array, Int32Array, Uint32Array,
+    Float32Array, Float64Array, BigUint64Array, BigInt64Array, ArrayBuffer, DataView
+  };
+  sandbox.window = sandbox;
+  sandbox.self = sandbox;
+  sandbox.globalThis = sandbox;
+  const pdfCtx = vm.createContext(sandbox);
+
+  function loadInPdfSandbox(relativePath) {
+    const filePath = path.join(__dirname, '..', relativePath);
+    const src = fs.readFileSync(filePath, 'utf8');
+    new vm.Script(src, { filename: filePath }).runInContext(pdfCtx);
+  }
+
+  loadInPdfSandbox('js/utils.js');
+  loadInPdfSandbox('js/config.js');
+  loadInPdfSandbox('js/dates.js');
+  loadInPdfSandbox('js/vendor/jspdf.umd.min.js');
+  loadInPdfSandbox('js/vendor/fonts-barlow.js');
+  loadInPdfSandbox('js/pdf-export.js');
+  // "const"/"let" de topo nao viram propriedades do objeto de contexto; uma
+  // ponte via "var" expõe as referencias para o script de teste (fora da sandbox).
+  new vm.Script('var __bridge = { EuGeroConfig: EuGeroConfig, EuGeroPdfExport: EuGeroPdfExport };', { filename: 'bridge.js' }).runInContext(pdfCtx);
+  const PdfConfig = pdfCtx.__bridge.EuGeroConfig;
+  const PdfExport = pdfCtx.__bridge.EuGeroPdfExport;
+
+  const pdfState = {
+    template: 'classic',
+    margin: 'padrao',
+    density: 'normal',
+    personal: {
+      fullName: 'Maria Teste',
+      headline: 'Engenheira de Dados',
+      email: 'maria@teste.com',
+      phone: '11999999999',
+      location: 'São Paulo, SP',
+      linkedinUrl: 'https://linkedin.com/in/maria-teste'
+    },
+    summary: 'Profissional com experiência em dados e liderança de projetos analíticos.',
+    experiences: [
+      { company: 'Tech Co', title: 'Analista de Dados', startDate: '2020-01', endDate: '2023-01', description: 'Desenvolvi pipelines de dados e dashboards para times de produto.' }
+    ],
+    education: [{ institution: 'Universidade X', degree: 'Bacharelado em Estatística', startDate: '2015-01', endDate: '2019-01' }],
+    skills: [], skillsText: 'SQL; Python; Power BI',
+    languages: [{ language: 'Inglês', level: 'Avançado' }],
+    certifications: [], projects: [], volunteering: [], publications: [], awards: [], organizations: [], courses: [],
+    enabledSections: ['personal', 'summary', 'experiences', 'education', 'skills', 'languages']
+  };
+  const pdfSections = PdfConfig.getActiveSections(pdfState.enabledSections);
+
+  // CA01: uma familia de layout por tipo, sem excecao
+  const familyTemplates = { centered: 'classic', left: 'minimal', banner: 'executive', sidebar: 'petroleo', creative: 'creative' };
+  Object.entries(familyTemplates).forEach(([layout, templateId]) => {
+    let error = null;
+    let doc = null;
+    try {
+      doc = PdfExport.generatePdf(pdfState, pdfSections, templateId, 'padrao', 'normal');
+    } catch (e) {
+      error = e;
+    }
+    assert(!error && !!doc, `generatePdf nao lanca excecao para layout ${layout} (modelo ${templateId})${error ? ': ' + error.message : ''}`);
+  });
+
+  // CA03: conteudo extenso gera mais de uma pagina
+  const heavyPdfState = {
+    ...pdfState,
+    experiences: Array.from({ length: 6 }, (_, i) => ({
+      company: `Empresa ${i}`,
+      title: 'Analista Sênior',
+      startDate: '2015-01',
+      endDate: '2024-01',
+      description: 'Liderei iniciativas de dados com resultados mensuráveis em múltiplos times e projetos. '.repeat(10)
+    }))
+  };
+  const heavyDoc = PdfExport.generatePdf(heavyPdfState, pdfSections, 'classic', 'padrao', 'normal');
+  assert(heavyDoc.internal.getNumberOfPages() > 1, 'Conteudo extenso gera mais de uma pagina no PDF (CA03)');
+
+  // CA04: estado vazio nao lanca excecao
+  const emptyPdfState = {
+    template: 'classic', margin: 'padrao', density: 'normal',
+    personal: {}, summary: '', experiences: [], education: [], skills: [], skillsText: '',
+    languages: [], certifications: [], projects: [], volunteering: [], publications: [], awards: [], organizations: [], courses: [],
+    enabledSections: ['personal', 'summary', 'skills']
+  };
+  let emptyError = null;
+  try {
+    PdfExport.generatePdf(emptyPdfState, PdfConfig.getActiveSections(emptyPdfState.enabledSections), 'classic', 'padrao', 'normal');
+  } catch (e) {
+    emptyError = e;
+  }
+  assert(!emptyError, `Estado vazio nao lanca excecao ao gerar PDF (CA04)${emptyError ? ': ' + emptyError.message : ''}`);
+}
 
 setTimeout(() => {
   assert(debounceCalls === 1, 'debounce cancela chamadas anteriores e executa só a última');

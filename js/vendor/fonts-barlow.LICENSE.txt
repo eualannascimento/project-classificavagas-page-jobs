@@ -1,0 +1,3 @@
+SIL Open Font License 1.1 - Barlow / Barlow Condensed
+Fonte: https://github.com/google/fonts/tree/main/ofl/barlow e /ofl/barlowcondensed
+Copyright 2017 The Barlow Project Authors
