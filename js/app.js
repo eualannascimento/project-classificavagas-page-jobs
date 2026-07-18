@@ -317,7 +317,7 @@
     if (!grid || typeof EuGeroCharacters === 'undefined') return;
     grid.innerHTML = EuGeroCharacters.CHARACTERS.map((c) => `
       <button type="button" class="character-card${c.state ? '' : ' character-card-blank'}" data-character="${c.id}">
-        <span class="character-avatar" aria-hidden="true">${escapeHtml(c.initials)}</span>
+        <span class="character-avatar" aria-hidden="true"${c.avatarColor ? ` style="background: ${escapeAttr(c.avatarColor)};"` : ''}>${escapeHtml(c.initials)}</span>
         <span class="character-kicker">${escapeHtml(c.tagline)}</span>
         <span class="character-name">${escapeHtml(c.name)}</span>
         <span class="character-role">${escapeHtml(c.role)}</span>
@@ -593,7 +593,7 @@
     els.screenReview.hidden = view !== 'review';
     els.screenGuide.hidden = view !== 'guide';
     if (els.previewMobileDock) {
-      els.previewMobileDock.hidden = (view !== 'start' && view !== 'wizard' && view !== 'review');
+      els.previewMobileDock.hidden = (view !== 'wizard' && view !== 'review');
       // No wizard o botao flutua acima da barra fixa; nas demais, junto da base.
       els.previewMobileDock.style.bottom = view === 'wizard'
         ? 'calc(4.8rem + env(safe-area-inset-bottom))'
@@ -893,7 +893,7 @@
       input.className = 'cv-input';
       input.id = id;
       input.name = field.key;
-      input.rows = 3;
+      input.rows = field.rows || 3;
       if (field.placeholder) input.placeholder = field.placeholder;
       if (field.required) input.required = true;
       input.value = value;
@@ -982,12 +982,17 @@
   function updateFieldHint(el, kind, value) {
     let q;
     if (kind === 'email') {
-      q = (!value || /.+@.+\..+/.test(value))
-        ? { kind: 'good', label: 'Use um e-mail que você consulta com frequência.' }
-        : { kind: 'weak', label: 'Esse e-mail parece incompleto - confira o "@" e o domínio.' };
+      // E-mail valido nao precisa de dica; so avisa quando parece errado.
+      if (!value || /.+@.+\..+/.test(value)) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      q = { kind: 'weak', label: 'Esse e-mail parece incompleto. Confira o "@" e o domínio.' };
     } else {
       q = textQuality(value);
     }
+    el.hidden = false;
     const m = HINT_STYLE[q.kind];
     el.style.color = m.c;
     el.innerHTML = `${hintIconSvg(m.i, m.c)}<span>${escapeHtml(q.label)}</span>`;
@@ -1224,7 +1229,7 @@
     experiences: 'Experi\u00eancia',
     education: 'Forma\u00e7\u00e3o',
     languages: 'Idioma',
-    certifications: 'Certificado',
+    certifications: 'Certifica\u00e7\u00e3o',
     projects: 'Projeto'
   };
 

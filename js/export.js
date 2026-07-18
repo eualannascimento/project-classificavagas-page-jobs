@@ -868,7 +868,7 @@ const EuGeroExport = (function () {
 
     sidebarSection('Contato', cvDoc.sidebar.contact);
     sidebarSection('Habilidades', cvDoc.sidebar.skills);
-    sidebarSection('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} — ${l.level}`));
+    sidebarSection('Idiomas', cvDoc.sidebar.languages.map(l => `${l.language} · ${l.level}`));
 
     const mainChildren = [];
     EuGeroCvData.getMainSections(cvDoc, templateId).forEach(section => {
