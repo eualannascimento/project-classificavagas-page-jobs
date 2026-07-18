@@ -424,6 +424,13 @@ assert(noWordRefs.length === 0, `Sem referencias a Word/export removidos${noWord
 assert(!fs.existsSync(path.join(__dirname, '..', 'js/export.js')), 'js/export.js removido');
 assert(!fs.existsSync(path.join(__dirname, '..', 'js/cv-data.js')), 'js/cv-data.js removido');
 
+// --- P0.2: sem listener duplicado no botão "Voltar" da configuração ---
+console.log('\nNavegação sem binding duplicado:');
+
+const appJsCode = fs.readFileSync(path.join(__dirname, '..', 'js/app.js'), 'utf8');
+const backStartBindings = (appJsCode.match(/getElementById\('btn-back-start'\)\?\.addEventListener/g) || []).length;
+assert(backStartBindings === 1, `btn-back-start tem exatamente 1 listener de clique (encontrados: ${backStartBindings})`);
+
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
 

@@ -193,7 +193,6 @@
     document.getElementById('btn-export-pdf')?.addEventListener('click', printCv);
     document.getElementById('btn-guide')?.addEventListener('click', goToGuide);
     document.getElementById('btn-back-review')?.addEventListener('click', goToReview);
-    document.getElementById('btn-back-start')?.addEventListener('click', goToStart);
 
     const btnToggleCompact = document.getElementById('toggle-compact-mode');
     if (btnToggleCompact) {
