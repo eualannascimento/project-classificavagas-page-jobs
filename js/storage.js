@@ -68,7 +68,7 @@ const EuGeroStorage = (function () {
     }
 
     if (data.version && typeof data.version !== 'string') {
-      return { valid: false, error: 'Arquivo inválido: versão incorreta.' };
+      return { valid: false, error: 'Arquivo inválido: versão incompatível.' };
     }
 
     return { valid: true, data: mergeWithDefaults(data) };

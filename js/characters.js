@@ -273,9 +273,9 @@ const EuGeroCharacters = (function () {
     {
       id: 'blank',
       name: 'Em branco',
-      role: 'Comece do zero, do seu jeito',
+      role: 'Crie seu currículo do zero',
       initials: '+',
-      tagline: 'Página limpa',
+      tagline: 'Página em branco',
       avatarColor: null,
       state: null
     },
