@@ -476,7 +476,8 @@ assert(!exportHtml.includes('>Resumo<'), 'Modo export não inclui título de se�
 const editorHtml = EuGeroPreview.render(previewEmptyState, 'classic', exportSections);
 assert(editorHtml.includes('cv-section-skeleton'), 'Modo padrão (editor) preserva skeletons de seção vazia');
 
-const printCvUsesExportMode = /EuGeroPreview\.render\(\s*state\s*,\s*state\.template\s*,\s*activeSections\(\)\s*,\s*['"]export['"]\s*\)/.test(appJsCode);
+const reviewScreenCode = fs.readFileSync(path.join(__dirname, '..', 'js/screens/review.js'), 'utf8');
+const printCvUsesExportMode = /EuGeroPreview\.render\(\s*state\s*,\s*state\.template\s*,\s*ctx\.activeSections\(\)\s*,\s*['"]export['"]\s*\)/.test(reviewScreenCode);
 assert(printCvUsesExportMode, 'printCv() chama EuGeroPreview.render com modo "export"');
 
 // --- P0.4: tipografia unificada entre previa e PDF, sem fator de conversão ---
@@ -589,17 +590,21 @@ assert(htmlContent.includes('Algumas plataformas usam sistemas ATS para ler e or
 console.log('\nTextos ATS (js/app.js):');
 
 const appJsContent = fs.readFileSync(path.join(__dirname, '..', 'js/app.js'), 'utf8');
-assert(appJsContent.includes('Estrutura favorável a ATS'), 'Selo "Estrutura favoravel a ATS" presente em app.js');
-assert(appJsContent.includes('Pode dificultar a leitura por ATS'), 'Selo "Pode dificultar a leitura por ATS" presente em app.js');
-assert(!appJsContent.includes('Favorável a ATS'), 'Selo antigo "Favorável a ATS" removido de app.js');
-assert(!appJsContent.includes('Pode exigir atenção no ATS'), 'Texto antigo de selo removido de app.js');
-assert(appJsContent.includes('confirme se o texto pode ser selecionado e copiado'), 'Toast de exportacao pede confirmar texto selecionavel');
-assert(appJsContent.includes('revise os campos preenchidos automaticamente'), 'Orientacao pos-download pede revisar campos importados');
-assert(appJsContent.includes('Esta verificação considera apenas a estrutura e a organização do currículo'), 'Texto de apoio do painel Leitura por ATS presente em app.js');
-assert(appJsContent.includes('Estrutura favorável') && appJsContent.includes('Revise a estrutura'), 'Status do painel Leitura por ATS presentes em app.js');
-assert(appJsContent.includes('Antes de enviar'), 'Rotulo da checklist "Antes de enviar" presente em app.js');
-assert(appJsContent.includes('Confirme se o texto do PDF pode ser selecionado e copiado.'), 'Checklist inclui item sobre texto selecionavel no PDF');
-assert(appJsContent.includes('Dica: leia os requisitos da vaga e confira se as habilidades'), 'Dica de habilidades x requisitos da vaga presente abaixo das sugestoes');
+const screensDir = path.join(__dirname, '..', 'js/screens');
+const appModulesContent = appJsContent + fs.readdirSync(screensDir)
+  .map((f) => fs.readFileSync(path.join(screensDir, f), 'utf8'))
+  .join('\n');
+assert(appModulesContent.includes('Estrutura favorável a ATS'), 'Selo "Estrutura favoravel a ATS" presente em app.js/screens');
+assert(appModulesContent.includes('Pode dificultar a leitura por ATS'), 'Selo "Pode dificultar a leitura por ATS" presente em app.js/screens');
+assert(!appModulesContent.includes('Favorável a ATS'), 'Selo antigo "Favorável a ATS" removido de app.js/screens');
+assert(!appModulesContent.includes('Pode exigir atenção no ATS'), 'Texto antigo de selo removido de app.js/screens');
+assert(appModulesContent.includes('confirme se o texto pode ser selecionado e copiado'), 'Toast de exportacao pede confirmar texto selecionavel');
+assert(appModulesContent.includes('revise os campos preenchidos automaticamente'), 'Orientacao pos-download pede revisar campos importados');
+assert(appModulesContent.includes('Esta verificação considera apenas a estrutura e a organização do currículo'), 'Texto de apoio do painel Leitura por ATS presente em app.js/screens');
+assert(appModulesContent.includes('Estrutura favorável') && appModulesContent.includes('Revise a estrutura'), 'Status do painel Leitura por ATS presentes em app.js/screens');
+assert(appModulesContent.includes('Antes de enviar'), 'Rotulo da checklist "Antes de enviar" presente em app.js/screens');
+assert(appModulesContent.includes('Confirme se o texto do PDF pode ser selecionado e copiado.'), 'Checklist inclui item sobre texto selecionavel no PDF');
+assert(appModulesContent.includes('Dica: leia os requisitos da vaga e confira se as habilidades'), 'Dica de habilidades x requisitos da vaga presente abaixo das sugestoes');
 
 // --- Content-Security-Policy ---
 console.log('\nContent-Security-Policy:');
