@@ -1511,7 +1511,7 @@
   function printCv() {
     const el = document.getElementById('print-cv');
     if (!el) return;
-    el.innerHTML = EuGeroPreview.render(state, state.template, activeSections());
+    el.innerHTML = EuGeroPreview.render(state, state.template, activeSections(), 'export');
     el.className = `preview-content template-${state.template} cv-margin-${state.margin || 'padrao'} cv-density-${state.density || 'normal'}`;
     // O nome sugerido no "Salvar como PDF" vem do titulo da pagina: CV_<NOME>_<CARGO>.
     const prevTitle = document.title;

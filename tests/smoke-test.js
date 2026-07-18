@@ -23,6 +23,27 @@ loadScript('js/prompts.js');
 loadScript('js/router.js');
 loadScript('js/sample-data.js');
 
+// js/preview.js só usa document.createElement('div') para escapar HTML;
+// shim mínimo o suficiente para carregar o módulo sem um DOM real.
+global.document = {
+  createElement() {
+    let text = '';
+    return {
+      set textContent(value) { text = value == null ? '' : String(value); },
+      get textContent() { return text; },
+      get innerHTML() {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+    };
+  }
+};
+loadScript('js/preview.js');
+
 let passed = 0;
 let failed = 0;
 
@@ -430,6 +451,32 @@ console.log('\nNavegação sem binding duplicado:');
 const appJsCode = fs.readFileSync(path.join(__dirname, '..', 'js/app.js'), 'utf8');
 const backStartBindings = (appJsCode.match(/getElementById\('btn-back-start'\)\?\.addEventListener/g) || []).length;
 assert(backStartBindings === 1, `btn-back-start tem exatamente 1 listener de clique (encontrados: ${backStartBindings})`);
+
+// --- P0.3: sem skeletons/placeholders no PDF exportado ---
+console.log('\nExportação sem skeletons:');
+
+const previewEmptyState = {
+  template: 'classic',
+  personal: { fullName: 'Maria Teste', headline: 'Engenheira de Dados' },
+  summary: '',
+  experiences: [],
+  education: [],
+  skills: [],
+  skillsText: '',
+  languages: []
+};
+const exportSections = EuGeroConfig.getActiveSections(['experiences', 'education']);
+
+const exportHtml = EuGeroPreview.render(previewEmptyState, 'classic', exportSections, 'export');
+assert(!exportHtml.includes('cv-section-skeleton'), 'Modo export não inclui skeletons de seção vazia');
+assert(!exportHtml.includes('>Experiência<'), 'Modo export não inclui título de seção vazia (Experiência)');
+assert(!exportHtml.includes('>Resumo<'), 'Modo export não inclui título de seção vazia (Resumo)');
+
+const editorHtml = EuGeroPreview.render(previewEmptyState, 'classic', exportSections);
+assert(editorHtml.includes('cv-section-skeleton'), 'Modo padrão (editor) preserva skeletons de seção vazia');
+
+const printCvUsesExportMode = /EuGeroPreview\.render\(\s*state\s*,\s*state\.template\s*,\s*activeSections\(\)\s*,\s*['"]export['"]\s*\)/.test(appJsCode);
+assert(printCvUsesExportMode, 'printCv() chama EuGeroPreview.render com modo "export"');
 
 // --- Summary ---
 console.log(`\n=== Resultado: ${passed} passou, ${failed} falhou ===\n`);
