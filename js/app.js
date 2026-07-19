@@ -215,7 +215,7 @@
     document.getElementById('btn-wizard-to-start')?.addEventListener('click', goToStart);
     document.getElementById('btn-gal-prev')?.addEventListener('click', () => EuGeroReviewScreen.galleryStep(-1));
     document.getElementById('btn-gal-next')?.addEventListener('click', () => EuGeroReviewScreen.galleryStep(1));
-    document.getElementById('btn-export-pdf')?.addEventListener('click', EuGeroReviewScreen.downloadPdf);
+    document.getElementById('btn-export-pdf')?.addEventListener('click', EuGeroReviewScreen.printCv);
     document.getElementById('btn-guide')?.addEventListener('click', goToGuide);
     document.getElementById('btn-back-review')?.addEventListener('click', goToReview);
 
@@ -337,6 +337,7 @@
     state[key] = value;
     saveState();
     renderPageControls();
+    if (els.previewMobileDock) els.previewMobileDock.hidden = currentView !== 'wizard';
     debouncedUpdatePreviews();
   }
 
@@ -387,7 +388,6 @@
     saveState();
     updateTemplateIndicators();
     debouncedUpdatePreviews();
-    showToast(`Modelo alterado para ${TEMPLATES[templateId].name}.`);
   }
 
   function updateTemplateIndicators() {
@@ -525,9 +525,11 @@
   const debouncedUpdatePreviews = debounce(updateAllPreviews, 150);
 
   function updateMobilePreviewDock() {
-    const thumb = document.querySelector('[data-preview-mobile]');
-    if (!thumb) return;
-    EuGeroPreview.updatePreview(thumb, state, state.template, activeSections());
+    const fit = document.getElementById('preview-mobile-fit');
+    if (!fit) return;
+    const pageFit = EuGeroScoring.scorePageFit(state, activeSections());
+    fit.textContent = pageFit.level === 'ok' ? '1 página' : pageFit.level === 'detailed' ? 'até 2 páginas' : 'revisar';
+    fit.className = `preview-mobile-fit preview-mobile-fit-${pageFit.level}`;
   }
 
   function exportJson() {
