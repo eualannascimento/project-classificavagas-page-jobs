@@ -12,7 +12,7 @@ const EuGeroConfig = (function () {
     'colabori', 'participei', 'contribuí', 'capacitei', 'estruturei', 'reestruturei'
   ];
 
-  const REQUIRED_SECTION_IDS = ['personal', 'summary', 'skills'];
+  const REQUIRED_SECTION_IDS = ['personal'];
   const DEFAULT_ENABLED_SECTION_IDS = [
     'personal', 'summary', 'experiences', 'education', 'skills', 'languages'
   ];
@@ -273,13 +273,15 @@ const EuGeroConfig = (function () {
   }
 
   function normalizeEnabledSections(enabledSections) {
-    const set = new Set([...REQUIRED_SECTION_IDS, ...(enabledSections || DEFAULT_ENABLED_SECTION_IDS)]);
-    return SECTIONS.map(s => s.id).filter(id => set.has(id));
+    const validIds = new Set(SECTIONS.map(s => s.id));
+    const ordered = (enabledSections || DEFAULT_ENABLED_SECTION_IDS)
+      .filter((id, index, list) => validIds.has(id) && list.indexOf(id) === index && id !== 'personal');
+    return ['personal', ...ordered];
   }
 
   function getActiveSections(enabledSections) {
     const enabled = normalizeEnabledSections(enabledSections);
-    return SECTIONS.filter(s => enabled.includes(s.id));
+    return enabled.map(id => SECTIONS.find(s => s.id === id)).filter(Boolean);
   }
 
   function isSectionMandatory(sectionId) {
