@@ -1,0 +1,773 @@
+/*
+ * ClassificaVagas + Meu Currículo
+ * Camada visual canônica baseada no design system do gerador de currículo.
+ * Este arquivo é carregado por último para manter a interface inteira coerente.
+ */
+
+:root {
+    --bg: #f2f2f3;
+    --bg-elevated: #f5f5f8;
+    --bg-sunk: #e9e9ea;
+    --ink: #1d1f20;
+    --ink-2: #5d5d60;
+    --ink-3: #7a7a7d;
+    --accent: #5980a6;
+    --accent-soft: #eef6ff;
+    --accent-ink: #416180;
+    --rule: color-mix(in srgb, #1d1f20 16%, transparent);
+    --rule-2: #e7e7ea;
+    --font-sans: "Barlow", system-ui, sans-serif;
+    --font-serif: "Barlow Condensed", system-ui, sans-serif;
+    --font-heading: "Barlow Condensed", system-ui, sans-serif;
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 7px;
+    --radius-xl: 7px;
+}
+
+html { font-size: 16px; }
+
+body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea { font-family: var(--font-sans); }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* A home é sempre clara, assim como a entrada do projeto Meu Currículo. */
+body.hub-active {
+    --bg: #f2f2f3;
+    --bg-elevated: #f5f5f8;
+    --bg-sunk: #e9e9ea;
+    --ink: #1d1f20;
+    --ink-2: #5d5d60;
+    --ink-3: #7a7a7d;
+    --accent: #5980a6;
+    --accent-soft: #eef6ff;
+    --accent-ink: #416180;
+    --rule: color-mix(in srgb, #1d1f20 16%, transparent);
+    --rule-2: #e7e7ea;
+    background: var(--bg);
+    color: var(--ink);
+}
+
+/* Home / central de produtos */
+.product-hub {
+    width: 100%;
+    max-width: 1180px;
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 12px 24px 32px;
+    color: var(--ink);
+    font-family: var(--font-sans);
+}
+
+.hub-nav {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    border: 0;
+}
+
+.hub-brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 9px;
+    color: var(--ink);
+    font-family: var(--font-heading);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+.hub-brand small {
+    color: color-mix(in srgb, var(--ink) 50%, transparent);
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.hub-intro {
+    max-width: 760px;
+    padding: 64px 0 8px;
+}
+
+.hub-eyebrow {
+    display: inline-flex;
+    margin: 0 0 22px;
+    padding: 8px 18px;
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    color: var(--accent-ink);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.hub-intro h1 {
+    max-width: 15ch;
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-heading);
+    font-size: clamp(34px, 5vw, 56px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.04;
+    text-transform: uppercase;
+}
+
+.hub-intro > p:last-child {
+    max-width: 56ch;
+    margin: 20px 0 0;
+    color: color-mix(in srgb, var(--ink) 82%, transparent);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+.hub-products {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin: 34px 0 0;
+}
+
+.product-card,
+.product-card-featured {
+    position: relative;
+    min-height: 256px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 30px;
+    background: var(--bg-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.blueprint-corner {
+    position: absolute;
+    z-index: 2;
+    width: 5px;
+    height: 5px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    pointer-events: none;
+}
+
+.blueprint-corner.tl { inset: -3px auto auto -3px; }
+.blueprint-corner.tr { inset: -3px -3px auto auto; }
+.blueprint-corner.bl { inset: auto auto -3px -3px; }
+.blueprint-corner.br { inset: auto -3px -3px auto; }
+
+.product-kicker {
+    color: color-mix(in srgb, var(--ink) 55%, transparent);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.product-kicker-accent { color: var(--accent-ink); }
+
+.product-card h2 {
+    margin: 2px 0 0;
+    color: var(--ink);
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.product-card p {
+    max-width: 48ch;
+    margin: 0;
+    color: color-mix(in srgb, var(--ink) 78%, transparent);
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+.hub-button {
+    width: 100%;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 0;
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+}
+
+.hub-button-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.hub-button-primary:hover {
+    background: var(--accent-ink);
+    border-color: var(--accent-ink);
+    color: #fff;
+}
+
+.hub-button-secondary {
+    background: transparent;
+    border-color: var(--rule);
+    color: var(--ink);
+}
+
+.hub-button-secondary:hover {
+    background: var(--bg);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+}
+
+.hub-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.hub-home-footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px 28px;
+    flex-wrap: wrap;
+    margin: 24px 0 10px;
+}
+
+.hub-how { flex: none; }
+
+.hub-how > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-ink);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    list-style: none;
+    user-select: none;
+}
+
+.hub-how > summary::-webkit-details-marker { display: none; }
+
+.hub-how-badge {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hub-how[open] {
+    order: 0;
+    flex-basis: 100%;
+}
+
+.hub-how-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
+    margin-top: 18px;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+}
+
+.hub-how-grid article > span {
+    color: var(--accent-ink);
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.hub-how-grid h3 {
+    margin: 5px 0 4px;
+    color: var(--ink);
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    text-transform: uppercase;
+}
+
+.hub-how-grid p {
+    margin: 0;
+    color: color-mix(in srgb, var(--ink) 72%, transparent);
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.hub-privacy {
+    flex: 1;
+    min-width: 280px;
+    margin: 0;
+    color: color-mix(in srgb, var(--ink) 72%, transparent);
+    font-size: 13.5px;
+    line-height: 1.5;
+    text-align: right;
+}
+
+.hub-privacy strong {
+    margin-right: 6px;
+    color: var(--accent-ink);
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hub-privacy span { display: inline; }
+
+.hub-home-footer:has(.hub-how[open]) .hub-privacy {
+    order: 1;
+    flex-basis: 100%;
+    padding: 17px 22px;
+    border: 1px solid var(--rule);
+    text-align: left;
+}
+
+.hub-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin: 8px 0 0;
+    padding: 0;
+    border: 0;
+    color: var(--ink-3);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.hub-footer nav { display: flex; gap: 8px; }
+.hub-footer a:hover { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Interface de vagas: mesma moldura, tipografia e controles técnicos. */
+.masthead-inner,
+.search-bar,
+.main-content { max-width: 1180px; }
+
+.filter-chips-scroll { max-width: calc(1180px + var(--shell-pad) * 2); }
+
+.app-chrome {
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.top-app-bar,
+.app-chrome .top-app-bar {
+    background: transparent;
+    border-bottom: 0;
+}
+
+.masthead-inner {
+    min-height: 48px;
+    height: 48px;
+    gap: 16px;
+}
+
+.masthead-brand { gap: 12px; }
+
+.brand-mark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 9px;
+    color: var(--ink);
+    font-style: normal;
+    text-transform: none;
+}
+
+.brand-product {
+    font-family: var(--font-heading);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1;
+}
+
+.brand-by {
+    color: color-mix(in srgb, var(--ink) 50%, transparent);
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.job-count,
+.brand-update {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    text-transform: uppercase;
+}
+
+.icon-btn,
+.search-bar,
+.filter-chip,
+.sort-dropdown,
+.info-popover,
+.job-card,
+.job-card-icon,
+.job-tag,
+.active-filter-chip,
+.bottom-sheet,
+.filled-button,
+.text-button,
+.filter-option-chip,
+.onboarding-banner,
+.legal-disclaimer,
+.fab,
+.fab-menu,
+.fab-menu-item {
+    border-radius: 0;
+}
+
+.search-bar {
+    height: 40px;
+    background: var(--bg-sunk);
+    border: 1px solid var(--rule);
+    box-shadow: none;
+}
+
+.search-bar:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.search-bar input {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.filter-chip,
+.filled-button,
+.text-button,
+.filter-option-chip,
+.sort-option,
+.onboarding-dismiss {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.filter-chip {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 11px;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.filter-chip-main,
+.filter-chip.selected,
+.filter-chip[data-active="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+}
+
+.filter-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+}
+
+.filter-chip-main:hover,
+.filter-chip.selected:hover,
+.filter-chip[data-active="true"]:hover {
+    border-color: var(--accent-ink);
+    background: var(--accent-ink);
+    color: #fff;
+}
+
+.main-content { padding-top: 8px; }
+
+.jobs-grid { gap: 8px; }
+
+.job-card {
+    background: var(--bg-sunk);
+    border: 1px solid var(--rule);
+    box-shadow: none;
+}
+
+.job-card:hover {
+    transform: none;
+    background: var(--bg-elevated);
+    border-color: var(--accent);
+    box-shadow: none;
+}
+
+.job-card-icon {
+    width: 38px;
+    height: 38px;
+}
+
+.job-card-title h3,
+.job-list-main h3,
+.job-compact-title,
+.bottom-sheet-title h2,
+.empty-state h3 {
+    color: var(--ink);
+    font-family: var(--font-heading);
+    font-style: normal;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    text-transform: uppercase;
+}
+
+.job-card-title p,
+.job-list-company {
+    color: var(--ink-2);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.job-card-body,
+.job-card-footer,
+.job-list-meta,
+.job-compact-meta {
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.job-tag {
+    min-height: 22px;
+    padding: 2px 7px;
+    background: var(--bg);
+    border: 1px solid var(--rule-2);
+    color: var(--ink-2);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+}
+
+.job-card-footer { border-top-color: var(--rule); }
+
+.filled-button,
+.text-button {
+    min-height: 42px;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.filled-button {
+    background: var(--accent);
+    color: #fff;
+}
+
+.filled-button:hover { background: var(--accent-ink); opacity: 1; }
+
+.legal-disclaimer,
+.onboarding-banner {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.bottom-sheet-header { border-bottom: 1px solid var(--rule); }
+
+@media (max-width: 768px) {
+    .product-hub {
+        min-height: 100dvh;
+        padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+        display: flex;
+        flex-direction: column;
+    }
+
+    .hub-nav { min-height: 32px; }
+    .hub-brand { gap: 7px; font-size: 18px; }
+    .hub-brand small { font-size: 9.5px; letter-spacing: 0.09em; }
+
+    .hub-intro {
+        max-width: none;
+        padding: 22px 0 0;
+    }
+
+    .hub-eyebrow {
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        font-size: 10.5px;
+    }
+
+    .hub-intro h1 {
+        max-width: none;
+        font-size: clamp(28px, 8vw, 40px);
+        line-height: 1.04;
+    }
+
+    .hub-intro > p:last-child {
+        max-width: none;
+        margin-top: 10px;
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+
+    .hub-products {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .product-card,
+    .product-card-featured {
+        min-height: 220px;
+        gap: 5px;
+        padding: 13px;
+    }
+
+    .product-kicker { font-size: 9.5px; }
+    .product-card h2 { font-size: 15px; line-height: 1.12; }
+    .product-card p { font-size: 12px; line-height: 1.38; }
+
+    .hub-button {
+        min-height: 40px;
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .hub-home-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        margin: auto 0 0;
+        padding-top: 14px;
+    }
+
+    .hub-how { position: relative; }
+    .hub-how > summary { font-size: 12.5px; }
+
+    .hub-how[open] { flex-basis: auto; }
+    .hub-how[open] > .hub-how-grid {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: calc(100% + 10px);
+        z-index: 30;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        max-height: min(62dvh, 430px);
+        overflow-y: auto;
+        margin: 0;
+        padding: 14px;
+        border: 1px solid var(--rule);
+        background: var(--bg);
+        box-shadow: 0 10px 30px rgba(20, 30, 40, 0.14);
+    }
+
+    .hub-how-grid h3 { font-size: 15px; }
+    .hub-how-grid p { font-size: 12.5px; }
+
+    .hub-privacy,
+    .hub-home-footer:has(.hub-how[open]) .hub-privacy {
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        font-size: 11.5px;
+        text-align: left;
+    }
+
+    .hub-footer {
+        justify-content: flex-start;
+        margin-top: 8px;
+        font-size: 11px;
+    }
+
+    .masthead-inner {
+        min-height: 48px;
+        height: auto;
+        padding: 7px 0;
+    }
+
+    .brand-product { font-size: 20px; }
+    .brand-by { font-size: 9px; letter-spacing: 0.09em; }
+
+    .brand-meta { gap: 2px; }
+    .job-count { font-size: 11px; }
+    .brand-update { font-size: 10px; }
+
+    .search-bar { height: 44px; }
+    .search-bar input { font-size: 16px; }
+
+    .filter-chip {
+        height: 36px;
+        min-height: 36px;
+        font-size: 13px;
+    }
+
+    .jobs-grid { gap: 6px; }
+    .job-card-title h3,
+    .job-list-main h3,
+    .job-compact-title { font-size: 15px; line-height: 1.2; }
+
+    .job-card-title p,
+    .job-list-company { font-size: 12.5px; }
+
+    .bottom-sheet-title h2 { font-size: 20px; }
+}
+
+@media (max-width: 350px) {
+    .hub-products { grid-template-columns: 1fr; }
+    .product-card,
+    .product-card-featured { min-height: 184px; }
+}

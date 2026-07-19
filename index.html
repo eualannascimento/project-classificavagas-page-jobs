@@ -54,6 +54,7 @@
     <link rel="stylesheet" href="assets/css/fonts-text.css">
     <link rel="stylesheet" href="assets/css/fonts-icons.css">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/curriculum-theme.css">
 </head>
 <body>
     <a href="#productHub" class="skip-link hub-skip-link">Pular para o conteúdo</a>
@@ -63,43 +64,48 @@
         <header class="hub-nav">
             <a class="hub-brand" href="#home" aria-label="ClassificaVagas — início">
                 <span>ClassificaVagas</span>
-                <small>ferramentas para carreira</small>
+                <small>ferramentas para sua carreira</small>
             </a>
-            <span class="hub-nav-note">Ferramentas gratuitas</span>
         </header>
 
         <section class="hub-intro">
             <p class="hub-eyebrow">Gratuito · Sem cadastro · Feito no seu navegador</p>
-            <h1 id="hubTitle">Sua busca por vagas, sem complicação.</h1>
-            <p>Busque oportunidades em fontes públicas, aplique filtros que fazem sentido para você e encontre vagas de forma clara e organizada.</p>
+            <h1 id="hubTitle">Sua carreira, sem complicação.</h1>
+            <p>Encontre vagas e prepare seu currículo em ferramentas claras, gratuitas e pensadas para ajudar você em cada etapa.</p>
         </section>
 
         <section class="hub-products" aria-label="Ferramentas disponíveis">
             <article class="product-card blueprint-card product-card-featured">
                 <i class="blueprint-corner tl" aria-hidden="true"></i><i class="blueprint-corner tr" aria-hidden="true"></i><i class="blueprint-corner bl" aria-hidden="true"></i><i class="blueprint-corner br" aria-hidden="true"></i>
-                <span class="product-kicker product-kicker-accent">Começar agora</span>
+                <span class="product-kicker product-kicker-accent">Encontrar oportunidades</span>
                 <h2>Classifica Vagas</h2>
                 <p>Busque vagas abertas, filtre por perfil e acesse a candidatura diretamente na fonte oficial.</p>
-                <a class="hub-button hub-button-primary" href="#vagas">Explorar vagas <span aria-hidden="true">→</span></a>
+                <a class="hub-button hub-button-primary" href="#vagas">Ver vagas</a>
             </article>
 
             <article class="product-card blueprint-card">
                 <i class="blueprint-corner tl" aria-hidden="true"></i><i class="blueprint-corner tr" aria-hidden="true"></i><i class="blueprint-corner bl" aria-hidden="true"></i><i class="blueprint-corner br" aria-hidden="true"></i>
-                <span class="product-kicker">Em breve</span>
+                <span class="product-kicker">Preparar minha apresentação</span>
                 <h2>Meu Currículo</h2>
                 <p>Crie, revise e baixe um currículo bem apresentado, com orientações em cada etapa.</p>
-                <span class="hub-button hub-button-secondary hub-button-disabled" aria-label="Currículo disponível em breve">Disponível em breve</span>
+                <a class="hub-button hub-button-secondary" href="https://eualannascimento.github.io/projeto-eu-gero-meu-curriculo/">Criar currículo</a>
             </article>
 
         </section>
 
-        <footer class="hub-footer">
+        <div class="hub-home-footer">
             <details class="hub-how">
-                <summary><span aria-hidden="true">?</span>Como funciona?</summary>
-                <p><strong>01 · Encontre oportunidades.</strong> Use a busca e os filtros para chegar às vagas relevantes.</p>
-                <p><strong>02 · Acesse a fonte oficial.</strong> A candidatura ocorre sempre na página original.</p>
+                <summary><span class="hub-how-badge" aria-hidden="true">?</span>Como funciona?</summary>
+                <div class="hub-how-grid">
+                    <article><span>01</span><h3>Encontre as vagas</h3><p>Pesquise por cargo, empresa ou local e combine filtros para chegar às oportunidades relevantes.</p></article>
+                    <article><span>02</span><h3>Prepare seu currículo</h3><p>Preencha com orientações, acompanhe a prévia em tempo real e escolha o visual que combina com você.</p></article>
+                    <article><span>03</span><h3>Candidate-se na fonte</h3><p>Confira os detalhes e envie sua candidatura diretamente pela página original da oportunidade.</p></article>
+                </div>
             </details>
-            <p class="hub-privacy"><strong>Privacidade</strong> Suas preferências e histórico ficam no seu dispositivo.</p>
+            <p class="hub-privacy"><strong>Privacidade</strong><span>Suas preferências ficam no navegador. O ClassificaVagas não recebe os dados preenchidos no currículo.</span></p>
+        </div>
+
+        <footer class="hub-footer">
             <nav aria-label="Links legais"><a href="termos.html">Termos</a><span aria-hidden="true">·</span><a href="privacidade.html">Privacidade/LGPD</a></nav>
         </footer>
     </main>
@@ -122,8 +128,9 @@
             <div class="masthead-inner">
                 <div class="masthead-brand">
                     <h1 class="brand-heading">
-                        <a href="#home" class="brand-mark" id="brandLink" aria-label="ClassificaVagas — voltar ao início">
-                            <span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span>
+                        <a href="#home" class="brand-mark" id="brandLink" aria-label="Vagas por ClassificaVagas — voltar ao início">
+                            <span class="brand-product">Vagas</span>
+                            <span class="brand-by">por ClassificaVagas</span>
                             <span class="visually-hidden">voltar ao início</span>
                         </a>
                     </h1>
