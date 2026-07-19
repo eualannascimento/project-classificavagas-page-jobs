@@ -1,4 +1,42 @@
-/* Text fonts - Instrument Serif + Inter (SIL OFL) */
+/* Text fonts - Barlow / Barlow Condensed shared with Meu Currículo (SIL OFL). */
+
+@font-face {
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/barlow-400.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/barlow-500.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Barlow';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/barlow-700.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Barlow Condensed';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/barlow-condensed-400.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Barlow Condensed';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../fonts/barlow-condensed-600.ttf') format('truetype');
+}
+
+/* Legacy text faces kept for user preferences in the vacancy interface. */
 
 @font-face {
     font-family: 'Instrument Serif';

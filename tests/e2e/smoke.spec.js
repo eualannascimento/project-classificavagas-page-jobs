@@ -5,6 +5,7 @@ test('product hub opens jobs and search filters results', async ({ page }) => {
 
     await expect(page.locator('#productHub')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Sua busca por vagas, sem complicação.' })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => document.fonts.check('600 24px "Barlow Condensed"'))).toBeTruthy();
 
     await page.getByRole('link', { name: /Explorar vagas/i }).click();
     await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });

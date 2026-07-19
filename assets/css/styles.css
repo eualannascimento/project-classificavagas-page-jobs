@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap');
-
 /* ============================================
    CLASSIFICA&VAGAS - Editorial Redesign
    ============================================ */
@@ -26,9 +24,9 @@
     --font-heading: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue Condensed', var(--font-sans);
     --font-mono:  ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
 
-    --shell-pad:  28px;
-    --card-pad:   14px;
-    --gap:        6px;
+    --shell-pad:  24px;
+    --card-pad:   16px;
+    --gap:        8px;
 
     --radius-sm:   2px;
     --radius-md:   4px;
@@ -120,7 +118,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
-    font-size: 14px;
+    font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
@@ -134,7 +132,7 @@ html {
 
 body {
     font-family: var(--font-sans);
-    font-size: 1rem;
+    font-size: 15px;
     line-height: 1.5;
     background: var(--bg);
     color: var(--ink);
@@ -3960,4 +3958,31 @@ body.chrome-scrolled .app-chrome {
     .product-card { padding: 22px; }
     .hub-footer { flex-direction: column; gap: 14px; }
     .hub-privacy { min-width: 0; text-align: left; }
+}
+
+/* Same compact mobile composition as the curriculum home. */
+@media (max-width: 768px) {
+    .product-hub {
+        min-height: calc(100dvh - 54px);
+        padding: 10px 16px 12px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .hub-nav { min-height: 32px; }
+    .hub-intro { padding: 10px 0 0; }
+    .hub-eyebrow { margin-bottom: 8px; font-size: .65625rem; }
+    .hub-intro h1 { max-width: none; font-size: clamp(1.75rem, 8vw, 2.5rem); }
+    .hub-intro > p:last-child { margin-top: 10px; max-width: none; font-size: .84375rem; }
+    .hub-products { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .product-card { padding: 13px; gap: 5px; }
+    .product-kicker { font-size: .59375rem; }
+    .product-card h2 { font-size: .9375rem; line-height: 1.12; }
+    .product-card p { font-size: .75rem; line-height: 1.38; }
+    .hub-button { min-height: 40px; margin-top: 8px; padding: 6px 8px; font-size: .75rem; }
+    .hub-button span { display: none; }
+    .hub-footer { margin: auto 0 0; padding-top: 12px; gap: 8px; }
+    .hub-how summary { font-size: .78125rem; }
+    .hub-privacy { font-size: .71875rem; }
+    .hub-footer nav { font-size: .6875rem; }
 }

@@ -1,4 +1,4 @@
-const CACHE_VERSION = '18';
+const CACHE_VERSION = '19';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',
@@ -10,6 +10,11 @@ const PRECACHE = [
     './sitemap.xml',
     './.well-known/security.txt',
     './assets/css/fonts-text.css',
+    './assets/fonts/barlow-400.ttf',
+    './assets/fonts/barlow-500.ttf',
+    './assets/fonts/barlow-700.ttf',
+    './assets/fonts/barlow-condensed-400.ttf',
+    './assets/fonts/barlow-condensed-600.ttf',
     './assets/css/fonts-icons.css',
     './assets/css/styles.css',
     './assets/js/theme-init.js',
