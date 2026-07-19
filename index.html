@@ -239,7 +239,9 @@
     <!-- Preview mobile dock -->
     <aside id="preview-mobile-dock" class="preview-mobile-dock" aria-label="Prévia do currículo">
       <button type="button" class="preview-mobile-dock-btn" id="btn-expand-mobile-preview" aria-label="Ver prévia do currículo">
+        <span class="preview-mobile-dock-icon" aria-hidden="true">▣</span>
         <span class="preview-mobile-dock-label">Ver prévia</span>
+        <span id="preview-mobile-fit" class="preview-mobile-fit">1 página</span>
       </button>
     </aside>
     </div>
@@ -250,6 +252,7 @@
         <div class="preview-overlay-header bottom-sheet-header">
           <div class="bottom-sheet-drag-handle"></div>
           <h2 id="preview-overlay-title">Prévia do currículo</h2>
+          <p class="preview-overlay-tip">Deslize para ver o currículo completo.</p>
           <button type="button" class="btn btn-ghost" id="btn-close-preview" aria-label="Fechar prévia">✕</button>
         </div>
         <div class="preview-paper-wrap">
@@ -332,7 +335,6 @@
   <script src="js/sample-data.js"></script>
   <script src="js/characters.js"></script>
   <script src="js/preview.js"></script>
-  <script src="js/pdf-export.js"></script>
   <script src="js/linkedin-guide.js"></script>
   <script src="js/router.js"></script>
   <script src="js/a11y.js"></script>

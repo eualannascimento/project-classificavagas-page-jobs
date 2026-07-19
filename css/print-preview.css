@@ -9,6 +9,7 @@
     display: block !important;
     width: 210mm;
     min-height: 297mm;
+    box-sizing: border-box;
     background: #fff;
     box-shadow: none;
     /* font-size, line-height e padding vem das mesmas regras .preview-content
@@ -527,4 +528,3 @@
 .toast-error {
   background: var(--color-danger);
 }
-

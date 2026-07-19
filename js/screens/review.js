@@ -138,11 +138,7 @@ const EuGeroReviewScreen = (function () {
     syncPrintCv();
   }
 
-  /**
-   * Mantem #print-cv espelhando o template atual, para que o atalho nativo
-   * do navegador (Ctrl+P) continue funcionando mesmo que o download de PDF
-   * (downloadPdf) use jsPDF em vez da impressao.
-   */
+  /** Mantém a área de impressão idêntica ao conteúdo da prévia. */
   function syncPrintCv() {
     const el = document.getElementById('print-cv');
     if (!el) return;
@@ -183,55 +179,9 @@ const EuGeroReviewScreen = (function () {
     return cargo ? `CV_${nome}_${cargo}` : `CV_${nome}`;
   }
 
-  function loadScriptOnce(src) {
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[data-vendor-src="${src}"]`);
-      if (existing) {
-        if (existing.dataset.loaded === 'true') { resolve(); return; }
-        existing.addEventListener('load', () => resolve());
-        existing.addEventListener('error', () => reject(new Error(`Falha ao carregar ${src}`)));
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = src;
-      script.dataset.vendorSrc = src;
-      script.addEventListener('load', () => { script.dataset.loaded = 'true'; resolve(); });
-      script.addEventListener('error', () => reject(new Error(`Falha ao carregar ${src}`)));
-      document.head.appendChild(script);
-    });
-  }
-
-  /** Bibliotecas de PDF (jsPDF + fontes) carregadas sob demanda no primeiro download. */
-  async function ensurePdfLibsLoaded() {
-    if (typeof window.jspdf === 'undefined') {
-      await loadScriptOnce('js/vendor/jspdf.umd.min.js');
-    }
-    if (typeof EuGeroPdfFonts === 'undefined') {
-      await loadScriptOnce('js/vendor/fonts-barlow.js');
-    }
-  }
-
-  /**
-   * PDF real (download direto): gera o arquivo com jsPDF, identico a previa
-   * por familia de layout, e baixa CV_<NOME>_<CARGO>.pdf sem passar pela
-   * caixa de dialogo de impressao do navegador.
-   */
-  async function downloadPdf() {
-    const state = ctx.getState();
-    try {
-      await ensurePdfLibsLoaded();
-      const doc = EuGeroPdfExport.generatePdf(
-        state,
-        ctx.activeSections(),
-        state.template,
-        state.margin || 'padrao',
-        state.density || 'normal'
-      );
-      doc.save(`${cvFileBaseName()}.pdf`);
-      ctx.showToast('Abra o arquivo baixado e confirme se o texto pode ser selecionado e copiado. Ao enviar o currículo para uma plataforma de vagas, revise os campos preenchidos automaticamente, principalmente cargos, empresas, datas, formação e descrições.', { duration: 7000 });
-    } catch (err) {
-      ctx.showToast('Não foi possível gerar o PDF agora. Tente novamente.', { duration: 5000, error: true });
-    }
+  function printCv() {
+    syncPrintCv();
+    window.print();
   }
 
   function renderReviewTemplateGallery() {
@@ -295,6 +245,6 @@ const EuGeroReviewScreen = (function () {
     renderReviewGallery,
     renderReviewTemplateGallery,
     cvFileBaseName,
-    downloadPdf
+    printCv
   };
 })();
