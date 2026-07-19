@@ -2331,7 +2331,7 @@ body.legal-page {
     padding: 20px var(--shell-pad) calc(72px + var(--safe-bottom));
 }
 
-.legal-system-switcher {
+.legal-document-switcher {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2344,20 +2344,20 @@ body.legal-page {
     letter-spacing: .02em;
 }
 
-.legal-system-switcher span {
+.legal-document-switcher span {
     margin-right: 4px;
     color: var(--ink-2);
     font-family: var(--font-sans);
     font-size: 12px;
 }
 
-.legal-system-switcher a {
+.legal-document-switcher a {
     padding: 6px 10px;
     border: 1px solid var(--rule);
     background: var(--bg-sunk);
 }
 
-.legal-system-switcher a:hover {
+.legal-document-switcher a:hover {
     border-color: var(--accent);
     color: var(--accent-ink);
 }

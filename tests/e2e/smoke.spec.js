@@ -55,7 +55,7 @@ test('product hub preserves the curriculum typography and mobile layout', async 
     expect(layout.cardWidths[0]).toBe(layout.cardWidths[1]);
 });
 
-test('legal links open and offer system switching', async ({ page }) => {
+test('legal links open and offer document switching', async ({ page }) => {
     await page.goto('/');
 
     const termsLink = page.locator('#productHub a[href="termos.html"]');
@@ -63,10 +63,12 @@ test('legal links open and offer system switching', async ({ page }) => {
     await termsLink.click();
 
     await expect(page).toHaveURL(/termos\.html/);
-    await expect(page.getByRole('link', { name: 'Vagas', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Currículo', exact: true })).toBeVisible();
+    const termsSwitcher = page.locator('.legal-document-switcher');
+    await expect(termsSwitcher.getByRole('link', { name: 'Termos', exact: true })).toBeVisible();
+    await expect(termsSwitcher.getByRole('link', { name: 'Privacidade/LGPD', exact: true })).toBeVisible();
 
     await page.goto('/privacidade.html');
-    await expect(page.getByRole('link', { name: 'Vagas', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Currículo', exact: true })).toBeVisible();
+    const privacySwitcher = page.locator('.legal-document-switcher');
+    await expect(privacySwitcher.getByRole('link', { name: 'Termos', exact: true })).toBeVisible();
+    await expect(privacySwitcher.getByRole('link', { name: 'Privacidade/LGPD', exact: true })).toBeVisible();
 });
