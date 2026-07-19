@@ -108,7 +108,7 @@ body.hub-active {
 
 .hub-intro {
     max-width: 760px;
-    padding: 64px 0 8px;
+    padding: 20px 0 8px;
 }
 
 .hub-eyebrow {
@@ -260,35 +260,13 @@ body.hub-active {
 }
 
 .hub-button-unavailable {
-    position: relative;
-    overflow: hidden;
-    cursor: default;
+    cursor: not-allowed;
     color: color-mix(in srgb, var(--ink) 56%, transparent);
+    opacity: 0.58;
     user-select: none;
 }
 
-.hub-button-unavailable::before {
-    content: "Em breve";
-    position: absolute;
-    left: -12%;
-    top: 50%;
-    width: 124%;
-    padding: 3px 0;
-    transform: translateY(-50%) rotate(-7deg);
-    background: var(--accent);
-    color: #fff;
-    font-family: var(--font-heading);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    line-height: 1.2;
-    text-align: center;
-    text-transform: uppercase;
-}
-
 .hub-button-unavailable:hover {
-    background: transparent;
-    border-color: var(--rule);
     color: color-mix(in srgb, var(--ink) 56%, transparent);
 }
 
@@ -674,7 +652,7 @@ body.hub-active {
 
     .hub-intro {
         max-width: none;
-        padding: 22px 0 0;
+        padding: 10px 0 0;
     }
 
     .hub-eyebrow {
@@ -719,7 +697,6 @@ body.hub-active {
         font-size: 12px;
     }
 
-    .hub-button-unavailable::before { font-size: 10px; }
 
     .hub-home-footer {
         flex-direction: column;
