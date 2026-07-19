@@ -390,6 +390,12 @@ body.hub-active {
 
 .filter-chips-scroll { max-width: calc(1180px + var(--shell-pad) * 2); }
 
+/* A faixa de rolagem ficava sobre o canto esquerdo do botão Filtros no mobile. */
+.filter-chips-container::before,
+.filter-chips-container::after {
+    display: none;
+}
+
 .app-chrome {
     background: color-mix(in srgb, var(--bg) 94%, transparent);
     backdrop-filter: blur(12px);
