@@ -6,13 +6,13 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f9f9ff">
+    <meta name="theme-color" content="#f2f2f3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="classificavagas.com — agregador de vagas de emprego no Brasil. Busque por cargo, empresa, cidade ou categoria, filtre e compartilhe sua busca.">
+    <meta name="description" content="ClassificaVagas — ferramentas gratuitas para organizar a busca por emprego, encontrar vagas e criar seu currículo.">
     <link rel="canonical" href="https://classificavagas.com/">
-    <meta property="og:title" content="classificavagas.com — Vagas de Emprego no Brasil">
-    <meta property="og:description" content="Agregador independente de vagas de emprego no Brasil. Busque, filtre e compartilhe sua busca.">
+    <meta property="og:title" content="ClassificaVagas — ferramentas para a sua carreira">
+    <meta property="og:description" content="Encontre vagas e crie seu currículo gratuitamente, sem cadastro.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://classificavagas.com/">
     <meta property="og:image" content="https://classificavagas.com/assets/images/og-image.png">
@@ -50,12 +50,59 @@
     <link rel="prefetch" href="termos.html">
     <link rel="prefetch" href="privacidade.html">
     <script src="assets/js/theme-init.js"></script>
+    <script src="assets/js/product-hub.js"></script>
     <link rel="stylesheet" href="assets/css/fonts-text.css">
     <link rel="stylesheet" href="assets/css/fonts-icons.css">
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
-    <a href="#jobsGrid" class="skip-link">Pular para vagas</a>
+    <a href="#productHub" class="skip-link hub-skip-link">Pular para o conteúdo</a>
+    <a href="#jobsGrid" class="skip-link app-skip-link">Pular para vagas</a>
+
+    <main class="product-hub" id="productHub" aria-labelledby="hubTitle">
+        <header class="hub-nav">
+            <a class="hub-brand" href="#home" aria-label="ClassificaVagas — início">
+                <span>ClassificaVagas</span>
+                <small>carreira, com clareza</small>
+            </a>
+            <span class="hub-nav-note">Ferramentas gratuitas</span>
+        </header>
+
+        <section class="hub-intro">
+            <p class="hub-eyebrow">Gratuito · Sem cadastro · Feito para o seu próximo passo</p>
+            <h1 id="hubTitle">Tudo para organizar sua busca por trabalho.</h1>
+            <p>Encontre oportunidades e monte um currículo claro, em ferramentas simples que funcionam direto no navegador.</p>
+        </section>
+
+        <section class="hub-products" aria-label="Ferramentas disponíveis">
+            <article class="product-card blueprint-card product-card-featured">
+                <i class="blueprint-corner tl" aria-hidden="true"></i><i class="blueprint-corner tr" aria-hidden="true"></i><i class="blueprint-corner bl" aria-hidden="true"></i><i class="blueprint-corner br" aria-hidden="true"></i>
+                <span class="product-kicker product-kicker-accent">Encontre oportunidades</span>
+                <h2>Classifica Vagas</h2>
+                <p>Busque vagas abertas, filtre por perfil e acesse a candidatura diretamente na fonte oficial.</p>
+                <a class="hub-button hub-button-primary" href="#vagas">Explorar vagas <span aria-hidden="true">→</span></a>
+            </article>
+
+            <article class="product-card blueprint-card">
+                <i class="blueprint-corner tl" aria-hidden="true"></i><i class="blueprint-corner tr" aria-hidden="true"></i><i class="blueprint-corner bl" aria-hidden="true"></i><i class="blueprint-corner br" aria-hidden="true"></i>
+                <span class="product-kicker">Apresente sua trajetória</span>
+                <h2>Meu Currículo</h2>
+                <p>Crie, revise e baixe um currículo bem apresentado, com orientações em cada etapa.</p>
+                <a class="hub-button hub-button-secondary" href="https://eualannascimento.github.io/projeto-eu-gero-meu-curriculo/">Criar currículo <span aria-hidden="true">→</span></a>
+            </article>
+
+            <article class="product-card product-card-soon" aria-label="Em breve, novas ferramentas">
+                <span class="product-kicker">Em breve</span>
+                <h2>Mais ferramentas para a sua carreira</h2>
+                <p>Este espaço já está preparado para os próximos projetos do ClassificaVagas.</p>
+            </article>
+        </section>
+
+        <footer class="hub-footer">
+            <p><strong>Privacidade em primeiro lugar.</strong> Cada ferramenta explica como usa seus dados antes de você começar.</p>
+            <nav aria-label="Links legais"><a href="termos.html">Termos</a><span aria-hidden="true">·</span><a href="privacidade.html">Privacidade/LGPD</a></nav>
+        </footer>
+    </main>
 
     <div id="splash" class="splash">
         <div class="splash-content">
@@ -75,7 +122,7 @@
             <div class="masthead-inner">
                 <div class="masthead-brand">
                     <h1 class="brand-heading">
-                        <a href="/" class="brand-mark" id="brandLink" aria-label="classificavagas.com — voltar ao início">
+                        <a href="#home" class="brand-mark" id="brandLink" aria-label="ClassificaVagas — voltar ao início">
                             <span class="brand-c">c</span>lassifica<span class="brand-v">v</span>agas<span class="brand-tld">.com</span>
                             <span class="visually-hidden">voltar ao início</span>
                         </a>

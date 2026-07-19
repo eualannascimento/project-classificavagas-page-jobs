@@ -1,4 +1,4 @@
-const CACHE_VERSION = '15';
+const CACHE_VERSION = '16';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',
@@ -13,6 +13,7 @@ const PRECACHE = [
     './assets/css/fonts-icons.css',
     './assets/css/styles.css',
     './assets/js/theme-init.js',
+    './assets/js/product-hub.js',
     './assets/js/link-prefetch.js',
     './assets/js/legal-chrome.js',
     './assets/js/legal.js',

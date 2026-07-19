@@ -3,23 +3,23 @@
    ============================================ */
 
 :root {
-    --bg:           oklch(0.985 0.005 250);
-    --bg-elevated:  oklch(1.000 0.000 0);
-    --bg-sunk:      oklch(0.965 0.008 250);
-    --ink:          oklch(0.20 0.020 250);
-    --ink-2:        oklch(0.42 0.018 250);
-    --ink-3:        oklch(0.60 0.015 250);
-    --accent:       oklch(0.52 0.08 240);
-    --accent-soft:  oklch(0.93 0.025 240);
-    --accent-ink:   oklch(0.32 0.10 240);
-    --success:      oklch(0.50 0.13 145);
-    --success-soft: oklch(0.92 0.04 145);
-    --warn:         oklch(0.55 0.12 50);
-    --warn-soft:    oklch(0.93 0.04 50);
-    --rule:         oklch(0.90 0.008 250);
-    --rule-2:       oklch(0.94 0.006 250);
+    --bg:           #f2f2f3;
+    --bg-elevated:  #ffffff;
+    --bg-sunk:      #e9e9ea;
+    --ink:          #1d1f20;
+    --ink-2:        #5d5d60;
+    --ink-3:        #7a7a7d;
+    --accent:       #5980a6;
+    --accent-soft:  #eef6ff;
+    --accent-ink:   #416180;
+    --success:      #17845f;
+    --success-soft: #e5f4ed;
+    --warn:         #9b661a;
+    --warn-soft:    #fff1dc;
+    --rule:         #d4d4d7;
+    --rule-2:       #e7e7ea;
 
-    --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+    --font-serif: 'Inter', system-ui, sans-serif;
     --font-sans:  'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono:  ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
 
@@ -27,10 +27,10 @@
     --card-pad:   14px;
     --gap:        6px;
 
-    --radius-sm:   6px;
-    --radius-md:   10px;
-    --radius-lg:   14px;
-    --radius-xl:   20px;
+    --radius-sm:   2px;
+    --radius-md:   4px;
+    --radius-lg:   6px;
+    --radius-xl:   8px;
     --radius-pill: 999px;
 
     --ease: cubic-bezier(.22, 1, .36, 1);
@@ -2986,6 +2986,195 @@ body.legal-panel-open {
     .filter-chip-sort .sort-label {
         display: none;
     }
+}
+
+/* ============================================
+   CLASSIFICAVAGAS — PRODUCT HUB / BLUEPRINT UI
+   Shared visual language with "Meu Currículo".
+   ============================================ */
+.product-hub {
+    width: min(1180px, calc(100% - 48px));
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: 12px 0 36px;
+    animation: hub-enter .35s var(--ease) both;
+}
+.product-hub[hidden] { display: none !important; }
+.hub-nav {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--rule);
+}
+.hub-brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 9px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+.hub-brand span,
+.product-card h2,
+.hub-intro h1 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+}
+.hub-brand small,
+.hub-nav-note,
+.hub-eyebrow,
+.product-kicker {
+    font-size: 0.69rem;
+    font-weight: 600;
+    letter-spacing: .10em;
+    line-height: 1.25;
+    text-transform: uppercase;
+}
+.hub-brand small { color: var(--ink-3); letter-spacing: .11em; }
+.hub-nav-note { margin-left: auto; color: var(--ink-3); }
+.hub-intro { max-width: 670px; padding: clamp(58px, 10vw, 120px) 0 clamp(32px, 5vw, 56px); }
+.hub-eyebrow { margin-bottom: 12px; color: var(--accent-ink); }
+.hub-intro h1 {
+    max-width: 15ch;
+    margin: 0;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: .98;
+    text-transform: uppercase;
+}
+.hub-intro > p:last-child {
+    max-width: 56ch;
+    margin: 20px 0 0;
+    color: var(--ink-2);
+    font-size: clamp(1rem, 1.7vw, 1.125rem);
+    line-height: 1.58;
+}
+.hub-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.product-card {
+    position: relative;
+    min-height: 282px;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(22px, 3vw, 32px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--rule);
+}
+.blueprint-card { isolation: isolate; }
+.blueprint-corner {
+    position: absolute;
+    z-index: 1;
+    width: 9px;
+    height: 9px;
+    border-color: var(--accent);
+    border-style: solid;
+    pointer-events: none;
+}
+.blueprint-corner.tl { inset: -3px auto auto -3px; border-width: 2px 0 0 2px; }
+.blueprint-corner.tr { inset: -3px -3px auto auto; border-width: 2px 2px 0 0; }
+.blueprint-corner.bl { inset: auto auto -3px -3px; border-width: 0 0 2px 2px; }
+.blueprint-corner.br { inset: auto -3px -3px auto; border-width: 0 2px 2px 0; }
+.product-card-featured { border-color: var(--accent); }
+.product-kicker { color: var(--ink-3); }
+.product-kicker-accent { color: var(--accent-ink); }
+.product-card h2 {
+    margin: 8px 0 0;
+    font-size: clamp(1.65rem, 3vw, 2.15rem);
+    line-height: 1;
+    text-transform: uppercase;
+}
+.product-card p {
+    max-width: 42ch;
+    margin: 14px 0 0;
+    color: var(--ink-2);
+    font-size: .94rem;
+    line-height: 1.55;
+}
+.hub-button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: fit-content;
+    margin-top: auto;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: .875rem;
+    transition: background .16s var(--ease), border-color .16s var(--ease), color .16s var(--ease), transform .16s var(--ease);
+}
+.hub-button span { font-size: 1.2em; transition: transform .16s var(--ease); }
+.hub-button:hover span { transform: translateX(3px); }
+.hub-button:active { transform: translateY(1px); }
+.hub-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hub-button-primary { background: var(--accent); color: #fff; }
+.hub-button-primary:hover { background: var(--accent-ink); color: #fff; }
+.hub-button-secondary { border-color: var(--rule); color: var(--accent-ink); background: var(--bg); }
+.hub-button-secondary:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.product-card-soon { min-height: 0; grid-column: 1 / -1; background: transparent; padding: 22px 0 0; border-width: 1px 0 0; }
+.product-card-soon h2 { margin-top: 7px; font-size: 1.2rem; }
+.product-card-soon p { margin-top: 6px; }
+.hub-footer {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: clamp(58px, 10vw, 110px);
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-size: .78rem;
+    line-height: 1.5;
+}
+.hub-footer p { max-width: 56ch; }
+.hub-footer strong { color: var(--accent-ink); }
+.hub-footer nav { display: flex; flex-shrink: 0; gap: 8px; color: var(--ink-3); }
+.hub-footer a:hover { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+html[data-route="home"] .app-skip-link,
+html[data-route="vagas"] .hub-skip-link { display: none; }
+body.hub-active #app,
+body.hub-active #splash,
+body.hub-active #privacyNotice { display: none !important; }
+
+/* The app keeps every current interaction, but adopts the same compact, technical system. */
+.top-app-bar { border-bottom-color: var(--rule); background: color-mix(in srgb, var(--bg) 92%, transparent); }
+.brand-mark,
+.splash-brand,
+.job-card-title h3,
+.job-list-main h3,
+.job-compact-title,
+.bottom-sheet-title h2,
+.empty-state h3 {
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+.brand-mark { text-transform: uppercase; }
+.job-card { border-radius: 0; box-shadow: none; }
+.job-card:hover { box-shadow: none; transform: translateY(-1px); border-color: var(--accent); }
+.job-card-icon, .job-tag, .filter-chip, .icon-btn { border-radius: var(--radius-sm); }
+.filter-chip, .search-bar, .sort-dropdown, .info-popover { border-radius: var(--radius-sm); }
+
+@keyframes hub-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 720px) {
+    .product-hub { width: min(100% - 32px, 1180px); padding-top: 8px; padding-bottom: calc(26px + env(safe-area-inset-bottom)); }
+    .hub-nav { min-height: 44px; }
+    .hub-brand { gap: 6px; font-size: .94rem; }
+    .hub-brand small { font-size: .56rem; letter-spacing: .08em; }
+    .hub-nav-note { display: none; }
+    .hub-intro { padding: 58px 0 34px; }
+    .hub-intro h1 { max-width: 12ch; font-size: clamp(2.35rem, 12vw, 3.35rem); }
+    .hub-intro > p:last-child { margin-top: 16px; font-size: 1rem; }
+    .hub-products { grid-template-columns: 1fr; gap: 10px; }
+    .product-card { min-height: 248px; padding: 24px 20px; }
+    .product-card h2 { font-size: 1.7rem; }
+    .product-card-soon { min-height: 0; padding: 20px 0 0; }
+    .hub-button { width: 100%; }
+    .hub-footer { align-items: flex-start; flex-direction: column; gap: 12px; margin-top: 56px; }
 }
 
 /* No-select on interactive elements */

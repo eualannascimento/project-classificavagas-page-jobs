@@ -4441,6 +4441,36 @@
 
     function init() {
         try {
+            let dataLoadStarted = false;
+            let fallbackTimerStarted = false;
+
+            const startDataLoading = () => {
+                if (dataLoadStarted) return;
+                dataLoadStarted = true;
+
+                dataLoader.load().then(() => {
+                    preferencesManager.markVisited();
+                    sortManager.updateLabel();
+                    fabMenuManager.updateLastJobVisibility();
+                });
+
+                // Fallback: avoid empty app if load is still in progress
+                if (!fallbackTimerStarted) {
+                    fallbackTimerStarted = true;
+                    setTimeout(() => {
+                        const app = document.getElementById('app');
+                        const splash = document.getElementById('splash');
+                        const splashMsg = document.getElementById('splashMsg');
+                        if (state.allJobs.length > 0 && app && !app.classList.contains('visible')) {
+                            dataLoader.showApp();
+                            if (splash) splash.style.display = 'none';
+                        } else if (splashMsg && state.allJobs.length === 0) {
+                            splashMsg.textContent = 'Ainda carregando o catálogo…';
+                        }
+                    }, 5000);
+                }
+            };
+
             utils.markSessionStart();
             preferencesManager.applyDefaults();
             themeManager.init();
@@ -4466,34 +4496,21 @@
             swManager.init();
             ptr.init();
 
-            // Brand logo click → reset to initial state (without full page reload)
+            // Brand logo click → return to the product hub.
             const brandLink = document.getElementById('brandLink');
             if (brandLink) {
                 brandLink.addEventListener('click', (e) => {
                     e.preventDefault();
-                    filterManager.clearAll();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.location.hash = 'home';
                 });
             }
 
-            dataLoader.load().then(() => {
-                preferencesManager.markVisited();
-                sortManager.updateLabel();
-                fabMenuManager.updateLastJobVisibility();
-            });
-
-            // Fallback: avoid empty app if load is still in progress
-            setTimeout(() => {
-                const app = document.getElementById('app');
-                const splash = document.getElementById('splash');
-                const splashMsg = document.getElementById('splashMsg');
-                if (state.allJobs.length > 0 && app && !app.classList.contains('visible')) {
-                    dataLoader.showApp();
-                    if (splash) splash.style.display = 'none';
-                } else if (splashMsg && state.allJobs.length === 0) {
-                    splashMsg.textContent = 'Ainda carregando o catálogo…';
-                }
-            }, 5000);
+            const syncProductRoute = (event) => {
+                const route = event?.detail?.route || document.documentElement.dataset.route;
+                if (route === 'vagas') startDataLoading();
+            };
+            document.addEventListener('classificavagas:routechange', syncProductRoute);
+            syncProductRoute();
 
         } catch (err) {
             console.error('Initialization error:', err);
