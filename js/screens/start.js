@@ -39,10 +39,8 @@ const EuGeroStartScreen = (function () {
     if (character.state) {
       // Cópia profunda para não mutar o módulo de personagens.
       ctx.replaceState(EuGeroStorage.mergeWithDefaults(JSON.parse(JSON.stringify(character.state))));
-      ctx.showToast(`Exemplo de ${character.name} carregado. Substitua o conteúdo pelas informações que se aplicam a você.`);
     } else {
       ctx.replaceState(EuGeroStorage.mergeWithDefaults(EuGeroConfig.createEmptyState()));
-      ctx.showToast('Página em branco pronta. Comece a montar seu currículo.');
     }
     ctx.saveState();
     ctx.goToStart();
@@ -161,12 +159,15 @@ const EuGeroStartScreen = (function () {
   function renderSectionChecklist() {
     const state = ctx.getState();
     if (!ctx.els.sectionChecklist) return;
-    ctx.els.sectionChecklist.innerHTML = SECTIONS.map((section) => {
+    const orderedSections = EuGeroConfig.getActiveSections(state.enabledSections)
+      .concat(SECTIONS.filter((section) => !state.enabledSections.includes(section.id)));
+    ctx.els.sectionChecklist.innerHTML = orderedSections.map((section) => {
       const mandatory = isSectionMandatory(section.id);
       const checked = state.enabledSections.includes(section.id) || mandatory;
       const rowBg = checked ? 'color-mix(in srgb, var(--color-accent) 6%, transparent)' : 'transparent';
       return `
-        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" style="display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'default' : 'pointer'}; background: ${rowBg}; margin-bottom: 2px;">
+        <label class="section-check ${mandatory ? 'section-check-mandatory' : ''}" data-section-row="${section.id}" ${mandatory ? '' : 'draggable="true"'} style="display: flex; align-items: center; gap: 12px; padding: 8px 14px; border: 1px solid var(--color-divider); cursor: ${mandatory ? 'default' : 'grab'}; background: ${rowBg}; margin-bottom: 2px;">
+          ${mandatory ? '' : '<span aria-hidden="true" style="color:color-mix(in srgb, var(--color-text) 45%, transparent); font-size:18px; line-height:1;">⠿</span>'}
           <input type="checkbox" data-section-id="${section.id}" ${checked ? 'checked' : ''} ${mandatory ? 'disabled checked' : ''} style="width: 17px; height: 17px; accent-color: var(--color-accent);">
           <span class="section-check-label" style="display:flex; flex:1; align-items:center;">
             <strong style="font-family: var(--font-heading); font-weight: 600; font-size: 16px;">${section.title}</strong>
@@ -178,6 +179,30 @@ const EuGeroStartScreen = (function () {
 
     ctx.els.sectionChecklist.querySelectorAll('input[type="checkbox"]').forEach((input) => {
       input.addEventListener('change', () => toggleSection(input.dataset.sectionId, input.checked));
+    });
+    bindSectionReorder();
+  }
+
+  function bindSectionReorder() {
+    const list = ctx.els.sectionChecklist;
+    let draggedId = null;
+    list.querySelectorAll('[data-section-row]').forEach((row) => {
+      row.addEventListener('dragstart', () => { draggedId = row.dataset.sectionRow; row.style.opacity = '0.45'; });
+      row.addEventListener('dragend', () => { draggedId = null; row.style.opacity = ''; });
+      row.addEventListener('dragover', (event) => event.preventDefault());
+      row.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const targetId = row.dataset.sectionRow;
+        if (!draggedId || !targetId || draggedId === targetId || targetId === 'personal') return;
+        const state = ctx.getState();
+        const allIds = Array.from(list.querySelectorAll('[data-section-row]')).map((item) => item.dataset.sectionRow);
+        const moved = allIds.filter((id) => id !== draggedId);
+        moved.splice(moved.indexOf(targetId), 0, draggedId);
+        state.enabledSections = normalizeEnabledSections(moved.filter((id) => state.enabledSections.includes(id)));
+        ctx.saveState();
+        renderSectionChecklist();
+        ctx.debouncedUpdatePreviews();
+      });
     });
   }
 
