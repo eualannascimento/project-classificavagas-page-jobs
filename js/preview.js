@@ -119,64 +119,37 @@ const EuGeroPreview = (function () {
     const enabled = enabledSections || getActiveSections(state.enabledSections);
     const enabledSet = new Set(enabled.map(s => s.id));
     const p = state.personal || {};
-    let content = '';
-
-    if (isSectionEnabled(enabledSet, 'summary')) {
-      if (state.summary?.trim()) {
-        content += renderSection('Resumo', `<p class="cv-summary">${escapeHtml(state.summary).replace(/\n/g, '<br>')}</p>`);
-      } else if (showSkeleton) {
-        content += renderSkeletonSection('Resumo');
-      }
-    }
-
-    if (isSectionEnabled(enabledSet, 'experiences')) {
-      content += renderExperiences(state.experiences, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'education')) {
-      content += renderEducation(state.education, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'skills') && !modernLayout) {
-      content += renderSkills(state, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'languages') && !modernLayout) {
-      content += renderLanguages(state.languages, showSkeleton);
-    }
-
-    if (isSectionEnabled(enabledSet, 'certifications')) {
-      content += renderGenericList('Certificados', state.certifications, ['name'], c => `
+    const sectionMarkup = {
+      summary: state.summary?.trim()
+        ? renderSection('Resumo', `<p class="cv-summary">${escapeHtml(state.summary).replace(/\n/g, '<br>')}</p>`)
+        : (showSkeleton ? renderSkeletonSection('Resumo') : ''),
+      experiences: renderExperiences(state.experiences, showSkeleton),
+      education: renderEducation(state.education, showSkeleton),
+      skills: modernLayout ? '' : renderSkills(state, showSkeleton),
+      languages: modernLayout ? '' : renderLanguages(state.languages, showSkeleton),
+      certifications: renderGenericList('Certificados', state.certifications, ['name'], c => `
         <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.issuer || '')}${(c.year || c.date) ? ` · ${escapeHtml(c.year || fmtDate(c.date))}` : ''}</div></article>
-      `, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'projects')) {
-      content += renderGenericList('Projetos', state.projects, ['name'], p => `
+      `, showSkeleton),
+      projects: renderGenericList('Projetos', state.projects, ['name'], p => `
         <article class="cv-item"><strong>${escapeHtml(p.name)}</strong>${p.description ? `<p class="cv-desc">${escapeHtml(p.description).replace(/\n/g, '<br>')}</p>` : ''}</article>
-      `, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'volunteering')) {
-      content += renderGenericList('Voluntariado', state.volunteering, ['organization'], v => `
+      `, showSkeleton),
+      volunteering: renderGenericList('Voluntariado', state.volunteering, ['organization'], v => `
         <article class="cv-item"><strong>${escapeHtml(v.role || 'Função')}</strong> · ${escapeHtml(v.organization)}<span class="cv-period">${escapeHtml(formatPeriod(v.startDate, v.endDate, v.endCurrent))}</span></article>
-      `, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'publications')) {
-      content += renderGenericList('Publicações', state.publications, ['title'], pub => `
+      `, showSkeleton),
+      publications: renderGenericList('Publicações', state.publications, ['title'], pub => `
         <article class="cv-item"><strong>${escapeHtml(pub.title)}</strong><div class="cv-item-sub">${escapeHtml(pub.publisher || '')}</div></article>
-      `, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'awards')) {
-      content += renderGenericList('Prêmios e Honrarias', state.awards, ['title'], a => `
+      `, showSkeleton),
+      awards: renderGenericList('Prêmios e Honrarias', state.awards, ['title'], a => `
         <article class="cv-item"><strong>${escapeHtml(a.title)}</strong> · ${escapeHtml(a.issuer || '')}</article>
-      `, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'organizations')) {
-      content += renderGenericList('Organizações', state.organizations, ['name'], o => `
+      `, showSkeleton),
+      organizations: renderGenericList('Organizações', state.organizations, ['name'], o => `
         <article class="cv-item"><strong>${escapeHtml(o.name)}</strong> · ${escapeHtml(o.role || '')}</article>
-      `, showSkeleton);
-    }
-    if (isSectionEnabled(enabledSet, 'courses')) {
-      content += renderGenericList('Cursos', state.courses, ['name'], c => `
+      `, showSkeleton),
+      courses: renderGenericList('Cursos', state.courses, ['name'], c => `
         <article class="cv-item"><strong>${escapeHtml(c.name)}</strong><div class="cv-item-sub">${escapeHtml(c.institution || '')}</div></article>
-      `, showSkeleton);
-    }
+      `, showSkeleton)
+    };
+    const content = enabled.map(section => sectionMarkup[section.id] || '').join('');
 
     return { personal: p, content };
   }
