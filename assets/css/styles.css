@@ -21,6 +21,7 @@
 
     --font-serif: 'Inter', system-ui, sans-serif;
     --font-sans:  'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue Condensed', var(--font-sans);
     --font-mono:  ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
 
     --shell-pad:  28px;
@@ -2996,7 +2997,7 @@ body.legal-panel-open {
     width: min(1180px, calc(100% - 48px));
     min-height: 100dvh;
     margin: 0 auto;
-    padding: 12px 0 36px;
+    padding: 12px 0 18px;
     animation: hub-enter .35s var(--ease) both;
 }
 .product-hub[hidden] { display: none !important; }
@@ -3018,7 +3019,7 @@ body.legal-panel-open {
 .hub-brand span,
 .product-card h2,
 .hub-intro h1 {
-    font-family: var(--font-sans);
+    font-family: var(--font-heading);
     font-weight: 600;
     letter-spacing: -0.035em;
 }
@@ -3034,70 +3035,72 @@ body.legal-panel-open {
 }
 .hub-brand small { color: var(--ink-3); letter-spacing: .11em; }
 .hub-nav-note { margin-left: auto; color: var(--ink-3); }
-.hub-intro { max-width: 670px; padding: clamp(58px, 10vw, 120px) 0 clamp(32px, 5vw, 56px); }
-.hub-eyebrow { margin-bottom: 12px; color: var(--accent-ink); }
+.hub-intro { max-width: 670px; padding: 20px 0 8px; }
+.hub-eyebrow { margin-bottom: 16px; color: var(--accent-ink); font-size: .8125rem; }
 .hub-intro h1 {
-    max-width: 15ch;
+    max-width: 22ch;
     margin: 0;
-    font-size: clamp(2.5rem, 6vw, 4.5rem);
-    line-height: .98;
+    font-size: clamp(2.125rem, 5vw, 3.5rem);
+    line-height: 1.04;
     text-transform: uppercase;
 }
 .hub-intro > p:last-child {
     max-width: 56ch;
     margin: 20px 0 0;
     color: var(--ink-2);
-    font-size: clamp(1rem, 1.7vw, 1.125rem);
-    line-height: 1.58;
+    font-size: 1.0625rem;
+    line-height: 1.55;
 }
-.hub-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.hub-products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
 .product-card {
     position: relative;
-    min-height: 282px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: clamp(22px, 3vw, 32px);
-    background: var(--bg-elevated);
+    gap: 10px;
+    padding: 26px;
+    background: var(--bg-sunk);
     border: 1px solid var(--rule);
 }
 .blueprint-card { isolation: isolate; }
 .blueprint-corner {
     position: absolute;
     z-index: 1;
-    width: 9px;
-    height: 9px;
+    width: 5px;
+    height: 5px;
+    background: var(--bg);
     border-color: var(--accent);
     border-style: solid;
     pointer-events: none;
 }
-.blueprint-corner.tl { inset: -3px auto auto -3px; border-width: 2px 0 0 2px; }
-.blueprint-corner.tr { inset: -3px -3px auto auto; border-width: 2px 2px 0 0; }
-.blueprint-corner.bl { inset: auto auto -3px -3px; border-width: 0 0 2px 2px; }
-.blueprint-corner.br { inset: auto -3px -3px auto; border-width: 0 2px 2px 0; }
+.blueprint-corner.tl { inset: -3px auto auto -3px; border-width: 1px; }
+.blueprint-corner.tr { inset: -3px -3px auto auto; border-width: 1px; }
+.blueprint-corner.bl { inset: auto auto -3px -3px; border-width: 1px; }
+.blueprint-corner.br { inset: auto -3px -3px auto; border-width: 1px; }
 .product-card-featured { border-color: var(--accent); }
 .product-kicker { color: var(--ink-3); }
 .product-kicker-accent { color: var(--accent-ink); }
 .product-card h2 {
-    margin: 8px 0 0;
-    font-size: clamp(1.65rem, 3vw, 2.15rem);
+    margin: 2px 0 0;
+    font-size: 1.5rem;
     line-height: 1;
     text-transform: uppercase;
 }
 .product-card p {
     max-width: 42ch;
-    margin: 14px 0 0;
+    margin: 0;
     color: var(--ink-2);
-    font-size: .94rem;
+    font-size: .90625rem;
     line-height: 1.55;
 }
 .hub-button {
-    min-height: 44px;
+    min-height: 42px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     width: fit-content;
-    margin-top: auto;
+    margin-top: 0;
     padding: 10px 16px;
     border: 1px solid transparent;
     font-weight: 600;
@@ -3110,9 +3113,9 @@ body.legal-panel-open {
 .hub-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .hub-button-primary { background: var(--accent); color: #fff; }
 .hub-button-primary:hover { background: var(--accent-ink); color: #fff; }
-.hub-button-secondary { border-color: var(--rule); color: var(--accent-ink); background: var(--bg); }
+.hub-button-secondary { border-color: var(--rule); color: var(--ink); background: var(--bg-sunk); }
 .hub-button-secondary:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
-.product-card-soon { min-height: 0; grid-column: 1 / -1; background: transparent; padding: 22px 0 0; border-width: 1px 0 0; }
+.product-card-soon { min-height: 0; grid-column: 1 / -1; background: transparent; padding: 18px 0 0; border-width: 1px 0 0; }
 .product-card-soon h2 { margin-top: 7px; font-size: 1.2rem; }
 .product-card-soon p { margin-top: 6px; }
 .hub-footer {
@@ -3120,9 +3123,9 @@ body.legal-panel-open {
     align-items: end;
     justify-content: space-between;
     gap: 24px;
-    margin-top: clamp(58px, 10vw, 110px);
-    padding-top: 16px;
-    border-top: 1px solid var(--rule);
+    margin: 22px 0 0;
+    padding-top: 0;
+    border-top: 0;
     color: var(--ink-2);
     font-size: .78rem;
     line-height: 1.5;
@@ -3147,12 +3150,12 @@ body.hub-active #privacyNotice { display: none !important; }
 .job-compact-title,
 .bottom-sheet-title h2,
 .empty-state h3 {
-    font-family: var(--font-sans);
+    font-family: var(--font-heading);
     font-style: normal;
     font-weight: 600;
     letter-spacing: -0.02em;
 }
-.brand-mark { text-transform: uppercase; }
+.brand-mark { text-transform: none; font-size: 1.3125rem; }
 .job-card { border-radius: 0; box-shadow: none; }
 .job-card:hover { box-shadow: none; transform: translateY(-1px); border-color: var(--accent); }
 .job-card-icon, .job-tag, .filter-chip, .icon-btn { border-radius: var(--radius-sm); }
@@ -3166,15 +3169,15 @@ body.hub-active #privacyNotice { display: none !important; }
     .hub-brand { gap: 6px; font-size: .94rem; }
     .hub-brand small { font-size: .56rem; letter-spacing: .08em; }
     .hub-nav-note { display: none; }
-    .hub-intro { padding: 58px 0 34px; }
-    .hub-intro h1 { max-width: 12ch; font-size: clamp(2.35rem, 12vw, 3.35rem); }
+    .hub-intro { padding: 20px 0 8px; }
+    .hub-intro h1 { max-width: 18ch; font-size: clamp(2.125rem, 10vw, 3rem); }
     .hub-intro > p:last-child { margin-top: 16px; font-size: 1rem; }
-    .hub-products { grid-template-columns: 1fr; gap: 10px; }
-    .product-card { min-height: 248px; padding: 24px 20px; }
-    .product-card h2 { font-size: 1.7rem; }
-    .product-card-soon { min-height: 0; padding: 20px 0 0; }
+    .hub-products { grid-template-columns: 1fr; gap: 14px; margin-top: 24px; }
+    .product-card { min-height: 0; padding: 22px 20px; }
+    .product-card h2 { font-size: 1.5rem; }
+    .product-card-soon { min-height: 0; padding: 18px 0 0; }
     .hub-button { width: 100%; }
-    .hub-footer { align-items: flex-start; flex-direction: column; gap: 12px; margin-top: 56px; }
+    .hub-footer { align-items: flex-start; flex-direction: column; gap: 12px; margin-top: 22px; }
 }
 
 /* No-select on interactive elements */
@@ -3757,4 +3760,60 @@ body.chrome-scrolled .app-chrome {
         color: var(--ink);
         font-weight: 600;
     }
+}
+
+/* Final alignment: the vacancies interface follows the same compact frame,
+   square controls and condensed hierarchy used by the curriculum builder. */
+.masthead-inner,
+.search-bar,
+.main-content { max-width: 1180px; }
+.filter-chips-scroll { max-width: calc(1180px + var(--shell-pad) * 2); }
+.masthead-inner { height: 48px; gap: 16px; }
+.masthead-brand { gap: 9px; }
+.brand-mark,
+.splash-brand,
+.job-card-title h3,
+.job-list-main h3,
+.job-compact-title,
+.bottom-sheet-title h2,
+.empty-state h3 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+.brand-mark { font-size: 1.3125rem; }
+.brand-meta { gap: 6px; }
+.job-count,
+.brand-update { font-family: var(--font-sans); letter-spacing: .04em; text-transform: uppercase; }
+.search-bar,
+.job-card,
+.filter-chip,
+.icon-btn,
+.sort-dropdown,
+.info-popover,
+.bottom-sheet,
+.filled-button,
+.text-button { border-radius: 0; }
+.search-bar,
+.job-card { background: var(--bg-sunk); }
+.search-bar { height: 40px; }
+.filter-chip,
+.filled-button,
+.text-button {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: none;
+}
+.filter-chip { height: 32px; }
+.job-card:hover { transform: none; background: var(--bg-elevated); }
+.job-card-title h3 { font-size: 1.08rem; text-transform: uppercase; }
+.job-tag { border-radius: 0; background: var(--bg); }
+.job-card-footer { border-top-color: var(--rule); }
+
+@media (max-width: 720px) {
+    .masthead-inner { min-height: 48px; height: auto; padding: 7px 0; }
+    .brand-mark { font-size: 1.25rem; }
+    .search-bar { height: 44px; }
+    .job-card-title h3 { font-size: 1rem; }
 }
