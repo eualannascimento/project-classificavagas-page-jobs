@@ -1,4 +1,4 @@
-const CACHE_VERSION = '20';
+const CACHE_VERSION = '21';
 const CACHE_NAME = `classificavagas-v${CACHE_VERSION}`;
 const PRECACHE = [
     './',

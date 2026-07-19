@@ -72,3 +72,27 @@ test('legal links open and offer document switching', async ({ page }) => {
     await expect(privacySwitcher.getByRole('link', { name: 'Termos', exact: true })).toBeVisible();
     await expect(privacySwitcher.getByRole('link', { name: 'Privacidade/LGPD', exact: true })).toBeVisible();
 });
+
+test('vacancies header keeps two mobile rows and theme toggle works', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/#vagas');
+  await expect(page.locator('#splash')).toBeHidden();
+
+  const headerLayout = await page.evaluate(() => {
+        const mark = document.querySelector('.brand-mark').getBoundingClientRect();
+        const meta = document.querySelector('.brand-meta').getBoundingClientRect();
+        const count = document.querySelector('.brand-meta-count').getBoundingClientRect();
+        const update = document.querySelector('.brand-meta-update').getBoundingClientRect();
+        return { markBottom: mark.bottom, metaTop: meta.top, countTop: count.top, updateTop: update.top };
+    });
+
+    expect(headerLayout.metaTop).toBeGreaterThan(headerLayout.markBottom - 1);
+    expect(Math.abs(headerLayout.countTop - headerLayout.updateTop)).toBeLessThan(3);
+
+    const themeToggle = page.locator('#themeToggle');
+    expect(await themeToggle.count()).toBe(1);
+    const before = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    await themeToggle.click();
+    const after = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    expect(after).not.toBe(before);
+});
