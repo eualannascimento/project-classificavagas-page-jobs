@@ -2331,6 +2331,37 @@ body.legal-page {
     padding: 20px var(--shell-pad) calc(72px + var(--safe-bottom));
 }
 
+.legal-system-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 860px;
+    margin: 0 auto 12px;
+    padding: 0 2px;
+    color: var(--ink-3);
+    font-family: var(--font-heading);
+    font-size: 13px;
+    letter-spacing: .02em;
+}
+
+.legal-system-switcher span {
+    margin-right: 4px;
+    color: var(--ink-2);
+    font-family: var(--font-sans);
+    font-size: 12px;
+}
+
+.legal-system-switcher a {
+    padding: 6px 10px;
+    border: 1px solid var(--rule);
+    background: var(--bg-sunk);
+}
+
+.legal-system-switcher a:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+}
+
 .legal-shell > .legal-disclaimer {
     margin: 0 0 14px;
 }

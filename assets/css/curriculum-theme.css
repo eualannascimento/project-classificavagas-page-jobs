@@ -159,7 +159,7 @@ body.hub-active {
 .product-card,
 .product-card-featured {
     position: relative;
-    min-height: 256px;
+    min-height: 230px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -224,7 +224,7 @@ body.hub-active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-top: auto;
+    margin-top: 13px;
     padding: 8px 16px;
     border: 1px solid transparent;
     border-radius: 0;
@@ -675,26 +675,26 @@ body.hub-active {
     }
 
     .hub-products {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        grid-template-columns: 1fr;
+        gap: 14px;
         margin-top: 16px;
     }
 
     .product-card,
     .product-card-featured {
-        min-height: 220px;
+        min-height: 210px;
         gap: 5px;
-        padding: 13px;
+        padding: 20px;
     }
 
-    .product-kicker { font-size: 9.5px; }
-    .product-card h2 { font-size: 15px; line-height: 1.12; }
-    .product-card p { font-size: 12px; line-height: 1.38; }
+    .product-kicker { font-size: 11px; }
+    .product-card h2 { font-size: 22px; line-height: 1.05; }
+    .product-card p { font-size: 14px; line-height: 1.45; }
 
     .hub-button {
-        min-height: 40px;
+        min-height: 44px;
         padding: 6px 8px;
-        font-size: 12px;
+        font-size: 14px;
     }
 
 

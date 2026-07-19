@@ -237,6 +237,11 @@
         if (!anchor) return;
         const resolved = resolveLegalPage(anchor.getAttribute('href'));
         if (!resolved) return;
+
+        // Na home, o app de vagas fica oculto. Deixe os links legais
+        // seguirem para as páginas completas em vez de abrir um painel invisível.
+        if (document.body.classList.contains('hub-active')) return;
+
         e.preventDefault();
         const inPanel = !!anchor.closest('#legalPanel');
         open(resolved.page, resolved.hash, {
