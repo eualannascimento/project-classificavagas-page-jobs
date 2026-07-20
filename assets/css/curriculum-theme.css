@@ -557,7 +557,17 @@ body.hub-active {
 
 .main-content { padding-top: 8px; }
 
-.jobs-grid { gap: 8px; }
+.jobs-grid {
+    gap: 8px;
+    /* A quantidade de colunas acompanha a largura disponível. Cada card
+       mantém espaço mínimo para título, empresa, tags e metadados. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+}
+
+.jobs-grid .job-card {
+    min-width: 0;
+    min-height: 188px;
+}
 
 .job-card {
     background: var(--bg-sunk);
