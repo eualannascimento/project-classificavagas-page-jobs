@@ -157,6 +157,9 @@
       hashSectionId = resolveWizardSectionId(sectionId);
     }
     render();
+    // Cada tela comeca do topo: sem isso, trocar de passo com a pagina
+    // rolada deixa o usuario no meio do conteudo novo, sem ver o titulo.
+    window.scrollTo(0, 0);
     suppressHash = true;
     EuGeroRouter.setHash(view, hashSectionId, { replace });
     suppressHash = false;
