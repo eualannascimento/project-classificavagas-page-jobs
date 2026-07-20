@@ -43,3 +43,11 @@ npm ci && npm run lint && npm run test:e2e
 ## Payload
 
 O catálogo completo tem dezenas de milhares de vagas (~37 MB JSON, ~2 MB gzip). O cliente tenta `.json.gz` primeiro e faz fallback para `.json`.
+
+## Ecossistema ClassificaVagas
+
+Os dados publicados aqui vêm de [`project-classificavagas-workflow-jobs`](https://github.com/eualannascimento/project-classificavagas-workflow-jobs) (scraping/classificação), que também mantém a lista de empresas em [`list-work-with-us`](https://github.com/eualannascimento/list-work-with-us).
+
+## Licença
+
+MIT — ver [LICENSE](./LICENSE).
