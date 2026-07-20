@@ -386,9 +386,19 @@ body.hub-active {
 /* Interface de vagas: mesma moldura, tipografia e controles técnicos. */
 .masthead-inner,
 .search-bar,
-.main-content { max-width: 1180px; }
+.main-content { max-width: 920px; }
 
-.filter-chips-scroll { max-width: calc(1180px + var(--shell-pad) * 2); }
+.filter-chips-scroll { max-width: calc(920px + var(--shell-pad) * 2); }
+
+/* No desktop, o chrome acompanha a mesma largura da galeria de quatro cards. */
+.legal-disclaimer,
+.partial-data-banner,
+.onboarding-banner {
+    width: calc(100% - (var(--shell-pad) * 2));
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+}
 
 /* A faixa de rolagem ficava sobre o canto esquerdo do botão Filtros no mobile. */
 .filter-chips-container::before,
