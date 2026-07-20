@@ -4,13 +4,13 @@ Agregador estático de vagas de emprego no Brasil.
 
 ## Estrutura
 
-- `index.html` — shell da aplicação
-- `termos.html` / `privacidade.html` — termos de uso e política LGPD
-- `assets/js/scripts.js` — lógica (filtros, busca, UI)
-- `assets/js/jobs-worker.js` — parse do JSON em Web Worker
-- `assets/data/json/open_jobs.json` — catálogo completo (formato fixo, atualizado externamente)
-- `assets/data/json/open_jobs.json.gz` — mesma carga compactada para download
-- `scripts/build-recent.py` — gera `recent_jobs.json` (últimos 14 dias)
+- `index.html`: shell da aplicação
+- `termos.html` / `privacidade.html`: termos de uso e política LGPD
+- `assets/js/scripts.js`: lógica (filtros, busca, UI)
+- `assets/js/jobs-worker.js`: parse do JSON em Web Worker
+- `assets/data/json/open_jobs.json`: catálogo completo (formato fixo, atualizado externamente)
+- `assets/data/json/open_jobs.json.gz`: mesma carga compactada para download
+- `scripts/build-recent.py`: gera `recent_jobs.json` (últimos 14 dias)
 
 ## Deploy
 
@@ -44,10 +44,6 @@ npm ci && npm run lint && npm run test:e2e
 
 O catálogo completo tem dezenas de milhares de vagas (~37 MB JSON, ~2 MB gzip). O cliente tenta `.json.gz` primeiro e faz fallback para `.json`.
 
-## Ecossistema ClassificaVagas
-
-Os dados publicados aqui vêm de [`project-classificavagas-workflow-jobs`](https://github.com/eualannascimento/project-classificavagas-workflow-jobs) (scraping/classificação), que também mantém a lista de empresas em [`list-work-with-us`](https://github.com/eualannascimento/list-work-with-us).
-
 ## Licença
 
-MIT — ver [LICENSE](./LICENSE).
+MIT. Ver [LICENSE](./LICENSE).
