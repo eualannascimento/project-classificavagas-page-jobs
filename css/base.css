@@ -398,12 +398,22 @@ textarea.cv-input { min-height: 104px; resize: vertical; line-height: 1.5; }
   gap: 16px;
 }
 
+/* So aparece junto com o dock/menu mobile, quando a previa lateral (.cv-aside) sai da tela. */
+.start-mobile-actions {
+  display: none;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 18px;
+}
+.start-mobile-actions .btn { min-height: 44px; }
+
 @media (max-width: 900px) {
   .cv-split { grid-template-columns: 1fr; gap: 22px; }
   .cv-form2 { grid-template-columns: 1fr !important; }
   .cv-main { padding-left: 16px; padding-right: 16px; }
   /* No mobile a previa lateral sai da tela; abre pelo botao discreto (dock). */
   .cv-aside { display: none; }
+  .start-mobile-actions { display: flex; }
 
   /* ---- Menos scroll no celular, mantendo o design ---- */
   /* (As regras da home vivem no bloco "Home mobile compacta" no fim do arquivo.) */

@@ -260,6 +260,7 @@
 
     document.getElementById('btn-toggle-preview')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
     document.getElementById('btn-toggle-preview-start')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
+    document.getElementById('btn-change-template-start')?.addEventListener('click', (e) => openModal(els.modalTemplate, e.currentTarget));
     document.getElementById('btn-toggle-preview-review')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
     document.getElementById('btn-expand-mobile-preview')?.addEventListener('click', (e) => openPreviewOverlay(e.currentTarget));
     document.getElementById('btn-close-preview')?.addEventListener('click', () => closePreviewOverlay());
