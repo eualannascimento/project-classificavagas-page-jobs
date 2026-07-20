@@ -624,6 +624,39 @@ body.hub-active {
 
 .job-card-footer { border-top-color: var(--rule); }
 
+/* Os cards estreitos precisam de duas colunas reais no rodapé; sem isso as
+   datas continuam em uma linha rígida e acabam invadindo a localização. */
+.job-card-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+}
+
+.job-card-footer .job-location,
+.job-card-footer .job-dates {
+    min-width: 0;
+    max-width: none;
+}
+
+.job-card-footer .job-dates {
+    align-items: flex-end;
+}
+
+.job-card-footer .job-date-line {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.privacy-notice {
+    left: 50%;
+    right: auto;
+    width: calc(100% - (var(--shell-pad) * 2));
+    max-width: 920px;
+    transform: translateX(-50%);
+}
+
 .filled-button,
 .text-button {
     min-height: 42px;
