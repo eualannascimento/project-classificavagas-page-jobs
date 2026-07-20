@@ -383,11 +383,15 @@ body.hub-active {
 .hub-footer nav { display: flex; gap: 8px; }
 .hub-footer a:hover { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
 
-/* Interface de vagas: mesma moldura, tipografia e controles técnicos. */
+/* Interface de vagas: mesma moldura, tipografia e controles técnicos.
+   masthead-inner/search-bar herdam o padding do elemento pai, então travam
+   cheios em 920px; main-content e filter-chips-scroll aplicam o padding
+   neles mesmos, então precisam do padding somado de volta para renderizar
+   na mesma largura visual. */
 .masthead-inner,
-.search-bar,
-.main-content { max-width: 920px; }
+.search-bar { max-width: 920px; }
 
+.main-content,
 .filter-chips-scroll { max-width: calc(920px + var(--shell-pad) * 2); }
 
 /* No desktop, o chrome acompanha a mesma largura da galeria de quatro cards. */
@@ -561,7 +565,7 @@ body.hub-active {
     gap: 8px;
     /* A quantidade de colunas acompanha a largura disponível. Cada card
        mantém espaço mínimo para título, empresa, tags e metadados. */
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 }
 
 .jobs-grid .job-card {

@@ -1248,14 +1248,10 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
    ============================================ */
 .jobs-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: var(--gap);
     transition: gap 0.3s var(--ease);
 }
-
-@media (min-width: 600px)  { .jobs-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 900px)  { .jobs-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1200px) { .jobs-grid { grid-template-columns: repeat(4, 1fr); } }
 
 /* ============================================
    JOB CARD - CARDS VIEW
@@ -3794,10 +3790,14 @@ body.chrome-scrolled .app-chrome {
 }
 
 /* Final alignment: the vacancies interface follows the same compact frame,
-   square controls and condensed hierarchy used by the curriculum builder. */
+   square controls and condensed hierarchy used by the curriculum builder.
+   masthead-inner/search-bar sit inside ancestors that already apply
+   --shell-pad, so they cap flush at 1180px; main-content and
+   filter-chips-scroll apply --shell-pad to themselves, so their cap needs
+   the padding added back in to render at the same visual width. */
 .masthead-inner,
-.search-bar,
-.main-content { max-width: 1180px; }
+.search-bar { max-width: 1180px; }
+.main-content,
 .filter-chips-scroll { max-width: calc(1180px + var(--shell-pad) * 2); }
 .masthead-inner { height: 48px; gap: 16px; }
 .masthead-brand { gap: 9px; }
