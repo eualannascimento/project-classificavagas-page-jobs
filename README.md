@@ -86,7 +86,7 @@ Cobre: scoring, validacao, datas, router, page fit, JSON, prompts, catalogo de 2
 
 1. Push para o GitHub
 2. Settings → Pages → branch `main`, pasta `/ (root)`
-3. URL: `https://<usuario>.github.io/<repo>/`
+3. URL: https://eualannascimento.github.io/project-classificavagas-page-resume/
 
 ## Privacidade
 
@@ -99,6 +99,10 @@ Cobre: scoring, validacao, datas, router, page fit, JSON, prompts, catalogo de 2
 
 HTML, CSS e JavaScript puro - sem framework, sem bundler.
 
+## Ecossistema ClassificaVagas
+
+Parte do ecossistema [ClassificaVagas](https://classificavagas.com), junto com [`project-classificavagas-workflow-jobs`](https://github.com/eualannascimento/project-classificavagas-workflow-jobs) (coleta/classificacao de vagas) e [`project-classificavagas-page-jobs`](https://github.com/eualannascimento/project-classificavagas-page-jobs) (site publico).
+
 ## Licenca
 
-Open source - use livremente.
+MIT - ver [LICENSE](./LICENSE).
