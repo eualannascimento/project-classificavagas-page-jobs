@@ -42,7 +42,7 @@
 
 [data-theme="dark"] {
     --bg:           oklch(0.13 0.010 260);
-    --bg-elevated:  oklch(0.19 0.010 260);
+    --bg-elevated:  oklch(0.26 0.012 260);
     --bg-sunk:      oklch(0.10 0.010 260);
     --ink:          oklch(0.94 0.006 260);
     --ink-2:        oklch(0.76 0.010 260);
@@ -54,13 +54,13 @@
     --success-soft: oklch(0.18 0.06 145);
     --warn:         oklch(0.78 0.12 50);
     --warn-soft:    oklch(0.20 0.06 50);
-    --rule:         oklch(0.26 0.010 260);
-    --rule-2:       oklch(0.21 0.008 260);
+    --rule:         oklch(0.38 0.012 260);
+    --rule-2:       oklch(0.30 0.010 260);
 }
 
 [data-theme="black"] {
     --bg:           oklch(0.00 0.000 0);
-    --bg-elevated:  oklch(0.11 0.006 280);
+    --bg-elevated:  oklch(0.20 0.008 280);
     --bg-sunk:      oklch(0.06 0.004 280);
     --ink:          oklch(0.96 0.004 80);
     --ink-2:        oklch(0.75 0.008 80);
@@ -72,8 +72,8 @@
     --success-soft: oklch(0.13 0.05 145);
     --warn:         oklch(0.82 0.13 50);
     --warn-soft:    oklch(0.14 0.05 50);
-    --rule:         oklch(0.18 0.006 280);
-    --rule-2:       oklch(0.13 0.004 280);
+    --rule:         oklch(0.36 0.008 280);
+    --rule-2:       oklch(0.26 0.006 280);
 }
 
 /* Restraint style - sans-serif, less decoration */
@@ -3825,9 +3825,10 @@ body.chrome-scrolled .app-chrome {
 .bottom-sheet,
 .filled-button,
 .text-button { border-radius: 0; }
-.search-bar,
-.job-card { background: var(--bg-sunk); }
-.search-bar { height: 40px; }
+.search-bar { background: var(--bg-sunk); height: 40px; }
+/* job-card fica em --bg-elevated (não --bg-sunk): nos temas dark/black
+   --bg-sunk é praticamente idêntico a --bg, deixando o card invisível. */
+.job-card { background: var(--bg-elevated); }
 .filter-chip,
 .filled-button,
 .text-button {

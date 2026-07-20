@@ -570,11 +570,19 @@ body.hub-active {
 
 .jobs-grid .job-card {
     min-width: 0;
+}
+
+/* O piso de altura só faz sentido na grade de cards, onde ele evita que
+   linhas com card mais curto que os vizinhos quebrem o ritmo do grid.
+   Lista e modo compacto são fileiras de uma linha só. */
+.jobs-grid:not(.list-view):not(.compact-view) .job-card {
     min-height: 188px;
 }
 
+/* --bg-elevated (não --bg-sunk): nos temas dark/black --bg-sunk é quase
+   idêntico a --bg, deixando o card sem contraste com a página. */
 .job-card {
-    background: var(--bg-sunk);
+    background: var(--bg-elevated);
     border: 1px solid var(--rule);
     box-shadow: none;
 }
