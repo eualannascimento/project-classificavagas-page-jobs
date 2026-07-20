@@ -825,10 +825,19 @@ body.hub-active {
     .search-bar { height: 44px; }
     .search-bar input { font-size: 16px; }
 
+    /* 44px só no mobile: alvo de toque mínimo recomendado (Apple HIG /
+       Material) para o controle mais tocado da tela (Filtros, Ordenar,
+       Visualização, Visitadas). No desktop o mouse é preciso e o chip de
+       36px (regra base acima) segue valendo. */
     .filter-chip {
-        height: 36px;
-        min-height: 36px;
+        height: 44px;
+        min-height: 44px;
         font-size: 13px;
+    }
+
+    .filter-chip-visited {
+        width: 44px;
+        min-width: 44px;
     }
 
     .jobs-grid { gap: 6px; }
