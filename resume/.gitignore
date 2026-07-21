@@ -1,0 +1,15 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos temporários e pacotes
+*.zip
+*.log
+*.tmp
+
+# Editores
+.idea/
+.vscode/
+
+# Diario de execucao e transitorio (.rules/context-management.md, secao 5)
+.docs/journal/
