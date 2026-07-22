@@ -35,8 +35,6 @@
             { key: '90d', label: 'Últimos 3 meses', days: 90 }
         ],
         SORT_OPTIONS: [
-            { key: 'date_desc', label: 'Obtidas: mais recentes', icon: 'schedule' },
-            { key: 'date_asc', label: 'Obtidas: mais antigas', icon: 'history' },
             { key: 'published_desc', label: 'Publicadas: mais recentes', icon: 'event' },
             { key: 'published_asc', label: 'Publicadas: mais antigas', icon: 'event' },
             { key: 'company_asc', label: 'Empresa A-Z', icon: 'sort_by_alpha' },
@@ -376,7 +374,7 @@
             const listClass = variant === 'list' ? ' job-dates-list' : '';
             return `<div class="job-dates${listClass}${todayClass}">
                 ${publishedLine}
-                ${insertedLine}
+                ${variant === 'list' ? insertedLine : ''}
             </div>`;
         },
 
@@ -445,9 +443,9 @@
             return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         },
 
-        closeAboutInfoPopover() {
-            const popover = document.getElementById('infoPopover');
-            const infoBtn = document.getElementById('aboutInfoBtn');
+        closeShortcutsHintPopover() {
+            const popover = document.getElementById('shortcutsHintPopover');
+            const infoBtn = document.getElementById('shortcutsHintBtn');
             if (popover && infoBtn && !popover.classList.contains('hidden')) {
                 popover.classList.add('hidden');
                 infoBtn.setAttribute('aria-expanded', 'false');
@@ -465,7 +463,7 @@
             });
 
             input.addEventListener('click', (e) => {
-                this.closeAboutInfoPopover();
+                this.closeShortcutsHintPopover();
                 e.stopPropagation();
             });
         },
@@ -484,7 +482,7 @@
             container.addEventListener('click', (e) => {
                 const input = e.target.closest('input.filter-search-input, input.date-range-input');
                 if (!input) return;
-                this.closeAboutInfoPopover();
+                this.closeShortcutsHintPopover();
                 e.stopPropagation();
             });
         },
@@ -3469,9 +3467,9 @@
                 const countStr = count.toLocaleString('pt-BR');
                 const isSelected = selected.includes(opt);
                 return `
-                    <button type="button" class="filter-option-chip ${isSelected ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}" aria-pressed="${isSelected ? 'true' : 'false'}">
+                    <button type="button" class="filter-option-chip ${isSelected ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}" aria-pressed="${isSelected ? 'true' : 'false'}" title="${utils.escapeHtml(opt)}">
                         <span class="material-symbols-rounded check-icon" aria-hidden="true">check</span>
-                        <span>${utils.escapeHtml(utils.truncate(opt, 18))}</span>
+                        <span class="filter-option-label">${utils.escapeHtml(opt)}</span>
                         <span class="filter-option-count">(${countStr})</span>
                     </button>
                 `;
@@ -3912,7 +3910,7 @@
                 elements.searchInput?.focus();
             });
             elements.searchBar?.addEventListener('click', (e) => {
-                utils.closeAboutInfoPopover();
+                utils.closeShortcutsHintPopover();
                 e.stopPropagation();
             });
 
@@ -4392,10 +4390,10 @@
         }
     };
 
-    const aboutInfoManager = {
+    const shortcutsHintManager = {
         init() {
-            const btn = document.getElementById('aboutInfoBtn');
-            const popover = document.getElementById('infoPopover');
+            const btn = document.getElementById('shortcutsHintBtn');
+            const popover = document.getElementById('shortcutsHintPopover');
             if (!btn || !popover) return;
 
             const close = ({ restoreFocus = false } = {}) => {
@@ -4429,7 +4427,7 @@
 
             document.addEventListener('click', (e) => {
                 if (popover.classList.contains('hidden')) return;
-                if (e.target.closest('#aboutInfoBtn') || e.target.closest('#infoPopover')) return;
+                if (e.target.closest('#shortcutsHintBtn') || e.target.closest('#shortcutsHintPopover')) return;
                 close();
             });
 
@@ -4481,7 +4479,7 @@
             sortManager.init();
             shareManager.init();
             filterManager.initGroupedFilterDropdown();
-            aboutInfoManager.init();
+            shortcutsHintManager.init();
             searchHistoryManager.init();
             searchManager.init();
             animationManager.init();
@@ -4490,7 +4488,6 @@
             bottomSheet.init();
             clearHandlers.init();
             shortcutsOverlay.init();
-            window.cvOnboardingManager?.init();
             mobileLayout.init();
             fabMenuManager.init();
             swManager.init();

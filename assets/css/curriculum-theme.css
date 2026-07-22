@@ -79,6 +79,10 @@ body.hub-active {
     line-height: 1;
 }
 
+.hub-brand > span {
+    color: var(--accent);
+}
+
 .hub-brand small {
     color: color-mix(in srgb, var(--ink) 50%, transparent);
     font-family: var(--font-sans);
@@ -408,8 +412,7 @@ body.hub-active {
 
 /* No desktop, o chrome acompanha a mesma largura da galeria de quatro cards. */
 .legal-disclaimer,
-.partial-data-banner,
-.onboarding-banner {
+.partial-data-banner {
     width: calc(100% - (var(--shell-pad) * 2));
     max-width: 920px;
     margin-left: auto;
@@ -493,7 +496,7 @@ body.hub-active {
 .search-bar,
 .filter-chip,
 .sort-dropdown,
-.info-popover,
+.shortcuts-hint-popover,
 .job-card,
 .job-card-icon,
 .job-tag,
@@ -502,7 +505,6 @@ body.hub-active {
 .filled-button,
 .text-button,
 .filter-option-chip,
-.onboarding-banner,
 .legal-disclaimer,
 .fab,
 .fab-menu,
@@ -532,8 +534,7 @@ body.hub-active {
 .filled-button,
 .text-button,
 .filter-option-chip,
-.sort-option,
-.onboarding-dismiss {
+.sort-option {
     font-family: var(--font-heading);
     font-weight: 600;
     letter-spacing: 0.01em;
@@ -705,8 +706,7 @@ body.hub-active {
 
 .filled-button:hover { background: var(--accent-ink); opacity: 1; }
 
-.legal-disclaimer,
-.onboarding-banner {
+.legal-disclaimer {
     font-family: var(--font-sans);
     font-size: 12px;
     line-height: 1.45;
@@ -964,7 +964,6 @@ body.legal-page {
 
 .legal-section { border-top-color: var(--rule); }
 
-.footer-legal-links a,
 .legal-footer a { font-family: var(--font-heading); }
 
 @media (max-width: 350px) {

@@ -87,7 +87,7 @@
                 <span class="product-kicker">Preparar minha apresentação</span>
                 <h2>Currículo</h2>
                 <p>Crie, revise e baixe um currículo bem apresentado, com orientações em cada etapa.</p>
-                <span class="hub-button hub-button-secondary hub-button-unavailable" aria-label="Currículo disponível em breve" aria-disabled="true">Em breve</span>
+                <a class="hub-button hub-button-secondary" href="resume/index.html">Criar currículo</a>
             </article>
 
         </section>
@@ -131,13 +131,15 @@
                     </div>
                 </div>
                 <div class="top-app-bar-actions">
-                    <div class="info-btn-wrap">
-                        <button type="button" class="icon-btn" id="aboutInfoBtn" aria-label="Sobre o projeto" aria-expanded="false" aria-controls="infoPopover">
-                            <span class="material-symbols-rounded">info</span>
+                    <div class="shortcuts-hint-wrap">
+                        <button type="button" class="icon-btn" id="shortcutsHintBtn" aria-label="Atalhos de teclado" aria-expanded="false" aria-controls="shortcutsHintPopover">
+                            <span class="material-symbols-rounded">keyboard</span>
                         </button>
-                        <div id="infoPopover" class="info-popover hidden" role="dialog" aria-modal="true" aria-labelledby="infoPopoverTitle" tabindex="-1">
-                            <p id="infoPopoverTitle">O projeto <strong class="info-popover-brand">classificavagas.com</strong> reúne vagas abertas em fontes públicas e organiza links para candidatura nos sites oficiais.</p>
-                            <p>Somos um agregador independente: não representamos as empresas, plataformas ou recrutadores listados.</p>
+                        <div id="shortcutsHintPopover" class="shortcuts-hint-popover hidden" role="dialog" aria-modal="true" aria-label="Atalhos de teclado" tabindex="-1">
+                            <ul class="shortcuts-list">
+                                <li><kbd>/</kbd><span>Focar a busca</span></li>
+                                <li><kbd>f</kbd><span>Abrir filtros</span></li>
+                            </ul>
                         </div>
                     </div>
                     <button class="icon-btn" id="themeToggle" aria-label="Alternar tema">
@@ -150,19 +152,6 @@
         </header>
 
         <p id="partialDataBanner" class="partial-data-banner hidden" aria-live="polite"></p>
-        <aside class="legal-disclaimer" aria-label="Aviso legal">
-            Agregador independente de vagas públicas. A candidatura ocorre sempre na fonte original, e as empresas podem solicitar correção ou remoção pelos <a href="termos.html#remocao">termos de uso</a>.
-        </aside>
-
-        <aside id="onboardingBanner" class="onboarding-banner hidden" aria-label="Dicas de uso">
-            <ul class="onboarding-list">
-                <li>Pressione <kbd>/</kbd> para focar a busca</li>
-                <li>Pressione <kbd>f</kbd> para abrir filtros</li>
-                <li>Use &ldquo;Copiar link&rdquo; para compartilhar sua busca</li>
-                <li class="onboarding-ptr-hint">Puxe para baixo no topo da página para atualizar (mobile)</li>
-            </ul>
-            <button type="button" class="onboarding-dismiss" id="onboardingDismiss">Entendi</button>
-        </aside>
 
         <div class="search-bar-container">
             <div class="search-bar" id="searchBar">
@@ -196,8 +185,6 @@
                         <span class="sort-label">Publicadas</span>
                     </button>
                     <div class="sort-dropdown hidden" id="sortDropdown" role="menu">
-                        <button class="sort-option" data-sort="date_desc" role="menuitem">Obtidas: mais recentes</button>
-                        <button class="sort-option" data-sort="date_asc" role="menuitem">Obtidas: mais antigas</button>
                         <button class="sort-option" data-sort="published_desc" role="menuitem">Publicadas: mais recentes</button>
                         <button class="sort-option" data-sort="published_asc" role="menuitem">Publicadas: mais antigas</button>
                         <button class="sort-option" data-sort="company_asc" role="menuitem">Empresa A–Z</button>
@@ -296,8 +283,6 @@
             </div>
             <div class="bottom-sheet-content sort-sheet-content">
                 <div class="sort-sheet-list" id="sortSheetList" role="listbox" aria-label="Ordenação">
-                    <button type="button" class="sort-sheet-option" data-sort="date_desc" role="option">Obtidas: mais recentes</button>
-                    <button type="button" class="sort-sheet-option" data-sort="date_asc" role="option">Obtidas: mais antigas</button>
                     <button type="button" class="sort-sheet-option" data-sort="published_desc" role="option">Publicadas: mais recentes</button>
                     <button type="button" class="sort-sheet-option" data-sort="published_asc" role="option">Publicadas: mais antigas</button>
                     <button type="button" class="sort-sheet-option" data-sort="company_asc" role="option">Empresa A–Z</button>
@@ -428,7 +413,6 @@
 
     <script src="assets/js/focus-trap.js"></script>
     <script src="assets/js/view-mode-manager.js"></script>
-    <script src="assets/js/onboarding-manager.js"></script>
     <script src="assets/js/legal.js"></script>
     <script src="assets/js/link-prefetch.js"></script>
     <script src="assets/js/privacy-notice.js"></script>
