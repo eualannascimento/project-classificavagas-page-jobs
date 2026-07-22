@@ -572,7 +572,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .search-history-dropdown {
     position: absolute;
     top: calc(100% + 4px); left: var(--shell-pad); right: var(--shell-pad);
-    max-width: 1240px; margin: 0 auto;
+    margin: 0 auto;
     background: var(--bg-elevated);
     border: 1px solid var(--rule);
     border-radius: var(--radius-lg);
@@ -2350,6 +2350,8 @@ body.legal-page {
 }
 
 .legal-shell > .legal-disclaimer {
+    width: auto;
+    max-width: none;
     margin: 0 0 14px;
 }
 

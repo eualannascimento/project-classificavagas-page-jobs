@@ -393,7 +393,8 @@ body.hub-active {
    neles mesmos, então precisam do padding somado de volta para renderizar
    na mesma largura visual. */
 .masthead-inner,
-.search-bar { max-width: 920px; }
+.search-bar,
+.search-history-dropdown { max-width: 920px; }
 
 .main-content,
 .filter-chips-scroll { max-width: calc(920px + var(--shell-pad) * 2); }
@@ -401,10 +402,12 @@ body.hub-active {
 /* Acima de ~1280px sobra tela: a largura passa a acompanhar a viewport
    (min(74vw, 1680px)) em vez de travar em 920px para sempre — a galeria
    ganha mais colunas em monitores largos até um teto elegante, sem virar
-   uma faixa infinita de cards em ultrawide. */
+   uma faixa infinita de cards em ultrawide. O dropdown de buscas recentes
+   acompanha exatamente a mesma largura da search-bar, sempre. */
 @media (min-width: 1280px) {
     .masthead-inner,
-    .search-bar { max-width: min(74vw, 1680px); }
+    .search-bar,
+    .search-history-dropdown { max-width: min(74vw, 1680px); }
 
     .main-content,
     .filter-chips-scroll { max-width: calc(min(74vw, 1680px) + var(--shell-pad) * 2); }
@@ -417,6 +420,18 @@ body.hub-active {
     max-width: 920px;
     margin-left: auto;
     margin-right: auto;
+}
+
+/* Abaixo de 720px o .partial-data-banner vira uma faixa full-bleed
+   (ver styles.css); sem isso, a regra acima entra em conflito e o
+   deixa encolhido e centralizado por engano no mobile. */
+@media (max-width: 720px) {
+    .partial-data-banner {
+        width: auto;
+        max-width: none;
+        margin-left: 0;
+        margin-right: 0;
+    }
 }
 
 /* A faixa de rolagem ficava sobre o canto esquerdo do botão Filtros no mobile. */
@@ -455,7 +470,7 @@ body.hub-active {
 }
 
 .brand-product {
-    color: inherit;
+    color: var(--accent);
     font-family: var(--font-heading);
     font-size: 21px;
     font-weight: 600;
@@ -911,6 +926,13 @@ body.legal-page {
 .legal-shell {
     width: min(1180px, 100%);
     padding: 20px 24px 60px;
+}
+
+/* O header acompanha a mesma largura da coluna de conteúdo, em qualquer
+   viewport — sem isso, o masthead escala até 74vw/1680px (regra pensada
+   para a galeria de vagas) e passa da largura fixa do .legal-shell. */
+body.legal-page .masthead-inner {
+    max-width: 1180px;
 }
 
 .legal-document-switcher {
