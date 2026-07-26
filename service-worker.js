@@ -10,11 +10,11 @@ const PRECACHE = [
     './sitemap.xml',
     './.well-known/security.txt',
     './assets/css/fonts-text.css',
-    './assets/fonts/barlow-400.ttf',
-    './assets/fonts/barlow-500.ttf',
-    './assets/fonts/barlow-700.ttf',
-    './assets/fonts/barlow-condensed-400.ttf',
-    './assets/fonts/barlow-condensed-600.ttf',
+    './assets/fonts/barlow-400.woff2',
+    './assets/fonts/barlow-500.woff2',
+    './assets/fonts/barlow-700.woff2',
+    './assets/fonts/barlow-condensed-400.woff2',
+    './assets/fonts/barlow-condensed-600.woff2',
     './assets/css/fonts-icons.css',
     './assets/css/styles.css',
     './assets/css/curriculum-theme.css',
@@ -26,15 +26,27 @@ const PRECACHE = [
     './assets/js/privacy-notice.js',
     './assets/js/focus-trap.js',
     './assets/js/view-mode-manager.js',
-    './assets/js/onboarding-manager.js',
-    './assets/js/legal-panel.js',
     './assets/js/scripts.js',
     './assets/js/jobs-worker.js'
 ];
 
 self.addEventListener('install', (event) => {
+    // cache.addAll() is atomic: a single 404 rejects the whole batch and, with
+    // the error swallowed, the entire precache silently became a no-op. Cache
+    // entries individually so one bad URL cannot take the others down, and log
+    // whatever failed instead of hiding it.
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE).catch(() => {}))
+        caches.open(CACHE_NAME).then(async (cache) => {
+            const results = await Promise.allSettled(
+                PRECACHE.map((url) => cache.add(new Request(url, { cache: 'reload' })))
+            );
+            const failed = results
+                .map((result, index) => (result.status === 'rejected' ? PRECACHE[index] : null))
+                .filter(Boolean);
+            if (failed.length) {
+                console.error('[sw] precache falhou para:', failed);
+            }
+        })
     );
     self.skipWaiting();
 });
@@ -71,16 +83,52 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // HTML: network-first. The old cache-first rule also covered /resume/,
+    // whose files are not in PRECACHE, so a visitor could stay pinned to an old
+    // build until CACHE_VERSION was bumped by hand.
+    const isHtml = event.request.mode === 'navigate'
+        || event.request.destination === 'document'
+        || url.pathname.endsWith('.html')
+        || url.pathname.endsWith('/');
+
+    if (isHtml) {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    if (response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    }
+                    return response;
+                })
+                .catch(async () => {
+                    const cached = await caches.match(event.request);
+                    if (cached) return cached;
+                    throw new Error('offline e sem copia em cache');
+                })
+        );
+        return;
+    }
+
+    // Everything else: stale-while-revalidate, so a deploy is picked up on the
+    // next navigation instead of never.
     event.respondWith(
         caches.match(event.request).then((cached) => {
-            if (cached) return cached;
-            return fetch(event.request).then((response) => {
-                if (response.ok && event.request.method === 'GET') {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-                }
-                return response;
-            });
+            const network = fetch(event.request)
+                .then((response) => {
+                    if (response.ok && event.request.method === 'GET') {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    }
+                    return response;
+                })
+                .catch((err) => {
+                    // Revalidation failing offline must not surface as an
+                    // unhandled rejection when we already served from cache.
+                    if (cached) return cached;
+                    throw err;
+                });
+            return cached || network;
         })
     );
 });
