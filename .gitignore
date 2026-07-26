@@ -14,3 +14,10 @@ playwright/.cache/
 # Traga com `python3 scripts/sync-resume.py` (o deploy faz isso automaticamente).
 resume/
 .resume-sha
+
+# Catalogo de vagas: 47 MB por versao, publicado como release asset e baixado
+# no build (scripts/fetch-catalog.py). Commitar isso levou o repositorio a
+# 673 MB.
+assets/data/json/open_jobs.json
+assets/data/json/open_jobs.json.gz
+assets/data/xlsx/
