@@ -9,8 +9,8 @@
     "validate": "python3 scripts/build-recent.py && python3 scripts/validate-jobs-schema.py && python3 scripts/check-no-google-fonts.py && python3 scripts/prepare-deploy.py && python3 scripts/validate-site-artifact.py && python3 scripts/validate-sw-precache.py"
   },
   "devDependencies": {
-    "@eslint/js": "^9.27.0",
-    "@playwright/test": "^1.52.0",
-    "eslint": "^9.27.0"
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.0",
+    "eslint": "^10.8.0"
   }
 }
