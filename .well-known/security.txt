@@ -1,4 +1,5 @@
 Contact: mailto:contato@classificavagas.com
+Expires: 2027-07-25T00:00:00.000Z
 Preferred-Languages: pt-BR
 Policy: https://classificavagas.com/termos.html
 Canonical: https://classificavagas.com/.well-known/security.txt
