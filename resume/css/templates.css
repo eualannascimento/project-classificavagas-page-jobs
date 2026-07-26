@@ -435,7 +435,9 @@
 /* ---- Seleção de personagem (estilo escolha de jogo) ---- */
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* auto-fit em vez de 3 colunas fixas: em 375px os cards ficavam com ~100px
+     e os nomes quebravam em tres linhas. */
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 20px;
 }
 
