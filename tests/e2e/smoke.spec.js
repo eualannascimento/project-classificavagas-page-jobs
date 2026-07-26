@@ -96,3 +96,39 @@ test('vacancies header keeps two mobile rows and theme toggle works', async ({ p
     const after = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     expect(after).not.toBe(before);
 });
+
+test('toast does not overlap the privacy notice on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/');
+
+    // O aviso vive na tela de vagas, nao no hub.
+    await page.getByRole('link', { name: /Ver vagas/i }).click();
+    await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
+
+    const notice = page.locator('#privacyNotice');
+    await expect(notice).toBeVisible();
+
+    // Reproduz o toast real: mesma classe e mesmo ciclo de vida de utils.showToast.
+    await page.evaluate(() => {
+        const toast = document.createElement('div');
+        toast.className = 'theme-toast';
+        toast.textContent = 'Catálogo completo atualizado';
+        document.body.appendChild(toast);
+        toast.classList.add('visible');
+    });
+
+    const toast = page.locator('.theme-toast');
+    await expect(toast).toBeVisible();
+
+    const noticeBox = await notice.boundingBox();
+    const toastBox = await toast.boundingBox();
+
+    const overlaps = !(
+        noticeBox.y + noticeBox.height <= toastBox.y
+        || toastBox.y + toastBox.height <= noticeBox.y
+        || noticeBox.x + noticeBox.width <= toastBox.x
+        || toastBox.x + toastBox.width <= noticeBox.x
+    );
+
+    expect(overlaps, 'toast e aviso de privacidade nao podem se sobrepor').toBe(false);
+});
