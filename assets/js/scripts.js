@@ -1456,7 +1456,7 @@
             } else if (mode === 'list') {
                 card.innerHTML = `
                     <div class="skeleton-list-content">
-                        <div class="skeleton-date" style="width:28px;height:12px;margin-right:4px;"></div>
+                        <div class="skeleton-date"></div>
                         <div class="skeleton-list-main">
                             <div class="skeleton-title"></div>
                             <div class="skeleton-subtitle"></div>
@@ -3049,7 +3049,7 @@
             const isValidCompanyType = job.company_type && job.company_type !== 'A Classificar' && job.company_type !== 'Não definido';
 
             const affirmativeTag = isAffirmative
-                ? `<button type="button" class="job-tag job-tag-affirmative job-tag-clickable" data-quick-filter="affirmative"><svg class="material-symbols-rounded" style="font-size:13px;line-height:1" aria-hidden="true" focusable="false"><use href="#i-diversity_3"></use></svg>Afirmativa</button>`
+                ? `<button type="button" class="job-tag job-tag-affirmative job-tag-clickable" data-quick-filter="affirmative"><svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-diversity_3"></use></svg>Afirmativa</button>`
                 : '';
 
             const contractQuick = contractInfo
@@ -3057,8 +3057,8 @@
                 : null;
             const contractTag = contractInfo
                 ? (contractQuick
-                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
-                    : `<span class="job-tag job-tag-${contractInfo.cls}">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`)
+                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
+                    : `<span class="job-tag job-tag-${contractInfo.cls}">${contractInfo.icon ? `<svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`)
                 : '';
 
             const newBadge = isNew
@@ -3089,9 +3089,9 @@
                                 <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                                 ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
                                 ${contractInfo ? (contractQuick
-                                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-compact job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
-                                    : `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`) : ''}
-                                ${isAffirmative ? `<button type="button" class="job-tag job-tag-affirmative job-tag-compact job-tag-clickable" data-quick-filter="affirmative"><svg class="material-symbols-rounded" style="font-size:12px;line-height:1" aria-hidden="true" focusable="false"><use href="#i-diversity_3"></use></svg>Afirm.</button>` : ''}
+                                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-compact job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
+                                    : `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${contractInfo.icon ? `<svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`) : ''}
+                                ${isAffirmative ? `<button type="button" class="job-tag job-tag-affirmative job-tag-compact job-tag-clickable" data-quick-filter="affirmative"><svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-diversity_3"></use></svg>Afirm.</button>` : ''}
                             </div>
                         </div>
                         <div class="job-list-meta">

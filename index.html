@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -58,7 +58,7 @@
 </head>
 <body>
 <!-- ICONES: gerado por scripts/build-icons.py. Nao editar a mao. -->
-<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" width="0" height="0" aria-hidden="true">
 <symbol id="i-add" viewBox="0 -960 960 960"><path transform="scale(1,-1)" d="M454 454H286Q275 454 267.5 461.5Q260 469 260.0 480.0Q260 491 267.5 498.5Q275 506 286 506H454V674Q454 685 461.5 692.5Q469 700 480.0 700.0Q491 700 498.5 692.5Q506 685 506 674V506H674Q685 506 692.5 498.5Q700 491 700.0 480.0Q700 469 692.5 461.5Q685 454 674 454H506V286Q506 275 498.5 267.5Q491 260 480.0 260.0Q469 260 461.5 267.5Q454 275 454 286Z"/></symbol>
 <symbol id="i-apartment" viewBox="0 -960 960 960"><path transform="scale(1,-1)" d="M207 161Q184 161 169.0 176.5Q154 192 154 214V616Q154 638 169.5 653.5Q185 669 207 669H298V760Q298 782 313.0 797.5Q328 813 350 813H585Q607 813 622.5 797.5Q638 782 638 760V525H753Q775 525 790.5 509.5Q806 494 806 472V214Q806 192 790.5 176.5Q775 161 753 161H538V305H422V161ZM206 213H298V305H206ZM206 369H298V461H206ZM206 525H298V617H206ZM350 369H442V461H350ZM350 525H442V617H350ZM350 669H442V761H350ZM494 369H586V461H494ZM494 525H586V617H494ZM494 669H586V761H494ZM662 213H754V305H662ZM662 369H754V461H662Z"/></symbol>
 <symbol id="i-business" viewBox="0 -960 960 960"><path transform="scale(1,-1)" d="M111 214V760Q111 782 126.0 797.5Q141 813 163 813H422Q444 813 459.5 797.5Q475 782 475 760V669H797Q819 669 834.0 653.5Q849 638 849 616V214Q849 192 834.0 176.5Q819 161 797 161H163Q141 161 126.0 176.5Q111 192 111 214ZM163 213H255V305H163ZM163 365H255V457H163ZM163 517H255V609H163ZM163 669H255V761H163ZM331 213H423V305H331ZM331 365H423V457H331ZM331 517H423V609H331ZM331 669H423V761H331ZM475 213H797V617H475V517H554V465H475V365H554V313H475ZM658 465V517H710V465ZM658 313V365H710V313Z"/></symbol>
@@ -244,7 +244,7 @@
                 </button>
 
                 <button class="filter-chip filter-chip-visited" id="visitedToggle" aria-pressed="false" aria-label="Visualizadas" title="Vagas que você já abriu">
-                    <svg class="material-symbols-rounded" style="font-size:18px" aria-hidden="true" focusable="false"><use href="#i-visibility"></use></svg>
+                    <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-visibility"></use></svg>
                     <span class="visited-count" id="visitedCount"></span>
                 </button>
 

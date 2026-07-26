@@ -1378,6 +1378,13 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
     color: var(--success);
 }
 .job-tag-compact { height: 20px; padding: 0 7px; font-size: 0.60rem; }
+/* O tamanho do icone dentro da etiqueta vinha em style= no JS, repetido em
+   seis lugares. Aqui ele fica no CSS e o style-src pode dispensar
+   'unsafe-inline'. */
+.job-tag .material-symbols-rounded { font-size: 12px; line-height: 1; }
+.job-tag-compact .material-symbols-rounded { font-size: 11px; line-height: 1; }
+.job-tag-affirmative .material-symbols-rounded { font-size: 13px; }
+.job-tag-affirmative.job-tag-compact .material-symbols-rounded { font-size: 12px; }
 
 .job-tag-clickable {
     cursor: pointer;
@@ -1726,6 +1733,7 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 }
 .skeleton-location { height: 12px; width: 100px; background: var(--rule); border-radius: var(--radius-sm); animation: shimmer 1.5s infinite; animation-delay: 0.6s; }
 .skeleton-date { height: 11px; width: 45px; background: var(--rule); border-radius: var(--radius-sm); animation: shimmer 1.5s infinite; animation-delay: 0.7s; }
+.skeleton-list-content .skeleton-date { width: 28px; height: 12px; margin-right: 4px; }
 
 @keyframes shimmer { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
@@ -3968,3 +3976,8 @@ body.chrome-scrolled .app-chrome {
     .hub-privacy { font-size: .71875rem; }
     .hub-footer nav { font-size: .6875rem; }
 }
+
+/* O sprite de icones e so um deposito de <symbol>: nunca e desenhado. */
+.icon-sprite { display: none; }
+/* O icone do filtro de vagas visitadas e menor que o padrao. */
+#visitedToggle .material-symbols-rounded { font-size: 18px; }
