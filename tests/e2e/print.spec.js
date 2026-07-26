@@ -61,6 +61,41 @@ test('conteudo que nao cabe continua inteiro em vez de ser cortado', async ({ pa
 });
 
 /**
+ * A altura da folha impressa e a altura do DOCUMENTO, nao a da caixa do
+ * curriculo. `base.css` define `body { min-height: 100vh }` para a tela, e na
+ * impressao o Chrome resolve vh pela altura da folha enquanto o Safari resolve
+ * pela altura da janela. Numa janela alta o body sozinho passava de uma folha e
+ * saia uma segunda pagina em branco, com o curriculo inteiro cabendo na
+ * primeira. Cinco rodadas de correcao mexeram no #print-cv sem tocar na causa.
+ *
+ * A janela alta e obrigatoria no teste: com a janela padrao de 720px o defeito
+ * nao aparece, porque 720px cabem numa folha.
+ */
+test('a folha impressa nao herda a altura da janela', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1600 });
+    await page.goto('/resume/');
+    await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
+
+    await page.evaluate(() => {
+        const character = EuGeroCharacters.CHARACTERS.find((c) => c.state);
+        EuGeroStorage.save(JSON.parse(JSON.stringify(character.state)));
+    });
+
+    await page.goto('/resume/#/review');
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.emulateMedia({ media: 'print' });
+
+    const alturaBodyMm = await page.evaluate(() => {
+        const r = document.body.getBoundingClientRect();
+        return (Math.max(document.body.scrollHeight, r.height) * 25.4) / 96;
+    });
+
+    // 271,6mm e a area util de um A4 com a margem de 12,7mm que o Safari aplica
+    // por padrao. Abaixo disso o documento cabe em uma folha em qualquer motor.
+    expect(alturaBodyMm, 'o body nao pode ser mais alto que a area util do A4').toBeLessThan(271.6);
+});
+
+/**
  * O botao de exportar abre a impressao nativa: e o mesmo HTML e CSS da previa,
  * entao o resultado e fiel por construcao. A geracao por jsPDF foi testada e
  * descartada porque divergia visivelmente (ver spec no repositorio de origem).
