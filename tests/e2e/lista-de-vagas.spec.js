@@ -44,8 +44,6 @@ function contagem(texto) {
 test('a ordenacao muda a primeira vaga da lista e sobrevive ao recarregar', async ({ page }) => {
     await abrirVagas(page);
 
-    const primeiraAntes = await page.locator('.job-card').first().textContent();
-
     await page.locator('#sortToggle').click();
     // No desktop quem abre e o #sortDropdown; o #sortSheet e o equivalente de
     // celular e fica escondido. Sem escopo, o primeiro casamento cai no
@@ -66,8 +64,9 @@ test('a ordenacao muda a primeira vaga da lista e sobrevive ao recarregar', asyn
     expect(empresas.slice(0, 10), 'as primeiras vagas devem vir em ordem alfabetica')
         .toEqual(ordenadas.slice(0, 10));
 
-    const primeiraDepois = await page.locator('.job-card').first().textContent();
-    expect(primeiraDepois).not.toBe(primeiraAntes);
+    // Nao vale cobrar que o primeiro card mude: a ordem padrao ja pode comecar
+    // pela mesma empresa que a ordem alfabetica, e foi o que aconteceu no CI.
+    // O que importa e a lista estar ordenada, ja conferido acima.
 
     // A escolha fica guardada: recarregar nao pode voltar para o padrao. A
     // comparacao e pela empresa, nao pelo texto inteiro do card: o card mostra
