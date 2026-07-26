@@ -47,3 +47,21 @@ O catálogo completo tem dezenas de milhares de vagas (~37 MB JSON, ~2 MB gzip).
 ## Licença
 
 MIT. Ver [LICENSE](./LICENSE).
+
+## Limitações de segurança conhecidas (GitHub Pages)
+
+O GitHub Pages não permite definir cabeçalhos HTTP. O site compensa com
+`<meta http-equiv>`, o que cobre parte do caminho:
+
+| Proteção | Situação |
+|---|---|
+| CSP | aplicada por `<meta http-equiv>`, funciona |
+| `Referrer-Policy` | aplicada por `<meta name="referrer">`, funciona |
+| `X-Content-Type-Options` | **ignorada** por `<meta>`: só vale como cabeçalho |
+| `frame-ancestors` da CSP | **ignorada** por `<meta>`: clickjacking não está coberto |
+| `Strict-Transport-Security` | não aplicável por `<meta>`; o Pages já força HTTPS |
+
+Aceito como risco em 2026-07-26. A mitigação disponível seria colocar um
+proxy ou CDN com cabeçalhos na frente do domínio, o que adiciona um
+intermediário e um custo operacional que hoje não se justificam para um site
+estático sem login nem dados no servidor.
