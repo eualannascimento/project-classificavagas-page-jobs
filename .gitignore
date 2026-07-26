@@ -21,3 +21,4 @@ resume/
 assets/data/json/open_jobs.json
 assets/data/json/open_jobs.json.gz
 assets/data/xlsx/
+__pycache__/
