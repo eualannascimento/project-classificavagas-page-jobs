@@ -140,6 +140,32 @@ def stamp_cache_version() -> str:
     return build_id
 
 
+ASSET_REF_RE = re.compile(r'(src|href)="([^"#?:]+\.(?:css|js))"')
+
+
+def version_asset_refs(build_id: str) -> int:
+    """Anexa ?v=<build_id> as referencias locais de css e js nos HTML do artefato.
+
+    O GitHub Pages serve os assets com max-age=600 e os arquivos nao tem hash no
+    nome, entao por ate dez minutos depois de um deploy o navegador continua
+    usando o css e o js antigos que ja tem em cache. Com a query, cada deploy
+    gera uma URL nova e a correcao chega na primeira visita.
+
+    Os nomes dos arquivos nao mudam, entao o PRECACHE do service worker (que
+    lista caminhos sem query) continua valido.
+    """
+    total = 0
+    for html in OUT.rglob("*.html"):
+        text = html.read_text(encoding="utf-8")
+        new_text, count = ASSET_REF_RE.subn(
+            lambda m: f'{m.group(1)}="{m.group(2)}?v={build_id}"', text
+        )
+        if count:
+            html.write_text(new_text, encoding="utf-8")
+            total += count
+    return total
+
+
 def copy_tree() -> int:
     if OUT.exists():
         shutil.rmtree(OUT)
@@ -164,8 +190,10 @@ def copy_tree() -> int:
         copied += 1
 
     build_id = stamp_cache_version()
+    stamped = version_asset_refs(build_id)
     print(f"OK: deploy artifact prepared at {OUT} ({copied} files, {skipped} skipped)")
     print(f"OK: service worker CACHE_VERSION = {build_id}")
+    print(f"OK: {stamped} referencia(s) de css/js versionada(s) com ?v={build_id}")
     return copied
 
 
