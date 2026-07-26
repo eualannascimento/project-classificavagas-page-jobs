@@ -151,12 +151,23 @@ verificar_producao() {
   # o servidor ja atualizado. Compara o CACHE_VERSION publicado com o commit.
   local sw_versao; sw_versao="$(curl -s "$DOMINIO/service-worker.js" \
     | grep -oE "CACHE_VERSION = '[^']*'" | head -1 | cut -d"'" -f2)"
+  # O id de build combina os dois repositorios: o site e o gerador, que vem de
+  # outro repo no momento do build. Conferir so o SHA do site deixava passar um
+  # gerador desatualizado em producao, que foi exatamente o que aconteceu.
   local sha; sha="$(git -C "$SITE" rev-parse --short HEAD)"
-  if [ "$sw_versao" = "$sha" ]; then
-    verde "CACHE_VERSION publicado ($sw_versao) confere com o HEAD"
+  local sha_ger; sha_ger="$(git -C "$GERADOR" rev-parse --short HEAD)"
+  local esperado="$sha-$sha_ger"
+  if [ "$sw_versao" = "$esperado" ]; then
+    verde "CACHE_VERSION publicado ($sw_versao) confere com site e gerador"
   else
-    vermelho "CACHE_VERSION publicado ($sw_versao) difere do HEAD ($sha): o deploy ainda nao propagou"
+    vermelho "CACHE_VERSION publicado ($sw_versao) difere do esperado ($esperado): deploy nao propagou ou gerador desatualizado"
   fi
+
+  # O CDN do GitHub Pages ignora query string na chave de cache, entao ?v= nao
+  # fura o cache de borda: so o TTL de 600s resolve. Conferir a data real do
+  # arquivo evita concluir que o deploy falhou quando ele so nao propagou ainda.
+  local lm; lm="$(curl -sI "$DOMINIO/resume/css/print-preview.css" | grep -i '^last-modified:' | cut -d' ' -f2-)"
+  printf "  \033[36minfo\033[0m last-modified do css do gerador: %s\n" "${lm:-desconhecido}"
   local versionado; versionado="$(curl -s "$DOMINIO/resume/" | grep -c "css?v=$sw_versao" || true)"
   [ "$versionado" -gt 0 ] && verde "assets do gerador versionados com ?v=$sw_versao" \
     || vermelho "assets do gerador sem ?v=$sw_versao: navegador pode usar css em cache"

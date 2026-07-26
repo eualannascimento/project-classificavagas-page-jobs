@@ -56,6 +56,10 @@ def main() -> int:
         shutil.copytree(clone, TARGET)
 
     total = sum(1 for p in TARGET.rglob("*") if p.is_file())
+    # O identificador de build precisa incluir este commit: sem isso, uma
+    # mudanca so no gerador nao alterava as URLs com ?v= e o navegador seguia
+    # usando o css antigo que ja tinha em cache.
+    (ROOT / ".resume-sha").write_text(sha + "\n", encoding="utf-8")
     print(f"OK: resume/ sincronizado de {ref} ({sha}), {total} arquivo(s)")
     return 0
 

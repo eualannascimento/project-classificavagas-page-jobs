@@ -115,6 +115,11 @@ def stamp_cache_version() -> str:
             ["git", "rev-parse", "--short", "HEAD"],
             cwd=ROOT, capture_output=True, text=True, check=True,
         ).stdout.strip()
+        # resume/ vem de outro repositorio: o commit dele entra no id, senao
+        # uma mudanca no gerador nao invalida cache nenhum.
+        resume_sha = ROOT / ".resume-sha"
+        if resume_sha.is_file():
+            build_id = f"{build_id}-{resume_sha.read_text().strip()}"
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Fora de um clone git, o conteudo publicado define a identidade.
         digest = hashlib.sha256()
