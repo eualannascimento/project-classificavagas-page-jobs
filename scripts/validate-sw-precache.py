@@ -19,6 +19,11 @@ PRECACHE_BLOCK = re.compile(r"const\s+PRECACHE\s*=\s*\[(.*?)\]", re.DOTALL)
 ENTRY = re.compile(r"['\"]([^'\"]+)['\"]")
 
 
+def version_of(path: Path) -> str | None:
+    match = re.search(r"const CACHE_VERSION = '([^']*)'", path.read_text(encoding="utf-8"))
+    return match.group(1) if match else None
+
+
 def parse_precache() -> list[str]:
     match = PRECACHE_BLOCK.search(SW.read_text(encoding="utf-8"))
     if not match:
@@ -54,7 +59,21 @@ def main() -> int:
         )
         return 1
 
+    # O nome do cache deriva do CACHE_VERSION e o activate so limpa caches com
+    # nome diferente: se o valor publicado for igual ao do repositorio, o deploy
+    # nao invalida nada e quem ja visitou o site fica na versao antiga.
+    repo_version = version_of(SW)
+    site_version = version_of(SITE / "service-worker.js")
+    if repo_version == site_version:
+        print(
+            f"ERROR: CACHE_VERSION publicado ({site_version}) e igual ao do repositorio. "
+            "prepare-deploy.py deve gravar um identificador por build.",
+            file=sys.stderr,
+        )
+        return 1
+
     print(f"OK: {len(entries)} entradas do PRECACHE existem em _site/")
+    print(f"OK: CACHE_VERSION do artefato = {site_version} (repo: {repo_version})")
     return 0
 
 

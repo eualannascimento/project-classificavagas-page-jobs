@@ -10,7 +10,10 @@ published to the live site.
 from __future__ import annotations
 
 import fnmatch
+import hashlib
+import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -98,6 +101,45 @@ def should_skip(rel: Path) -> bool:
     return False
 
 
+def stamp_cache_version() -> str:
+    """Grava um CACHE_VERSION unico por build no service worker do artefato.
+
+    O nome do cache deriva desse valor, e o handler de activate so apaga caches
+    com nome diferente do atual. Com a versao fixa no codigo, um deploy novo
+    reaproveitava o cache antigo e quem ja tinha visitado o site continuava
+    recebendo os arquivos velhos ate alguem lembrar de subir o numero na mao.
+    """
+    try:
+        build_id = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=ROOT, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fora de um clone git, o conteudo publicado define a identidade.
+        digest = hashlib.sha256()
+        for path in sorted(OUT.rglob("*")):
+            if path.is_file() and path.suffix in {".html", ".css", ".js"}:
+                digest.update(path.read_bytes())
+        build_id = digest.hexdigest()[:12]
+
+    sw = OUT / "service-worker.js"
+    if not sw.is_file():
+        raise SystemExit("ERROR: service-worker.js ausente do artefato")
+
+    text = sw.read_text(encoding="utf-8")
+    new_text, count = re.subn(
+        r"const CACHE_VERSION = '[^']*';",
+        f"const CACHE_VERSION = '{build_id}';",
+        text,
+        count=1,
+    )
+    if count != 1:
+        raise SystemExit("ERROR: nao foi possivel definir CACHE_VERSION no service worker")
+
+    sw.write_text(new_text, encoding="utf-8")
+    return build_id
+
+
 def copy_tree() -> int:
     if OUT.exists():
         shutil.rmtree(OUT)
@@ -121,7 +163,9 @@ def copy_tree() -> int:
         shutil.copy2(item, dest)
         copied += 1
 
+    build_id = stamp_cache_version()
     print(f"OK: deploy artifact prepared at {OUT} ({copied} files, {skipped} skipped)")
+    print(f"OK: service worker CACHE_VERSION = {build_id}")
     return copied
 
 
