@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint .",
     "test:e2e": "playwright test",
-    "validate": "python3 scripts/build-recent.py && python3 scripts/validate-jobs-schema.py && python3 scripts/check-no-google-fonts.py && python3 scripts/validate-icons.py && python3 scripts/prepare-deploy.py && python3 scripts/validate-site-artifact.py && python3 scripts/validate-sw-precache.py"
+    "validate": "python3 scripts/build-recent.py && python3 scripts/validate-jobs-schema.py && python3 scripts/check-no-google-fonts.py && python3 scripts/validate-icons.py && python3 scripts/validate-csp.py && python3 scripts/prepare-deploy.py && python3 scripts/validate-site-artifact.py && python3 scripts/validate-sw-precache.py"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

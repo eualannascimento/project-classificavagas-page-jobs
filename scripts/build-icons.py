@@ -87,7 +87,12 @@ def paginas() -> dict[Path, set[str]]:
 def sprite(nomes: list[str], glifos, ligaduras: dict[str, str], desenhar) -> str:
     linhas = [
         INICIO,
-        '<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">',
+        # width/height zero em vez de style="display:none": atributo de
+        # apresentacao nao e estilo inline, entao o style-src pode dispensar
+        # 'unsafe-inline'. A classe some com a caixa de 0x0; os atributos
+        # garantem que o sprite siga invisivel mesmo se o CSS nao carregar.
+        '<svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" width="0" height="0"'
+        ' aria-hidden="true">',
     ]
     for nome in nomes:
         linhas.append(
