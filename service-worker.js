@@ -15,7 +15,7 @@ const PRECACHE = [
     './assets/fonts/barlow-700.woff2',
     './assets/fonts/barlow-condensed-400.woff2',
     './assets/fonts/barlow-condensed-600.woff2',
-    './assets/css/fonts-icons.css',
+    './assets/css/icons.css',
     './assets/css/styles.css',
     './assets/css/curriculum-theme.css',
     './assets/js/theme-init.js',

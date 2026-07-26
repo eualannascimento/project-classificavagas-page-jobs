@@ -88,6 +88,9 @@ jobs:
       - name: Check no Google Fonts in HTML
         run: python3 scripts/check-no-google-fonts.py
 
+      - name: Validate icon sprite
+        run: python3 scripts/validate-icons.py
+
       - name: Prepare deploy artifact
         run: python3 scripts/prepare-deploy.py
 
