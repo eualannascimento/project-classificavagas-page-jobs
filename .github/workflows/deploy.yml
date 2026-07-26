@@ -8,6 +8,14 @@ on:
   # resume/ vem do repositorio de origem no momento do build, entao uma mudanca
   # la precisa republicar o site sem exigir um commit vazio aqui.
   workflow_dispatch:
+  # O catalogo de vagas tambem vem de fora (release deste repo, publicado pelo
+  # pipeline de scraping), entao um catalogo novo tambem precisa republicar.
+  # E repository_dispatch e nao workflow_dispatch de proposito: disparar um
+  # workflow exige "Actions: write" no token de fora, que o pipeline nao tem e
+  # nao deveria ter. repository_dispatch usa a permissao de conteudo que ele ja
+  # precisa para subir o release.
+  repository_dispatch:
+    types: [catalog-updated]
 
 permissions:
   contents: read
