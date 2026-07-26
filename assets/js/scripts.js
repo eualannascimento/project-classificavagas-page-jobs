@@ -716,7 +716,7 @@
             localStorage.setItem(key, '1');
             state.visitedJobs.add(key);
 
-            let index = [];
+            let index;
             try {
                 index = JSON.parse(localStorage.getItem(this.VISITED_INDEX_KEY) || '[]');
             } catch (err) {
