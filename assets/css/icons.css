@@ -1,0 +1,24 @@
+/* Icones em SVG (desenho da Material Symbols, Apache 2.0).
+ *
+ * Antes isto era uma fonte de 407 KB com 3.993 glifos para os 39 que a pagina
+ * usa. Agora os contornos vem do sprite embutido no HTML por
+ * scripts/build-icons.py: nenhuma requisicao, nenhuma espera, e o icone aparece
+ * junto com o texto em vez de depois dele.
+ *
+ * A classe continua se chamando material-symbols-rounded de proposito: existem
+ * cerca de 20 regras de font-size espalhadas em styles.css controlando o
+ * tamanho de cada icone. Com width e height em em, font-size continua sendo o
+ * controle de tamanho, e nenhuma daquelas regras precisou mudar.
+ */
+
+.material-symbols-rounded {
+    /* 1em amarra o tamanho ao font-size, igual ao que a fonte fazia. */
+    width: 1em;
+    height: 1em;
+    font-size: 24px;
+    /* O desenho segue a cor do texto, como o glifo seguia. */
+    fill: currentColor;
+    display: inline-block;
+    /* Sem isto o icone encolhe dentro de containers flex apertados. */
+    flex: none;
+}

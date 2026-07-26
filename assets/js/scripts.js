@@ -1930,7 +1930,7 @@
                 <div class="filter-dropdown-item" data-value="${utils.escapeHtml(v)}" role="option">
                     <span>${utils.escapeHtml(this.formatFilterOptionLabel(v))}</span>
                     <button type="button" aria-label="Remover ${utils.escapeHtml(this.formatFilterOptionLabel(v))}">
-                        <span class="material-symbols-rounded">close</span>
+                        <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg>
                     </button>
                 </div>
             `).join('');
@@ -2254,7 +2254,7 @@
                          ${isGrouped ? `data-tooltip="${tooltipItems}"` : ''}>
                         <button type="button" class="chip-text${isGrouped ? ' chip-text-grouped' : ''}" ${isGrouped ? 'aria-expanded="false" aria-haspopup="listbox"' : ''}>${chipText}</button>
                         <button type="button" class="chip-close" aria-label="Remover filtro">
-                            <span class="material-symbols-rounded">close</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg>
                         </button>
                     </div>
                 `;
@@ -2465,15 +2465,15 @@
                 : this.items.map(item => `
                     <div class="saved-filters-menu-item" role="menuitem">
                         <button type="button" class="saved-filters-menu-item-main" data-saved-filter-id="${utils.escapeHtml(item.id)}" title="Aplicar: ${utils.escapeHtml(item.label)}">
-                            <span class="material-symbols-rounded" aria-hidden="true">favorite</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-favorite"></use></svg>
                             <span class="saved-filters-menu-item-label">${utils.escapeHtml(item.label)}</span>
                         </button>
                         <div class="saved-filters-menu-item-actions">
                             <button type="button" class="icon-btn" data-action="edit" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Editar ${utils.escapeHtml(item.label)}" title="Editar">
-                                <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+                                <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-edit"></use></svg>
                             </button>
                             <button type="button" class="icon-btn" data-action="remove" data-saved-filter-id="${utils.escapeHtml(item.id)}" aria-label="Remover ${utils.escapeHtml(item.label)}" title="Remover">
-                                <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                                <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-delete"></use></svg>
                             </button>
                         </div>
                     </div>
@@ -2481,7 +2481,7 @@
 
             const footerHtml = `
                 <button type="button" class="saved-filters-menu-action primary" data-action="save-current"${canSave ? '' : ' disabled'}>
-                    <span class="material-symbols-rounded" aria-hidden="true">add</span>
+                    <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-add"></use></svg>
                     Salvar filtro atual
                 </button>
                 ${this.items.length > 0 ? `
@@ -3049,7 +3049,7 @@
             const isValidCompanyType = job.company_type && job.company_type !== 'A Classificar' && job.company_type !== 'Não definido';
 
             const affirmativeTag = isAffirmative
-                ? `<button type="button" class="job-tag job-tag-affirmative job-tag-clickable" data-quick-filter="affirmative"><span class="material-symbols-rounded" style="font-size:13px;line-height:1">diversity_3</span>Afirmativa</button>`
+                ? `<button type="button" class="job-tag job-tag-affirmative job-tag-clickable" data-quick-filter="affirmative"><svg class="material-symbols-rounded" style="font-size:13px;line-height:1" aria-hidden="true" focusable="false"><use href="#i-diversity_3"></use></svg>Afirmativa</button>`
                 : '';
 
             const contractQuick = contractInfo
@@ -3057,8 +3057,8 @@
                 : null;
             const contractTag = contractInfo
                 ? (contractQuick
-                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
-                    : `<span class="job-tag job-tag-${contractInfo.cls}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`)
+                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
+                    : `<span class="job-tag job-tag-${contractInfo.cls}">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:12px;line-height:1;margin-right:3px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`)
                 : '';
 
             const newBadge = isNew
@@ -3089,13 +3089,13 @@
                                 <span class="job-list-company">${utils.escapeHtml(job.company)}</span>
                                 ${isValidCompanyType ? `<span class="job-list-type">${utils.escapeHtml(job.company_type)}</span>` : ''}
                                 ${contractInfo ? (contractQuick
-                                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-compact job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
-                                    : `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${contractInfo.icon ? `<span class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px">${contractInfo.icon}</span>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`) : ''}
-                                ${isAffirmative ? `<button type="button" class="job-tag job-tag-affirmative job-tag-compact job-tag-clickable" data-quick-filter="affirmative"><span class="material-symbols-rounded" style="font-size:12px;line-height:1">diversity_3</span>Afirm.</button>` : ''}
+                                    ? `<button type="button" class="job-tag job-tag-${contractInfo.cls} job-tag-compact job-tag-clickable" data-quick-filter="${contractQuick}">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</button>`
+                                    : `<span class="job-tag job-tag-${contractInfo.cls} job-tag-compact">${contractInfo.icon ? `<svg class="material-symbols-rounded" style="font-size:11px;line-height:1;margin-right:2px" aria-hidden="true" focusable="false"><use href="#i-${contractInfo.icon}"></use></svg>` : ''}${utils.escapeHtml(contractInfo.label)}</span>`) : ''}
+                                ${isAffirmative ? `<button type="button" class="job-tag job-tag-affirmative job-tag-compact job-tag-clickable" data-quick-filter="affirmative"><svg class="material-symbols-rounded" style="font-size:12px;line-height:1" aria-hidden="true" focusable="false"><use href="#i-diversity_3"></use></svg>Afirm.</button>` : ''}
                             </div>
                         </div>
                         <div class="job-list-meta">
-                            ${locationDisplay.text ? `<span class="job-list-location${locationDisplay.isRemote ? ' job-list-location-remote' : ''}"><span class="material-symbols-rounded">${locationDisplay.icon}</span>${utils.escapeHtml(utils.truncate(locationDisplay.text, 18))}</span>` : ''}
+                            ${locationDisplay.text ? `<span class="job-list-location${locationDisplay.isRemote ? ' job-list-location-remote' : ''}"><svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${locationDisplay.icon}"></use></svg>${utils.escapeHtml(utils.truncate(locationDisplay.text, 18))}</span>` : ''}
                             ${jobDatesList}
                         </div>
                         <span class="job-list-arrow">
@@ -3110,7 +3110,7 @@
                     ${stretchLink}
                     <div class="job-card-header">
                         <div class="job-card-icon ${modalityKind}">
-                            <span class="material-symbols-rounded">${modalityIcon}</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${modalityIcon}"></use></svg>
                         </div>
                         <div class="job-card-title">
                             <h3><a class="job-card-title-link" href="${utils.escapeHtml(jobUrl)}" target="_blank" rel="noopener noreferrer">${utils.escapeHtml(title)}</a></h3>
@@ -3127,7 +3127,7 @@
                     </div>
                     <div class="job-card-footer">
                         <div class="job-location${locationDisplay.isRemote ? ' job-location-remote' : ''}">
-                            <span class="material-symbols-rounded">${locationDisplay.icon}</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${locationDisplay.icon}"></use></svg>
                             <span>${locationDisplay.text ? utils.escapeHtml(locationDisplay.text) : '<span class="job-location-empty">-</span>'}</span>
                         </div>
                         ${jobDatesCard}
@@ -3329,7 +3329,7 @@
             const bodyId = this.sectionBodyId(key);
             return `<button type="button" class="filter-section-header" aria-expanded="${expanded ? 'true' : 'false'}" aria-controls="${bodyId}">
                 ${leftHtml}
-                <span class="material-symbols-rounded filter-section-icon" aria-hidden="true">expand_more</span>
+                <svg class="material-symbols-rounded filter-section-icon" aria-hidden="true" focusable="false"><use href="#i-expand_more"></use></svg>
             </button>`;
         },
 
@@ -3348,7 +3348,7 @@
                 <div class="filter-section" data-key="_quick">
                     ${this.buildSectionHeader('_quick', `
                         <span class="filter-section-header-left">
-                            <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-tune"></use></svg>
                             <span class="filter-section-title">Tipo</span>
                             ${quickTipoUtils.isActive(state.tempQuickTipo) ? `<span class="filter-section-count">${quickTipoUtils.count(state.tempQuickTipo)}</span>` : ''}
                         </span>
@@ -3358,7 +3358,7 @@
                         <div class="filter-options-list" id="sheetQuickFilters">
                             ${quickOpts.map(o => `
                                 <button type="button" class="filter-option-chip ${quickSelected(o.key) ? 'selected' : ''}" data-quick="${o.key}" aria-pressed="${quickSelected(o.key) ? 'true' : 'false'}">
-                                    <span class="material-symbols-rounded check-icon" aria-hidden="true">check</span>
+                                    <svg class="material-symbols-rounded check-icon" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>
                                     <span>${o.label}</span>
                                 </button>
                             `).join('')}
@@ -3373,7 +3373,7 @@
                 <div class="filter-section" data-key="${key}">
                     ${this.buildSectionHeader(key, `
                         <span class="filter-section-header-left">
-                            <span class="material-symbols-rounded" aria-hidden="true">${icon}</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${icon}"></use></svg>
                             <span class="filter-section-title">${title}</span>
                             ${active ? '<span class="filter-section-count">1</span>' : ''}
                         </span>
@@ -3424,7 +3424,7 @@
                     <div class="filter-section" data-key="${key}">
                         ${this.buildSectionHeader(key, `
                             <span class="filter-section-header-left">
-                                <span class="material-symbols-rounded" aria-hidden="true">${icon}</span>
+                                <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${icon}"></use></svg>
                                 <span class="filter-section-title">${label}</span>
                                 ${selectedCount > 0 ? `<span class="filter-section-count">${selectedCount}</span>` : ''}
                             </span>
@@ -3483,7 +3483,7 @@
                 const isSelected = selected.includes(opt);
                 return `
                     <button type="button" class="filter-option-chip ${isSelected ? 'selected' : ''}" data-key="${key}" data-value="${utils.escapeHtml(opt)}" aria-pressed="${isSelected ? 'true' : 'false'}" title="${utils.escapeHtml(opt)}">
-                        <span class="material-symbols-rounded check-icon" aria-hidden="true">check</span>
+                        <svg class="material-symbols-rounded check-icon" aria-hidden="true" focusable="false"><use href="#i-check"></use></svg>
                         <span class="filter-option-label">${utils.escapeHtml(opt)}</span>
                         <span class="filter-option-count">(${countStr})</span>
                     </button>
@@ -3824,16 +3824,16 @@
                 <div class="search-history-header">
                     <span>Buscas recentes</span>
                     <button class="search-history-clear" aria-label="Limpar histórico">
-                        <span class="material-symbols-rounded">delete_sweep</span>
+                        <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-delete_sweep"></use></svg>
                     </button>
                 </div>
                 <div class="search-history-list">
                     ${state.searchHistory.map(query => `
                         <div class="search-history-item" data-query="${utils.escapeHtml(query)}">
-                            <span class="material-symbols-rounded">history</span>
+                            <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-history"></use></svg>
                             <span class="search-history-text">${utils.escapeHtml(query)}</span>
                             <button class="search-history-remove" aria-label="Remover">
-                                <span class="material-symbols-rounded">close</span>
+                                <svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg>
                             </button>
                         </div>
                     `).join('')}
@@ -4371,7 +4371,7 @@
             if (!('ontouchstart' in window)) return;
             const ind = document.createElement('div');
             ind.className = 'ptr-indicator';
-            ind.innerHTML = '<span class="material-symbols-rounded">refresh</span>';
+            ind.innerHTML = '<svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg>';
             document.body.appendChild(ind);
             this.indicator = ind;
 

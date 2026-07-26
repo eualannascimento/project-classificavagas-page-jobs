@@ -57,6 +57,10 @@ EXCLUDE_FILE_NAMES = {
     "CONTRIBUTING.md",
     "CHANGELOG.md",
     "SECURITY.md",
+    # Origem do desenho dos icones, nao um asset da pagina. Os contornos usados
+    # ja estao embutidos no HTML por scripts/build-icons.py; publicar os 407 KB
+    # da fonte inteira seria voltar ao problema que o sprite resolveu.
+    "material-symbols-rounded.woff2",
 }
 
 EXCLUDE_FILE_GLOBS = ("prd-*.md", "*.spec.js", "*.plan.md")

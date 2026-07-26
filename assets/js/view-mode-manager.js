@@ -63,7 +63,7 @@
                     const nextLabel = VIEW_MODE_LABELS[nextMode];
 
                     elements.viewToggle.innerHTML =
-                        `<span class="material-symbols-rounded" aria-hidden="true">${nextIcon}</span>`;
+                        `<svg class="material-symbols-rounded" aria-hidden="true" focusable="false"><use href="#i-${nextIcon}"></use></svg>`;
                     elements.viewToggle.setAttribute('aria-label', `Alternar para visualização em ${nextLabel}`);
                 },
 
