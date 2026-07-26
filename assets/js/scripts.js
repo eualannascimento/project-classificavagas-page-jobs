@@ -1784,15 +1784,30 @@
         },
 
         buildFilterOptions() {
+            // One pass over the catalog accumulating into a Map per category.
+            // The previous version rescanned every job once per distinct value
+            // (2.924 values over 76k jobs = ~223M comparisons, twice per load).
+            const counts = {};
             CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
-                const values = [...new Set(state.allJobs.map(j => j[key]).filter(Boolean))];
-                values.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                state.filterOptions[key] = values;
+                counts[key] = new Map();
+            });
 
-                // Count jobs per filter option
+            for (const job of state.allJobs) {
+                for (const { key } of CONFIG.FILTER_CATEGORIES) {
+                    const value = job[key];
+                    if (!value) continue;
+                    counts[key].set(value, (counts[key].get(value) || 0) + 1);
+                }
+            }
+
+            CONFIG.FILTER_CATEGORIES.forEach(({ key }) => {
+                const values = [...counts[key].keys()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                state.filterOptions[key] = values;
+                // Insert in sorted order so the object matches the previous
+                // implementation key-for-key, not just by lookup.
                 state.filterCounts[key] = {};
-                values.forEach(value => {
-                    state.filterCounts[key][value] = state.allJobs.filter(j => j[key] === value).length;
+                values.forEach((value) => {
+                    state.filterCounts[key][value] = counts[key].get(value);
                 });
             });
         },

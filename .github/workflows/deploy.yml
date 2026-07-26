@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Evita deixar o token do workflow no .git/config para os steps seguintes.
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -65,6 +68,12 @@ jobs:
       - name: Prepare deploy artifact
         run: python3 scripts/prepare-deploy.py
 
+      - name: Check no dev files in the artifact
+        run: python3 scripts/validate-site-artifact.py
+
+      - name: Validate service worker precache
+        run: python3 scripts/validate-sw-precache.py
+
       - name: Upload recent_jobs artifact
         uses: actions/upload-artifact@v4
         with:
@@ -76,6 +85,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
 
       - name: Install dev dependencies
         run: npm ci
