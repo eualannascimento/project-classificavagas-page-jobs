@@ -20,6 +20,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_site"
 
+# js/vendor/ NAO entra aqui: o jsPDF e as fontes sao carregados sob demanda
+# pelo botao de exportar PDF e precisam estar publicados.
 # Directory names blocked wherever they appear in the tree.
 EXCLUDE_DIR_NAMES = {
     "_backup",
@@ -30,7 +32,6 @@ EXCLUDE_DIR_NAMES = {
     "test-results",
     "playwright-report",
     "blob-report",
-    "vendor",
 }
 
 # Directory name patterns blocked wherever they appear.

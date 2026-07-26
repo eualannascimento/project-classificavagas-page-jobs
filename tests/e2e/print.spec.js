@@ -59,3 +59,38 @@ test('conteudo que nao cabe continua inteiro em vez de ser cortado', async ({ pa
 
     expect(cargos, 'nenhuma experiencia pode sumir da area de impressao').toBe(12);
 });
+
+/**
+ * O botao de exportar baixa o PDF direto, sem passar pelo dialogo de impressao:
+ * o dialogo aplica margens e escala proprias de cada navegador, e era ali que
+ * nascia a segunda pagina em branco no Safari.
+ */
+test('o botao de exportar baixa um PDF de uma pagina', async ({ page }) => {
+    await page.goto('/resume/');
+    await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
+
+    await page.evaluate(() => {
+        const character = EuGeroCharacters.CHARACTERS.find((c) => c.state);
+        const state = JSON.parse(JSON.stringify(character.state));
+        state.template = 'petroleo';
+        EuGeroStorage.save(state);
+    });
+
+    await page.goto('/resume/#/review');
+    await page.reload({ waitUntil: 'networkidle' });
+
+    // window.print nao pode ser chamado por este caminho.
+    await page.evaluate(() => {
+        window.__printChamado = false;
+        const original = window.print;
+        window.print = () => { window.__printChamado = true; return original.call(window); };
+    });
+
+    const [download] = await Promise.all([
+        page.waitForEvent('download', { timeout: 30000 }),
+        page.click('#btn-export-pdf')
+    ]);
+
+    expect(download.suggestedFilename()).toMatch(/^CV_.*\.pdf$/);
+    expect(await page.evaluate(() => window.__printChamado), 'o dialogo de impressao nao deve abrir').toBe(false);
+});
