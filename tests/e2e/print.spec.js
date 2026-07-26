@@ -61,36 +61,32 @@ test('conteudo que nao cabe continua inteiro em vez de ser cortado', async ({ pa
 });
 
 /**
- * O botao de exportar baixa o PDF direto, sem passar pelo dialogo de impressao:
- * o dialogo aplica margens e escala proprias de cada navegador, e era ali que
- * nascia a segunda pagina em branco no Safari.
+ * O botao de exportar abre a impressao nativa: e o mesmo HTML e CSS da previa,
+ * entao o resultado e fiel por construcao. A geracao por jsPDF foi testada e
+ * descartada porque divergia visivelmente (ver spec no repositorio de origem).
  */
-test('o botao de exportar baixa um PDF de uma pagina', async ({ page }) => {
+test('o botao de exportar abre a impressao nativa', async ({ page }) => {
     await page.goto('/resume/');
     await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
 
     await page.evaluate(() => {
         const character = EuGeroCharacters.CHARACTERS.find((c) => c.state);
-        const state = JSON.parse(JSON.stringify(character.state));
-        state.template = 'petroleo';
-        EuGeroStorage.save(state);
+        EuGeroStorage.save(JSON.parse(JSON.stringify(character.state)));
     });
 
     await page.goto('/resume/#/review');
     await page.reload({ waitUntil: 'networkidle' });
 
-    // window.print nao pode ser chamado por este caminho.
     await page.evaluate(() => {
         window.__printChamado = false;
-        const original = window.print;
-        window.print = () => { window.__printChamado = true; return original.call(window); };
+        window.print = () => { window.__printChamado = true; };
     });
 
-    const [download] = await Promise.all([
-        page.waitForEvent('download', { timeout: 30000 }),
-        page.click('#btn-export-pdf')
-    ]);
+    await page.click('#btn-export-pdf');
+    await page.waitForTimeout(300);
 
-    expect(download.suggestedFilename()).toMatch(/^CV_.*\.pdf$/);
-    expect(await page.evaluate(() => window.__printChamado), 'o dialogo de impressao nao deve abrir').toBe(false);
+    expect(await page.evaluate(() => window.__printChamado), 'o botao deve acionar a impressao').toBe(true);
+    // A area impressa precisa estar preenchida no momento da impressao.
+    const conteudo = await page.evaluate(() => document.getElementById('print-cv').textContent.trim().length);
+    expect(conteudo, 'a area de impressao nao pode estar vazia').toBeGreaterThan(200);
 });
