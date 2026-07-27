@@ -67,6 +67,8 @@ validar_site() {
   checa_em "$SITE" "schema do catalogo" python3 scripts/validate-jobs-schema.py
   checa_em "$SITE" "recent_jobs dentro do teto" python3 scripts/build-recent.py
   checa_em "$SITE" "sem Google Fonts" python3 scripts/check-no-google-fonts.py
+  checa_em "$SITE" "sprite de icones" python3 scripts/validate-icons.py
+  checa_em "$SITE" "CSP sem estilo inline" python3 scripts/validate-csp.py
   checa_em "$SITE" "sitemap completo" python3 scripts/update-sitemap.py
   checa_em "$SITE" "artefato de deploy" python3 scripts/prepare-deploy.py
   checa_em "$SITE" "sem arquivo de desenvolvimento" python3 scripts/validate-site-artifact.py
