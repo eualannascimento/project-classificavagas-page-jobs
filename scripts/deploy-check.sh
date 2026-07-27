@@ -154,8 +154,11 @@ verificar_producao() {
   # O id de build combina os dois repositorios: o site e o gerador, que vem de
   # outro repo no momento do build. Conferir so o SHA do site deixava passar um
   # gerador desatualizado em producao, que foi exatamente o que aconteceu.
-  local sha; sha="$(git -C "$SITE" rev-parse --short HEAD)"
-  local sha_ger; sha_ger="$(git -C "$GERADOR" rev-parse --short HEAD)"
+  # Contra origin/main, nao contra o HEAD local: trabalhando em branch, o HEAD
+  # local nao e o que foi publicado, e a checagem acusava falha onde o deploy
+  # estava certo.
+  local sha; sha="$(git -C "$SITE" rev-parse --short origin/main)"
+  local sha_ger; sha_ger="$(git -C "$GERADOR" rev-parse --short origin/main)"
   local esperado="$sha-$sha_ger"
   if [ "$sw_versao" = "$esperado" ]; then
     verde "CACHE_VERSION publicado ($sw_versao) confere com site e gerador"
