@@ -1,24 +1,41 @@
 import { test, expect } from '@playwright/test';
 
 /**
+ * Abre a revisao pelo caminho que o app oferece hoje.
+ *
+ * `page.goto('/resume/#/review')` deixou de funcionar: a revisao passou a ser
+ * acessivel apenas por `goToReview()`, que valida os campos obrigatorios antes
+ * de abrir e devolve ao wizard quando falta algo. Entrar pela URL cai em
+ * `#/wizard/personal` com a area de impressao vazia, e foi isso que estes
+ * testes passaram a medir depois da mudanca, e nao o comportamento que eles
+ * descrevem.
+ */
+async function abrirRevisao(page, montarEstado) {
+    await page.goto('/resume/');
+    await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
+    await page.evaluate(montarEstado);
+    await page.reload();
+    await page.waitForFunction(() => typeof EuGeroApp !== 'undefined');
+
+    const abriu = await page.evaluate(() => EuGeroApp.goToReview());
+    expect(abriu, 'o estado de teste tem que passar na validacao da revisao').toBe(true);
+    await expect(page.locator('#screen-review')).toBeVisible();
+}
+
+
+/**
  * A pagina A4 tem 297mm, mas 297mm a 96dpi da 1122,52px: o navegador arredonda
  * para 1123px, ou seja 297,13mm, e esse excesso de 0,13mm gera uma segunda
  * pagina em branco no Safari e no Firefox. A caixa de impressao precisa ficar
  * abaixo de 297mm com folga.
  */
 test('a area de impressao do curriculo cabe em uma pagina A4', async ({ page }) => {
-    await page.goto('/resume/');
-    await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
-
-    await page.evaluate(() => {
+    await abrirRevisao(page, () => {
         const character = EuGeroCharacters.CHARACTERS.find((c) => c.state);
         const state = JSON.parse(JSON.stringify(character.state));
         state.template = 'classic';
         EuGeroStorage.save(state);
     });
-
-    await page.goto('/resume/#/review');
-    await page.reload({ waitUntil: 'networkidle' });
     await page.emulateMedia({ media: 'print' });
 
     const heightMm = await page.evaluate(() => {
@@ -31,10 +48,7 @@ test('a area de impressao do curriculo cabe em uma pagina A4', async ({ page }) 
 });
 
 test('conteudo que nao cabe continua inteiro em vez de ser cortado', async ({ page }) => {
-    await page.goto('/resume/');
-    await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
-
-    await page.evaluate(() => {
+    await abrirRevisao(page, () => {
         const character = EuGeroCharacters.CHARACTERS.find((c) => c.state);
         const state = JSON.parse(JSON.stringify(character.state));
         state.template = 'classic';
@@ -46,9 +60,6 @@ test('conteudo que nao cabe continua inteiro em vez de ser cortado', async ({ pa
         }));
         EuGeroStorage.save(state);
     });
-
-    await page.goto('/resume/#/review');
-    await page.reload({ waitUntil: 'networkidle' });
     await page.emulateMedia({ media: 'print' });
 
     // Cortar o excedente esconderia experiencia do candidato sem ele perceber.
@@ -96,32 +107,34 @@ test('a folha impressa nao herda a altura da janela', async ({ page }) => {
 });
 
 /**
- * O botao de exportar abre a impressao nativa: e o mesmo HTML e CSS da previa,
- * entao o resultado e fiel por construcao. A geracao por jsPDF foi testada e
- * descartada porque divergia visivelmente (ver spec no repositorio de origem).
+ * A exportacao deixou de passar pelo dialogo de impressao do navegador.
+ *
+ * Ate 2026-07-30 o botao chamava `window.print()`, e este teste conferia isso.
+ * Em 31/07 a origem trocou para geracao direta de PDF com jsPDF
+ * (`fbe2feef`, "caminho unico de exportacao"), e `window.print` nao existe mais
+ * em lugar nenhum do gerador. O teste antigo media um comportamento que foi
+ * removido de proposito, entao ele passa a cobrar o comportamento atual: o
+ * clique entrega um arquivo PDF.
  */
-test('o botao de exportar abre a impressao nativa', async ({ page }) => {
-    await page.goto('/resume/');
-    await page.waitForFunction(() => typeof EuGeroStorage !== 'undefined');
-
-    await page.evaluate(() => {
+test('o botao de exportar entrega o PDF do curriculo', async ({ page }) => {
+    await abrirRevisao(page, () => {
         const character = EuGeroCharacters.CHARACTERS.find((c) => c.state);
-        EuGeroStorage.save(JSON.parse(JSON.stringify(character.state)));
+        const state = JSON.parse(JSON.stringify(character.state));
+        state.template = 'classic';
+        EuGeroStorage.save(state);
     });
 
-    await page.goto('/resume/#/review');
-    await page.reload({ waitUntil: 'networkidle' });
+    // A area impressa precisa estar montada antes do clique: e dela que o PDF
+    // e gerado.
+    const conteudo = await page.evaluate(
+        () => document.getElementById('print-cv').textContent.trim().length
+    );
+    expect(conteudo, 'a area do curriculo nao pode estar vazia na exportacao').toBeGreaterThan(100);
 
-    await page.evaluate(() => {
-        window.__printChamado = false;
-        window.print = () => { window.__printChamado = true; };
-    });
+    const download = await Promise.race([
+        page.waitForEvent('download', { timeout: 60000 }),
+        page.click('#btn-export-pdf').then(() => page.waitForEvent('download', { timeout: 60000 }))
+    ]);
 
-    await page.click('#btn-export-pdf');
-    await page.waitForTimeout(300);
-
-    expect(await page.evaluate(() => window.__printChamado), 'o botao deve acionar a impressao').toBe(true);
-    // A area impressa precisa estar preenchida no momento da impressao.
-    const conteudo = await page.evaluate(() => document.getElementById('print-cv').textContent.trim().length);
-    expect(conteudo, 'a area de impressao nao pode estar vazia').toBeGreaterThan(200);
+    expect(download.suggestedFilename(), 'o arquivo entregue tem que ser um PDF').toMatch(/\.pdf$/);
 });
