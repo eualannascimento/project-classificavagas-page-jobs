@@ -74,6 +74,14 @@ test('a ordenacao muda a primeira vaga da lista e sobrevive ao recarregar', asyn
     const empresaDepois = empresas[0];
     await page.reload();
     await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
+    // A pagina mostra primeiro as vagas recentes e so depois o catalogo
+    // inteiro, igual ao que `abrirVagas` espera na primeira carga. Ler a lista
+    // antes dessa troca compara a primeira empresa do lote parcial com a da
+    // lista completa, e o resultado depende de quais vagas entraram no lote
+    // naquele dia.
+    await expect
+        .poll(async () => contagem(await page.locator('#jobCount').textContent()), { timeout: 60000 })
+        .toBeGreaterThan(50000);
     const empresaRecarregada = await page.locator(EMPRESA).first().textContent();
     expect(empresaRecarregada, 'a ordenacao escolhida tem que sobreviver ao recarregar')
         .toBe(empresaDepois);

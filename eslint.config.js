@@ -111,6 +111,48 @@ export default [
         }
     },
     {
+        // Scripts de build e teste do gerador de curriculo. `resume/` nao e
+        // versionado aqui: vem do repositorio de origem no momento do build
+        // (scripts/sync-resume.py), entao qualquer arquivo novo la passa a ser
+        // lintado aqui sem que nada mude neste repositorio. Foi o que quebrou o
+        // build em 31/07: os scripts abaixo chegaram sem que existisse um bloco
+        // declarando o ambiente deles, e 42 globais de Node viraram no-undef.
+        //
+        // Corrigir o codigo nao resolveria: a proxima sincronizacao sobrescreve
+        // `resume/`. So a configuracao, que e deste repositorio, persiste.
+        files: ['resume/scripts/**/*.js', 'resume/playwright.config.js'],
+        languageOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'commonjs',
+            globals: {
+                require: 'readonly',
+                module: 'writable',
+                exports: 'writable',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                process: 'readonly',
+                console: 'readonly',
+                Buffer: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                setInterval: 'readonly',
+                clearInterval: 'readonly',
+                URL: 'readonly',
+                URLSearchParams: 'readonly',
+                fetch: 'readonly',
+                AbortController: 'readonly',
+                TextDecoder: 'readonly',
+                TextEncoder: 'readonly'
+            }
+        },
+        rules: {
+            // Regra do ESLint 9 que exige encadear a causa ao relancar erro.
+            // O codigo esta na origem e seria sobrescrito no proximo sync, entao
+            // exigi-la aqui so trava o deploy do site sem chance de conserto.
+            'preserve-caught-error': 'off'
+        }
+    },
+    {
         ignores: [
             '_backup/**',
             'node_modules/**',
