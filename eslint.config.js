@@ -118,8 +118,10 @@ export default [
         // build em 31/07: os scripts abaixo chegaram sem que existisse um bloco
         // declarando o ambiente deles, e 42 globais de Node viraram no-undef.
         //
-        // Corrigir o codigo nao resolveria: a proxima sincronizacao sobrescreve
-        // `resume/`. So a configuracao, que e deste repositorio, persiste.
+        // Corrigir o codigo daqui nao resolveria: a proxima sincronizacao
+        // sobrescreve `resume/`. Desde 23/08 o repositorio de origem roda o
+        // espelho desta configuracao, entao a quebra passou a aparecer la, no
+        // PR que a causa, e o conserto pode ser feito no codigo.
         files: ['resume/scripts/**/*.js', 'resume/playwright.config.js'],
         languageOptions: {
             ecmaVersion: 2022,
@@ -144,12 +146,6 @@ export default [
                 TextDecoder: 'readonly',
                 TextEncoder: 'readonly'
             }
-        },
-        rules: {
-            // Regra do ESLint 9 que exige encadear a causa ao relancar erro.
-            // O codigo esta na origem e seria sobrescrito no proximo sync, entao
-            // exigi-la aqui so trava o deploy do site sem chance de conserto.
-            'preserve-caught-error': 'off'
         }
     },
     {
