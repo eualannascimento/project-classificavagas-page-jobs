@@ -135,7 +135,7 @@ jobs:
       # fora, porque ali o objetivo e validar, nao publicar.
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
