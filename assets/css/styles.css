@@ -3981,3 +3981,78 @@ body.chrome-scrolled .app-chrome {
 .icon-sprite { display: none; }
 /* O icone do filtro de vagas visitadas e menor que o padrao. */
 #visitedToggle .material-symbols-rounded { font-size: 18px; }
+
+
+/* ============================================
+   SELETOR DE ABRANGENCIA
+   A abrangencia deixou de ser um filtro entre oito e virou a primeira
+   decisao da pagina, acima da busca. O estado ativo usa a mesma pintura
+   do `.filter-chip.active`: fundo `--ink` sobre texto `--bg`.
+   ============================================ */
+.scope-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px var(--shell-pad) 0;
+}
+
+.scope-switch-icon {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    color: var(--ink-3);
+}
+
+.scope-switch {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-sunk);
+    border: 1px solid var(--rule);
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.scope-switch::-webkit-scrollbar {
+    display: none;
+}
+
+.scope-option {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.3s var(--ease), color 0.3s var(--ease);
+}
+
+.scope-option:hover {
+    color: var(--ink);
+}
+
+.scope-option.active {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+.scope-option:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .scope-option {
+        padding: 8px 14px;
+        font-size: 0.8125rem;
+    }
+}

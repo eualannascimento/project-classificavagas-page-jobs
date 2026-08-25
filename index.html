@@ -198,6 +198,15 @@
 
         <p id="partialDataBanner" class="partial-data-banner hidden" aria-live="polite"></p>
 
+        <div class="scope-switch-container">
+            <svg class="material-symbols-rounded scope-switch-icon" aria-hidden="true" focusable="false"><use href="#i-public"></use></svg>
+            <div class="scope-switch" id="scopeSwitch" role="group" aria-label="Abrangência das vagas">
+                <button type="button" class="scope-option active" data-scope="br" aria-pressed="true">Brasil</button>
+                <button type="button" class="scope-option" data-scope="world" aria-pressed="false">Mundo</button>
+                <button type="button" class="scope-option" data-scope="all" aria-pressed="false">Todas</button>
+            </div>
+        </div>
+
         <div class="search-bar-container">
             <div class="search-bar" id="searchBar">
                 <label class="search-bar-field" for="searchInput">

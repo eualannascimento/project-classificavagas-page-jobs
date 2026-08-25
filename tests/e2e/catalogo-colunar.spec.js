@@ -51,7 +51,8 @@ test.describe('catalogo colunar', () => {
             if (/^(catalog|open_jobs|recent_jobs)\.json/.test(nome)) baixados.push(nome);
         });
 
-        await page.goto('/');
+        // `escopo=all`: o seletor abre no Brasil e aqui o alvo e o catalogo inteiro.
+        await page.goto('/?escopo=all');
         await page.getByRole('link', { name: /Ver vagas/i }).click();
         await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
         await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
@@ -73,7 +74,8 @@ test.describe('catalogo colunar', () => {
     });
 
     test('a lista reidrata as vagas com os campos certos', async ({ page }) => {
-        await page.goto('/');
+        // `escopo=all`: o seletor abre no Brasil e aqui o alvo e o catalogo inteiro.
+        await page.goto('/?escopo=all');
         await page.getByRole('link', { name: /Ver vagas/i }).click();
         await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
         await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
