@@ -1641,6 +1641,15 @@
             });
         },
 
+        // Quantas vagas o payload traz, seja ele colunar ou lista de objetos.
+        // Ler `.length` direto quebrava com o colunar, e o TypeError acontecia
+        // no texto de progresso, antes do ingest: o catalogo completo nunca
+        // entrava e a lista ficava nas 2.000 recentes, sem erro visivel.
+        countJobs(data) {
+            if (Array.isArray(data)) return data.length;
+            return Array.isArray(data?.vagas) ? data.vagas.length : 0;
+        },
+
         // Aceita os dois formatos: o colunar do catalogo completo e a lista
         // de objetos do recent_jobs.json, que continua como esta por ser
         // pequeno.
@@ -1786,7 +1795,7 @@
                 this._slowNetworkTimer = null;
 
                 const wasPartial = state.isPartialData;
-                await _setProgress(showedApp ? 90 : 80, `Processando ${fullResult.data.length.toLocaleString('pt-BR')} vagas...`);
+                await _setProgress(showedApp ? 90 : 80, `Processando ${this.countJobs(fullResult.data).toLocaleString('pt-BR')} vagas...`);
 
                 this.ingestJobs(fullResult.data, fullResult.lastModified);
                 state.isPartialData = false;
