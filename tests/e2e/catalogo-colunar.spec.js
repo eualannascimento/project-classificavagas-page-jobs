@@ -39,6 +39,28 @@ test.describe('catalogo colunar', () => {
         expect(tamanho(colunar)).toBeLessThan(tamanho(objetos));
     });
 
+    test('o colunar carrega sem cair no formato antigo', async ({ page }) => {
+        // O worker que faz o parse validava `Array.isArray` e rejeitava o
+        // colunar antes da reidratacao: o site baixava o novo, falhava, e
+        // caia no antigo. Eram 27 MB em vez de 7,4, e nenhum teste pegou
+        // porque o servidor local nao serve `.gz` e o caminho do worker nao
+        // era exercitado.
+        const baixados = [];
+        page.on('response', (r) => {
+            const nome = r.url().split('/').pop();
+            if (/^(catalog|open_jobs|recent_jobs)\.json/.test(nome)) baixados.push(nome);
+        });
+
+        await page.goto('/');
+        await page.getByRole('link', { name: /Ver vagas/i }).click();
+        await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
+        await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
+        await page.waitForTimeout(2000);
+
+        expect(baixados.some(n => n.startsWith('catalog.json'))).toBeTruthy();
+        expect(baixados.filter(n => n.startsWith('open_jobs.json'))).toHaveLength(0);
+    });
+
     test('a lista reidrata as vagas com os campos certos', async ({ page }) => {
         await page.goto('/');
         await page.getByRole('link', { name: /Ver vagas/i }).click();
