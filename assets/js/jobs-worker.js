@@ -11,7 +11,13 @@ self.onmessage = (event) => {
     }
     try {
         const data = JSON.parse(text);
-        if (!Array.isArray(data)) {
+        // Dois formatos chegam aqui: a lista de objetos do recent_jobs.json e
+        // o colunar do catalogo completo, `{campos, vagas}`. Aceitar so array
+        // fazia o colunar ser rejeitado antes de chegar na reidratacao, e o
+        // site caia no formato antigo depois de ja ter baixado o novo: eram
+        // 27 MB em vez de 7,4.
+        const colunar = data && Array.isArray(data.campos) && Array.isArray(data.vagas);
+        if (!Array.isArray(data) && !colunar) {
             throw new Error('Invalid jobs data');
         }
         self.postMessage({ id, type: 'parsed', data });
