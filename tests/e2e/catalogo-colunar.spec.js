@@ -59,6 +59,17 @@ test.describe('catalogo colunar', () => {
 
         expect(baixados.some(n => n.startsWith('catalog.json'))).toBeTruthy();
         expect(baixados.filter(n => n.startsWith('open_jobs.json'))).toHaveLength(0);
+
+        // Baixar o arquivo certo nao basta: a primeira versao deste teste
+        // parava aqui e passou verde enquanto o catalogo completo nunca
+        // entrava, porque o erro acontecia depois do download. O que prova a
+        // carga e a lista deixar de mostrar so as 2.000 recentes.
+        await expect
+            .poll(async () => {
+                const texto = await page.locator('#jobCount').textContent();
+                return Number((texto || '').replace(/\D/g, '')) || 0;
+            }, { timeout: 90000 })
+            .toBeGreaterThan(50000);
     });
 
     test('a lista reidrata as vagas com os campos certos', async ({ page }) => {
