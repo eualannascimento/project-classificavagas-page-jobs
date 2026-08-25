@@ -27,7 +27,6 @@
             { key: 'level', label: 'Nível', icon: 'trending_up' },
             { key: 'category', label: 'Categoria', icon: 'work' },
             { key: 'company', label: 'Empresa', icon: 'business' },
-            { key: 'location_scope', label: 'Abrangência', icon: 'public' },
             { key: 'location_country', label: 'País', icon: 'flag' },
             { key: 'location_state', label: 'Estado', icon: 'map' },
             { key: 'location_city', label: 'Cidade', icon: 'location_city' }
@@ -47,6 +46,19 @@
             { key: 'title_asc', label: 'Título A-Z', icon: 'sort_by_alpha' },
             { key: 'title_desc', label: 'Título Z-A', icon: 'sort_by_alpha' }
         ],
+        // Abrangencia deixou de ser um filtro entre oito e virou a primeira
+        // decisao da pagina. `NAO IDENTIFICADO` sao 19% do catalogo e nao
+        // cabem nem em Brasil nem em Mundo, entao existe um terceiro modo em
+        // vez de esconde-las.
+        SCOPE_MODES: [
+            { key: 'br', label: 'Brasil', value: 'BRASIL' },
+            { key: 'world', label: 'Mundo', value: 'INTERNACIONAL' },
+            { key: 'all', label: 'Todas', value: null }
+        ],
+        DEFAULT_SCOPE: 'br',
+        // Estado e cidade so tem dado no Brasil: `location_state` vem vazio em
+        // 100% das vagas internacionais.
+        BR_ONLY_FILTERS: ['location_state', 'location_city'],
         MAX_SEARCH_HISTORY: 5,
         SKELETON_COUNT: 8
     };
@@ -68,6 +80,7 @@
         visitedJobs: new Set(),
         insertedDateRange: { from: '', to: '' },
         publishedDateRange: { from: '', to: '' },
+        scopeMode: 'br',
         sortBy: 'published_desc',
         viewMode: 'cards', // 'cards', 'list', or 'compact'
         searchHistory: [], // recent searches
@@ -84,6 +97,7 @@
         splash: $('#splash'),
         app: $('#app'),
         jobCount: $('#jobCount'),
+        scopeSwitch: $('#scopeSwitch'),
         searchInput: $('#searchInput'),
         searchClear: $('#searchClear'),
         searchBar: $('#searchBar'),
@@ -780,6 +794,7 @@
     const preferencesManager = {
         VISITED_KEY: 'cv_has_visited',
         SORT_KEY: 'cv_sort',
+        SCOPE_KEY: 'cv_scope',
         DEFAULT_SORT: 'published_desc',
 
         hasVisitedBefore() {
@@ -800,8 +815,18 @@
             if (sortBy) localStorage.setItem(this.SORT_KEY, sortBy);
         },
 
+        getDefaultScope() {
+            const salvo = this.hasVisitedBefore() ? localStorage.getItem(this.SCOPE_KEY) : null;
+            return CONFIG.SCOPE_MODES.some(m => m.key === salvo) ? salvo : CONFIG.DEFAULT_SCOPE;
+        },
+
+        saveScope(scopeMode) {
+            if (scopeMode) localStorage.setItem(this.SCOPE_KEY, scopeMode);
+        },
+
         applyDefaults() {
             state.sortBy = this.getDefaultSort();
+            state.scopeMode = this.getDefaultScope();
         }
     };
 
@@ -979,6 +1004,58 @@
             header.addEventListener('touchend', (e) => {
                 end(e.changedTouches[0].clientY);
             }, { passive: true });
+        }
+    };
+
+    // ============================================
+    // SCOPE MANAGER
+    // ============================================
+    const scopeManager = {
+        valueOf(scopeMode = state.scopeMode) {
+            const modo = CONFIG.SCOPE_MODES.find(m => m.key === scopeMode);
+            return modo ? modo.value : null;
+        },
+
+        labelOf(scopeMode = state.scopeMode) {
+            const modo = CONFIG.SCOPE_MODES.find(m => m.key === scopeMode);
+            return modo ? modo.label : '';
+        },
+
+        /** Estado e cidade so tem dado no Brasil. */
+        isBrOnlyVisible() {
+            return state.scopeMode === 'br';
+        },
+
+        set(scopeMode, { rerender = true } = {}) {
+            if (!CONFIG.SCOPE_MODES.some(m => m.key === scopeMode)) return;
+            if (state.scopeMode === scopeMode) return;
+            state.scopeMode = scopeMode;
+            preferencesManager.saveScope(scopeMode);
+            // Estado e cidade nao existem fora do Brasil: manter a selecao
+            // deixaria a lista vazia sem explicacao visivel.
+            if (scopeMode !== 'br') {
+                CONFIG.BR_ONLY_FILTERS.forEach(k => { delete state.selectedFilters[k]; });
+            }
+            this.syncUI();
+            if (rerender) filterManager.apply();
+        },
+
+        syncUI() {
+            if (!elements.scopeSwitch) return;
+            elements.scopeSwitch.querySelectorAll('.scope-option').forEach(btn => {
+                const ativo = btn.dataset.scope === state.scopeMode;
+                btn.classList.toggle('active', ativo);
+                btn.setAttribute('aria-pressed', String(ativo));
+            });
+        },
+
+        init() {
+            if (!elements.scopeSwitch) return;
+            elements.scopeSwitch.addEventListener('click', (e) => {
+                const btn = e.target.closest('.scope-option');
+                if (btn) this.set(btn.dataset.scope);
+            });
+            this.syncUI();
         }
     };
 
@@ -1300,6 +1377,9 @@
             if (state.sortBy !== preferencesManager.DEFAULT_SORT) {
                 url.searchParams.set('sort', state.sortBy);
             }
+            if (state.scopeMode !== CONFIG.DEFAULT_SCOPE) {
+                url.searchParams.set('escopo', state.scopeMode);
+            }
 
             Object.entries(state.selectedFilters).forEach(([key, values]) => {
                 if (values && values.length > 0) {
@@ -1347,6 +1427,13 @@
             if (params.has('sort')) {
                 state.sortBy = params.get('sort');
                 preferencesManager.saveSort(state.sortBy);
+            }
+            if (params.has('escopo')) {
+                const escopo = params.get('escopo');
+                if (CONFIG.SCOPE_MODES.some(m => m.key === escopo)) {
+                    state.scopeMode = escopo;
+                    preferencesManager.saveScope(escopo);
+                }
             }
 
             params.forEach((value, key) => {
@@ -2007,9 +2094,17 @@
             quickTipo = state.quickTipo,
             insertedDateRange = state.insertedDateRange,
             publishedDateRange = state.publishedDateRange,
-            selectedFilters = state.selectedFilters
+            selectedFilters = state.selectedFilters,
+            scopeMode = state.scopeMode
         } = {}) {
             let result = jobs;
+
+            // A abrangencia recorta antes de tudo: ela e a primeira decisao da
+            // pagina, nao mais um filtro entre os outros.
+            const escopo = scopeManager.valueOf(scopeMode);
+            if (escopo) {
+                result = result.filter(job => job.location_scope === escopo);
+            }
 
             if (searchQuery) {
                 const parsedQuery = utils.parseSearchQuery(searchQuery);
@@ -2146,7 +2241,8 @@
             const todayCount = state.allJobs.filter(j => utils.isToday(j.inserted_date)).length;
             const hasActiveFilters = state.searchQuery || quickTipoUtils.isActive(state.quickTipo) ||
                 Object.values(state.selectedFilters).some(v => v && v.length > 0) ||
-                utils.hasDateRange(state.insertedDateRange) || utils.hasDateRange(state.publishedDateRange);
+                utils.hasDateRange(state.insertedDateRange) || utils.hasDateRange(state.publishedDateRange) ||
+                Boolean(scopeManager.valueOf());
 
             if (hasActiveFilters) {
                 elements.jobCount.textContent = `${filtered.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} vagas`;
@@ -2175,7 +2271,8 @@
         },
 
         hasShareableState(filterState = state) {
-            return Boolean(filterState.searchQuery ||
+            return Boolean((filterState.scopeMode && filterState.scopeMode !== CONFIG.DEFAULT_SCOPE) ||
+                filterState.searchQuery ||
                 quickTipoUtils.isActive(filterState.quickTipo) ||
                 filterState.showOnlyVisited ||
                 utils.hasDateRange(filterState.insertedDateRange) ||
@@ -3455,7 +3552,11 @@
             );
 
             // Order: Tipo | Ramo Nível Categoria | Data | Empresa Abrangência País Estado Cidade
-            const cats = CONFIG.FILTER_CATEGORIES;
+            // Estado e cidade so tem dado no Brasil, entao fora dele a secao
+            // sairia com a lista vazia e sem explicacao.
+            const cats = scopeManager.isBrOnlyVisible()
+                ? CONFIG.FILTER_CATEGORIES
+                : CONFIG.FILTER_CATEGORIES.filter(c => !CONFIG.BR_ONLY_FILTERS.includes(c.key));
             const beforeDate = cats.slice(0, 3);
             const afterDate  = cats.slice(3);
 
@@ -4535,6 +4636,9 @@
             viewModeManager.init();
             sortManager.init();
             shareManager.init();
+            // Depois de shareManager, que e quem le a URL: `?escopo=` precisa
+            // vencer a preferencia salva antes do seletor pintar o estado.
+            scopeManager.init();
             filterManager.initGroupedFilterDropdown();
             shortcutsHintManager.init();
             searchHistoryManager.init();

@@ -14,7 +14,10 @@ import { test, expect } from '@playwright/test';
  */
 
 async function abrirVagas(page) {
-    await page.goto('/');
+    // `escopo=all` porque o seletor de abrangencia abre no Brasil, e estes
+    // testes medem o catalogo inteiro. Sem isso a espera por mais de 50.000
+    // passaria a depender de quantas vagas o Brasil tem no dia.
+    await page.goto('/?escopo=all');
     await page.getByRole('link', { name: /Ver vagas/i }).click();
     await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
     await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
