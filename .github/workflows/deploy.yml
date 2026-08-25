@@ -72,6 +72,23 @@ jobs:
       - name: Build open_jobs.json.gz
         run: python3 scripts/build-gzip.py
 
+      # O que o navegador baixa: colunar, so com os campos que o site le.
+      - name: Build catalog.json (colunar)
+        run: python3 scripts/build-columnar.py
+
+      - name: Verify catalog.json artifact
+        run: |
+          python3 -c "
+          import json
+          from pathlib import Path
+          d = json.loads(Path('assets/data/json/catalog.json').read_text(encoding='utf-8'))
+          completo = json.loads(Path('assets/data/json/open_jobs.json').read_text(encoding='utf-8'))
+          assert d['campos'], 'catalog.json sem cabecalho'
+          assert len(d['vagas']) == len(completo), 'catalog.json com contagem diferente do completo'
+          assert all(len(v) == len(d['campos']) for v in d['vagas'][:1000]), 'linha fora do cabecalho'
+          print(f\"OK: {len(d['vagas']):,} vagas no colunar\")
+          "
+
       - name: Update sitemap lastmod
         run: python3 scripts/update-sitemap.py
 

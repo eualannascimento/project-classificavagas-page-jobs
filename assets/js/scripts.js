@@ -14,7 +14,12 @@
         SEARCH_DEBOUNCE: 250,
         SCROLL_THRESHOLD: 300,
         INFINITE_SCROLL_THRESHOLD: 600,
-        DATA_URL: 'assets/data/json/open_jobs.json',
+        // O catalogo que o navegador baixa e o colunar: cabecalho uma vez e
+        // valores em array, so com os campos que este site le. Com 204 mil
+        // vagas o formato de objetos chega a 143 MB e 347 MB de heap no
+        // celular, patamar em que o navegador comeca a matar a aba.
+        DATA_URL: 'assets/data/json/catalog.json',
+        LEGACY_DATA_URL: 'assets/data/json/open_jobs.json',
         RECENT_DATA_URL: 'assets/data/json/recent_jobs.json',
         RECENT_MAX_AGE_DAYS: 14,
         FILTER_CATEGORIES: [
@@ -1554,6 +1559,19 @@
             if (el) el.textContent = msg;
         },
 
+        // O catalogo completo tem duas fontes: a colunar, que e a de hoje, e a
+        // de objetos, que fica como rede enquanto o build antigo puder estar
+        // publicado. Sem isso, um deploy do site na frente do build derrubaria
+        // a lista inteira.
+        async fetchCatalog(onProgress) {
+            try {
+                return await this.fetchJson(CONFIG.DATA_URL, onProgress);
+            } catch (erroColunar) {
+                console.warn('catalog.json indisponivel; tentando o formato antigo', erroColunar);
+                return this.fetchJson(CONFIG.LEGACY_DATA_URL, onProgress);
+            }
+        },
+
         async fetchJson(url, onProgress, { preferGzip = true } = {}) {
             if (preferGzip && typeof DecompressionStream !== 'undefined') {
                 try {
@@ -1623,11 +1641,26 @@
             });
         },
 
+        // Aceita os dois formatos: o colunar do catalogo completo e a lista
+        // de objetos do recent_jobs.json, que continua como esta por ser
+        // pequeno.
+        hydrateJobs(data) {
+            if (Array.isArray(data)) return data;
+            if (!data || !Array.isArray(data.campos) || !Array.isArray(data.vagas)) return null;
+            const campos = data.campos;
+            return data.vagas.map(linha => {
+                const job = {};
+                for (let i = 0; i < campos.length; i++) job[campos[i]] = linha[i];
+                return job;
+            });
+        },
+
         ingestJobs(data, lastModified) {
-            if (!Array.isArray(data)) {
+            const lista = this.hydrateJobs(data);
+            if (!lista) {
                 throw new Error('Invalid jobs data');
             }
-            state.allJobs = data.map((job, i) => ({ ...job, id: i + 1 }));
+            state.allJobs = lista.map((job, i) => ({ ...job, id: i + 1 }));
             state.allJobs.forEach(job => {
                 const key = utils.getJobKey(job);
                 if (utils.isVisited(key)) {
@@ -1688,7 +1721,7 @@
                     }
                 } catch (_) { /* optional */ }
                 try {
-                    const fullResult = await this.fetchJson(CONFIG.DATA_URL);
+                    const fullResult = await this.fetchCatalog();
                     this.ingestJobs(fullResult.data, fullResult.lastModified);
                     state.isPartialData = false;
                     this.updatePartialBanner();
@@ -1740,7 +1773,7 @@
                     /* recent_jobs.json optional */
                 }
 
-                const fullResult = await this.fetchJson(CONFIG.DATA_URL, (e) => {
+                const fullResult = await this.fetchCatalog((e) => {
                     if (e.lengthComputable) {
                         const pct = showedApp ? 70 + (e.loaded / e.total) * 25 : 10 + (e.loaded / e.total) * 60;
                         setSplashProgress(pct, `Baixando catálogo... ${Math.round(e.loaded / 1024).toLocaleString('pt-BR')} KB`);

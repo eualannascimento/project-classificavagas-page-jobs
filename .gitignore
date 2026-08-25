@@ -1,5 +1,7 @@
-# Generated at build/deploy time (see scripts/build-recent.py)
+# Generated at build/deploy time (see scripts/build-recent.py e build-columnar.py)
 assets/data/json/recent_jobs.json
+assets/data/json/catalog.json
+assets/data/json/catalog.json.gz
 
 # Local dev / CI artifacts
 server.log
