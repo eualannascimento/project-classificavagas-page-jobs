@@ -6,6 +6,7 @@ import os
 import tarfile
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -59,18 +60,55 @@ class FetchCatalogTests(unittest.TestCase):
         self.fetch_catalog.DESTINO = self.jobs_destination
         self.fetch_catalog.MANIFEST_DESTINO = self.manifest_destination
 
-    def run_fetch(self, snapshot_bytes):
+    def run_fetch(
+        self,
+        snapshot_bytes=None,
+        *,
+        legacy_bytes=None,
+        snapshot_asset_exists=True,
+        snapshot_download_fails=False,
+        legacy_fallback=False,
+        snapshot_error='snapshot download failed',
+    ):
         snapshot_source = self.workspace / 'downloaded-snapshot.tar.gz'
-        snapshot_source.write_bytes(snapshot_bytes)
+        if snapshot_bytes is not None:
+            snapshot_source.write_bytes(snapshot_bytes)
+        legacy_source = self.workspace / 'downloaded-legacy.json'
+        if legacy_bytes is not None:
+            legacy_source.write_bytes(legacy_bytes)
         fake_bin = self.workspace / 'bin'
         fake_bin.mkdir()
         fake_gh = fake_bin / 'gh'
         fake_gh.write_text(
             '#!/bin/sh\n'
+            'if [ "$1" = "release" ] && [ "$2" = "view" ]; then\n'
+            '  if [ "$SNAPSHOT_ASSET_EXISTS" = "1" ]; then\n'
+            '    printf "%s\\n" "catalog_snapshot.tar.gz"\n'
+            '  else\n'
+            '    printf "%s\\n" "open_jobs.json"\n'
+            '  fi\n'
+            '  exit 0\n'
+            'fi\n'
             'while [ "$#" -gt 0 ]; do\n'
             '  if [ "$1" = "--output" ]; then\n'
-            '    cp "$SNAPSHOT_SOURCE" "$2"\n'
-            '    exit 0\n'
+            '    case "$2" in\n'
+            '      *catalog_snapshot.tar.gz)\n'
+            '        if [ "$SNAPSHOT_ASSET_EXISTS" = "1" ]; then\n'
+            '          if [ "$SNAPSHOT_DOWNLOAD_FAILS" = "1" ]; then\n'
+            '            echo "$SNAPSHOT_ERROR" >&2\n'
+            '            exit 1\n'
+            '          fi\n'
+            '          cp "$SNAPSHOT_SOURCE" "$2"\n'
+            '          exit 0\n'
+            '        fi\n'
+            '        echo "$SNAPSHOT_ERROR" >&2\n'
+            '        exit 1\n'
+            '        ;;\n'
+            '      *open_jobs.json)\n'
+            '        cp "$LEGACY_SOURCE" "$2"\n'
+            '        exit 0\n'
+            '        ;;\n'
+            '    esac\n'
             '  fi\n'
             '  shift\n'
             'done\n'
@@ -81,9 +119,14 @@ class FetchCatalogTests(unittest.TestCase):
         environment = {
             'PATH': f'{fake_bin}{os.pathsep}{os.environ["PATH"]}',
             'SNAPSHOT_SOURCE': str(snapshot_source),
+            'LEGACY_SOURCE': str(legacy_source),
+            'SNAPSHOT_ASSET_EXISTS': '1' if snapshot_asset_exists else '0',
+            'SNAPSHOT_DOWNLOAD_FAILS': '1' if snapshot_download_fails else '0',
+            'SNAPSHOT_ERROR': snapshot_error,
         }
         with mock.patch.dict(os.environ, environment, clear=False):
-            return self.fetch_catalog.main()
+            arguments = ['--allow-legacy-fallback'] if legacy_fallback else []
+            return self.fetch_catalog.main(arguments)
 
     def assert_rejected_without_replacing_catalog(self, snapshot_bytes):
         self.jobs_destination.parent.mkdir(parents=True)
@@ -174,6 +217,59 @@ class FetchCatalogTests(unittest.TestCase):
 
         self.assertEqual(self.jobs_destination.read_bytes(), previous_jobs)
         self.assertEqual(self.manifest_destination.read_bytes(), previous_manifest)
+
+    def test_uses_legacy_catalog_only_when_snapshot_asset_is_absent_and_flag_is_set(self):
+        legacy_jobs = b'[{"company":"Acme"},{"company":"Globex"}]'
+
+        self.assertEqual(
+            self.run_fetch(
+                legacy_bytes=legacy_jobs,
+                snapshot_asset_exists=False,
+                legacy_fallback=True,
+            ),
+            0,
+        )
+
+        manifest = json.loads(self.manifest_destination.read_text(encoding='utf-8'))
+        self.assertEqual(self.jobs_destination.read_bytes(), legacy_jobs)
+        self.assertEqual(manifest['jobs_count'], 2)
+        self.assertEqual(manifest['eligible_companies_count'], 2)
+        self.assertEqual(manifest['published_companies_count'], 2)
+        self.assertEqual(manifest['blocked_companies_count'], 0)
+        self.assertEqual(
+            manifest['open_jobs_sha256'],
+            hashlib.sha256(legacy_jobs).hexdigest(),
+        )
+        datetime.fromisoformat(manifest['generated_at'])
+
+    def test_does_not_use_legacy_catalog_when_the_snapshot_asset_exists_but_download_fails(self):
+        self.jobs_destination.parent.mkdir(parents=True)
+        self.jobs_destination.write_text('["catalogo anterior"]', encoding='utf-8')
+        self.manifest_destination.write_text('{"anterior": true}', encoding='utf-8')
+
+        self.assertEqual(
+            self.run_fetch(
+                legacy_bytes=b'[{"company":"Acme"}]',
+                snapshot_asset_exists=True,
+                snapshot_download_fails=True,
+                legacy_fallback=True,
+            ),
+            1,
+        )
+
+        self.assertEqual(self.jobs_destination.read_bytes(), b'["catalogo anterior"]')
+        self.assertEqual(self.manifest_destination.read_bytes(), b'{"anterior": true}')
+
+    def test_requires_an_explicit_flag_before_using_the_legacy_catalog(self):
+        self.assertEqual(
+            self.run_fetch(
+                legacy_bytes=b'[{"company":"Acme"}]',
+                snapshot_asset_exists=False,
+            ),
+            1,
+        )
+        self.assertFalse(self.jobs_destination.exists())
+        self.assertFalse(self.manifest_destination.exists())
 
 
 if __name__ == '__main__':

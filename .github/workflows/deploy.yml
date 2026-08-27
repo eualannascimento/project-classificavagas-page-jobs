@@ -45,11 +45,13 @@ jobs:
         run: python3 scripts/sync-resume.py
 
       # O catalogo nao e versionado: vem do release 'catalog' deste repositorio.
+      # TODO: remover --allow-legacy-fallback após a primeira publicação do
+      # pipeline de scraping que incluir catalog_snapshot.tar.gz.
       # Se falhar, o build para e a versao ja publicada continua no ar.
       - name: Fetch job catalog from release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 scripts/fetch-catalog.py
+        run: python3 scripts/fetch-catalog.py --allow-legacy-fallback
 
       - name: Validate catalog manifest
         run: python3 scripts/validate-catalog-manifest.py
