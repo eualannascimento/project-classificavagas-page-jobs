@@ -23,13 +23,9 @@ O workflow em `.github/workflows/deploy.yml`:
 5. Executa ESLint e smoke test Playwright
 6. Publica artefato limpo (`_site/`, sem `_backup/` nem `server.log`) no **GitHub Pages**
 
-Durante a migração, o deploy passa explicitamente
-`--allow-legacy-fallback` ao buscar o catálogo. O script tenta primeiro o
-snapshot atômico `catalog_snapshot.tar.gz`; somente se confirmar que esse asset
-não existe na release baixa o legado `open_jobs.json`, gera e valida localmente
-um manifesto de migração. Falhas de download, autenticação ou integridade do
-snapshot não usam fallback. Remover essa flag e o suporte legado após a primeira
-publicação do pipeline de scraping que incluir o snapshot.
+O deploy busca exclusivamente o snapshot atômico `catalog_snapshot.tar.gz` no
+release `catalog`. Se o asset estiver ausente ou falhar em qualquer validação,
+o build para sem substituir o catálogo publicado anteriormente.
 
 Para testar localmente antes do push:
 

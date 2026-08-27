@@ -15,7 +15,7 @@
 * Modify: `scripts/fetch-catalog.py`, `.github/workflows/deploy.yml`
 * Create: `scripts/validate-catalog-manifest.py`, `tests/test_fetch_catalog.py`
 
-- [ ] Escrever RED para tar invalido, membros extras/faltantes, hash divergente e snapshot valido.
-- [ ] Baixar somente `catalog_snapshot.tar.gz`, extrair em temporario, validar e mover atomically.
+- [x] Escrever RED para tar invalido, membros extras/faltantes, hash divergente e snapshot valido.
+- [x] Baixar somente `catalog_snapshot.tar.gz`, extrair em temporario, validar e mover atomically.
 - [ ] Validar manifesto no workflow antes das transformacoes do site.
 - [ ] Rodar testes Python, lint e E2E relevante.
