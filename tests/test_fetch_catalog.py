@@ -153,6 +153,28 @@ class FetchCatalogTests(unittest.TestCase):
             manifest,
         )
 
+    def test_restores_the_previous_pair_when_manifest_promotion_fails(self):
+        previous_jobs = b'[{"company":"Previous"}]'
+        previous_manifest = b'{"version":"previous"}'
+        self.jobs_destination.parent.mkdir(parents=True)
+        self.jobs_destination.write_bytes(previous_jobs)
+        self.manifest_destination.write_bytes(previous_manifest)
+        jobs_bytes = b'[{"company":"Acme"}]'
+        snapshot = build_snapshot(jobs_bytes, manifest_for(jobs_bytes))
+        original_replace = os.replace
+
+        def fail_manifest_promotion(source, target):
+            if Path(source).name == 'catalog_manifest.json' and Path(target) == self.manifest_destination:
+                raise OSError('simulated manifest promotion failure')
+            return original_replace(source, target)
+
+        self.fetch_catalog.replace_file = fail_manifest_promotion
+
+        self.assertEqual(self.run_fetch(snapshot), 1)
+
+        self.assertEqual(self.jobs_destination.read_bytes(), previous_jobs)
+        self.assertEqual(self.manifest_destination.read_bytes(), previous_manifest)
+
 
 if __name__ == '__main__':
     unittest.main()

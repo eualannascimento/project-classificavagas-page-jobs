@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -17,6 +19,11 @@ TAG = 'catalog'
 ASSET = 'catalog_snapshot.tar.gz'
 REPO = 'eualannascimento/project-classificavagas-page-jobs'
 MEMBROS_ESPERADOS = {'open_jobs.json', 'catalog_manifest.json'}
+
+
+def replace_file(source: Path, destination: Path) -> None:
+    """Substitui um arquivo por outro usando a primitiva atômica do sistema."""
+    os.replace(source, destination)
 
 
 def extract_snapshot(snapshot_path: Path, directory: Path) -> tuple[Path, Path]:
@@ -63,6 +70,42 @@ def validate_staged_catalog(jobs_path: Path, manifest_path: Path) -> None:
         raise ValueError(detail or 'manifesto do catálogo inválido')
 
 
+def create_backup(source: Path, backup: Path) -> None:
+    """Preserva o arquivo atual antes de promover o novo par validado."""
+    try:
+        os.link(source, backup)
+    except OSError:
+        shutil.copy2(source, backup)
+
+
+def publish_catalog_pair(jobs_path: Path, manifest_path: Path, directory: Path) -> None:
+    """Promove o par e restaura ambos os arquivos se uma troca falhar."""
+    publications = ((jobs_path, DESTINO), (manifest_path, MANIFEST_DESTINO))
+    backups: dict[Path, Path] = {}
+    for _, destination in publications:
+        if destination.exists():
+            backup = directory / f'.previous-{destination.name}'
+            create_backup(destination, backup)
+            backups[destination] = backup
+
+    try:
+        for source, destination in publications:
+            replace_file(source, destination)
+    except OSError as publication_error:
+        try:
+            for _, destination in publications:
+                backup = backups.get(destination)
+                if backup is not None:
+                    replace_file(backup, destination)
+                else:
+                    destination.unlink(missing_ok=True)
+        except OSError as rollback_error:
+            raise OSError(
+                'falha ao publicar o par e ao restaurar a versão anterior',
+            ) from rollback_error
+        raise publication_error
+
+
 def main() -> int:
     DESTINO.parent.mkdir(parents=True, exist_ok=True)
 
@@ -90,8 +133,7 @@ def main() -> int:
             jobs_path, manifest_path = extract_snapshot(snapshot_path, temporary_directory)
             validate_staged_catalog(jobs_path, manifest_path)
 
-            jobs_path.replace(DESTINO)
-            manifest_path.replace(MANIFEST_DESTINO)
+            publish_catalog_pair(jobs_path, manifest_path, temporary_directory)
     except (OSError, ValueError) as error:
         print(
             f'ERROR: {error}\n'
