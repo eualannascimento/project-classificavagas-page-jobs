@@ -7,9 +7,20 @@ O catálogo passou de 121 mil para 204 mil vagas, e o `open_jobs.json` foi de
 
 Duas economias, nenhuma delas perde dado que o site use:
 
-1. **Só os campos que o site lê.** Oito dos vinte e quatro nunca são lidos:
+1. **Só os campos que o site lê.** Sete dos vinte e quatro nunca são lidos:
    `content_hash`, `published_date_source`, `contract_source`, `removed_date`,
-   `department`, `site_type`, `experience_level` e `inserted_date`.
+   `department`, `site_type` e `experience_level`.
+
+   `inserted_date` esteve nesta lista por engano e saiu do catálogo colunar.
+   O site lê o campo em dez pontos: o filtro "Adicionadas hoje", o intervalo
+   "Obtida no Classifica Vagas", a ordenação por data de agregação, o ponto de
+   novidade no cartão e a linha de data da visão em lista. Sem o campo, os
+   cinco recursos ficam mudos, e a lista imprime "Obtida no Classifica Vagas:
+   Não obtida" nas 213 mil vagas. O `recent_jobs.json` das primeiras vagas
+   carrega o campo, então o comportamento ainda regredia no meio da sessão,
+   quando o catálogo completo substituía a carga rápida.
+
+   Custo medido no catálogo de 2026-08-30: +66 KB no gzip (+0,8%).
 2. **Cabeçalho uma vez, valores em array.** Repetir o nome das chaves em cada
    uma das 204 mil vagas custa 36 MB sozinho.
 
@@ -47,6 +58,7 @@ CAMPOS = (
     "remote?",
     "temporary?",
     "published_date",
+    "inserted_date",
 )
 
 

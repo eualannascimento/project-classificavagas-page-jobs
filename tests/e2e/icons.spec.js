@@ -44,6 +44,34 @@ test('todo icone referenciado tem simbolo, nos tres modos de visualizacao', asyn
     }
 });
 
+/**
+ * O painel de filtros so existe no DOM depois de aberto, e cada secao desenha
+ * o proprio icone. Enquanto este teste olhava apenas a lista, o icone da secao
+ * "Obtida no Classifica Vagas" ficou ausente do sprite sem que nada falhasse:
+ * a varredura estatica nao via o nome (vinha como argumento posicional) e o
+ * teste de DOM nunca abria a gaveta onde ele aparece.
+ */
+test('todo icone do painel de filtros tem simbolo', async ({ page }) => {
+    await abrirComVagas(page);
+
+    await page.locator('#openFilters').click();
+    await expect(page.locator('#filterSheet')).toBeVisible();
+    // Cada cabecalho de secao traz um icone proprio; sem eles nao ha o que checar.
+    await expect(page.locator('#filterSheetContent .filter-section-header').first()).toBeVisible();
+
+    expect(await referenciasOrfas(page), 'painel de filtros aberto').toEqual([]);
+
+    // As secoes recolhidas tambem desenham icone quando abertas.
+    const cabecalhos = page.locator('#filterSheetContent .filter-section-header');
+    const total = await cabecalhos.count();
+    for (let i = 0; i < total; i += 1) {
+        await cabecalhos.nth(i).click();
+        await page.waitForTimeout(120);
+    }
+
+    expect(await referenciasOrfas(page), 'secoes de filtro expandidas').toEqual([]);
+});
+
 test('nenhum icone fica sem tamanho na tela', async ({ page }) => {
     await abrirComVagas(page);
 

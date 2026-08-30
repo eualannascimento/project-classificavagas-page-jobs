@@ -510,6 +510,12 @@ body.hub-active {
 .icon-btn,
 .search-bar,
 .filter-chip,
+/* O seletor de abrangência e o índice das páginas legais eram os dois únicos
+   controles em formato de pílula numa interface que zera o raio em todo o
+   resto. O do topo é o mais visível da tela de vagas. */
+.scope-switch,
+.scope-option,
+.legal-toc a,
 .sort-dropdown,
 .shortcuts-hint-popover,
 .job-card,
@@ -602,9 +608,16 @@ body.hub-active {
 
 /* O piso de altura só faz sentido na grade de cards, onde ele evita que
    linhas com card mais curto que os vizinhos quebrem o ritmo do grid.
-   Lista e modo compacto são fileiras de uma linha só. */
-.jobs-grid:not(.list-view):not(.compact-view) .job-card {
-    min-height: 188px;
+   Lista e modo compacto são fileiras de uma linha só.
+
+   Abaixo de 600px a grade tem uma coluna: não há vizinho para acompanhar, e o
+   piso vira só espaço morto. Medido no catálogo de 2026-08-30: o cartão pede
+   138px de conteúdo e ocupava 188px, 27% da altura em branco, em cada cartão
+   da rolagem inteira. */
+@media (min-width: 600px) {
+    .jobs-grid:not(.list-view):not(.compact-view) .job-card {
+        min-height: 188px;
+    }
 }
 
 /* --bg-elevated (não --bg-sunk): nos temas dark/black --bg-sunk é quase

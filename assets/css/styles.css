@@ -1652,9 +1652,24 @@ input { font: inherit; border: none; outline: none; background: none; color: inh
 .jobs-grid.list-view .job-card.visited .job-list-company { color: var(--ink-3); }
 
 @media (max-width: 599px) {
-    .job-list-content { grid-template-columns: 32px 1fr auto 14px; gap: 10px; }
+    .job-list-content { grid-template-columns: 32px minmax(0, 1fr) auto 14px; gap: 10px; }
+    /* Sem teto em porcentagem: ele encolhia a caixa para 60px enquanto a
+       coluna do grid seguia reservando 117px, e as duas datas quebravam em
+       quatro linhas dentro de um vao que ninguem usava. */
     .job-list-meta { min-width: 60px; }
     .job-list-location { display: none; }
+
+    /* A linha da empresa cedia toda a largura para o ramo: `job-list-company`
+       encolhe e `job-list-type` não. Numa fileira de 358px isso deixava
+       "Lojas Colombo" com 11px, invisível, enquanto "VAREJO E CO" sobrava
+       cortado no meio. O empregador é o dado que decide se a vaga interessa;
+       o ramo já está no cartão e nos filtros. */
+    .job-list-type { display: none; }
+
+    /* Empresa e modalidade dividem o que sobra em vez de a empresa sumir. */
+    .job-list-company { flex: 1 1 auto; min-width: 6ch; }
+    .job-list-company-row .job-tag-compact { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+    .job-list-company-row .job-tag-compact span { overflow: hidden; text-overflow: ellipsis; }
 }
 
 /* ============================================
@@ -2992,6 +3007,8 @@ body.legal-panel-open {
     .job-card:hover { transform: none; box-shadow: none; }
     .job-card:active { transform: scale(0.99); }
     .filter-chip, .icon-btn, .icon-button, .filter-option-chip { min-height: 44px; }
+    /* Brasil / Mundo / Todas ficava em 32px: e o primeiro controle da tela. */
+    .scope-option { min-height: 44px; }
     .filter-chip[data-filter] { padding-left: 22px; }
     .filter-chip-view,
     .filter-chip-sort,

@@ -3536,17 +3536,24 @@
             `;
             };
 
+            // Mapa, e nao argumento solto: a varredura de scripts/build-icons.py
+            // reconhece nome de icone em `icon: '...'` e em mapa cujo nome
+            // contenha "icon". Passado como terceiro parametro posicional,
+            // `calendar_today` ficou invisivel para o gerador do sprite e para
+            // o validador, e a secao "Obtida no Classifica Vagas" abria sem
+            // icone nenhum em producao.
+            const DATE_SECTION_ICONS = { published: 'event', inserted: 'calendar_today' };
             const publishedDateSection = buildDateRangeSection(
                 '_date_published',
                 'Data de publicação',
-                'event',
+                DATE_SECTION_ICONS.published,
                 state.tempPublishedDateRange,
                 'published'
             );
             const insertedDateSection = buildDateRangeSection(
                 '_date_inserted',
                 'Obtida no Classifica Vagas',
-                'calendar_today',
+                DATE_SECTION_ICONS.inserted,
                 state.tempInsertedDateRange,
                 'inserted'
             );
