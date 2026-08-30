@@ -50,7 +50,13 @@ body.hub-active {
 .app { opacity: 1; }
 
 /* Home / central de produtos */
+/* `min-height: 100dvh` reservava a tela inteira e o conteudo empilhava so no
+   topo: numa janela de 1337x896 sobravam ~340px em branco embaixo dos
+   cartoes, com o rodape colado neles. Em coluna flexivel a home ocupa o que
+   reserva: os cartoes respiram no meio e o rodape ancora o fim da tela. */
 .product-hub {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 1180px;
     min-height: 100dvh;
@@ -59,6 +65,13 @@ body.hub-active {
     color: var(--ink);
     font-family: var(--font-sans);
 }
+
+/* As duas margens `auto` dividem a sobra em cima da chamada e embaixo dos
+   cartoes: o miolo fica centrado na altura e o rodape ancora o fim. Quando o
+   conteudo passa da tela, as margens viram zero e nada disso atua. */
+.product-hub > .hub-intro { flex: 0 0 auto; margin-top: auto; }
+.product-hub > .hub-products { flex: 0 0 auto; margin-bottom: auto; }
+.product-hub > .hub-footer { padding-top: 24px; }
 
 .hub-nav {
     min-height: 36px;
@@ -86,7 +99,7 @@ body.hub-active {
 .hub-brand small {
     color: color-mix(in srgb, var(--ink) 50%, transparent);
     font-family: var(--font-sans);
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 400;
     letter-spacing: 0.12em;
     line-height: 1.2;
@@ -134,6 +147,18 @@ body.hub-active {
     font-size: 17px;
     font-weight: 400;
     line-height: 1.55;
+}
+
+/* O numero e o argumento do cartao, entao ele vem antes do botao e com peso
+   de dado, nao de texto corrido. */
+.product-card .product-scale {
+    margin: 2px 0 0;
+    color: var(--accent-ink);
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
 }
 
 .hub-products {
@@ -211,7 +236,9 @@ body.hub-active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-top: 13px;
+    /* `auto` e nao um valor fixo: so o cartao de vagas ganhou a linha de
+       escala, e com margem fixa os dois botoes deixariam de alinhar entre si. */
+    margin-top: auto;
     padding: 8px 16px;
     border: 1px solid transparent;
     border-radius: 0;
@@ -490,7 +517,7 @@ body.hub-active {
 .brand-by {
     color: color-mix(in srgb, var(--ink) 50%, transparent);
     font-family: var(--font-sans);
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 400;
     letter-spacing: 0.12em;
     line-height: 1.2;
@@ -752,7 +779,7 @@ body.hub-active {
 
     .hub-nav { min-height: 32px; }
     .hub-brand { gap: 7px; font-size: 18px; }
-    .hub-brand small { font-size: 9.5px; letter-spacing: 0.09em; }
+    .hub-brand small { font-size: 11px; letter-spacing: 0.09em; }
 
     .hub-intro {
         max-width: none;
@@ -856,11 +883,11 @@ body.hub-active {
     }
 
     .brand-product { font-size: 20px; }
-    .brand-by { font-size: 9px; letter-spacing: 0.09em; }
+    .brand-by { font-size: 11px; letter-spacing: 0.09em; }
 
     .brand-meta { gap: 2px; }
     .job-count { font-size: 11px; }
-    .brand-update { font-size: 10px; }
+    .brand-update { font-size: 11px; }
 
     .search-bar { height: 44px; }
     .search-bar input { font-size: 16px; }
@@ -875,8 +902,8 @@ body.hub-active {
         font-size: 13px;
     }
 
+    /* Sem largura fixa: o chip agora carrega o rotulo "Vistas". */
     .filter-chip-visited {
-        width: 44px;
         min-width: 44px;
     }
 
