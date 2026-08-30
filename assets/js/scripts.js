@@ -1728,22 +1728,63 @@
             });
         },
 
-        // Quantas vagas o payload traz, seja ele colunar ou lista de objetos.
-        // Ler `.length` direto quebrava com o colunar, e o TypeError acontecia
-        // no texto de progresso, antes do ingest: o catalogo completo nunca
-        // entrava e a lista ficava nas 2.000 recentes, sem erro visivel.
+        // Uma coluna e a lista de valores literais ou `{dic, idx}`, com o
+        // dicionario dos valores distintos e um indice por vaga. Catorze dos
+        // dezesseis campos cabem no dicionario; `title` e `url` ficam
+        // literais, porque quase todo valor e unico.
+        expandColumn(coluna) {
+            if (Array.isArray(coluna)) return coluna;
+            if (!coluna || !Array.isArray(coluna.dic) || !Array.isArray(coluna.idx)) return null;
+            const dic = coluna.dic;
+            const idx = coluna.idx;
+            const saida = new Array(idx.length);
+            for (let i = 0; i < idx.length; i++) saida[i] = dic[idx[i]];
+            return saida;
+        },
+
+        // Quantas vagas o payload traz, seja ele agrupado por campo, o colunar
+        // por linha ou lista de objetos. Ler `.length` direto quebrava com o
+        // colunar, e o TypeError acontecia no texto de progresso, antes do
+        // ingest: o catalogo completo nunca entrava e a lista ficava nas 2.000
+        // recentes, sem erro visivel.
         countJobs(data) {
             if (Array.isArray(data)) return data.length;
+            if (Array.isArray(data?.colunas)) {
+                const primeira = this.expandColumn(data.colunas[0]);
+                return primeira ? primeira.length : 0;
+            }
             return Array.isArray(data?.vagas) ? data.vagas.length : 0;
         },
 
-        // Aceita os dois formatos: o colunar do catalogo completo e a lista
-        // de objetos do recent_jobs.json, que continua como esta por ser
-        // pequeno.
+        // Tres formatos chegam aqui.
+        //
+        // `{campos, colunas}` e o catalogo de hoje, agrupado por campo.
+        // `{campos, vagas}` e o formato anterior, agrupado por vaga: ele
+        // continua aceito porque o service worker serve o catalogo por
+        // stale-while-revalidate, entao na primeira navegacao depois de um
+        // deploy o JS novo encontra a copia antiga em cache.
+        // O array e a lista de objetos do recent_jobs.json, que segue como
+        // esta por ser pequeno.
         hydrateJobs(data) {
             if (Array.isArray(data)) return data;
-            if (!data || !Array.isArray(data.campos) || !Array.isArray(data.vagas)) return null;
+            if (!data || !Array.isArray(data.campos)) return null;
             const campos = data.campos;
+
+            if (Array.isArray(data.colunas)) {
+                if (data.colunas.length !== campos.length) return null;
+                const colunas = data.colunas.map(c => this.expandColumn(c));
+                if (colunas.some(c => c === null)) return null;
+                const total = colunas.length ? colunas[0].length : 0;
+                const lista = new Array(total);
+                for (let linha = 0; linha < total; linha++) {
+                    const job = {};
+                    for (let i = 0; i < campos.length; i++) job[campos[i]] = colunas[i][linha];
+                    lista[linha] = job;
+                }
+                return lista;
+            }
+
+            if (!Array.isArray(data.vagas)) return null;
             return data.vagas.map(linha => {
                 const job = {};
                 for (let i = 0; i < campos.length; i++) job[campos[i]] = linha[i];

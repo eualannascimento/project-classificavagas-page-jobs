@@ -76,9 +76,12 @@ jobs:
           d = json.loads(Path('assets/data/json/catalog.json').read_text(encoding='utf-8'))
           completo = json.loads(Path('assets/data/json/open_jobs.json').read_text(encoding='utf-8'))
           assert d['campos'], 'catalog.json sem cabecalho'
-          assert len(d['vagas']) == len(completo), 'catalog.json com contagem diferente do completo'
-          assert all(len(v) == len(d['campos']) for v in d['vagas'][:1000]), 'linha fora do cabecalho'
-          print(f\"OK: {len(d['vagas']):,} vagas no colunar\")
+          assert len(d['colunas']) == len(d['campos']), 'colunas fora do cabecalho'
+          expandir = lambda c: c if isinstance(c, list) else [c['dic'][i] for i in c['idx']]
+          colunas = [expandir(c) for c in d['colunas']]
+          assert len(colunas[0]) == len(completo), 'catalog.json com contagem diferente do completo'
+          assert len({len(c) for c in colunas}) == 1, 'colunas de tamanhos diferentes'
+          print(f\"OK: {len(colunas[0]):,} vagas no colunar\")
           "
 
       - name: Update sitemap lastmod

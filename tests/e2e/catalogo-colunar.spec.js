@@ -1,26 +1,47 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * O catalogo que o navegador baixa e colunar: cabecalho uma vez e valores em
- * array, so com os campos que este site le.
+ * O catalogo que o navegador baixa e agrupado **por campo**: o cabecalho uma
+ * vez e, para cada campo, ou a lista de valores ou `{dic, idx}` com os valores
+ * distintos e um indice por vaga.
  *
  * Com 204 mil vagas, o formato de objetos chega a 143 MB e 347 MB de heap num
- * celular emulado, patamar em que o navegador comeca a matar a aba. Estes
- * testes travam as duas pontas: o arquivo publicado e a reidratacao no site.
+ * celular emulado, patamar em que o navegador comeca a matar a aba. Agrupar
+ * por campo em vez de por vaga tirou outros 28% do arquivo publicado, medidos
+ * em 2026-08-30: 8,10 MB -> 5,78 MB no gzip, sem mudar um unico dado.
+ *
+ * Estes testes travam as duas pontas: o arquivo publicado e a reidratacao no
+ * site. Ver .docs/specs/catalogo-agrupado-por-campo.md.
  */
 
-test.describe('catalogo colunar', () => {
-    test('o arquivo publicado tem cabecalho e uma linha por vaga', async ({ request }) => {
+/** Uma coluna e literal ou `{dic, idx}`. */
+function expandir(coluna) {
+    return Array.isArray(coluna) ? coluna : coluna.idx.map((i) => coluna.dic[i]);
+}
+
+test.describe('catalogo agrupado por campo', () => {
+    test('o arquivo publicado tem uma coluna por campo, todas do mesmo tamanho', async ({ request }) => {
         const res = await request.get('/assets/data/json/catalog.json');
         expect(res.ok()).toBeTruthy();
 
         const corpo = await res.json();
         expect(Array.isArray(corpo.campos)).toBeTruthy();
-        expect(Array.isArray(corpo.vagas)).toBeTruthy();
-        expect(corpo.vagas.length).toBeGreaterThan(0);
-        // Toda linha segue o cabecalho: e o que permite reidratar por indice.
-        for (const linha of corpo.vagas.slice(0, 200)) {
-            expect(linha).toHaveLength(corpo.campos.length);
+        expect(Array.isArray(corpo.colunas)).toBeTruthy();
+        expect(corpo.colunas).toHaveLength(corpo.campos.length);
+
+        const tamanhos = new Set(corpo.colunas.map((c) => expandir(c).length));
+        expect(tamanhos.size, 'colunas de tamanhos diferentes').toBe(1);
+        expect([...tamanhos][0]).toBeGreaterThan(0);
+    });
+
+    test('todo indice de dicionario aponta para um valor existente', async ({ request }) => {
+        const corpo = await (await request.get('/assets/data/json/catalog.json')).json();
+        const comDicionario = corpo.colunas.filter((c) => !Array.isArray(c));
+        expect(comDicionario.length, 'nenhuma coluna usou dicionario').toBeGreaterThan(0);
+
+        for (const coluna of comDicionario) {
+            const fora = coluna.idx.filter((i) => !Number.isInteger(i) || i < 0 || i >= coluna.dic.length);
+            expect(fora, 'indice fora do dicionario').toEqual([]);
         }
     });
 
@@ -38,9 +59,8 @@ test.describe('catalogo colunar', () => {
 
     test('a data de agregacao chega preenchida', async ({ request }) => {
         const corpo = await (await request.get('/assets/data/json/catalog.json')).json();
-        const i = corpo.campos.indexOf('inserted_date');
-        const vazias = corpo.vagas.slice(0, 500).filter((linha) => !linha[i]).length;
-        expect(vazias, 'vaga sem data de agregacao no colunar').toBe(0);
+        const coluna = expandir(corpo.colunas[corpo.campos.indexOf('inserted_date')]);
+        expect(coluna.slice(0, 500).filter((v) => !v), 'vaga sem data de agregacao').toEqual([]);
     });
 
     test('o colunar e menor que o formato de objetos', async ({ request }) => {
