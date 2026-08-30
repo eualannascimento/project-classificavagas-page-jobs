@@ -132,3 +132,71 @@ test('toast does not overlap the privacy notice on mobile', async ({ page }) => 
 
     expect(overlaps, 'toast e aviso de privacidade nao podem se sobrepor').toBe(false);
 });
+
+/**
+ * A home descrevia o servico sem dizer o tamanho dele, e o rodape colava nos
+ * cartoes: numa janela de 1280x800 sobravam ~340px em branco embaixo. O
+ * numero vem do manifesto do catalogo, 299 bytes, e nao dos 8 MB do catalogo.
+ */
+test('a home mostra a escala do catalogo e ocupa a altura da tela', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+
+    const escala = page.locator('#hubJobsScale');
+    await expect(escala).toBeVisible();
+    await expect(escala).toHaveText(/\d[\d.]* vagas abertas/);
+
+    const medidas = await page.evaluate(() => {
+        const rodape = document.querySelector('.hub-footer').getBoundingClientRect();
+        return { rodapeBase: rodape.bottom, altura: window.innerHeight };
+    });
+    // O rodape ancora o fim da tela em vez de subir junto com os cartoes.
+    expect(medidas.rodapeBase).toBeGreaterThan(medidas.altura * 0.8);
+});
+
+/**
+ * Ordenacao, visualizacao e visualizadas ficavam so com o icone no celular:
+ * tres simbolos anonimos em sequencia, sem dizer em que modo a lista estava.
+ */
+test('os chips da barra de filtros carregam rotulo visivel no celular', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.getByRole('link', { name: /Ver vagas/i }).click();
+    await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
+    await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
+
+    await expect(page.locator('#openFilters')).toContainText(/Filtros/i);
+    await expect(page.locator('#sortToggle .sort-label')).toBeVisible();
+    await expect(page.locator('#viewToggle .view-label')).toBeVisible();
+    await expect(page.locator('#visitedToggle .visited-label')).toBeVisible();
+
+    // O botao relata o modo atual; o rotulo acessivel diz para onde o toque leva.
+    await expect(page.locator('#viewToggle .view-label')).toHaveText('Cartões');
+    await expect(page.locator('#viewToggle')).toHaveAttribute('aria-label', /Alternar para lista/);
+
+    await page.locator('#viewToggle').click();
+    await expect(page.locator('#viewToggle .view-label')).toHaveText('Lista');
+});
+
+/**
+ * A tipografia de apoio (localizacao, datas, contador) estava entre 9,28px e
+ * 10,56px. A data do cartao, a menor delas, e a que mais se le.
+ */
+test('nenhum texto de apoio do cartao fica abaixo de 11px', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: /Ver vagas/i }).click();
+    await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
+    await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
+
+    const menores = await page.evaluate(() => {
+        const alvos = ['.job-date-line', '.job-date-line strong', '.job-location', '.results-counter'];
+        return alvos
+            .map((sel) => {
+                const el = document.querySelector(sel);
+                return el ? { sel, px: parseFloat(getComputedStyle(el).fontSize) } : null;
+            })
+            .filter((x) => x && x.px < 11);
+    });
+
+    expect(menores, 'texto de apoio abaixo do piso de 11px').toEqual([]);
+});
