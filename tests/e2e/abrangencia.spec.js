@@ -25,6 +25,26 @@ async function abrirVagas(page) {
 const SELETOR = '#scopeSwitch';
 const opcao = (page, escopo) => page.locator(`${SELETOR} .scope-option[data-scope="${escopo}"]`);
 
+/**
+ * A gaveta de filtros abre e fecha com transicao, e o scrim cobre a tela
+ * enquanto ela anda. Clicar no proximo alvo sem esperar o fim deixava a secao
+ * ja no DOM e ainda invisivel: foi assim que este arquivo falhou uma vez em
+ * `main` (2026-08-30) e passou nas outras duas execucoes do mesmo codigo.
+ *
+ * Estas duas funcoes esperam o estado assentar antes de devolver o controle.
+ */
+async function abrirFiltros(page) {
+    await page.locator('#openFilters').click();
+    await expect(page.locator('#filterSheet')).toBeVisible();
+    await expect(page.locator('#filterSheetContent')).not.toBeEmpty();
+}
+
+async function fecharFiltros(page) {
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#filterSheet')).toBeHidden();
+    await expect(page.locator('#scrim')).toBeHidden();
+}
+
 test.describe('seletor de abrangencia', () => {
     test('aparece acima da busca e comeca no Brasil', async ({ page }) => {
         await abrirVagas(page);
@@ -58,12 +78,14 @@ test.describe('seletor de abrangencia', () => {
 
     test('estado e cidade so aparecem no modo Brasil', async ({ page }) => {
         await abrirVagas(page);
-        await page.locator('#openFilters').click();
+        await abrirFiltros(page);
         await expect(page.locator('.filter-section[data-key="location_state"]')).toBeVisible();
-        await page.keyboard.press('Escape');
+        await fecharFiltros(page);
 
         await opcao(page, 'world').click();
-        await page.locator('#openFilters').click();
+        await expect(opcao(page, 'world')).toHaveAttribute('aria-pressed', 'true');
+
+        await abrirFiltros(page);
         await expect(page.locator('.filter-section[data-key="location_state"]')).toHaveCount(0);
         await expect(page.locator('.filter-section[data-key="location_city"]')).toHaveCount(0);
         // Categoria continua la: ela vale nos dois modos.
@@ -72,7 +94,7 @@ test.describe('seletor de abrangencia', () => {
 
     test('abrangencia deixou de ser um filtro na folha de filtros', async ({ page }) => {
         await abrirVagas(page);
-        await page.locator('#openFilters').click();
+        await abrirFiltros(page);
         await expect(page.locator('.filter-section[data-key="location_scope"]')).toHaveCount(0);
     });
 });
