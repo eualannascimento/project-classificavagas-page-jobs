@@ -26,9 +26,21 @@ test.describe('catalogo colunar', () => {
 
     test('o cabecalho traz os campos que a lista usa', async ({ request }) => {
         const corpo = await (await request.get('/assets/data/json/catalog.json')).json();
-        for (const campo of ['company', 'title', 'url', 'location', 'contract', 'category']) {
+        // `inserted_date` esta aqui porque ja saiu do colunar uma vez, como
+        // campo "que o site nao le". O site le: filtro "Adicionadas hoje",
+        // intervalo "Obtida no Classifica Vagas", ordenacao por agregacao,
+        // ponto de novidade e a linha de data da visao em lista. Sem ele os
+        // cinco ficam mudos, e nenhum teste falhava.
+        for (const campo of ['company', 'title', 'url', 'location', 'contract', 'category', 'inserted_date']) {
             expect(corpo.campos).toContain(campo);
         }
+    });
+
+    test('a data de agregacao chega preenchida', async ({ request }) => {
+        const corpo = await (await request.get('/assets/data/json/catalog.json')).json();
+        const i = corpo.campos.indexOf('inserted_date');
+        const vazias = corpo.vagas.slice(0, 500).filter((linha) => !linha[i]).length;
+        expect(vazias, 'vaga sem data de agregacao no colunar').toBe(0);
     });
 
     test('o colunar e menor que o formato de objetos', async ({ request }) => {
