@@ -556,7 +556,8 @@ body.hub-active {
 .legal-disclaimer,
 .fab,
 .fab-menu,
-.fab-menu-item {
+.fab-menu-item,
+.scroll-progress {
     border-radius: 0;
 }
 
