@@ -890,33 +890,10 @@
         }
     };
 
-    // ============================================
-    // STYLE MANAGER (editorial / restraint)
-    // ============================================
-    const styleManager = {
-        apply(style) {
-            document.documentElement.setAttribute('data-style', style);
-            localStorage.setItem('cv_style', style);
-            const btn = document.getElementById('styleToggle');
-            if (btn) btn.textContent = style === 'editorial' ? 'Aa' : 'aa';
-            const group = document.querySelector('#tweaksStyle');
-            if (group) group.querySelectorAll('[data-value]').forEach(b => {
-                b.classList.toggle('active', b.dataset.value === style);
-            });
-        },
-        toggle() {
-            const cur = document.documentElement.getAttribute('data-style') || 'editorial';
-            this.apply(cur === 'editorial' ? 'restraint' : 'editorial');
-        },
-        init() {
-            const saved = localStorage.getItem('cv_style') || 'restraint';
-            this.apply(saved);
-            const btn = document.getElementById('styleToggle');
-            if (btn) btn.addEventListener('click', () => this.toggle());
-        }
-    };
+    // O estilo tambem vem de theme-init.js, junto com tema, fonte e densidade.
+    // O `styleManager` daqui pintava `#styleToggle` e `#tweaksStyle`, que
+    // sairam do HTML, e `init()` nunca era chamado.
 
-    // ============================================
     // A fonte e aplicada por assets/js/theme-init.js, que le `cv_font` do
     // localStorage antes do primeiro paint. O `fontManager` que existia aqui
     // duplicava aquilo e pintava `#tweaksFont`, elemento que saiu do HTML:
@@ -3095,13 +3072,11 @@
     // CARD RENDERER
     // ============================================
     const cardRenderer = {
-        _index: 0,
 
         render(reset = false) {
             if (reset) {
                 elements.jobsGrid.innerHTML = '';
                 state.displayedCount = 0;
-                this._index = 0;
             }
 
             const start = state.displayedCount;
@@ -3131,8 +3106,7 @@
 
             const fragment = document.createDocumentFragment();
             jobs.forEach(job => {
-                this._index++;
-                fragment.appendChild(this.createCard(job, this._index));
+                fragment.appendChild(this.createCard(job));
             });
             elements.jobsGrid.appendChild(fragment);
 
@@ -3202,7 +3176,7 @@
             }
         },
 
-        createCard(job, index = 0) {
+        createCard(job) {
             const modalityKind = utils.getJobModalityKind(job);
             const modalityIcon = utils.getJobModalityIcon(modalityKind);
             const isAffirmative = job['affirmative?'] === '01 - Sim';
@@ -3961,7 +3935,7 @@
             try {
                 const saved = localStorage.getItem(this.storageKey);
                 state.searchHistory = saved ? JSON.parse(saved) : [];
-            } catch (e) {
+            } catch {
                 state.searchHistory = [];
             }
         },
@@ -4241,7 +4215,6 @@
             const scrollY = window.scrollY;
             const windowH = window.innerHeight;
             const docH = document.documentElement.scrollHeight;
-            const isMobile = utils.isMobile();
 
             document.body.classList.toggle('chrome-scrolled', scrollY > 10);
             document.body.classList.toggle('chrome-compact', scrollY > 56);
