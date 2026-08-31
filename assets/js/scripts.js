@@ -738,7 +738,7 @@
             let index;
             try {
                 index = JSON.parse(localStorage.getItem(this.VISITED_INDEX_KEY) || '[]');
-            } catch (err) {
+            } catch {
                 index = [];
             }
             index = index.filter(k => k !== key);
@@ -917,28 +917,10 @@
     };
 
     // ============================================
-    // FONT MANAGER
-    // ============================================
-    const FONTS = ['instrument', 'newsreader', 'eb_garamond', 'dm_serif', 'bricolage', 'inter', 'mono'];
-    const FONT_LABELS = {
-        instrument: 'Instrument', newsreader: 'Newsreader', eb_garamond: 'EB Garamond',
-        dm_serif: 'DM Serif', bricolage: 'Bricolage', inter: 'Inter', mono: 'Mono'
-    };
-
-    const fontManager = {
-        apply(font) {
-            document.documentElement.setAttribute('data-font', font);
-            localStorage.setItem('cv_font', font);
-            const group = document.querySelector('#tweaksFont');
-            if (group) group.querySelectorAll('[data-font]').forEach(b => {
-                b.classList.toggle('active', b.dataset.font === font);
-            });
-        },
-        init() {
-            const saved = localStorage.getItem('cv_font') || 'instrument';
-            this.apply(saved);
-        }
-    };
+    // A fonte e aplicada por assets/js/theme-init.js, que le `cv_font` do
+    // localStorage antes do primeiro paint. O `fontManager` que existia aqui
+    // duplicava aquilo e pintava `#tweaksFont`, elemento que saiu do HTML:
+    // nunca foi chamado, e `FONTS` e `FONT_LABELS` nao eram lidos por ninguem.
 
     // ============================================
     // DENSITY MANAGER
@@ -1454,7 +1436,7 @@
             try {
                 await navigator.clipboard.writeText(url);
                 utils.showToast('Link copiado!', 'theme-toast share-toast');
-            } catch (err) {
+            } catch {
                 const textarea = document.createElement('textarea');
                 textarea.value = url;
                 textarea.style.position = 'fixed';
@@ -1494,7 +1476,7 @@
             try {
                 await navigator.clipboard.writeText(url);
                 this.showToast('Link copiado!');
-            } catch (err) {
+            } catch {
                 // Final fallback
                 const textarea = document.createElement('textarea');
                 textarea.value = url;
@@ -2221,7 +2203,7 @@
 
                 // Base set of jobs to count from:
                 // Start with all jobs and apply all current filters except the category being counted.
-                let baseJobs = this.filterJobs(state.allJobs, {
+                const baseJobs = this.filterJobs(state.allJobs, {
                     searchQuery,
                     showOnlyVisited: state.showOnlyVisited,
                     quickTipo,
@@ -2856,7 +2838,7 @@
                 this.items = Array.isArray(parsed)
                     ? parsed.filter(item => item && item.id && item.label && item.state).slice(0, this.maxItems)
                     : [];
-            } catch (err) {
+            } catch {
                 this.items = [];
             }
         },
@@ -4697,7 +4679,7 @@
             utils.markSessionStart();
             preferencesManager.applyDefaults();
             themeManager.init();
-            // styleManager / fontManager - optional prefs via data-* on <html>
+            // Tema, fonte e estilo vem de theme-init.js, que roda antes do paint.
             densityManager.init();
             visitedFilter.init();
             viewModeManager.init();
