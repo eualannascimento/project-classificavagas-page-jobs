@@ -317,6 +317,10 @@
                     <span>Topo</span>
                 </button>
             </div>
+            <div class="fab-row">
+                <!-- aria-hidden: #resultsCounter ja anuncia a mesma contagem
+                     por aria-live, e repetir seria ruido no leitor de tela. -->
+                <span class="scroll-progress hidden" id="scrollProgress" aria-hidden="true"></span>
             <button type="button" class="fab" id="scrollTopFab" aria-label="Ações rápidas" aria-expanded="false" aria-haspopup="menu">
                 <svg class="fab-ring" viewBox="0 0 36 36" aria-hidden="true">
                     <circle cx="18" cy="18" r="16" fill="none" stroke="var(--rule)" stroke-width="2"/>
@@ -324,6 +328,7 @@
                 </svg>
                 <svg class="material-symbols-rounded fab-icon-main" aria-hidden="true" focusable="false"><use href="#i-expand_less"></use></svg>
             </button>
+            </div>
         </div>
 
         <div class="scrim hidden" id="scrim"></div>

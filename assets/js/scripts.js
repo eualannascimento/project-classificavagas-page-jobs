@@ -3143,8 +3143,7 @@
                     if (p) p.textContent = 'Tente ajustar seus filtros ou termos de busca';
                     if (btn) btn.textContent = 'Limpar filtros';
                 }
-                const counter = document.getElementById('resultsCounter');
-                if (counter) counter.classList.add('hidden');
+                this.updateProgress();
                 return;
             }
 
@@ -3161,16 +3160,7 @@
             elements.loadingMore.classList.add('hidden');
 
             // Update results counter
-            const counter = document.getElementById('resultsCounter');
-            if (counter) {
-                if (state.filteredJobs.length === 0) {
-                    counter.classList.add('hidden');
-                } else {
-                    counter.classList.remove('hidden');
-                    const shown = Math.min(state.displayedCount, state.filteredJobs.length);
-                    counter.textContent = `${shown.toLocaleString('pt-BR')} de ${state.filteredJobs.length.toLocaleString('pt-BR')}`;
-                }
-            }
+            this.updateProgress();
 
             let allLoaded = document.getElementById('allLoaded');
             if (!allLoaded && elements.jobsGrid?.parentNode) {
@@ -3189,6 +3179,44 @@
                 if (complete) {
                     allLoaded.textContent = `Todas as ${state.filteredJobs.length.toLocaleString('pt-BR')} vagas carregadas`;
                 }
+            }
+        },
+
+        /**
+         * Quantas vagas ja entraram na pagina, do total do resultado filtrado.
+         *
+         * O contador embaixo da grade e o do FAB leem a mesma fonte e mudam
+         * juntos: eram dois numeros para a mesma pergunta, e so um deles
+         * aparecia durante a rolagem.
+         */
+        updateProgress() {
+            const total = state.filteredJobs.length;
+            const carregadas = Math.min(state.displayedCount, total);
+            const texto = total > 0
+                ? `${carregadas.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')}`
+                : '';
+
+            const counter = document.getElementById('resultsCounter');
+            if (counter) {
+                counter.classList.toggle('hidden', total === 0);
+                if (total > 0) counter.textContent = texto;
+            }
+
+            const pill = document.getElementById('scrollProgress');
+            if (pill) {
+                pill.classList.toggle('hidden', total === 0);
+                if (total > 0) pill.textContent = texto;
+            }
+
+            // O anel acompanha a mesma fracao. Antes ele media pixels
+            // (`scrollY / (docH - windowH)`), e com rolagem infinita o
+            // denominador cresce a cada lote: o anel andava para tras, chegava
+            // a 90% e voltava para 70% quando mais 24 vagas entravam.
+            const ring = document.getElementById('fabRingProgress');
+            if (ring) {
+                const circumference = 100.5;
+                const fracao = total > 0 ? carregadas / total : 0;
+                ring.style.strokeDashoffset = String(circumference * (1 - fracao));
             }
         },
 
@@ -4245,15 +4273,6 @@
                 fabStack.classList.toggle('visible', scrollY > CONFIG.SCROLL_THRESHOLD);
             } else if (elements.scrollTopFab) {
                 elements.scrollTopFab.classList.toggle('visible', scrollY > CONFIG.SCROLL_THRESHOLD);
-            }
-
-            // FAB ring progress
-            const ring = document.getElementById('fabRingProgress');
-            if (ring) {
-                const maxScroll = docH - windowH;
-                const pct = maxScroll > 0 ? Math.min(1, Math.max(0, scrollY / maxScroll)) : 0;
-                const circumference = 100.5;
-                ring.style.strokeDashoffset = String(circumference * (1 - pct));
             }
 
             // Infinite scroll

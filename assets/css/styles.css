@@ -3432,6 +3432,34 @@ body.chrome-scrolled .app-chrome {
     pointer-events: auto;
 }
 .fab-stack .fab.visible { transform: none; }
+/* O contador fica na mesma linha do botao, a esquerda dele. */
+.fab-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Quantas vagas ja entraram na pagina, do total do resultado filtrado.
+   `pointer-events: none` porque e rotulo, nao controle: sem isso ele roubaria
+   o toque destinado ao botao ao lado. */
+.scroll-progress {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    background: var(--bg-elevated);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-meta);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 8px -4px oklch(0.20 0.02 250 / 0.25);
+}
+.scroll-progress.hidden { display: none; }
+
 .fab-stack.fab-open .fab-icon-main { transform: rotate(180deg); }
 .fab-icon-main { transition: transform 0.25s var(--ease); }
 

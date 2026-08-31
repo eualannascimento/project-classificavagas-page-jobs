@@ -206,3 +206,89 @@ test('abrir uma vaga marca como visitada e o contador sobrevive ao recarregar', 
     expect(await page.locator('.job-card').count(),
         'o filtro de visitadas mostra so as vagas abertas').toBe(depois);
 });
+
+/**
+ * Progresso da rolagem.
+ *
+ * O unico indicador durante a rolagem era o anel de 2px no botao de subir, e
+ * ele media pixels: `scrollY / (docH - windowH)`. Com rolagem infinita o
+ * denominador cresce a cada lote de 24, entao o anel andava para tras - subia
+ * a 90% e voltava a 70% quando mais vagas entravam.
+ *
+ * Agora a pilula ao lado do botao e o contador embaixo da grade leem a mesma
+ * fonte: quantas vagas ja entraram na pagina, do total do resultado filtrado.
+ * Ver .docs/specs/progresso-da-rolagem.md.
+ */
+test.describe('progresso da rolagem', () => {
+    async function abrirVagas(page) {
+        await page.goto('/');
+        await page.getByRole('link', { name: /Ver vagas/i }).click();
+        await expect(page.locator('#splash')).toBeHidden({ timeout: 90000 });
+        await expect(page.locator('.job-card').first()).toBeVisible({ timeout: 30000 });
+        const aviso = page.locator('#privacyNoticeDismiss');
+        if (await aviso.isVisible().catch(() => false)) await aviso.click();
+    }
+
+    const carregadas = async (page) => {
+        const texto = (await page.locator('#scrollProgress').textContent()) || '';
+        return Number((texto.split(' de ')[0] || '').replace(/\D/g, ''));
+    };
+
+    test('a pilula e o contador da grade mostram o mesmo numero', async ({ page }) => {
+        await abrirVagas(page);
+
+        const pilula = (await page.locator('#scrollProgress').textContent() || '').trim();
+        const contador = (await page.locator('#resultsCounter').textContent() || '').trim();
+        expect(pilula).toBe(contador);
+        expect(pilula).toMatch(/^\d[\d.]* de \d[\d.]*$/);
+    });
+
+    test('o numero avanca conforme os lotes entram, e nunca recua', async ({ page }) => {
+        await abrirVagas(page);
+
+        const inicio = await carregadas(page);
+        expect(inicio).toBeGreaterThan(0);
+
+        const leituras = [inicio];
+        for (let i = 0; i < 3; i++) {
+            await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+            await expect
+                .poll(async () => carregadas(page), { timeout: 15000 })
+                .toBeGreaterThan(leituras[leituras.length - 1]);
+            leituras.push(await carregadas(page));
+        }
+
+        // O defeito que motivou a mudanca era justamente recuar.
+        for (let i = 1; i < leituras.length; i++) {
+            expect(leituras[i], `leitura ${i} recuou`).toBeGreaterThan(leituras[i - 1]);
+        }
+    });
+
+    test('a pilula aparece com o botao de subir e nao rouba o toque dele', async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await abrirVagas(page);
+
+        await page.evaluate(() => window.scrollTo(0, 1200));
+        await expect(page.locator('#fabStack')).toHaveClass(/visible/);
+        await expect(page.locator('#scrollProgress')).toBeVisible();
+
+        // Rotulo, nao controle: o toque tem de chegar no botao ao lado.
+        const eventos = await page.locator('#scrollProgress').evaluate(
+            (el) => getComputedStyle(el).pointerEvents,
+        );
+        expect(eventos).toBe('none');
+
+        await page.locator('#scrollTopFab').click();
+        await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeLessThan(1200);
+    });
+
+    test('sem resultado, os dois contadores somem', async ({ page }) => {
+        await abrirVagas(page);
+
+        await page.locator('#searchInput').fill('zzzzzznaoexistezzzzzz');
+        await expect(page.locator('#emptyState')).toBeVisible({ timeout: 15000 });
+
+        await expect(page.locator('#scrollProgress')).toBeHidden();
+        await expect(page.locator('#resultsCounter')).toBeHidden();
+    });
+});
