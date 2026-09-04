@@ -738,7 +738,7 @@
             let index;
             try {
                 index = JSON.parse(localStorage.getItem(this.VISITED_INDEX_KEY) || '[]');
-            } catch (err) {
+            } catch {
                 index = [];
             }
             index = index.filter(k => k !== key);
@@ -890,55 +890,14 @@
         }
     };
 
-    // ============================================
-    // STYLE MANAGER (editorial / restraint)
-    // ============================================
-    const styleManager = {
-        apply(style) {
-            document.documentElement.setAttribute('data-style', style);
-            localStorage.setItem('cv_style', style);
-            const btn = document.getElementById('styleToggle');
-            if (btn) btn.textContent = style === 'editorial' ? 'Aa' : 'aa';
-            const group = document.querySelector('#tweaksStyle');
-            if (group) group.querySelectorAll('[data-value]').forEach(b => {
-                b.classList.toggle('active', b.dataset.value === style);
-            });
-        },
-        toggle() {
-            const cur = document.documentElement.getAttribute('data-style') || 'editorial';
-            this.apply(cur === 'editorial' ? 'restraint' : 'editorial');
-        },
-        init() {
-            const saved = localStorage.getItem('cv_style') || 'restraint';
-            this.apply(saved);
-            const btn = document.getElementById('styleToggle');
-            if (btn) btn.addEventListener('click', () => this.toggle());
-        }
-    };
+    // O estilo tambem vem de theme-init.js, junto com tema, fonte e densidade.
+    // O `styleManager` daqui pintava `#styleToggle` e `#tweaksStyle`, que
+    // sairam do HTML, e `init()` nunca era chamado.
 
-    // ============================================
-    // FONT MANAGER
-    // ============================================
-    const FONTS = ['instrument', 'newsreader', 'eb_garamond', 'dm_serif', 'bricolage', 'inter', 'mono'];
-    const FONT_LABELS = {
-        instrument: 'Instrument', newsreader: 'Newsreader', eb_garamond: 'EB Garamond',
-        dm_serif: 'DM Serif', bricolage: 'Bricolage', inter: 'Inter', mono: 'Mono'
-    };
-
-    const fontManager = {
-        apply(font) {
-            document.documentElement.setAttribute('data-font', font);
-            localStorage.setItem('cv_font', font);
-            const group = document.querySelector('#tweaksFont');
-            if (group) group.querySelectorAll('[data-font]').forEach(b => {
-                b.classList.toggle('active', b.dataset.font === font);
-            });
-        },
-        init() {
-            const saved = localStorage.getItem('cv_font') || 'instrument';
-            this.apply(saved);
-        }
-    };
+    // A fonte e aplicada por assets/js/theme-init.js, que le `cv_font` do
+    // localStorage antes do primeiro paint. O `fontManager` que existia aqui
+    // duplicava aquilo e pintava `#tweaksFont`, elemento que saiu do HTML:
+    // nunca foi chamado, e `FONTS` e `FONT_LABELS` nao eram lidos por ninguem.
 
     // ============================================
     // DENSITY MANAGER
@@ -1454,7 +1413,7 @@
             try {
                 await navigator.clipboard.writeText(url);
                 utils.showToast('Link copiado!', 'theme-toast share-toast');
-            } catch (err) {
+            } catch {
                 const textarea = document.createElement('textarea');
                 textarea.value = url;
                 textarea.style.position = 'fixed';
@@ -1494,7 +1453,7 @@
             try {
                 await navigator.clipboard.writeText(url);
                 this.showToast('Link copiado!');
-            } catch (err) {
+            } catch {
                 // Final fallback
                 const textarea = document.createElement('textarea');
                 textarea.value = url;
@@ -2221,7 +2180,7 @@
 
                 // Base set of jobs to count from:
                 // Start with all jobs and apply all current filters except the category being counted.
-                let baseJobs = this.filterJobs(state.allJobs, {
+                const baseJobs = this.filterJobs(state.allJobs, {
                     searchQuery,
                     showOnlyVisited: state.showOnlyVisited,
                     quickTipo,
@@ -2856,7 +2815,7 @@
                 this.items = Array.isArray(parsed)
                     ? parsed.filter(item => item && item.id && item.label && item.state).slice(0, this.maxItems)
                     : [];
-            } catch (err) {
+            } catch {
                 this.items = [];
             }
         },
@@ -3113,13 +3072,11 @@
     // CARD RENDERER
     // ============================================
     const cardRenderer = {
-        _index: 0,
 
         render(reset = false) {
             if (reset) {
                 elements.jobsGrid.innerHTML = '';
                 state.displayedCount = 0;
-                this._index = 0;
             }
 
             const start = state.displayedCount;
@@ -3149,8 +3106,7 @@
 
             const fragment = document.createDocumentFragment();
             jobs.forEach(job => {
-                this._index++;
-                fragment.appendChild(this.createCard(job, this._index));
+                fragment.appendChild(this.createCard(job));
             });
             elements.jobsGrid.appendChild(fragment);
 
@@ -3220,7 +3176,7 @@
             }
         },
 
-        createCard(job, index = 0) {
+        createCard(job) {
             const modalityKind = utils.getJobModalityKind(job);
             const modalityIcon = utils.getJobModalityIcon(modalityKind);
             const isAffirmative = job['affirmative?'] === '01 - Sim';
@@ -3979,7 +3935,7 @@
             try {
                 const saved = localStorage.getItem(this.storageKey);
                 state.searchHistory = saved ? JSON.parse(saved) : [];
-            } catch (e) {
+            } catch {
                 state.searchHistory = [];
             }
         },
@@ -4259,7 +4215,6 @@
             const scrollY = window.scrollY;
             const windowH = window.innerHeight;
             const docH = document.documentElement.scrollHeight;
-            const isMobile = utils.isMobile();
 
             document.body.classList.toggle('chrome-scrolled', scrollY > 10);
             document.body.classList.toggle('chrome-compact', scrollY > 56);
@@ -4697,7 +4652,7 @@
             utils.markSessionStart();
             preferencesManager.applyDefaults();
             themeManager.init();
-            // styleManager / fontManager - optional prefs via data-* on <html>
+            // Tema, fonte e estilo vem de theme-init.js, que roda antes do paint.
             densityManager.init();
             visitedFilter.init();
             viewModeManager.init();

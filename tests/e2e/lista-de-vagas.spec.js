@@ -278,7 +278,14 @@ test.describe('progresso da rolagem', () => {
         );
         expect(eventos).toBe('none');
 
+        // `#scrollTopFab` abre o menu de acoes rapidas; quem sobe e o item
+        // `#fabScrollTop` dentro dele. A primeira versao deste teste clicava no
+        // botao e cobrava a rolagem direto: passou uma vez por coincidencia de
+        // estado e falhou na execucao seguinte.
         await page.locator('#scrollTopFab').click();
+        await expect(page.locator('#scrollTopFab')).toHaveAttribute('aria-expanded', 'true');
+
+        await page.locator('#fabScrollTop').click();
         await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeLessThan(1200);
     });
 
