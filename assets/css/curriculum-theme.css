@@ -479,6 +479,70 @@ body.hub-active {
     border-bottom: 0;
 }
 
+/* Product Switcher Tabs no Top App Bar */
+.top-product-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-sunk);
+    padding: 3px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-pill);
+    margin-right: 6px;
+}
+
+.top-product-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    font-family: var(--font-heading);
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink-2);
+    text-decoration: none;
+    border-radius: var(--radius-pill);
+    transition: all 0.15s ease;
+    min-height: 30px;
+}
+
+.top-product-tab:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.top-product-tab.active {
+    color: #ffffff;
+    background: var(--accent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.top-product-tab svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .top-product-tab span {
+        display: none;
+    }
+    .top-product-tab {
+        padding: 4px 8px;
+    }
+    .top-product-tabs {
+        margin-right: 2px;
+        gap: 2px;
+    }
+}
+
+@media (max-width: 400px) {
+    .top-product-tabs {
+        display: none;
+    }
+}
+
 .masthead-inner {
     min-height: 48px;
     height: 48px;

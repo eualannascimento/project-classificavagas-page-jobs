@@ -55,10 +55,22 @@
         }
     };
 
+    const adjustResumeLinks = () => {
+        if (typeof window === 'undefined' || !window.location) return;
+        const isLocalFile = window.location.protocol === 'file:';
+        if (isLocalFile) {
+            const resumeLinks = document.querySelectorAll('a[href^="resume/"]');
+            resumeLinks.forEach(link => {
+                link.href = '../project-classificavagas-page-resume/index.html';
+            });
+        }
+    };
+
     applyRoute();
     window.addEventListener('hashchange', applyRoute);
     document.addEventListener('DOMContentLoaded', () => {
         applyRoute();
         mostrarEscala();
+        adjustResumeLinks();
     });
 })();
